@@ -3,7 +3,7 @@
 -- 
 -- Copyright © 2002 John Martin
 --
--- $Id: ogreToolbar.mcr,v 1.9 2003-12-25 16:44:41 sinbad Exp $
+-- $Id: ogreToolbar.mcr,v 1.9.6.1 2004-06-16 22:44:04 sinbad Exp $
 --
 -- Macroscript for the Ogre Toolbar.
 --
@@ -105,7 +105,7 @@ macroScript showSkeletonTools
 		on exportButton pressed do
 		(
 			sliderTime = 0 ;
-			m = execute ("$" + objectNameET.text) ;
+			m = execute ("$" + (replaceSpaces objectNameET.text)) ;
 			if (filenameET.text == "" or m == undefined ) then
 				messageBox "You have to choose a filename and a valid object." ;
 			else
