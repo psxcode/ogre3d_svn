@@ -260,7 +260,9 @@ namespace Ogre
             if (vecparams[0] == "add")
                 stype = SBT_ADD;
             else if (vecparams[0] == "modulate")
-                stype = SBT_TRANSPARENT_COLOUR;
+                stype = SBT_MODULATE;
+			else if (vecparams[0] == "colour_blend")
+				stype = SBT_TRANSPARENT_COLOUR;
             else if (vecparams[0] == "alpha_blend")
                 stype = SBT_TRANSPARENT_ALPHA;
             else
@@ -1379,6 +1381,10 @@ namespace Ogre
         {
             acType = GpuProgramParameters::ACT_INVERSE_WORLD_MATRIX;
         }
+		else if (vecparams[1] == "inverse_view_matrix")
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEW_MATRIX;
+		}
         else if (vecparams[1] == "inverse_worldview_matrix")
         {
             acType = GpuProgramParameters::ACT_INVERSE_WORLDVIEW_MATRIX;
@@ -1455,6 +1461,13 @@ namespace Ogre
             acType = GpuProgramParameters::ACT_CUSTOM;
             extras = true;
         }
+		else
+		{
+			logParseError("Invalid " + commandname + " attribute - "
+				+ vecparams[1], context);
+			return;
+
+		}
 
         // Do we need any extra parameters?
         size_t extraParam = 0;

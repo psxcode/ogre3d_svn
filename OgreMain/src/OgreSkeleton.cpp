@@ -42,14 +42,15 @@ namespace Ogre {
     //---------------------------------------------------------------------
 	Skeleton::Skeleton()
 		: Resource(),
-		mNextAutoHandle(0), mBlendState(ANIMBLEND_AVERAGE)
+        mBlendState(ANIMBLEND_AVERAGE),
+		mNextAutoHandle(0)
 	{
 	}
 	//---------------------------------------------------------------------
     Skeleton::Skeleton(ResourceManager* creator, const String& name, ResourceHandle handle,
         const String& group, bool isManual, ManualResourceLoader* loader) 
         : Resource(creator, name, handle, group, isManual, loader), 
-        mNextAutoHandle(0), mBlendState(ANIMBLEND_AVERAGE)
+        mBlendState(ANIMBLEND_AVERAGE), mNextAutoHandle(0)
         // set animation blending to weighted, not cumulative
     {
         if (createParamDictionary("Skeleton"))
@@ -89,6 +90,7 @@ namespace Ogre {
         }
         mBoneList.clear();
         mBoneListByName.clear();
+		mRootBones.clear();
 
 
         // Destroy animations
@@ -415,7 +417,7 @@ namespace Ogre {
                 "skeleton has no bones!", "Skeleton::deriveRootBone");
         }
 
-        mRootBones.empty();
+        mRootBones.clear();
 
         Bone* currentBone;
         BoneList::const_iterator i;

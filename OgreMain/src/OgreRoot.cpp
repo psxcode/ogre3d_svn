@@ -28,6 +28,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRoot.h"
 
 #include "OgreRenderSystem.h"
+#include "OgreRenderWindow.h"
 #include "OgreException.h"
 #include "OgreControllerManager.h"
 #include "OgreLogManager.h"
@@ -136,11 +137,12 @@ namespace Ogre {
             "(" + OGRE_VERSION_NAME + ")";
 		mConfigFileName = configFileName;
 
-        // Create log manager and default log file if there is no log manager yet
-        if(LogManager::getSingletonPtr() == 0) {
-            mLogManager = new LogManager();
-            mLogManager->createLog(logFileName, true, true);
-        }
+		// Create log manager and default log file if there is no log manager yet
+		if(LogManager::getSingletonPtr() == 0) 
+		{
+			mLogManager = new LogManager();
+			mLogManager->createLog(logFileName, true, true);
+		}
 
         // Dynamic library manager
         mDynLibManager = new DynLibManager();
@@ -214,9 +216,9 @@ namespace Ogre {
         if (!pluginFileName.empty())
             loadPlugins(pluginFileName);        
 
-        mLogManager->logMessage("*-*-* OGRE Initialising");
+		LogManager::getSingleton().logMessage("*-*-* OGRE Initialising");
         msg = "*-*-* Version " + mVersion;
-        mLogManager->logMessage(msg);
+        LogManager::getSingleton().logMessage(msg);
 
         // Can't create managers until initialised
         mControllerManager = 0;
@@ -452,9 +454,10 @@ namespace Ogre {
 
 		mResourceBackgroundQueue->initialise();
 
-        if (autoCreateWindow)
+        if (autoCreateWindow && !mFirstTimePostWindowInit)
         {
             oneTimePostWindowInit();
+            mAutoWindow->_setPrimary();
         }
 
         // Initialise timer
@@ -643,7 +646,7 @@ namespace Ogre {
 		mResourceBackgroundQueue->shutdown();
         ResourceGroupManager::getSingleton().shutdownAll();
 
-        mLogManager->logMessage("*-*-* OGRE Shutdown");
+		LogManager::getSingleton().logMessage("*-*-* OGRE Shutdown");
     }
     //-----------------------------------------------------------------------
     void Root::loadPlugins( const String& pluginsfile )
@@ -737,7 +740,11 @@ namespace Ogre {
         ret = mActiveRenderer->createRenderWindow(name, width, height, fullScreen, miscParams);
 
         // Initialisation for classes dependent on first window created
-        oneTimePostWindowInit();
+        if(!mFirstTimePostWindowInit)
+        {
+            oneTimePostWindowInit();
+            ret->_setPrimary();
+        }
 
         return ret;
 
@@ -841,4 +848,11 @@ namespace Ogre {
         // delegate
         mActiveRenderer->_updateAllRenderTargets();
     }
+	//-----------------------------------------------------------------------
+	void Root::clearEventTimes(void)
+	{
+		// Clear event times
+		for(int i=0; i<3; ++i)
+			mEventTimes[i].clear();
+	}
 }

@@ -428,6 +428,28 @@ namespace Ogre {
         0xE0, 0x1C, 0x03, 0, 
         5, 2, 0, 0 
         },
+	//-----------------------------------------------------------------------
+        {"PF_FLOAT16_R", 
+        /* Bytes per element */ 
+        2,  
+        /* Flags */
+        PFF_FLOAT,  
+        /* rbits, gbits, bbits, abits */
+        16, 0, 0, 0,
+        /* Masks and shifts */
+        0, 0, 0, 0, 0, 0, 0, 0 
+        },
+	//-----------------------------------------------------------------------
+        {"PF_FLOAT32_R", 
+        /* Bytes per element */ 
+        4,  
+        /* Flags */
+        PFF_FLOAT,  
+        /* rbits, gbits, bbits, abits */
+        32, 0, 0, 0,
+        /* Masks and shifts */
+        0, 0, 0, 0, 0, 0, 0, 0 
+        },
     };
     //-----------------------------------------------------------------------
 	size_t PixelBox::getConsecutiveSize() const 
@@ -490,14 +512,14 @@ namespace Ogre {
 				// DXT formats work by dividing the image into 4x4 blocks, then encoding each
 				// 4x4 block with a certain number of bytes. DXT can only be used on 2D images.
 				case PF_DXT1:
-					assert((width&3)==0 && (height&3)==0 && depth==1);
-					return (width/4)*(height/4)*8;
+					assert(depth == 1);
+					return ((width+3)/4)*((height+3)/4)*8;
 				case PF_DXT2:
 				case PF_DXT3:
 				case PF_DXT4:
 				case PF_DXT5:
-					assert((width&3)==0 && (height&3)==0 && depth==1);
-					return (width/4)*(height/4)*16;
+					assert(depth == 1);
+					return ((width+3)/4)*((height+3)/4)*16;
 				default:
 				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Invalid compressed pixel format", 
 					"PixelUtil::getMemorySize");

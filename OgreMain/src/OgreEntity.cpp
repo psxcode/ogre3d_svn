@@ -90,7 +90,7 @@ namespace Ogre {
             // NB skip LOD 0 which is the original
             for (i = 1; i < numLod; ++i)
             {
-                const Mesh::MeshLodUsage& usage = mesh->getLodLevel(i);
+                const MeshLodUsage& usage = mesh->getLodLevel(i);
                 // Manually create entity
                 Entity* lodEnt = new Entity(name + "Lod" + StringConverter::toString(i), 
                     usage.manualMesh, mCreatorSceneManager);
@@ -498,6 +498,21 @@ namespace Ogre {
             mFrameAnimationLastUpdated = currentFrameNumber;
         }
     }
+	//-----------------------------------------------------------------------
+	void Entity::_updateAnimation(void)
+	{
+		// Externally visible method
+		if (hasSkeleton())
+		{
+			updateAnimation();
+		}
+	}
+	//-----------------------------------------------------------------------
+	const VertexData* Entity::_getSharedBlendedVertexData(void) const
+	{
+		assert (mSharedBlendedVertexData && "Not software skinned!");
+        return mSharedBlendedVertexData;
+	}
     //-----------------------------------------------------------------------
     void Entity::cacheBoneMatrices(void)
     {

@@ -293,6 +293,13 @@ namespace Ogre {
                 it->second.immutable = false;
             }
         }
+		if( name == "VSync" )
+		{
+			if (value == "Yes")
+				mVSync = true;
+			else
+				mVSync = false;
+		}
 
         OgreUnguard();
     }
@@ -417,6 +424,7 @@ namespace Ogre {
             // Create myself a window
 			NameValuePairList params;
 			params["colourDepth"] = StringConverter::toString(colourDepth);
+			params["vsync"] = StringConverter::toString(mVSync);
             autoWindow = this->createRenderWindow(windowTitle, width, height, fullScreen, &params);
 
             // If we have 16bit depth buffer enable w-buffering.
@@ -2572,7 +2580,7 @@ namespace Ogre {
                     break;
                 }
             case FO_POINT:
-            case TFO_NONE:
+            case FO_NONE:
                 return D3DTFN_POINT;
                 break;
             }
@@ -2615,7 +2623,7 @@ namespace Ogre {
                     return D3DTFP_POINT;
                     break;
                 }
-            case TFO_NONE:
+            case FO_NONE:
                 return D3DTFP_NONE;
                 break;
             }

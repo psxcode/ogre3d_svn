@@ -303,6 +303,7 @@ protected:
 		sm->indexData->indexBuffer->unlock();
 
 		sm->setMaterialName(GRASS_MATERIAL);
+		msh->load();
 
 	}
 
@@ -430,7 +431,15 @@ protected:
 		mStaticGeom = s;
 
 		// Put an Ogre head in the middle
+		MeshPtr m = MeshManager::getSingleton().load("ogrehead.mesh", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		unsigned short src, dest;
+		if (!m->suggestTangentVectorBuildParams(src, dest))
+		{
+			m->buildTangentVectors(src, dest);
+		}
 		e = mSceneMgr->createEntity("head", "ogrehead.mesh");
+		e->setMaterialName("Examples/OffsetMapping/Specular");
 		SceneNode* headNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		headNode->attachObject(e);
 		headNode->setScale(7,7,7);
