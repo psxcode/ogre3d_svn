@@ -22,9 +22,8 @@ along with this library; if not, write to the Free Software Foundation,
 Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA or go to
 http://www.gnu.org/copyleft/lesser.txt
 -------------------------------------------------------------------------*/
-#include "OgreStableHeaders.h"
 
-#include "OgreTextAreaOverlayElement.h"
+#include "OgreTextAreaGuiElement.h"
 #include "OgreRoot.h"
 #include "OgreLogManager.h"
 #include "OgreOverlayManager.h"
@@ -36,20 +35,20 @@ namespace Ogre {
 
 #define DEFAULT_INITIAL_CHARS 12
     //---------------------------------------------------------------------
-    String TextAreaOverlayElement::msTypeName = "TextArea";
-    TextAreaOverlayElement::CmdCharHeight TextAreaOverlayElement::msCmdCharHeight;
-    TextAreaOverlayElement::CmdSpaceWidth TextAreaOverlayElement::msCmdSpaceWidth;
-    TextAreaOverlayElement::CmdFontName TextAreaOverlayElement::msCmdFontName;
-    TextAreaOverlayElement::CmdColour TextAreaOverlayElement::msCmdColour;
-    TextAreaOverlayElement::CmdColourBottom TextAreaOverlayElement::msCmdColourBottom;
-    TextAreaOverlayElement::CmdColourTop TextAreaOverlayElement::msCmdColourTop;
-    TextAreaOverlayElement::CmdAlignment TextAreaOverlayElement::msCmdAlignment;
+    String TextAreaGuiElement::msTypeName = "TextArea";
+    TextAreaGuiElement::CmdCharHeight TextAreaGuiElement::msCmdCharHeight;
+    TextAreaGuiElement::CmdSpaceWidth TextAreaGuiElement::msCmdSpaceWidth;
+    TextAreaGuiElement::CmdFontName TextAreaGuiElement::msCmdFontName;
+    TextAreaGuiElement::CmdColour TextAreaGuiElement::msCmdColour;
+    TextAreaGuiElement::CmdColourBottom TextAreaGuiElement::msCmdColourBottom;
+    TextAreaGuiElement::CmdColourTop TextAreaGuiElement::msCmdColourTop;
+    TextAreaGuiElement::CmdAlignment TextAreaGuiElement::msCmdAlignment;
     //---------------------------------------------------------------------
     #define POS_TEX_BINDING 0
     #define COLOUR_BINDING 1
     //---------------------------------------------------------------------
-    TextAreaOverlayElement::TextAreaOverlayElement(const String& name)
-        : OverlayElement(name)
+    TextAreaGuiElement::TextAreaGuiElement(const String& name)
+        : GuiElement(name)
     {
         mTransparent = false;
         mAlignment = Left;
@@ -67,13 +66,13 @@ namespace Ogre {
 		mPixelSpaceWidth = 0;
 		mViewportAspectCoef = 1;
 
-        if (createParamDictionary("TextAreaOverlayElement"))
+        if (createParamDictionary("TextAreaGuiElement"))
         {
             addBaseParameters();
         }
     }
 
-    void TextAreaOverlayElement::initialise(void)
+    void TextAreaGuiElement::initialise(void)
     {
         // Set up the render op
         // Combine positions and texture coords since they tend to change together
@@ -99,7 +98,7 @@ namespace Ogre {
 
     }
 
-    void TextAreaOverlayElement::checkMemoryAllocation( size_t numChars )
+    void TextAreaGuiElement::checkMemoryAllocation( size_t numChars )
     {
         if( mAllocSize < numChars)
         {
@@ -137,7 +136,7 @@ namespace Ogre {
 
     }
 
-    void TextAreaOverlayElement::updateGeometry()
+    void TextAreaGuiElement::updateGeometry()
     {
         Real *pVert;
 
@@ -308,28 +307,28 @@ namespace Ogre {
 
     }
 
-    void TextAreaOverlayElement::updatePositionGeometry()
+    void TextAreaGuiElement::updatePositionGeometry()
     {
         updateGeometry();
     }
 
-    void TextAreaOverlayElement::setCaption( const String& caption )
+    void TextAreaGuiElement::setCaption( const String& caption )
     {
         mCaption = caption;
         updateGeometry();
 
     }
-    const String& TextAreaOverlayElement::getCaption() const
+    const String& TextAreaGuiElement::getCaption() const
     {
         return mCaption;
     }
 
-    void TextAreaOverlayElement::setFontName( const String& font )
+    void TextAreaGuiElement::setFontName( const String& font )
     {
         mpFont = (Font*)FontManager::getSingleton().getByName( font );
         if (!mpFont)
 			Except( Exception::ERR_ITEM_NOT_FOUND, "Could not find font " + font,
-				"TextAreaOverlayElement::setFontName" );
+				"TextAreaGuiElement::setFontName" );
         mpFont->load();
         mpMaterial = mpFont->getMaterial();
         mpMaterial->setDepthCheckEnabled(false);
@@ -337,12 +336,12 @@ namespace Ogre {
 
         updateGeometry();
     }
-    const String& TextAreaOverlayElement::getFontName() const
+    const String& TextAreaGuiElement::getFontName() const
     {
         return mpFont->getName();
     }
 
-    void TextAreaOverlayElement::setCharHeight( Real height )
+    void TextAreaGuiElement::setCharHeight( Real height )
     {
         if (mMetricsMode != GMM_RELATIVE)
         {
@@ -354,7 +353,7 @@ namespace Ogre {
         }
         mGeomPositionsOutOfDate = true;
     }
-	Real TextAreaOverlayElement::getCharHeight() const
+	Real TextAreaGuiElement::getCharHeight() const
 	{
 		if (mMetricsMode == GMM_PIXELS)
 		{
@@ -366,7 +365,7 @@ namespace Ogre {
 		}
 	}
 
-    void TextAreaOverlayElement::setSpaceWidth( Real width )
+    void TextAreaGuiElement::setSpaceWidth( Real width )
     {
         if (mMetricsMode != GMM_RELATIVE)
         {
@@ -379,7 +378,7 @@ namespace Ogre {
 
         mGeomPositionsOutOfDate = true;
     }
-	Real TextAreaOverlayElement::getSpaceWidth() const
+	Real TextAreaGuiElement::getSpaceWidth() const
 	{
 		if (mMetricsMode == GMM_PIXELS)
 		{
@@ -392,30 +391,30 @@ namespace Ogre {
 	}
 
     //---------------------------------------------------------------------
-    TextAreaOverlayElement::~TextAreaOverlayElement()
+    TextAreaGuiElement::~TextAreaGuiElement()
     {
         delete mRenderOp.vertexData;
     }
     //---------------------------------------------------------------------
-    const String& TextAreaOverlayElement::getTypeName(void) const
+    const String& TextAreaGuiElement::getTypeName(void) const
     {
         return msTypeName;
     }
     //---------------------------------------------------------------------
-    void TextAreaOverlayElement::getRenderOperation(RenderOperation& op)
+    void TextAreaGuiElement::getRenderOperation(RenderOperation& op)
     {
         op = mRenderOp;
     }
     //---------------------------------------------------------------------
-    void TextAreaOverlayElement::setMaterialName(const String& matName)
+    void TextAreaGuiElement::setMaterialName(const String& matName)
     {
-        OverlayElement::setMaterialName(matName);
+        GuiElement::setMaterialName(matName);
         updateGeometry();
     }
     //---------------------------------------------------------------------
-    void TextAreaOverlayElement::addBaseParameters(void)
+    void TextAreaGuiElement::addBaseParameters(void)
     {
-        OverlayElement::addBaseParameters();
+        GuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("char_height", 
@@ -454,44 +453,44 @@ namespace Ogre {
             &msCmdAlignment);
     }
     //---------------------------------------------------------------------
-    void TextAreaOverlayElement::setColour(const ColourValue& col)
+    void TextAreaGuiElement::setColour(const ColourValue& col)
     {
         mColourBottom = mColourTop = col;
         mColoursChanged = true;
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaOverlayElement::getColour(void) const
+    const ColourValue& TextAreaGuiElement::getColour(void) const
     {
         // Either one
         return mColourTop;
     }
     //---------------------------------------------------------------------
-    void TextAreaOverlayElement::setColourBottom(const ColourValue& col)
+    void TextAreaGuiElement::setColourBottom(const ColourValue& col)
     {
         mColourBottom = col;
         mColoursChanged = true;
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaOverlayElement::getColourBottom(void) const
+    const ColourValue& TextAreaGuiElement::getColourBottom(void) const
     {
         return mColourBottom;
     }
     //---------------------------------------------------------------------
-    void TextAreaOverlayElement::setColourTop(const ColourValue& col)
+    void TextAreaGuiElement::setColourTop(const ColourValue& col)
     {
         mColourTop = col;
         mColoursChanged = true;
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaOverlayElement::getColourTop(void) const
+    const ColourValue& TextAreaGuiElement::getColourTop(void) const
     {
         return mColourTop;
     }
     //---------------------------------------------------------------------
-    void TextAreaOverlayElement::updateColours(void)
+    void TextAreaGuiElement::updateColours(void)
     {
         if (!mColoursChanged) return; // do nothing if colours haven't changed
 
@@ -523,7 +522,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void TextAreaOverlayElement::setMetricsMode(GuiMetricsMode gmm)
+    void TextAreaGuiElement::setMetricsMode(GuiMetricsMode gmm)
     {
         Real vpWidth, vpHeight;
 
@@ -531,7 +530,7 @@ namespace Ogre {
         vpHeight = (Real) (OverlayManager::getSingleton().getViewportHeight());
 		mViewportAspectCoef = vpHeight/vpWidth;
 
-		OverlayElement::setMetricsMode(gmm);
+		GuiElement::setMetricsMode(gmm);
         if (gmm != GMM_RELATIVE)
         {
             // Set pixel variables based on viewport multipliers
@@ -541,7 +540,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    void TextAreaOverlayElement::_update(void)
+    void TextAreaGuiElement::_update(void)
     {
         Real vpWidth, vpHeight;
 
@@ -558,32 +557,32 @@ namespace Ogre {
             mSpaceWidth = (Real) mPixelSpaceWidth / vpHeight;
 			mGeomPositionsOutOfDate = true;
         }
-        OverlayElement::_update();
+        GuiElement::_update();
     }
     //---------------------------------------------------------------------------------------------
     // Char height command object
     //
-    String TextAreaOverlayElement::CmdCharHeight::doGet( const void* target ) const
+    String TextAreaGuiElement::CmdCharHeight::doGet( const void* target ) const
     {
         return StringConverter::toString( 
-            static_cast< const TextAreaOverlayElement* >( target )->getCharHeight() );
+            static_cast< const TextAreaGuiElement* >( target )->getCharHeight() );
     }
-    void TextAreaOverlayElement::CmdCharHeight::doSet( void* target, const String& val )
+    void TextAreaGuiElement::CmdCharHeight::doSet( void* target, const String& val )
     {
-        static_cast< TextAreaOverlayElement* >( target )->setCharHeight( 
+        static_cast< TextAreaGuiElement* >( target )->setCharHeight( 
             StringConverter::parseReal( val ) );
     }
     //---------------------------------------------------------------------------------------------
     // Space width command object
     //
-    String TextAreaOverlayElement::CmdSpaceWidth::doGet( const void* target ) const
+    String TextAreaGuiElement::CmdSpaceWidth::doGet( const void* target ) const
     {
         return StringConverter::toString( 
-            static_cast< const TextAreaOverlayElement* >( target )->getSpaceWidth() );
+            static_cast< const TextAreaGuiElement* >( target )->getSpaceWidth() );
     }
-    void TextAreaOverlayElement::CmdSpaceWidth::doSet( void* target, const String& val )
+    void TextAreaGuiElement::CmdSpaceWidth::doSet( void* target, const String& val )
     {
-        static_cast< TextAreaOverlayElement* >( target )->setSpaceWidth( 
+        static_cast< TextAreaGuiElement* >( target )->setSpaceWidth( 
             StringConverter::parseReal( val ) );
     }
     //---------------------------------------------------------------------------------------------
@@ -591,26 +590,26 @@ namespace Ogre {
     //---------------------------------------------------------------------------------------------
     // Font name command object
     //
-    String TextAreaOverlayElement::CmdFontName::doGet( const void* target ) const
+    String TextAreaGuiElement::CmdFontName::doGet( const void* target ) const
     {
-        return static_cast< const TextAreaOverlayElement* >( target )->getFontName();
+        return static_cast< const TextAreaGuiElement* >( target )->getFontName();
     }
-    void TextAreaOverlayElement::CmdFontName::doSet( void* target, const String& val )
+    void TextAreaGuiElement::CmdFontName::doSet( void* target, const String& val )
     {
-        static_cast< TextAreaOverlayElement* >( target )->setFontName( val );
+        static_cast< TextAreaGuiElement* >( target )->setFontName( val );
     }
     //---------------------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------
     // Colour command object
     //
-    String TextAreaOverlayElement::CmdColour::doGet( const void* target ) const
+    String TextAreaGuiElement::CmdColour::doGet( const void* target ) const
     {
         return StringConverter::toString (
-            static_cast< const TextAreaOverlayElement* >( target )->getColour());
+            static_cast< const TextAreaGuiElement* >( target )->getColour());
     }
-    void TextAreaOverlayElement::CmdColour::doSet( void* target, const String& val )
+    void TextAreaGuiElement::CmdColour::doSet( void* target, const String& val )
     {
-        static_cast< TextAreaOverlayElement* >( target )->setColour( 
+        static_cast< TextAreaGuiElement* >( target )->setColour( 
             StringConverter::parseColourValue(val) );
     }
     //---------------------------------------------------------------------------------------------
@@ -618,14 +617,14 @@ namespace Ogre {
     //---------------------------------------------------------------------------------------------
     // Top colour command object
     //
-    String TextAreaOverlayElement::CmdColourTop::doGet( const void* target ) const
+    String TextAreaGuiElement::CmdColourTop::doGet( const void* target ) const
     {
         return StringConverter::toString (
-            static_cast< const TextAreaOverlayElement* >( target )->getColourTop());
+            static_cast< const TextAreaGuiElement* >( target )->getColourTop());
     }
-    void TextAreaOverlayElement::CmdColourTop::doSet( void* target, const String& val )
+    void TextAreaGuiElement::CmdColourTop::doSet( void* target, const String& val )
     {
-        static_cast< TextAreaOverlayElement* >( target )->setColourTop( 
+        static_cast< TextAreaGuiElement* >( target )->setColourTop( 
             StringConverter::parseColourValue(val) );
     }
     //---------------------------------------------------------------------------------------------
@@ -633,14 +632,14 @@ namespace Ogre {
     //---------------------------------------------------------------------------------------------
     // Bottom colour command object
     //
-    String TextAreaOverlayElement::CmdColourBottom::doGet( const void* target ) const
+    String TextAreaGuiElement::CmdColourBottom::doGet( const void* target ) const
     {
         return StringConverter::toString (
-            static_cast< const TextAreaOverlayElement* >( target )->getColourBottom());
+            static_cast< const TextAreaGuiElement* >( target )->getColourBottom());
     }
-    void TextAreaOverlayElement::CmdColourBottom::doSet( void* target, const String& val )
+    void TextAreaGuiElement::CmdColourBottom::doSet( void* target, const String& val )
     {
-        static_cast< TextAreaOverlayElement* >( target )->setColourBottom( 
+        static_cast< TextAreaGuiElement* >( target )->setColourBottom( 
             StringConverter::parseColourValue(val) );
     }
     //---------------------------------------------------------------------------------------------
@@ -648,9 +647,9 @@ namespace Ogre {
     //---------------------------------------------------------------------------------------------
     // Alignment command object
     //
-    String TextAreaOverlayElement::CmdAlignment::doGet( const void* target ) const
+    String TextAreaGuiElement::CmdAlignment::doGet( const void* target ) const
     {
-        Alignment align = static_cast< const TextAreaOverlayElement* >( target )->getAlignment();
+        Alignment align = static_cast< const TextAreaGuiElement* >( target )->getAlignment();
         switch (align)
         {
             case Left:
@@ -664,19 +663,19 @@ namespace Ogre {
         // To keep compiler happy
         return "left";
     }
-    void TextAreaOverlayElement::CmdAlignment::doSet( void* target, const String& val )
+    void TextAreaGuiElement::CmdAlignment::doSet( void* target, const String& val )
     {
         if (val == "center")
         {
-            static_cast< TextAreaOverlayElement* >( target )->setAlignment(Center);
+            static_cast< TextAreaGuiElement* >( target )->setAlignment(Center);
         }
         else if (val == "right")
         {
-            static_cast< TextAreaOverlayElement* >( target )->setAlignment(Right);
+            static_cast< TextAreaGuiElement* >( target )->setAlignment(Right);
         }
         else
         {
-            static_cast< TextAreaOverlayElement* >( target )->setAlignment(Left);
+            static_cast< TextAreaGuiElement* >( target )->setAlignment(Left);
         }
     }
     //---------------------------------------------------------------------------------------------

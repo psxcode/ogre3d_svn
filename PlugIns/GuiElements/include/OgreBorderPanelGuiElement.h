@@ -23,16 +23,17 @@ http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
 
-#ifndef __BorderPanelOverlayElement_H__
-#define __BorderPanelOverlayElement_H__
+#ifndef __BorderPanelGuiElement_H__
+#define __BorderPanelGuiElement_H__
 
-#include "OgrePanelOverlayElement.h"
+#include "OgreGuiElementPrerequisites.h"
+#include "OgrePanelGuiElement.h"
 
 namespace Ogre {
 
 
     
-    /** A specialisation of the PanelOverlayElement to provide a panel with a border.
+    /** A specialisation of the PanelGuiElement to provide a panel with a border.
     @remarks
         Whilst the standard panel can use a single tiled material, this class allows
         panels with a tileable backdrop plus a border texture. This is handy for large
@@ -40,18 +41,18 @@ namespace Ogre {
         for multiple different size panels where you want the border a constant width
         but the center to repeat.
     @par
-        In addition to the usual PanelOverlayElement properties, this class has a 'border
+        In addition to the usual PanelGuiElement properties, this class has a 'border
         material', which specifies the material used for the edges of the panel,
         a border width (which can either be constant all the way around, or specified
         per edge), and the texture coordinates for each of the border sections.
     */
-    class _OgreExport BorderPanelOverlayElement : public PanelOverlayElement
+    class _OgreGuiElementExport BorderPanelGuiElement : public PanelGuiElement
     {
         friend class BorderRenderable;
     public:
         /** Constructor */
-        BorderPanelOverlayElement(const String& name);
-        virtual ~BorderPanelOverlayElement();
+        BorderPanelGuiElement(const String& name);
+        virtual ~BorderPanelGuiElement();
 
         virtual void initialise(void);
 
@@ -166,10 +167,10 @@ namespace Ogre {
         /** Overridden from GuiContainer */
         void _updateRenderQueue(RenderQueue* queue);
 
-        /** Overridden from OverlayElement */
+        /** Overridden from GuiElement */
         void setMetricsMode(GuiMetricsMode gmm);
 
-        /** Overridden from OverlayElement */
+        /** Overridden from GuiElement */
         void _update(void);
 
 
@@ -262,7 +263,7 @@ namespace Ogre {
 
         static String msTypeName;
 
-        /// internal method for setting up geometry, called by OverlayElement::update
+        /// internal method for setting up geometry, called by GuiElement::update
         void updatePositionGeometry(void);
 
         /// Internal method for setting up parameters
@@ -297,18 +298,18 @@ namespace Ogre {
         BorderRenderable* mBorderRenderable;
     };
 
-    /** Class for rendering the border of a BorderPanelOverlayElement.
+    /** Class for rendering the border of a BorderPanelGuiElement.
     @remarks
         We need this because we have to render twice, once with the inner panel's repeating
         material (handled by superclass) and once for the border's separate meterial. 
     */
-    class _OgreExport BorderRenderable : public Renderable
+    class _OgreGuiElementExport BorderRenderable : public Renderable
     {
     protected:
-        BorderPanelOverlayElement* mParent;
+        BorderPanelGuiElement* mParent;
     public:
         /** Constructed with pointers to parent. */
-        BorderRenderable(BorderPanelOverlayElement* parent) : mParent(parent) {}
+        BorderRenderable(BorderPanelGuiElement* parent) : mParent(parent) {}
         Material* getMaterial(void) const { return mParent->mpBorderMaterial; }
         void getRenderOperation(RenderOperation& op) { op = mParent->mRenderOp2; }
         void getWorldTransforms(Matrix4* xform) const { mParent->getWorldTransforms(xform); }

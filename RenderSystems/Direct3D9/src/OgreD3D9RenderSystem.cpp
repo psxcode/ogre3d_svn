@@ -174,7 +174,7 @@ namespace Ogre
 			return false;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::initConfigOptions()
+	D3D9RenderSystem::initConfigOptions()
 	{
 		OgreGuard( "D3D9RenderSystem::initConfigOptions" );
 
@@ -687,11 +687,7 @@ namespace Ogre
 			}
 			
 		}
-        // non-power-of-two texturs always supported
-        mCapabilities->setCapability(RSC_NON_POWER_OF_2_TEXTURES);
-
-		// We always support rendertextures bigger than the frame buffer
-        mCapabilities->setCapability(RSC_HWRENDER_TO_TEXTURE);
+				
 
         mCapabilities->log(LogManager::getSingleton().getDefaultLog());
     }
@@ -862,7 +858,7 @@ namespace Ogre
         }
     }
     //---------------------------------------------------------------------
-	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format )
+	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height )
 	{
 		RenderTexture *rt = new D3D9RenderTexture( name, width, height );
 		attachRenderTarget( *rt );
@@ -967,7 +963,7 @@ namespace Ogre
         }
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::ResizeRepositionWindow(HWND wich)
+	D3D9RenderSystem::ResizeRepositionWindow(HWND wich)
 	{
 		for (RenderTargetMap::iterator it = mRenderTargets.begin(); it != mRenderTargets.end(); ++it)
 		{
@@ -2455,5 +2451,18 @@ namespace Ogre
             matrix[2][2] = -c.z; 
         }
         matrix[2][3] = c.w;        
+    }
+    //---------------------------------------------------------------------
+    Real D3D9RenderSystem::getMinimumDepthInputValue(void)
+    {
+        // Range [0.0f, 1.0f]
+        return 0.0f;
+    }
+    //---------------------------------------------------------------------
+    Real D3D9RenderSystem::getMaximumDepthInputValue(void)
+    {
+        // Range [0.0f, 1.0f]
+        // D3D inverts even identity view matrices, so maximum INPUT is -1.0
+        return -1.0f;
     }
 }

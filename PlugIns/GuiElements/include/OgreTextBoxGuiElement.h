@@ -27,9 +27,8 @@ http://www.gnu.org/copyleft/lesser.txt
 #define _TextBoxGuiElement_H__
 
 #include "OgrePrerequisites.h"
-#include "OgreGuiElementPrerequisites.h"
-#include "OgreTextAreaOverlayElement.h"
-#include "OgrePanelOverlayElement.h"
+#include "OgreTextAreaGuiElement.h"
+#include "OgrePanelGuiElement.h"
 
 namespace Ogre
 {
@@ -48,7 +47,7 @@ namespace Ogre
     layers, scrolling / animated textures etc. For multiple texture layers, you have to set 
     the tiling level for each layer.
     */
-    class _OgreGuiElementExport TextBoxGuiElement : public PanelOverlayElement
+    class _OgreGuiElementExport TextBoxGuiElement : public PanelGuiElement
     {
     public:
         /** Constructor. */
@@ -95,7 +94,7 @@ namespace Ogre
 
         bool mActionOnReturn;
 		GuiContainer* mBackPanel;
-		TextAreaOverlayElement* mTextArea;
+		TextAreaGuiElement* mTextArea;
 		String mTextAreaTemplateName;
 		String mBackPanelTemplateName;
         static String msTypeName;

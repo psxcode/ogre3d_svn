@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define __ButtonGuiElement_H__
 
 #include "OgreGuiElementPrerequisites.h"
-#include "OgrePanelOverlayElement.h"
+#include "OgrePanelGuiElement.h"
 #include "OgreGuiPressable.h"
 
 namespace Ogre {
@@ -51,7 +51,7 @@ namespace Ogre {
 	 * the <code>MouseEvent</code> is passed to it.
 	 *
 	 */
-	class _OgreGuiElementExport ButtonGuiElement : public PanelOverlayElement, public GuiPressable
+	class _OgreGuiElementExport ButtonGuiElement : public PanelGuiElement, public GuiPressable
     {
     protected:
 		bool mButtonDown;
@@ -68,9 +68,9 @@ namespace Ogre {
 		bool mSetCaptionDisabledColor;
 
         static String msTypeName;
-		OverlayElement* mInsideObject;
+		GuiElement* mInsideObject;
 		
-		void changeChild(OverlayElement* e, Real add);
+		void changeChild(GuiElement* e, Real add);
 
 	public :
 		const String& getTypeName(void) const;

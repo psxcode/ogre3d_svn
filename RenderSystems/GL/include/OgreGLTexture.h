@@ -57,19 +57,11 @@ namespace Ogre {
         void blitToTexture( const Image& src, 
             unsigned uStartX, unsigned uStartY );
 
-        // Takes the OGRE texture type (2d/3d/cube) and returns the appropriate GL one
-        GLenum getGLTextureTarget(void) const;
+        // Takes the ogre texture type and returns the appropriate GL one
+        GLenum getGLTextureType(void) const;
 
-        // Takes the OGRE pixel format and returns the appropriate GL one
-        GLenum getGLTextureOriginFormat(void) const;
-
-        // Takes the OGRE pixel format and returns the type that must be provided
-        // to GL as data type for reading it into the GPU.
-        GLenum getGLTextureOriginDataType(void) const;
-
-        // Takes the OGRE pixel format and returns the type that must be provided
-        // to GL as internal format.
-        GLenum getGLTextureInternalFormat(void) const;
+        // Takes the ogre texture format and returns the appropriate GL one
+        GLenum getGLTextureFormat(void) const;
 
         GLuint getGLID() const
         { return mTextureID; }
@@ -86,15 +78,15 @@ namespace Ogre {
     class GLRenderTexture : public RenderTexture
     {
     public:
-        GLRenderTexture(const String& name, uint width, uint height, TextureType texType,  PixelFormat format) 
-            : RenderTexture(name, width, height, texType, format) 
+        GLRenderTexture(const String& name, uint width, uint height) 
+            : RenderTexture(name, width, height) 
         {
         }
 
         void _copyToTexture(void);
 
         bool requiresTextureFlipping() const { return true; }
-        virtual void writeContentsToFile( const String & filename );
+        virtual void writeContentsToFile( const String & filename ) {}
     };
 }
 

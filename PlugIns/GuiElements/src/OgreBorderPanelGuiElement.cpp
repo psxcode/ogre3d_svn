@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright  2000-2002 The OGRE Team
+Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -22,9 +22,8 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
-#include "OgreBorderPanelOverlayElement.h"
+#include "OgreBorderPanelGuiElement.h"
 #include "OgreMaterialManager.h"
 #include "OgreMaterial.h"
 #include "OgreStringConverter.h"
@@ -34,27 +33,29 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreHardwareIndexBuffer.h"
 #include "OgreException.h"
 #include "OgreRenderQueue.h"
+#include "OgreRoot.h"
+#include "OgreRenderSystem.h"
 
 namespace Ogre {
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::msTypeName = "BorderPanel";
-    BorderPanelOverlayElement::CmdBorderSize BorderPanelOverlayElement::msCmdBorderSize;
-    BorderPanelOverlayElement::CmdBorderMaterial BorderPanelOverlayElement::msCmdBorderMaterial;
-    BorderPanelOverlayElement::CmdBorderLeftUV BorderPanelOverlayElement::msCmdBorderLeftUV;
-    BorderPanelOverlayElement::CmdBorderTopUV BorderPanelOverlayElement::msCmdBorderTopUV;
-    BorderPanelOverlayElement::CmdBorderBottomUV BorderPanelOverlayElement::msCmdBorderBottomUV;
-    BorderPanelOverlayElement::CmdBorderRightUV BorderPanelOverlayElement::msCmdBorderRightUV;
-    BorderPanelOverlayElement::CmdBorderTopLeftUV BorderPanelOverlayElement::msCmdBorderTopLeftUV;
-    BorderPanelOverlayElement::CmdBorderBottomLeftUV BorderPanelOverlayElement::msCmdBorderBottomLeftUV;
-    BorderPanelOverlayElement::CmdBorderTopRightUV BorderPanelOverlayElement::msCmdBorderTopRightUV;
-    BorderPanelOverlayElement::CmdBorderBottomRightUV BorderPanelOverlayElement::msCmdBorderBottomRightUV;
+    String BorderPanelGuiElement::msTypeName = "BorderPanel";
+    BorderPanelGuiElement::CmdBorderSize BorderPanelGuiElement::msCmdBorderSize;
+    BorderPanelGuiElement::CmdBorderMaterial BorderPanelGuiElement::msCmdBorderMaterial;
+    BorderPanelGuiElement::CmdBorderLeftUV BorderPanelGuiElement::msCmdBorderLeftUV;
+    BorderPanelGuiElement::CmdBorderTopUV BorderPanelGuiElement::msCmdBorderTopUV;
+    BorderPanelGuiElement::CmdBorderBottomUV BorderPanelGuiElement::msCmdBorderBottomUV;
+    BorderPanelGuiElement::CmdBorderRightUV BorderPanelGuiElement::msCmdBorderRightUV;
+    BorderPanelGuiElement::CmdBorderTopLeftUV BorderPanelGuiElement::msCmdBorderTopLeftUV;
+    BorderPanelGuiElement::CmdBorderBottomLeftUV BorderPanelGuiElement::msCmdBorderBottomLeftUV;
+    BorderPanelGuiElement::CmdBorderTopRightUV BorderPanelGuiElement::msCmdBorderTopRightUV;
+    BorderPanelGuiElement::CmdBorderBottomRightUV BorderPanelGuiElement::msCmdBorderBottomRightUV;
 
     #define BCELL_UV(x) (x * 4 * 2)
     #define POSITION_BINDING 0
     #define TEXCOORD_BINDING 1
     //---------------------------------------------------------------------
-    BorderPanelOverlayElement::BorderPanelOverlayElement(const String& name)
-      : PanelOverlayElement(name), 
+    BorderPanelGuiElement::BorderPanelGuiElement(const String& name)
+      : PanelGuiElement(name), 
         mLeftBorderSize(0),
         mRightBorderSize(0),
         mTopBorderSize(0),
@@ -66,22 +67,22 @@ namespace Ogre {
         mpBorderMaterial(0),
         mBorderRenderable(0)
     {
-        if (createParamDictionary("BorderPanelOverlayElement"))
+        if (createParamDictionary("BorderPanelGuiElement"))
         {
             addBaseParameters();
         }
     }
     //---------------------------------------------------------------------
-    BorderPanelOverlayElement::~BorderPanelOverlayElement()
+    BorderPanelGuiElement::~BorderPanelGuiElement()
     {
         delete mRenderOp2.vertexData;
         delete mRenderOp2.indexData;
         delete mBorderRenderable;
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::initialise(void)
+    void BorderPanelGuiElement::initialise(void)
     {
-        PanelOverlayElement::initialise();
+        PanelGuiElement::initialise();
 
         // superclass will handle the interior panel area 
 
@@ -161,9 +162,9 @@ namespace Ogre {
         mBorderRenderable = new BorderRenderable(this);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::addBaseParameters(void)
+    void BorderPanelGuiElement::addBaseParameters(void)
     {
-        PanelOverlayElement::addBaseParameters();
+        PanelGuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("border_size", 
@@ -218,7 +219,7 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setBorderSize(Real size)
+    void BorderPanelGuiElement::setBorderSize(Real size)
     {
         if (mMetricsMode != GMM_RELATIVE)
         {
@@ -233,7 +234,7 @@ namespace Ogre {
         mGeomPositionsOutOfDate = true;
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setBorderSize(Real sides, Real topAndBottom)
+    void BorderPanelGuiElement::setBorderSize(Real sides, Real topAndBottom)
     {
         if (mMetricsMode != GMM_RELATIVE)
         {
@@ -250,7 +251,7 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setBorderSize(Real left, Real right, Real top, Real bottom)
+    void BorderPanelGuiElement::setBorderSize(Real left, Real right, Real top, Real bottom)
     {
         if (mMetricsMode != GMM_RELATIVE)
         {
@@ -269,7 +270,7 @@ namespace Ogre {
         mGeomPositionsOutOfDate = true;
     }
     //---------------------------------------------------------------------
-    Real BorderPanelOverlayElement::getLeftBorderSize(void) const
+    Real BorderPanelGuiElement::getLeftBorderSize(void) const
     {
         if (mMetricsMode == GMM_PIXELS)
         {
@@ -281,7 +282,7 @@ namespace Ogre {
 		}
     }
     //---------------------------------------------------------------------
-    Real BorderPanelOverlayElement::getRightBorderSize(void) const
+    Real BorderPanelGuiElement::getRightBorderSize(void) const
     {
         if (mMetricsMode == GMM_PIXELS)
         {
@@ -293,7 +294,7 @@ namespace Ogre {
 		}
     }
     //---------------------------------------------------------------------
-    Real BorderPanelOverlayElement::getTopBorderSize(void) const
+    Real BorderPanelGuiElement::getTopBorderSize(void) const
     {
         if (mMetricsMode == GMM_PIXELS)
         {
@@ -305,7 +306,7 @@ namespace Ogre {
 		}
     }
     //---------------------------------------------------------------------
-    Real BorderPanelOverlayElement::getBottomBorderSize(void) const
+    Real BorderPanelGuiElement::getBottomBorderSize(void) const
     {
         if (mMetricsMode == GMM_PIXELS)
         {
@@ -317,7 +318,7 @@ namespace Ogre {
 		}
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setCellUV(BorderCellIndex idx, Real& u1, 
+    void BorderPanelGuiElement::setCellUV(BorderCellIndex idx, Real& u1, 
         Real& v1, Real& u2, Real& v2)
     {
         /* Each cell is
@@ -347,7 +348,7 @@ namespace Ogre {
        
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getCellUVString(BorderCellIndex idx) const
+    String BorderPanelGuiElement::getCellUVString(BorderCellIndex idx) const
     {
         /* Each cell is
             0-----2
@@ -376,83 +377,83 @@ namespace Ogre {
         return ret;
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setLeftBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setLeftBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_LEFT, u1, v1, u2, v2);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setRightBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setRightBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_RIGHT, u1, v1, u2, v2);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setTopBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setTopBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_TOP, u1, v1, u2, v2);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setBottomBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setBottomBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_BOTTOM, u1, v1, u2, v2);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setTopLeftBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setTopLeftBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_TOP_LEFT, u1, v1, u2, v2);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setTopRightBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setTopRightBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_TOP_RIGHT, u1, v1, u2, v2);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setBottomLeftBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setBottomLeftBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_BOTTOM_LEFT, u1, v1, u2, v2);
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setBottomRightBorderUV(Real u1, Real v1, Real u2, Real v2)
+    void BorderPanelGuiElement::setBottomRightBorderUV(Real u1, Real v1, Real u2, Real v2)
     {
         setCellUV(BCELL_BOTTOM_RIGHT, u1, v1, u2, v2);
     }
 
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getLeftBorderUVString() const
+    String BorderPanelGuiElement::getLeftBorderUVString() const
     {
         return getCellUVString(BCELL_LEFT);
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getRightBorderUVString() const
+    String BorderPanelGuiElement::getRightBorderUVString() const
     {
         return getCellUVString(BCELL_RIGHT);
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getTopBorderUVString() const
+    String BorderPanelGuiElement::getTopBorderUVString() const
     {
         return getCellUVString(BCELL_TOP);
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getBottomBorderUVString() const
+    String BorderPanelGuiElement::getBottomBorderUVString() const
     {
         return getCellUVString(BCELL_BOTTOM);
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getTopLeftBorderUVString() const
+    String BorderPanelGuiElement::getTopLeftBorderUVString() const
     {
         return getCellUVString(BCELL_TOP_LEFT);
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getTopRightBorderUVString() const
+    String BorderPanelGuiElement::getTopRightBorderUVString() const
     {
         return getCellUVString(BCELL_TOP_RIGHT);
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getBottomLeftBorderUVString() const
+    String BorderPanelGuiElement::getBottomLeftBorderUVString() const
     {
         return getCellUVString(BCELL_BOTTOM_LEFT);
     }
     //---------------------------------------------------------------------
-    String BorderPanelOverlayElement::getBottomRightBorderUVString() const
+    String BorderPanelGuiElement::getBottomRightBorderUVString() const
     {
         return getCellUVString(BCELL_BOTTOM_RIGHT);
     }
@@ -462,13 +463,13 @@ namespace Ogre {
 
 
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::setBorderMaterialName(const String& name)
+    void BorderPanelGuiElement::setBorderMaterialName(const String& name)
     {
         mBorderMaterialName = name;
         mpBorderMaterial = (Material*)MaterialManager::getSingleton().getByName(name);
         if (!mpBorderMaterial)
 			Except( Exception::ERR_ITEM_NOT_FOUND, "Could not find material " + name,
-				"BorderPanelOverlayElement::setBorderMaterialName" );
+				"BorderPanelGuiElement::setBorderMaterialName" );
         mpBorderMaterial->load();
         // Set some prerequisites to be sure
         mpBorderMaterial->setLightingEnabled(false);
@@ -476,12 +477,12 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    const String& BorderPanelOverlayElement::getBorderMaterialName(void) const
+    const String& BorderPanelGuiElement::getBorderMaterialName(void) const
     {
         return mBorderMaterialName;
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::updatePositionGeometry(void)
+    void BorderPanelGuiElement::updatePositionGeometry(void)
     {
         /*
         Grid is like this:
@@ -515,6 +516,9 @@ namespace Ogre {
             mRenderOp2.vertexData->vertexBufferBinding->getBuffer(POSITION_BINDING);
         Real* pPos = static_cast<Real*>(
             vbuf->lock(HardwareBuffer::HBL_DISCARD) );
+        // Use the furthest away depth value, since materials should have depth-check off
+        // This initialised the depth buffer for any 3D objects in front
+        Real zValue = Root::getSingleton().getRenderSystem()->getMaximumDepthInputValue();
         for (ushort cell = 0; cell < 8; ++cell)
         {
             /*
@@ -526,19 +530,19 @@ namespace Ogre {
             */
             *pPos++ = left[cell];
             *pPos++ = top[cell];
-            *pPos++ = -1;
+            *pPos++ = zValue;
 
             *pPos++ = left[cell];
             *pPos++ = bottom[cell];
-            *pPos++ = -1;
+            *pPos++ = zValue;
 
             *pPos++ = right[cell];
             *pPos++ = top[cell];
-            *pPos++ = -1;
+            *pPos++ = zValue;
 
             *pPos++ = right[cell];
             *pPos++ = bottom[cell];
-            *pPos++ = -1;
+            *pPos++ = zValue;
 
         }
         vbuf->unlock();
@@ -551,25 +555,25 @@ namespace Ogre {
         // Use cell 1 and 3 to determine positions
         *pPos++ = left[1];
         *pPos++ = top[3];
-        *pPos++ = -1;
+        *pPos++ = zValue;
 
         *pPos++ = left[1];
         *pPos++ = bottom[3];
-        *pPos++ = -1;
+        *pPos++ = zValue;
 
         *pPos++ = right[1];
         *pPos++ = top[3];
-        *pPos++ = -1;
+        *pPos++ = zValue;
 
         *pPos++ = right[1];
         *pPos++ = bottom[3];
-        *pPos++ = -1;
+        *pPos++ = zValue;
 
         vbuf->unlock();
         
     }
     //---------------------------------------------------------------------
-    void BorderPanelOverlayElement::_updateRenderQueue(RenderQueue* queue)
+    void BorderPanelGuiElement::_updateRenderQueue(RenderQueue* queue)
     {
         // Add self twice to the queue
         // Have to do this to allow 2 materials
@@ -581,13 +585,13 @@ namespace Ogre {
 
 			// do inner last so the border artifacts don't overwrite the children
             // Add inner
-            PanelOverlayElement::_updateRenderQueue(queue);
+            PanelGuiElement::_updateRenderQueue(queue);
         }
     }
     //-----------------------------------------------------------------------
-    void BorderPanelOverlayElement::setMetricsMode(GuiMetricsMode gmm)
+    void BorderPanelGuiElement::setMetricsMode(GuiMetricsMode gmm)
     {
-        PanelOverlayElement::setMetricsMode(gmm);
+        PanelGuiElement::setMetricsMode(gmm);
         if (gmm != GMM_RELATIVE)
         {
             mPixelBottomBorderSize = mBottomBorderSize;
@@ -597,9 +601,9 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void BorderPanelOverlayElement::_update(void)
+    void BorderPanelGuiElement::_update(void)
     {
-        PanelOverlayElement::_update();
+        PanelGuiElement::_update();
 
         if (mMetricsMode != GMM_RELATIVE && 
             (OverlayManager::getSingleton().hasViewportChanged() || mGeomPositionsOutOfDate))
@@ -617,20 +621,20 @@ namespace Ogre {
     // Command objects
     //---------------------------------------------------------------------
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderSize::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderSize::doGet(const void* target) const
     {
-		const BorderPanelOverlayElement* t = static_cast<const BorderPanelOverlayElement*>(target);
+		const BorderPanelGuiElement* t = static_cast<const BorderPanelGuiElement*>(target);
         return String(
 			StringConverter::toString(t->getLeftBorderSize()) + " " +
 			StringConverter::toString(t->getRightBorderSize()) + " " +
 			StringConverter::toString(t->getTopBorderSize()) + " " +
 			StringConverter::toString(t->getBottomBorderSize())	);
     }
-    void BorderPanelOverlayElement::CmdBorderSize::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderSize::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setBorderSize(
+        static_cast<BorderPanelGuiElement*>(target)->setBorderSize(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -638,28 +642,28 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderMaterial::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderMaterial::doGet(const void* target) const
     {
         // No need right now..
-        return static_cast<const BorderPanelOverlayElement*>(target)->getBorderMaterialName();
+        return static_cast<const BorderPanelGuiElement*>(target)->getBorderMaterialName();
     }
-    void BorderPanelOverlayElement::CmdBorderMaterial::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderMaterial::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setBorderMaterialName(val);
+        static_cast<BorderPanelGuiElement*>(target)->setBorderMaterialName(val);
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderBottomLeftUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderBottomLeftUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getBottomLeftBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getBottomLeftBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderBottomLeftUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderBottomLeftUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setBottomLeftBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setBottomLeftBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -667,16 +671,16 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderBottomRightUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderBottomRightUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getBottomRightBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getBottomRightBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderBottomRightUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderBottomRightUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setBottomRightBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setBottomRightBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -684,16 +688,16 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderTopLeftUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderTopLeftUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getTopLeftBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getTopLeftBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderTopLeftUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderTopLeftUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setTopLeftBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setTopLeftBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -701,16 +705,16 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderTopRightUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderTopRightUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getTopRightBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getTopRightBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderTopRightUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderTopRightUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setTopRightBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setTopRightBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -718,16 +722,16 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderLeftUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderLeftUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getLeftBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getLeftBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderLeftUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderLeftUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setLeftBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setLeftBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -735,16 +739,16 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderRightUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderRightUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getRightBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getRightBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderRightUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderRightUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setRightBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setRightBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -752,16 +756,16 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderTopUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderTopUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getTopBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getTopBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderTopUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderTopUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setTopBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setTopBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -769,16 +773,16 @@ namespace Ogre {
             );
     }
     //-----------------------------------------------------------------------
-    String BorderPanelOverlayElement::CmdBorderBottomUV::doGet(const void* target) const
+    String BorderPanelGuiElement::CmdBorderBottomUV::doGet(const void* target) const
     {
         // No need right now..
-		return  static_cast<const BorderPanelOverlayElement*>(target)->getBottomBorderUVString();
+		return  static_cast<const BorderPanelGuiElement*>(target)->getBottomBorderUVString();
     }
-    void BorderPanelOverlayElement::CmdBorderBottomUV::doSet(void* target, const String& val)
+    void BorderPanelGuiElement::CmdBorderBottomUV::doSet(void* target, const String& val)
     {
         std::vector<String> vec = StringUtil::split(val);
 
-        static_cast<BorderPanelOverlayElement*>(target)->setBottomBorderUV(
+        static_cast<BorderPanelGuiElement*>(target)->setBottomBorderUV(
             StringConverter::parseReal(vec[0]),
             StringConverter::parseReal(vec[1]),
             StringConverter::parseReal(vec[2]),
@@ -786,7 +790,7 @@ namespace Ogre {
             );
     }
     //---------------------------------------------------------------------
-    const String& BorderPanelOverlayElement::getTypeName(void) const
+    const String& BorderPanelGuiElement::getTypeName(void) const
     {
         return msTypeName;
     }

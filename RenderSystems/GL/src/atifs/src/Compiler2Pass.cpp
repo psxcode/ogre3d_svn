@@ -343,7 +343,7 @@ void Compiler2Pass::skipComments()
 void Compiler2Pass::findEOL()
 {
 	// find eol charter and move to this position
-	const char* newpos = strchr(&mSource[mCharPos], '\n');
+	char* newpos = strchr(&mSource[mCharPos], '\n');
 	if(newpos) {
 		mCharPos += newpos - &mSource[mCharPos];
 	}

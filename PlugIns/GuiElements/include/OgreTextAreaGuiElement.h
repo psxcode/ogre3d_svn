@@ -23,19 +23,20 @@ Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA or go to
 http://www.gnu.org/copyleft/lesser.txt
 -------------------------------------------------------------------------*/
 
-#ifndef _TextAreaOverlayElement_H__
-#define _TextAreaOverlayElement_H__
+#ifndef _TextAreaGuiElement_H__
+#define _TextAreaGuiElement_H__
 
+#include "OgreGuiElementPrerequisites.h"
 #include "OgreGuiContainer.h"
 #include "OgreMaterial.h"
 #include "OgreStringConverter.h"
-#include "OgreOverlayElementFactory.h"
+#include "OgreGuiElementFactory.h"
 #include "OgreFont.h"
 #include "OgreFontManager.h"
 
 namespace Ogre
 {
-    /** OverlayElement representing a flat, single-material (or transparent) panel which can contain other elements.
+    /** GuiElement representing a flat, single-material (or transparent) panel which can contain other elements.
     @remarks
     This class subclasses GuiContainer because it can contain other elements. Like other
     containers, if hidden it's contents are also hidden, if moved it's contents also move etc. 
@@ -44,13 +45,13 @@ namespace Ogre
     @par
     This component is suitable for backgrounds and grouping other elements. Note that because
     it has a single repeating material it cannot have a discrete border (unless the texture has one and
-    the texture is tiled only once). For a bordered panel, see it's subclass BorderTextAreaOverlayElement.
+    the texture is tiled only once). For a bordered panel, see it's subclass BorderTextAreaGuiElement.
     @par
     Note that the material can have all the usual effects applied to it like multiple texture
     layers, scrolling / animated textures etc. For multiple texture layers, you have to set 
     the tiling level for each layer.
     */
-    class _OgreExport TextAreaOverlayElement : public OverlayElement
+    class _OgreGuiElementExport TextAreaGuiElement : public GuiElement
     {
     public:
         enum Alignment
@@ -62,8 +63,8 @@ namespace Ogre
 
     public:
         /** Constructor. */
-        TextAreaOverlayElement(const String& name);
-        virtual ~TextAreaOverlayElement();
+        TextAreaGuiElement(const String& name);
+        virtual ~TextAreaGuiElement();
 
         virtual void initialise(void);
         void setCaption( const String& caption );
@@ -78,11 +79,11 @@ namespace Ogre
         void setFontName( const String& font );
         const String& getFontName() const;
 
-        /** See OverlayElement. */
+        /** See GuiElement. */
         virtual const String& getTypeName(void) const;
         /** See Renderable. */
         void getRenderOperation(RenderOperation& op);
-        /** Overridden from OverlayElement */
+        /** Overridden from GuiElement */
         void setMaterialName(const String& matName);
 
         /** Sets the colour of the text. 
@@ -124,10 +125,10 @@ namespace Ogre
             return mAlignment;
         }
 
-        /** Overridden from OverlayElement */
+        /** Overridden from GuiElement */
         void setMetricsMode(GuiMetricsMode gmm);
 
-        /** Overridden from OverlayElement */
+        /** Overridden from GuiElement */
         void _update(void);
 
         //-----------------------------------------------------------------------------------------

@@ -22,33 +22,33 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#ifndef __OverlayElementFactory_H__
-#define __OverlayElementFactory_H__
+#ifndef __GuiElementFactory_H__
+#define __GuiElementFactory_H__
 
 #include "OgrePrerequisites.h"
-#include "OgreOverlayElement.h"
+#include "OgreGuiElement.h"
 
 namespace Ogre {
 
     /** Defines the interface which all components wishing to 
-        supply OverlayElement subclasses must implement.
+        supply GuiElement subclasses must implement.
     @remarks
-        To allow the OverlayElement types available for inclusion on 
+        To allow the GuiElement types available for inclusion on 
         overlays to be extended, OGRE allows external apps or plugins
-        to register their ability to create custom OverlayElements with
-        the GuiManager, using the addOverlayElementFactory method. Classes
+        to register their ability to create custom GuiElements with
+        the GuiManager, using the addGuiElementFactory method. Classes
         wanting to do this must implement this interface.
     @par
-        Each OverlayElementFactory creates a single type of OverlayElement, 
+        Each GuiElementFactory creates a single type of GuiElement, 
         identified by a 'type name' which must be unique.
     */
-    class _OgreExport OverlayElementFactory
+    class _OgreExport GuiElementFactory
     {
     public:
-        /** Creates a new OverlayElement instance with the name supplied. */
-        virtual OverlayElement* createOverlayElement(const String& instanceName) = 0;
-        /** Destroys a OverlayElement which this factory created previously. */
-        virtual void destroyOverlayElement(OverlayElement* pElement) { delete pElement; };
+        /** Creates a new GuiElement instance with the name supplied. */
+        virtual GuiElement* createGuiElement(const String& instanceName) = 0;
+        /** Destroys a GuiElement which this factory created previously. */
+        virtual void destroyGuiElement(GuiElement* pElement) { delete pElement; };
         /** Gets the string uniquely identifying the type of element this factory creates. */
         virtual const String& getTypeName(void) const = 0;
     };

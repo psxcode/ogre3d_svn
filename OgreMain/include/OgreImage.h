@@ -178,14 +178,6 @@ namespace Ogre {
 			case PF_A2R10G10B10:
 			case PF_B10G10R10A2:
 				return 4;
-            case PF_FP_R16G16B16:
-                return 6;
-            case PF_FP_R16G16B16A16:
-                return 8;
-            case PF_FP_R32G32B32:
-                return 12;
-            case PF_FP_R32G32B32A32:
-                return 16;
 			default:
 				return 0xff;
 			}
@@ -243,15 +235,7 @@ namespace Ogre {
 			case PF_A2R10G10B10:
 			case PF_B10G10R10A2:
 				return 32;
-            case PF_FP_R16G16B16:
-                return 48;
-            case PF_FP_R16G16B16A16:
-                return 64;
-            case PF_FP_R32G32B32:
-                return 96;
-            case PF_FP_R32G32B32A32:
-                return 128;
-            default:
+			default:
 				return 0xff;
 			}
 		}
@@ -263,7 +247,7 @@ namespace Ogre {
                Passing one of the DXT_ formats will return false as it is unknown
                from the format alone in that case.
        */
-       inline static bool formatHasAlpha(PixelFormat format) 
+       inline static bool PFHasAlpha(PixelFormat format) 
        {
             switch(format) {
                 case PF_A8:
@@ -275,75 +259,11 @@ namespace Ogre {
                 case PF_B8G8R8A8:
                 case PF_A2R10G10B10:
                 case PF_B10G10R10A2:
-                case PF_FP_R16G16B16A16:
-                case PF_FP_R32G32B32A32:
                     return true;
                 default:
                     return false;
             }
         }
-
-        /** Returns wether a pixel format is floating point (at least not fixed point).
-          @returns
-               True when the format is floating point.
-       */
-       inline static bool formatIsFloat(PixelFormat format) 
-       {
-            switch(format) {
-                case PF_FP_R16G16B16:
-				case PF_FP_R32G32B32:
-                case PF_FP_R16G16B16A16:
-                case PF_FP_R32G32B32A32:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-		/** 
-		 * Returns number of bits (RGBA) for a format. For non-RGBA formats (dxt, depth, luminance)
-		 * this returns [0,0,0,0] in rgba.
-		 */
-		inline static void formatGetDepths(PixelFormat format, int rgba[4]) {
-			// Default values
-			rgba[0] = rgba[1] = rgba[2] = rgba[3] = 0;
-			switch( format )
-			{
-			case PF_R5G6B5:
-			case PF_B5G6R5:
-				rgba[0] = rgba[1] = rgba[2] = 5;
-				break;
-			case PF_A4R4G4B4:
-			case PF_B4G4R4A4:
-				rgba[0] = rgba[1] = rgba[2] = rgba[3] = 4;
-				break;
-            case PF_R8G8B8:
-			case PF_B8G8R8:
-				rgba[0] = rgba[1] = rgba[2] = 8;
-				break;
-			case PF_A8R8G8B8:
-			case PF_B8G8R8A8:
-				rgba[0] = rgba[1] = rgba[2] = rgba[3] = 8;
-				break;
-			case PF_A2R10G10B10:
-			case PF_B10G10R10A2:
-				rgba[0] = rgba[1] = rgba[2] = 10;
-				rgba[3] = 2;
-				break;
-            case PF_FP_R16G16B16:
-				rgba[0] = rgba[1] = rgba[2] = 16;
-				break;
-            case PF_FP_R16G16B16A16:
-				rgba[0] = rgba[1] = rgba[2] = rgba[3] = 16;
-				break;
-            case PF_FP_R32G32B32:
-                rgba[0] = rgba[1] = rgba[2] = 32;
-				break;
-            case PF_FP_R32G32B32A32:
-				rgba[0] = rgba[1] = rgba[2] = rgba[3] = 32;
-				break;
-			}
-		}
 
 		/** Decides wether converting from a pixel format to another requires 
 			endian-flipping.
@@ -521,6 +441,8 @@ namespace Ogre {
                 Castano Iguado
         */
         static void applyGamma( uchar *buffer, Real gamma, size_t size, uchar bpp );
+
+        static bool formatHasAlpha(PixelFormat format);
 
 		enum Filter
 		{

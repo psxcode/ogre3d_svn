@@ -268,11 +268,13 @@ namespace Ogre {
             mRootNode->_update(true, false);
             // Set up the default queue group for the objects about to be added
             RenderQueueGroupID oldgrp = queue->getDefaultQueueGroup();
+            ushort oldPriority = queue-> getDefaultRenderablePriority();
             queue->setDefaultQueueGroup(RENDER_QUEUE_OVERLAY);
+            queue->setDefaultRenderablePriority((mZOrder*100)-1);
             mRootNode->_findVisibleObjects(cam, queue, true, false);
             // Reset the group
             queue->setDefaultQueueGroup(oldgrp);
-
+            queue->setDefaultRenderablePriority(oldPriority);
             // Add 2D elements
             iend = m2DElements.end();
             for (i = m2DElements.begin(); i != iend; ++i)
@@ -319,9 +321,9 @@ namespace Ogre {
         // Do nothing
     }
 
-	OverlayElement* Overlay::findElementAt(Real x, Real y)
+	GuiElement* Overlay::findElementAt(Real x, Real y)
 	{
-		OverlayElement* ret = NULL;
+		GuiElement* ret = NULL;
 		int currZ = -1;
         GuiContainerList::iterator i, iend;
         iend = m2DElements.end();
@@ -330,7 +332,7 @@ namespace Ogre {
 			int z = (*i)->getZOrder();
 			if (z > currZ)
 			{
-				OverlayElement* elementFound = (*i)->findElementAt(x,y);
+				GuiElement* elementFound = (*i)->findElementAt(x,y);
 				if(elementFound)
 				{
 					currZ = elementFound->getZOrder();

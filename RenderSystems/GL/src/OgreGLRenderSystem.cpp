@@ -474,23 +474,6 @@ namespace Ogre {
         // Inifinite far plane always supported
         mCapabilities->setCapability(RSC_INFINITE_FAR_PLANE);
 
-        // Check for non-power-of-2 texture support
-		if(mGLSupport->checkExtension("GL_ARB_texture_non_power_of_two"))
-        {
-            mCapabilities->setCapability(RSC_NON_POWER_OF_2_TEXTURES);
-        }
-
-        // Check for Float textures
-        if(mGLSupport->checkExtension("GL_ATI_texture_float") ||
-//           mGLSupport->checkExtension("GL_NV_float_buffer") ||
-           mGLSupport->checkExtension("GL_ARB_texture_float"))
-        {
-            mCapabilities->setCapability(RSC_TEXTURE_FLOAT);
-        }
-
-		// Check for GLSupport specific extensions
-		mGLSupport->initialiseCapabilities(*mCapabilities);
-
         // Get extension function pointers
         glActiveTextureARB_ptr = 
             (GL_ActiveTextureARB_Func)mGLSupport->getProcAddress("glActiveTextureARB");
@@ -650,10 +633,10 @@ namespace Ogre {
         return win;
     }
 
-    RenderTexture * GLRenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format  )
+    RenderTexture * GLRenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height )
     {
-        RenderTexture *rt = mGLSupport->createRenderTexture(name, width, height, texType, format);
-        attachRenderTarget( *rt );
+        RenderTexture* rt = new GLRenderTexture(name, width, height);
+        attachRenderTarget(*rt);
         return rt;
     }
 
@@ -853,7 +836,7 @@ namespace Ogre {
 		if (enabled)
         {
             if (tex)
-                mTextureTypes[stage] = tex->getGLTextureTarget();
+                mTextureTypes[stage] = tex->getGLTextureType();
             else
                 // assume 2D
                 mTextureTypes[stage] = GL_TEXTURE_2D;
@@ -1129,6 +1112,14 @@ namespace Ogre {
         // Check if viewport is different
         if (vp != mActiveViewport || vp->_isUpdated())
         {
+		if(vp->getTarget() != mActiveRenderTarget) {
+			// Set new context
+			if(mActiveRenderTarget)
+				// Disable current context
+				mGLSupport->end_context();
+			mGLSupport->begin_context(vp->getTarget());
+		}
+
               mActiveViewport = vp;
               mActiveRenderTarget = vp->getTarget();
               // XXX Rendering target stuff?
@@ -2329,5 +2320,17 @@ namespace Ogre {
         matrix[2][3] = c.w; 
     }
 
+    //---------------------------------------------------------------------
+    Real GLRenderSystem::getMinimumDepthInputValue(void)
+    {
+        // Range [-1.0f, 1.0f]
+        return -1.0f;
+    }
+    //---------------------------------------------------------------------
+    Real GLRenderSystem::getMaximumDepthInputValue(void)
+    {
+        // Range [-1.0f, 1.0f]
+        return 1.0f;
+    }
 
 }

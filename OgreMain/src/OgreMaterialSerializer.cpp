@@ -579,7 +579,7 @@ namespace Ogre
             else if (vecparams[1] == "cubic")
             {
                 tt = TEX_TYPE_CUBE_MAP;
-            } 
+            }
         }
         context.textureUnit->setTextureName(vecparams[0], tt);
         return false;
@@ -1776,6 +1776,7 @@ namespace Ogre
     bool parseProgramSyntax(String& params, MaterialScriptContext& context)
     {
 		// Syntax code, make lower case
+        StringUtil::toLowerCase(params);
 		context.programDef->syntax = params;
 
 		return false;

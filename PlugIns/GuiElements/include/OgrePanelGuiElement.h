@@ -23,9 +23,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
 
-#ifndef __PanelOverlayElement_H__
-#define __PanelOverlayElement_H__
+#ifndef __PanelGuiElement_H__
+#define __PanelGuiElement_H__
 
+#include "OgreGuiElementPrerequisites.h"
 #include "OgreGuiContainer.h"
 
 namespace Ogre {
@@ -40,18 +41,18 @@ namespace Ogre {
     @par
         This component is suitable for backgrounds and grouping other elements. Note that because
         it has a single repeating material it cannot have a discrete border (unless the texture has one and
-        the texture is tiled only once). For a bordered panel, see it's subclass BorderPanelOverlayElement.
+        the texture is tiled only once). For a bordered panel, see it's subclass BorderPanelGuiElement.
     @par
         Note that the material can have all the usual effects applied to it like multiple texture
         layers, scrolling / animated textures etc. For multiple texture layers, you have to set 
         the tiling level for each layer.
     */
-    class _OgreExport PanelOverlayElement : public GuiContainer
+    class _OgreGuiElementExport PanelGuiElement : public GuiContainer
     {
     public:
         /** Constructor. */
-        PanelOverlayElement(const String& name);
-        virtual ~PanelOverlayElement();
+        PanelGuiElement(const String& name);
+        virtual ~PanelGuiElement();
 
         /** Initialise */
         virtual void initialise(void);

@@ -41,7 +41,7 @@ namespace Ogre {
 	PopupMenuGuiElement::CmdItemPanelMaterialSelected PopupMenuGuiElement::msCmdItemPanelMaterialSelected;
 
 	PopupMenuGuiElement::PopupMenuGuiElement(const String& name) :
-		PanelOverlayElement(name),
+		PanelGuiElement(name),
 		GuiPressable(name)
 	{
         if (createParamDictionary("PopupMenuGuiElement"))
@@ -73,7 +73,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void PopupMenuGuiElement::addBaseParameters(void)
     {
-        PanelOverlayElement::addBaseParameters();
+        PanelGuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("item_template", 
@@ -206,13 +206,13 @@ namespace Ogre {
 
 	void PopupMenuGuiElement::addMenuItem(Resource* r)
 	{
-		OverlayElement* mInsideObject = 
-			GuiManager::getSingleton().createOverlayElementFromTemplate(mItemTemplateName, "", getListItemName(r));
+		GuiElement* mInsideObject = 
+			GuiManager::getSingleton().createGuiElementFromTemplate(mItemTemplateName, "", getListItemName(r));
 
 		// create a back panel for the item
 
 		GuiContainer* pBackPanel = static_cast<GuiContainer*>
-			(GuiManager::getSingleton().createOverlayElement("Panel",getListItemPanelName(r)));
+			(GuiManager::getSingleton().createGuiElement("Panel",getListItemPanelName(r)));
 
 		pBackPanel->setLeft(0);
 		pBackPanel->setWidth(getWidth());
@@ -236,8 +236,8 @@ namespace Ogre {
 		backPanel->removeChild(getListItemName(r));
 		removeChild(getListItemPanelName(r));
 
-		GuiManager::getSingleton().destroyOverlayElement(getListItemName(r));
-		GuiManager::getSingleton().destroyOverlayElement(getListItemPanelName(r));
+		GuiManager::getSingleton().destroyGuiElement(getListItemName(r));
+		GuiManager::getSingleton().destroyGuiElement(getListItemPanelName(r));
 	}
     //-----------------------------------------------------------------------
 
@@ -292,7 +292,7 @@ namespace Ogre {
         ChildIterator it = getChildIterator();
         while (it.hasMoreElements())
         {
-            OverlayElement* currentElement = it.getNext();
+            GuiElement* currentElement = it.getNext();
 
 			currentElement->setTop(currentTop);
 			currentTop += currentElement->getHeight() + mVSpacing;
@@ -307,7 +307,7 @@ namespace Ogre {
 	void PopupMenuGuiElement::mouseMoved(MouseEvent* e) 
 	{
 		MouseEvent* me = static_cast<MouseEvent*>(e);
-		OverlayElement* newSelect = GuiContainer::findElementAt(me->getX(), me->getY());
+		GuiElement* newSelect = GuiContainer::findElementAt(me->getX(), me->getY());
 
 		if (newSelect == this || !isPressed())	// in case there are fringe pixels not in the list
 		{
@@ -405,12 +405,12 @@ namespace Ogre {
 		// do later
 	}
 
-	void PopupMenuGuiElement::setSelectedItem(OverlayElement* item)
+	void PopupMenuGuiElement::setSelectedItem(GuiElement* item)
 	{
 		// do later
 	}
 
-	void PopupMenuGuiElement::setSelectedItem(OverlayElement* item, bool on)
+	void PopupMenuGuiElement::setSelectedItem(GuiElement* item, bool on)
 	{
 		if (on)
 		{

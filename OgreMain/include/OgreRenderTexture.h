@@ -34,7 +34,7 @@ namespace Ogre
     class _OgreExport RenderTexture : public RenderTarget
     {
     public:
-        RenderTexture( const String & name, uint width, uint height, TextureType texType = TEX_TYPE_2D,  PixelFormat format = PF_R8G8B8);
+        RenderTexture( const String & name, uint width, uint height, TextureType texType = TEX_TYPE_2D );
         ~RenderTexture();
     protected:
 		RenderTexture() {};
@@ -45,7 +45,6 @@ namespace Ogre
 	protected:
 		/// The texture that gets accesses by the rest of the API.
         Texture * mTexture;
-        PixelFormat mInternalFormat;
     };
 }
 

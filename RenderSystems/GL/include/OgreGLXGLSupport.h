@@ -50,10 +50,6 @@ public:
 	* Get the address of a function
 	*/
 	void* getProcAddress(const String& procname);
-
-    RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format );
- 
- 
 private:
 	// X display
 	Display *mDisplay;

@@ -72,9 +72,9 @@ ShadowTechnique mShadowTech[NUM_SHADOW_TECH] =
 int mCurrentAtheneMaterial;
 int mCurrentShadowTechnique = 0;
 
-OverlayElement* mShadowTechniqueInfo;
-OverlayElement* mMaterialInfo;
-OverlayElement* mInfo;
+GuiElement* mShadowTechniqueInfo;
+GuiElement* mMaterialInfo;
+GuiElement* mInfo;
 
 
 /** This class 'wibbles' the light and billboard */
@@ -410,15 +410,15 @@ protected:
 
         // show overlay
         Overlay *pOver = (Overlay *)OverlayManager::getSingleton().getByName("Example/ShadowsOverlay");    
-        mShadowTechniqueInfo = GuiManager::getSingleton().getOverlayElement("Example/Shadows/ShadowTechniqueInfo");
-        mMaterialInfo = GuiManager::getSingleton().getOverlayElement("Example/Shadows/MaterialInfo");
-        mInfo = GuiManager::getSingleton().getOverlayElement("Example/Shadows/Info");
+        mShadowTechniqueInfo = GuiManager::getSingleton().getGuiElement("Example/Shadows/ShadowTechniqueInfo");
+        mMaterialInfo = GuiManager::getSingleton().getGuiElement("Example/Shadows/MaterialInfo");
+        mInfo = GuiManager::getSingleton().getGuiElement("Example/Shadows/Info");
 
         mShadowTechniqueInfo->setCaption("Current: " + mShadowTechDescriptions[mCurrentShadowTechnique]);
         mMaterialInfo->setCaption("Current: " + mAtheneMaterials[mCurrentAtheneMaterial]);
         pOver->show();
 
-		if (mRoot->getRenderSystem()->getCapabilities()->hasCapability(RSC_HWRENDER_TO_TEXTURE))
+		if (StringUtil::startsWith(mRoot->getRenderSystem()->getName(), "direct"))
         {
             // In D3D, use a 1024x1024 shadow texture
             mSceneMgr->setShadowTextureSettings(1024, 2);

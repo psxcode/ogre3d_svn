@@ -45,7 +45,7 @@ namespace Ogre {
          {
         mName = name;
         mSrcBpp = Image::PF2BPP(mFormat);
-		mHasAlpha = Image::formatHasAlpha(mFormat);
+        mHasAlpha = Image::PFHasAlpha(mFormat);
 
         enable32Bit(false);
         

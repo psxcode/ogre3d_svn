@@ -48,7 +48,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #elif defined( __GNUC__ )
 #   define OGRE_COMPILER COMPILER_GNUC
-#   define OGRE_COMP_VER __VERSION__
+#   define OGRE_COMP_VER (__GNUC__ * 10000 \
+                          + __GNUC_MINOR__ * 100 \
+                          +__GNUC_PATCHLEVEL__)
 
 #elif defined( __BORLANDC__ )
 #   define OGRE_COMPILER COMPILER_BORL
@@ -106,9 +108,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 #       define OGRE_DEBUG_MODE 0
 #   endif
 
-// A quick define to overcome different names for the same function
-#	define snprintf _snprintf
-#   define vsnprintf _vsnprintf
+#if defined( __MINGW32__ )
+    #define GCC_3_1
+    #define EXT_HASH
+#else
+    #define snprintf _snprintf
+    #define vsnprintf _vsnprintf
+#endif
 
 #endif
 //----------------------------------------------------------------------------

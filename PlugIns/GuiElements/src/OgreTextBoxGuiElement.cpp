@@ -38,7 +38,7 @@ namespace Ogre {
     TextBoxGuiElement::CmdTextArea TextBoxGuiElement::msCmdTextArea;
     //---------------------------------------------------------------------
     TextBoxGuiElement::TextBoxGuiElement(const String& name)
-        : PanelOverlayElement(name)
+        : PanelGuiElement(name)
     {
         if (createParamDictionary("TextBoxGuiElement"))
         {
@@ -65,7 +65,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void TextBoxGuiElement::addBaseParameters(void)
     {
-        PanelOverlayElement::addBaseParameters();
+        PanelGuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("back_panel", 
@@ -139,12 +139,12 @@ namespace Ogre {
 		if (mTextArea)
 		{
 			removeChild(mTextArea->getName());
-			GuiManager::getSingleton().destroyOverlayElement(mTextArea);
+			GuiManager::getSingleton().destroyGuiElement(mTextArea);
 			mTextArea = NULL;
 		}
 
-		mTextArea = static_cast<TextAreaOverlayElement*>
-			(GuiManager::getSingleton().createOverlayElementFromTemplate(mTextAreaTemplateName, "", mName + "/textArea"));
+		mTextArea = static_cast<TextAreaGuiElement*>
+			(GuiManager::getSingleton().createGuiElementFromTemplate(mTextAreaTemplateName, "", mName + "/textArea"));
 
 		mCaption = name;
 		setCaptionToTextArea();
@@ -174,12 +174,12 @@ namespace Ogre {
 		if (mBackPanel)
 		{
 			removeChild(mBackPanel->getName());
-			GuiManager::getSingleton().destroyOverlayElement(mBackPanel);
+			GuiManager::getSingleton().destroyGuiElement(mBackPanel);
 			mBackPanel = NULL;
 		}
 
 		mBackPanel = static_cast<GuiContainer*>
-			(GuiManager::getSingleton().createOverlayElementFromTemplate(mBackPanelTemplateName, "", mName + "/backPanel"));
+			(GuiManager::getSingleton().createGuiElementFromTemplate(mBackPanelTemplateName, "", mName + "/backPanel"));
 
 		// do not make this cloneable, otherwise there will be 2 copies of it when it is cloned,
 		// one copy when the children are copied, and another copy when setTextArea is set.
@@ -225,7 +225,7 @@ namespace Ogre {
     //---------------------------------------------------------------------------------------------
 	void TextBoxGuiElement::processEvent(InputEvent* e) 
 	{
-		PanelOverlayElement::processEvent(e);
+		PanelGuiElement::processEvent(e);
 
 		if (mTextArea)
 		{

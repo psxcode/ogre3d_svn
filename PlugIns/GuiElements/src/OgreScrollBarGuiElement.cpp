@@ -39,7 +39,7 @@ namespace Ogre {
 	static Real mouseDragBitOffset = 0;
 
 	ScrollBarGuiElement::ScrollBarGuiElement(const String& name) :
-		PanelOverlayElement(name)
+		PanelGuiElement(name)
 	{
         if (createParamDictionary("ScrollBarGuiElement"))
         {
@@ -59,7 +59,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void ScrollBarGuiElement::addBaseParameters(void)
     {
-        PanelOverlayElement::addBaseParameters();
+        PanelGuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("up_button", 
@@ -135,7 +135,7 @@ namespace Ogre {
 		mUpButtonName = val;
 		Real buttonSize = getWidth();
 		mUpButton = static_cast<ButtonGuiElement*> (
-			GuiManager::getSingleton().createOverlayElementFromTemplate(mUpButtonName, "", mName + "/" + "UpButton"));
+			GuiManager::getSingleton().createGuiElementFromTemplate(mUpButtonName, "", mName + "/" + "UpButton"));
 
 
 		// do not make this cloneable, otherwise there will be 2 copies of it when it is cloned,
@@ -151,7 +151,7 @@ namespace Ogre {
 		Real buttonSize = getWidth();
 		mDownButtonName = val;
 		mDownButton = static_cast<ButtonGuiElement*> (
-			GuiManager::getSingleton().createOverlayElementFromTemplate(mDownButtonName, "", mName + "/" + "DownButton"));
+			GuiManager::getSingleton().createGuiElementFromTemplate(mDownButtonName, "", mName + "/" + "DownButton"));
 
 		// do not make this cloneable, otherwise there will be 2 copies of it when it is cloned,
 		// one copy when the children are copied, and another copy when setDownButtonName is set.
@@ -164,8 +164,8 @@ namespace Ogre {
 	{
 		Real buttonSize = getWidth();
 		mScrollBitName = val;
-		mScrollBit = static_cast<PanelOverlayElement*> (
-			GuiManager::getSingleton().createOverlayElementFromTemplate(mScrollBitName, "", mName + "/" + "ScrollBit"));
+		mScrollBit = static_cast<PanelGuiElement*> (
+			GuiManager::getSingleton().createGuiElementFromTemplate(mScrollBitName, "", mName + "/" + "ScrollBit"));
 		// do not make this cloneable, otherwise there will be 2 copies of it when it is cloned,
 		// one copy when the children are copied, and another copy when setScrollBitName is set.
 		mScrollBit->setCloneable(false);
@@ -280,7 +280,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	void ScrollBarGuiElement::processEvent(InputEvent* e) 
 	{
-		PanelOverlayElement::processEvent(e);
+		PanelGuiElement::processEvent(e);
 
 		if (!e->isConsumed())
 		{
@@ -320,12 +320,12 @@ namespace Ogre {
 		Real vertSpacing = (mSpacing * 4.0F) / 3.0F;
 
 		Real mouseY = e->getY() - mDerivedTop;
-		if ((MouseTarget*)e->getSource() == (OverlayElement*)(mScrollBit))
+		if ((MouseTarget*)e->getSource() == (GuiElement*)(mScrollBit))
 		{
 			mouseHeldAtY = mouseY;
 			mouseDragBitOffset = e->getY() - getTop() - mScrollBit->getTop();
 		}
-		else if ((MouseTarget*)e->getSource() == (OverlayElement*)this)
+		else if ((MouseTarget*)e->getSource() == (GuiElement*)this)
 		{
 			size_t newStartingItem = (int)mStartingItem;
 			if ( mouseY < mScrollBit->getTop() )

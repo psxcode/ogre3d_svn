@@ -42,7 +42,7 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
 	ButtonGuiElement::ButtonGuiElement(const String& name) :
-		PanelOverlayElement(name),
+		PanelGuiElement(name),
 		GuiPressable(name)
 	{
 		mButtonDown = false;
@@ -69,7 +69,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	void ButtonGuiElement::processEvent(InputEvent* e) 
 	{
-		PanelOverlayElement::processEvent(e);
+		PanelGuiElement::processEvent(e);
 
 		updateMaterials();
 	}
@@ -130,7 +130,7 @@ namespace Ogre {
 			}
 		}
 
-		PanelOverlayElement::setMaterialName(materialName);
+		PanelGuiElement::setMaterialName(materialName);
 
 		if (buttonStatus && !init)
 		{
@@ -146,7 +146,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	void ButtonGuiElement::changeChild(OverlayElement* e, Real add)
+	void ButtonGuiElement::changeChild(GuiElement* e, Real add)
 	{
 		e->setLeft(e->getLeft() + add);
 		e->setTop(e->getTop() + add);
@@ -158,7 +158,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void ButtonGuiElement::addBaseParameters(void)
     {
-        PanelOverlayElement::addBaseParameters();
+        PanelGuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("button_down_material", 
@@ -251,7 +251,7 @@ namespace Ogre {
 		if (mInsideObject)
 		{
 			removeChild(mInsideObject->getName());
-			GuiManager::getSingleton().destroyOverlayElement(mInsideObject);
+			GuiManager::getSingleton().destroyGuiElement(mInsideObject);
 			mInsideObject = NULL;
 		}
 		if (name == "")
@@ -260,7 +260,7 @@ namespace Ogre {
 		}
 
 		mInsideObject = 
-			GuiManager::getSingleton().createOverlayElementFromTemplate(templateName, "", mName + "/caption");
+			GuiManager::getSingleton().createGuiElementFromTemplate(templateName, "", mName + "/caption");
 
 		// change left/top etc to relative
 //		mInsideObject->setLeft(mInsideObject->getLeft()*mWidth);

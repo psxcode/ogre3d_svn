@@ -50,7 +50,7 @@ namespace Ogre {
     #define COLOUR_BINDING 1
     //---------------------------------------------------------------------
     TTYGuiElement::TTYGuiElement(const String& name)
-        : OverlayElement(name)
+        : GuiElement(name)
     {
 	    mpFont = 0;
 
@@ -664,13 +664,13 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void TTYGuiElement::setMaterialName(const String& matName)
     {
-        OverlayElement::setMaterialName(matName);
+        GuiElement::setMaterialName(matName);
         updateWindowGeometry();
     }
     //---------------------------------------------------------------------
     void TTYGuiElement::addBaseParameters(void)
     {
-        OverlayElement::addBaseParameters();
+        GuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("char_height", 
@@ -752,7 +752,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void TTYGuiElement::setMetricsMode(GuiMetricsMode gmm)
     {
-        OverlayElement::setMetricsMode(gmm);
+        GuiElement::setMetricsMode(gmm);
         if (gmm != GMM_RELATIVE)
         {
             mPixelCharHeight = mCharHeight;
@@ -775,7 +775,7 @@ namespace Ogre {
             updateScrollBar();
             updateWindowGeometry();
         }
-        OverlayElement::_update();
+        GuiElement::_update();
     }
 
     //---------------------------------------------------------------------------------------------
@@ -889,7 +889,7 @@ namespace Ogre {
     void TTYGuiElement::CmdScrollBar::doSet( void* target, const String& val )
     {
         ScrollBarGuiElement* scrollBar;
-        scrollBar = static_cast<ScrollBarGuiElement* >(GuiManager::getSingleton().getOverlayElement(val));
+        scrollBar = static_cast<ScrollBarGuiElement* >(GuiManager::getSingleton().getGuiElement(val));
         static_cast< TTYGuiElement* >( target )->setScrollBar(scrollBar);
     }
     //---------------------------------------------------------------------------------------------

@@ -53,7 +53,7 @@ namespace Ogre {
 	GuiElements (or other components) that process the Mouse Motion Event should subclass this class 
 	and call processMouseMotionEvent when that event is identified.
 	*/
-	class _OgreExport MouseMotionTarget : public PositionTarget
+	class _OgreExport MouseMotionTarget : PositionTarget
     {
     protected:
 		MouseMotionListener* mMouseMotionListener;

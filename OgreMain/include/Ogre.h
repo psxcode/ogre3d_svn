@@ -75,9 +75,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreKeyFrame.h"
 #include "OgreRenderTargetListener.h"
 #include "OgreGuiManager.h"
+#include "OgreGuiElement.h"
 #include "OgreGuiContainer.h"
 #include "OgreOverlay.h"
-#include "OgreOverlayElement.h"
 #include "OgreRenderQueueListener.h"
 #include "OgreEventProcessor.h"
 #include "OgreOverlayManager.h"
@@ -98,7 +98,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreHardwareOcclusionQuery.h"
 #include "OgreSkeletonInstance.h"
 #include "OgreConfigFile.h"
-#include "OgreVector2.h"
 // .... more to come
 
 #endif

@@ -28,13 +28,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderSystem.h"
 #include "OgreImageCodec.h"
 #include "OgreException.h"
-#include "OgreWin32GLSupport.h"
 
 
 namespace Ogre {
 
-	Win32Window::Win32Window(Win32GLSupport &glsupport):
-		mGLSupport(glsupport)
+    Win32Window::Win32Window()
     {
 		mIsFullScreen = false;
 		mHWnd = 0;
@@ -413,18 +411,4 @@ namespace Ogre {
 
 		return DefWindowProc( hWnd, uMsg, wParam, lParam );
 	}
-
-	void Win32Window::firePreUpdate(void) {
-		// Enable current context
-		mGLSupport.pushContext(mHDC, mGlrc);
-		// Fire default preupdate
-		RenderWindow::firePreUpdate();
-	}
-	void Win32Window::firePostUpdate(void) {
-		// Fire default postupdate
-		RenderWindow::firePostUpdate();
-		// Possibly enable previous context
-		mGLSupport.popContext();
-	}
-
 }

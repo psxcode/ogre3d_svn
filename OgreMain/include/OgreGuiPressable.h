@@ -57,7 +57,7 @@ namespace Ogre {
 		String mActionCommand;
 		bool mPressed;
 		bool mButtonDown;
-		OverlayElement* mSource;
+		GuiElement* mSource;
 		
 		void fireActionPerformed();
 
@@ -65,7 +65,7 @@ namespace Ogre {
 		GuiPressable(const String& name);
         virtual ~GuiPressable() { }
 
-		void setSource(OverlayElement* source);
+		void setSource(GuiElement* source);
 		const String& getActionCommand() const;
 		void setActionCommand(const String& action);
 

@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreGuiElementPrerequisites.h"
 #include "OgreListSelectionTarget.h"
-#include "OgreBorderPanelOverlayElement.h"
+#include "OgreBorderPanelGuiElement.h"
 #include "OgreListChanger.h"
 #include "OgreScrollBarGuiElement.h"
 #include "OgreEventListeners.h"
@@ -56,7 +56,7 @@ namespace Ogre {
 	 *
 	 */
 
-	class _OgreGuiElementExport ListGuiElement : public PanelOverlayElement, public ListSelectionTarget, public ListChanger, public ScrollListener, public MouseListener, public MouseMotionListener
+	class _OgreGuiElementExport ListGuiElement : public PanelGuiElement, public ListSelectionTarget, public ListChanger, public ScrollListener, public MouseListener, public MouseMotionListener
     {
 	public :
 
@@ -151,13 +151,13 @@ namespace Ogre {
 		virtual Resource* popFront() ;
 		virtual size_t getListSize() const;
 
-        /** See OverlayElement. */
+        /** See GuiElement. */
         const String& getTypeName(void) const;
 
 
     protected:
-		virtual void setSelectedItem(OverlayElement* item, bool on);
-		virtual void setSelectedItem(OverlayElement* item);
+		virtual void setSelectedItem(GuiElement* item, bool on);
+		virtual void setSelectedItem(GuiElement* item);
 
 	    void addBaseParameters(void);
 		String getListItemName(Resource* r) const;
@@ -185,7 +185,7 @@ namespace Ogre {
 
 		ResourceList mResourceList; 
 
-		OverlayElement* mSelectedElement;
+		GuiElement* mSelectedElement;
     };
 
 }

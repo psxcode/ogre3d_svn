@@ -34,7 +34,7 @@ namespace Ogre {
 
     //---------------------------------------------------------------------
     GuiContainer::GuiContainer(const String& name)
-        : OverlayElement(name),
+        : GuiElement(name),
 		mChildrenProcessEvents(true)
     {
     }
@@ -44,12 +44,12 @@ namespace Ogre {
         GuiContainer::ChildIterator ci = getChildIterator();
         while (ci.hasMoreElements())
         {
-            OverlayElement* child = ci.getNext();
+            GuiElement* child = ci.getNext();
             child->_setParent(0);
         }
     }
     //---------------------------------------------------------------------
-    void GuiContainer::addChild(OverlayElement* elem)
+    void GuiContainer::addChild(GuiElement* elem)
     {
         if (elem->isContainer())
 		{
@@ -62,7 +62,7 @@ namespace Ogre {
 
 	}
     //---------------------------------------------------------------------
-    void GuiContainer::addChildImpl(OverlayElement* elem)
+    void GuiContainer::addChildImpl(GuiElement* elem)
     {
         String name = elem->getName();
         ChildMap::iterator i = mChildren.find(name);
@@ -85,7 +85,7 @@ namespace Ogre {
     {
         // Add to main map first 
         // This will pick up duplicates
-        OverlayElement* pElem = cont;
+        GuiElement* pElem = cont;
         addChildImpl(pElem);
 
         /*
@@ -119,7 +119,7 @@ namespace Ogre {
                 " not found.", "GuiContainer::removeChild");
         }
 
-        OverlayElement* element = i->second;
+        GuiElement* element = i->second;
         mChildren.erase(i);
 
             // remove from container list (if found)
@@ -130,7 +130,7 @@ namespace Ogre {
         element->_setParent(0);
     }
     //---------------------------------------------------------------------
-    void GuiContainer::_addChild(OverlayElement* elem)
+    void GuiContainer::_addChild(GuiElement* elem)
     {
         if (elem->isContainer())
 		{
@@ -151,7 +151,7 @@ namespace Ogre {
                 " not found.", "GuiContainer::removeChild");
         }
 
-        OverlayElement* element = i->second;
+        GuiElement* element = i->second;
         mChildren.erase(i);
 
             // remove from container list (if found)
@@ -162,7 +162,7 @@ namespace Ogre {
         element->_setParent(0);
     }
     //---------------------------------------------------------------------
-    OverlayElement* GuiContainer::getChild(const String& name)
+    GuiElement* GuiContainer::getChild(const String& name)
     {
         ChildMap::iterator i = mChildren.find(name);
         if (i == mChildren.end())
@@ -187,7 +187,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
 	void GuiContainer::_positionsOutOfDate(void)
 	{
-		OverlayElement::_positionsOutOfDate();
+		GuiElement::_positionsOutOfDate();
 
         ChildIterator it = getChildIterator();
         while (it.hasMoreElements())
@@ -200,7 +200,7 @@ namespace Ogre {
     void GuiContainer::_update(void)
     {
         // call superclass
-        OverlayElement::_update();
+        GuiElement::_update();
 
         // Update children
         ChildIterator it = getChildIterator();
@@ -214,7 +214,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void GuiContainer::_notifyZOrder(ushort newZOrder)
     {
-        OverlayElement::_notifyZOrder(newZOrder);
+        GuiElement::_notifyZOrder(newZOrder);
 
         // Update children
         ChildIterator it = getChildIterator();
@@ -227,7 +227,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void GuiContainer::_notifyWorldTransforms(const Matrix4& xform)
     {
-        OverlayElement::_notifyWorldTransforms(xform);
+        GuiElement::_notifyWorldTransforms(xform);
 
         // Update children
         ChildIterator it = getChildIterator();
@@ -239,7 +239,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void GuiContainer::_notifyViewport()
     {
-        OverlayElement::_notifyViewport();
+        GuiElement::_notifyViewport();
 
         // Update children
         ChildIterator it = getChildIterator();
@@ -251,7 +251,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void GuiContainer::_notifyParent(GuiContainer* parent, Overlay* overlay)
     {
-        OverlayElement::_notifyParent(parent, overlay);
+        GuiElement::_notifyParent(parent, overlay);
 
         // Update children
         ChildIterator it = getChildIterator();
@@ -268,7 +268,7 @@ namespace Ogre {
         if (mVisible)
         {
 
-            OverlayElement::_updateRenderQueue(queue);
+            GuiElement::_updateRenderQueue(queue);
 
             // Also add children
             ChildIterator it = getChildIterator();
@@ -282,28 +282,28 @@ namespace Ogre {
     }
 
 
-	OverlayElement* GuiContainer::findElementAt(Real x, Real y) 		// relative to parent
+	GuiElement* GuiContainer::findElementAt(Real x, Real y) 		// relative to parent
 	{
 
-		OverlayElement* ret = NULL;
+		GuiElement* ret = NULL;
 
 		int currZ = -1;
 
 		if (mVisible)
 		{
-			ret = OverlayElement::findElementAt(x,y);	//default to the current container if no others are found
+			ret = GuiElement::findElementAt(x,y);	//default to the current container if no others are found
 			if (ret && mChildrenProcessEvents)
 			{
 				ChildIterator it = getChildIterator();
 				while (it.hasMoreElements())
 				{
-					OverlayElement* currentOverlayElement = it.getNext();
-					if (currentOverlayElement->isVisible() && currentOverlayElement->isEnabled())
+					GuiElement* currentGuiElement = it.getNext();
+					if (currentGuiElement->isVisible() && currentGuiElement->isEnabled())
 					{
-						int z = currentOverlayElement->getZOrder();
+						int z = currentGuiElement->getZOrder();
 						if (z > currZ)
 						{
-							OverlayElement* elementFound = currentOverlayElement->findElementAt(x ,y );
+							GuiElement* elementFound = currentGuiElement->findElementAt(x ,y );
 							if (elementFound)
 							{
 								currZ = z;
@@ -317,20 +317,20 @@ namespace Ogre {
 		return ret;
 	}
 
-    void GuiContainer::copyFromTemplate(OverlayElement* templateGui)
+    void GuiContainer::copyFromTemplate(GuiElement* templateGui)
     {
-        OverlayElement::copyFromTemplate(templateGui);
+        GuiElement::copyFromTemplate(templateGui);
 
 		    if (templateGui->isContainer() && isContainer())
 		    {
     	     GuiContainer::ChildIterator it = static_cast<GuiContainer*>(templateGui)->getChildIterator();
   		     while (it.hasMoreElements())
 			     {
-				       OverlayElement* oldChildElement = it.getNext();
+				       GuiElement* oldChildElement = it.getNext();
 				       if (oldChildElement->isCloneable())
 				       {
-                   OverlayElement* newChildElement = 
-                       GuiManager::getSingleton().createOverlayElement(oldChildElement->getTypeName(), mName+"/"+oldChildElement->getName());
+                   GuiElement* newChildElement = 
+                       GuiManager::getSingleton().createGuiElement(oldChildElement->getTypeName(), mName+"/"+oldChildElement->getName());
                    oldChildElement->copyParametersTo(newChildElement);
                    addChild((GuiContainer*)newChildElement);
                }
@@ -338,19 +338,19 @@ namespace Ogre {
         }
     }
 
-    OverlayElement* GuiContainer::clone(const String& instanceName)
+    GuiElement* GuiContainer::clone(const String& instanceName)
     {
         GuiContainer *newContainer;
 
-        newContainer = static_cast<GuiContainer*>(OverlayElement::clone(instanceName));
+        newContainer = static_cast<GuiContainer*>(GuiElement::clone(instanceName));
 
     	  ChildIterator it = getChildIterator();
   		  while (it.hasMoreElements())
 			  {
-				    OverlayElement* oldChildElement = it.getNext();
+				    GuiElement* oldChildElement = it.getNext();
 				    if (oldChildElement->isCloneable())
 				    {
-                OverlayElement* newChildElement = oldChildElement->clone(instanceName);
+                GuiElement* newChildElement = oldChildElement->clone(instanceName);
                 newContainer->_addChild(newChildElement);
             }
         }

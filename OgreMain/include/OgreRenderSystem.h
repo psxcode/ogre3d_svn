@@ -290,7 +290,7 @@ namespace Ogre
 				size for the texture. Depending on the hardware driver or the underlying
 				API, these values might change when the texture is created.
 		*/
-        virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType = TEX_TYPE_2D,  PixelFormat format = PF_R8G8B8 ) = 0;
+        virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height ) = 0;
 
         /** Destroys a render window */
         virtual void destroyRenderWindow(const String& name);
@@ -843,6 +843,25 @@ namespace Ogre
         the vertical direction.
         */
         virtual Real getVerticalTexelOffset(void) = 0;
+
+        /** Gets the minimum (closest) depth value to be used when rendering
+            using identity transforms.
+        @remarks
+            When using identity transforms you can manually set the depth
+            of a vertex; however the input values required differ per
+            rendersystem. This method lets you retrieve the correct value.
+        @see Renderable::useIdentityView, Renderable::useIdentityProjection
+        */
+        virtual Real getMinimumDepthInputValue(void) = 0;
+        /** Gets the maximum (farthest) depth value to be used when rendering
+            using identity transforms.
+        @remarks
+            When using identity transforms you can manually set the depth
+            of a vertex; however the input values required differ per
+            rendersystem. This method lets you retrieve the correct value.
+        @see Renderable::useIdentityView, Renderable::useIdentityProjection
+        */
+        virtual Real getMaximumDepthInputValue(void) = 0;
     protected:
 
 

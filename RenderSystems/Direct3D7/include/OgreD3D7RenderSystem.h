@@ -204,7 +204,7 @@ namespace Ogre {
             bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true,
             RenderWindow* parentWindowHandle = 0);
 
-        RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format );
+        RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height );
 
         /** See
           RenderSystem
@@ -421,6 +421,8 @@ namespace Ogre {
         HardwareOcclusionQuery* createHardwareOcclusionQuery(void);
         Real getHorizontalTexelOffset(void);
         Real getVerticalTexelOffset(void);
+        Real getMinimumDepthInputValue(void);
+        Real getMaximumDepthInputValue(void);
         // ----------------------------------
         // End Overridden members
         // ----------------------------------

@@ -42,7 +42,7 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
 	BorderButtonGuiElement::BorderButtonGuiElement(const String& name) :
-		BorderPanelOverlayElement(name),
+		BorderPanelGuiElement(name),
 		GuiPressable(name)
 	{
 		mButtonDown = false;
@@ -66,7 +66,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	void BorderButtonGuiElement::processEvent(InputEvent* e) 
 	{
-		BorderPanelOverlayElement::processEvent(e);
+		BorderPanelGuiElement::processEvent(e);
 
 		updateMaterials();
 	}
@@ -106,7 +106,7 @@ namespace Ogre {
 				borderMaterialName = mBorderUpMaterialName;
 		}
 
-		BorderPanelOverlayElement::setBorderMaterialName(borderMaterialName);
+		BorderPanelGuiElement::setBorderMaterialName(borderMaterialName);
 
 		if (buttonStatus && !init)
 		{
@@ -122,7 +122,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	void BorderButtonGuiElement::changeChild(OverlayElement* e, Real add)
+	void BorderButtonGuiElement::changeChild(GuiElement* e, Real add)
 	{
 		e->setLeft(e->getLeft() + add);
 		e->setTop(e->getTop() + add);
@@ -134,7 +134,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void BorderButtonGuiElement::addBaseParameters(void)
     {
-        BorderPanelOverlayElement::addBaseParameters();
+        BorderPanelGuiElement::addBaseParameters();
         ParamDictionary* dict = getParamDictionary();
 
         dict->addParameter(ParameterDef("border_down_material", 
@@ -231,7 +231,7 @@ namespace Ogre {
 		if (mInsideObject)
 		{
 			removeChild(mInsideObject->getName());
-			GuiManager::getSingleton().destroyOverlayElement(mInsideObject);
+			GuiManager::getSingleton().destroyGuiElement(mInsideObject);
 			mInsideObject = NULL;
 		}
 		if (name == "")
@@ -240,7 +240,7 @@ namespace Ogre {
 
 		}
 		mInsideObject = 
-			GuiManager::getSingleton().createOverlayElementFromTemplate(templateName, "", mName + "/caption");
+			GuiManager::getSingleton().createGuiElementFromTemplate(templateName, "", mName + "/caption");
 
 		// change left/top etc to relative
 //		mInsideObject->setLeft(mInsideObject->getLeft()*mWidth);

@@ -61,10 +61,10 @@ protected:
 
         // update stats when necessary
         try {
-            OverlayElement* guiAvg = GuiManager::getSingleton().getOverlayElement("Core/AverageFps");
-            OverlayElement* guiCurr = GuiManager::getSingleton().getOverlayElement("Core/CurrFps");
-            OverlayElement* guiBest = GuiManager::getSingleton().getOverlayElement("Core/BestFps");
-            OverlayElement* guiWorst = GuiManager::getSingleton().getOverlayElement("Core/WorstFps");
+            GuiElement* guiAvg = GuiManager::getSingleton().getGuiElement("Core/AverageFps");
+            GuiElement* guiCurr = GuiManager::getSingleton().getGuiElement("Core/CurrFps");
+            GuiElement* guiBest = GuiManager::getSingleton().getGuiElement("Core/BestFps");
+            GuiElement* guiWorst = GuiManager::getSingleton().getGuiElement("Core/WorstFps");
 
             const RenderTarget::FrameStats& stats = mWindow->getStatistics();
 
@@ -75,10 +75,10 @@ protected:
             guiWorst->setCaption(worstFps + StringConverter::toString(stats.worstFPS)
                 +" "+StringConverter::toString(stats.worstFrameTime)+" ms");
 
-            OverlayElement* guiTris = GuiManager::getSingleton().getOverlayElement("Core/NumTris");
+            GuiElement* guiTris = GuiManager::getSingleton().getGuiElement("Core/NumTris");
             guiTris->setCaption(tris + StringConverter::toString(stats.triangleCount));
 
-            OverlayElement* guiDbg = GuiManager::getSingleton().getOverlayElement("Core/DebugText");
+            GuiElement* guiDbg = GuiManager::getSingleton().getGuiElement("Core/DebugText");
             guiDbg->setCaption(mWindow->getDebugText());
         }
         catch(...)
