@@ -1,18 +1,36 @@
+/*
+-----------------------------------------------------------------------------
+This source file is part of OGRE
+(Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.ogre3d.org/
+
+Copyright © 2000-2004 The OGRE Team
+Also see acknowledgements in Readme.html
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+-----------------------------------------------------------------------------
+*/
 /***************************************************************************
 terrainrenderable.cpp  -  description
 -------------------
 begin                : Sat Oct 5 2002
 copyright            : (C) 2002 by Jon Anderson
 email                : janders@users.sf.net
-***************************************************************************/
 
-/***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU Lesser General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
+Enhancements 2003 - 2004 (C) The OGRE Team
+
 ***************************************************************************/
 
 #include "OgreTerrainRenderable.h"
@@ -25,24 +43,30 @@ email                : janders@users.sf.net
 
 namespace Ogre
 {
+#define MAIN_BINDING 0
+#define DELTA_BINDING 1
+    /*
 #define POSITION_BINDING 0
 #define NORMAL_BINDING 1
 #define TEXCOORD_BINDING 2
 #define COLOUR_BINDING 3
+    */
 
 TerrainBufferCache gIndexCache;
 
-size_t TerrainRenderable::mRenderedTris = 0;
-
 String TerrainRenderable::mType = "TerrainMipMap";
+bool TerrainRenderable::msUseTriStrips = false;
+bool TerrainRenderable::msUseLODMorph = false;
+Real TerrainRenderable::msLODMorphStart = 0.5f;
 
 LevelArray TerrainRenderable::mLevelIndex;
 bool TerrainRenderable::mLevelInit = false;
 
-TerrainRenderable::TerrainRenderable()
-    : mTerrain(0)
+TerrainRenderable::TerrainRenderable(const String& name)
+    : mName(name), mTerrain(0), mPositionBuffer(0), mDeltaBuffers(0)
 {
     mForcedRenderLevel = -1;
+    mLastNextLevel = -1;
 
     mMinLevelDistSqr = 0;
 
@@ -71,6 +95,12 @@ void TerrainRenderable::deleteGeometry()
 {
     if(mTerrain)
         delete mTerrain;
+
+    if (mPositionBuffer)
+        delete [] mPositionBuffer;
+
+    if (mDeltaBuffers)
+        delete [] mDeltaBuffers;
 
     if ( mMinLevelDistSqr != 0 )
         delete [] mMinLevelDistSqr;
@@ -129,46 +159,42 @@ void TerrainRenderable::init( TerrainOptions &options )
 
     // positions
     size_t offset = 0;
-    decl->addElement(POSITION_BINDING, 0, VET_FLOAT3, VES_POSITION);
-    decl->addElement(NORMAL_BINDING, 0, VET_FLOAT3, VES_NORMAL);
+    decl->addElement(MAIN_BINDING, offset, VET_FLOAT3, VES_POSITION);
+    offset += VertexElement::getTypeSize(VET_FLOAT3);
+    if (mLit)
+    {
+        decl->addElement(MAIN_BINDING, offset, VET_FLOAT3, VES_NORMAL);
+        offset += VertexElement::getTypeSize(VET_FLOAT3);
+    }
     // texture coord sets
-    decl->addElement(TEXCOORD_BINDING, offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, 0);
+    decl->addElement(MAIN_BINDING, offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, 0);
     offset += VertexElement::getTypeSize(VET_FLOAT2);
-    decl->addElement(TEXCOORD_BINDING, offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, 1);
+    decl->addElement(MAIN_BINDING, offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, 1);
     offset += VertexElement::getTypeSize(VET_FLOAT2);
-    decl->addElement(COLOUR_BINDING, 0, VET_COLOUR, VES_DIFFUSE);
+    if (mColored)
+    {
+        decl->addElement(MAIN_BINDING, offset, VET_COLOUR, VES_DIFFUSE);
+        offset += VertexElement::getTypeSize(VET_COLOUR);
+    }
 
-    HardwareVertexBufferSharedPtr vbuf =
+    // Create shared vertex buffer
+    mMainBuffer =
         HardwareBufferManager::getSingleton().createVertexBuffer(
-            decl->getVertexSize(POSITION_BINDING),
-            mTerrain->vertexCount, 
-            HardwareBuffer::HBU_STATIC_WRITE_ONLY, true);
-
-    bind->setBinding(POSITION_BINDING, vbuf);
-
-    vbuf =
-        HardwareBufferManager::getSingleton().createVertexBuffer(
-            decl->getVertexSize(NORMAL_BINDING),
+            decl->getVertexSize(MAIN_BINDING),
             mTerrain->vertexCount, 
             HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+    // Create system memory copy with just positions in it, for use in simple reads
+    mPositionBuffer = new Real[mTerrain->vertexCount * 3];
 
-    bind->setBinding(NORMAL_BINDING, vbuf);
+    bind->setBinding(MAIN_BINDING, mMainBuffer);
 
-    vbuf =
-        HardwareBufferManager::getSingleton().createVertexBuffer(
-            offset,
-            mTerrain->vertexCount, 
-            HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+    if (msUseLODMorph)
+    {
+        // Create additional element for delta
+        decl->addElement(DELTA_BINDING, 0, VET_FLOAT1, VES_BLEND_WEIGHTS);
+        // NB binding is not set here, it is set when deriving the LOD
+    }
 
-    bind->setBinding(TEXCOORD_BINDING, vbuf);
-
-    vbuf =
-        HardwareBufferManager::getSingleton().createVertexBuffer(
-            decl->getVertexSize(COLOUR_BINDING),
-            mTerrain->vertexCount, 
-            HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-
-    bind->setBinding(COLOUR_BINDING, vbuf);
 
     mInit = true;
 
@@ -183,73 +209,79 @@ void TerrainRenderable::init( TerrainOptions &options )
 
     mScale.z = options.scalez;
 
-
-    RGBA* pCol = static_cast<RGBA*>( vbuf->lock(HardwareBuffer::HBL_DISCARD) );
-    for ( int i = 0; i < mSize*mSize; i++ )
-    {
-        *pCol++ = 0xFFFFFFFF;
-    }
-    vbuf->unlock();
-
     int endx = options.startx + options.size;
 
     int endz = options.startz + options.size;
 
     Vector3 left, down, here;
 
-    vbuf = bind->getBuffer(POSITION_BINDING);
+    const VertexElement* poselem = decl->findElementBySemantic(VES_POSITION);
+    const VertexElement* texelem0 = decl->findElementBySemantic(VES_TEXTURE_COORDINATES, 0);
+    const VertexElement* texelem1 = decl->findElementBySemantic(VES_TEXTURE_COORDINATES, 1);
+    Real* pSysPos = mPositionBuffer;
 
-    Real* pPos = static_cast<Real*>(vbuf->lock(HardwareBuffer::HBL_DISCARD));
-
-    HardwareVertexBufferSharedPtr vtexbuf = bind->getBuffer(TEXCOORD_BINDING);
-
-    Real* pTex = static_cast<Real*>(vtexbuf->lock(HardwareBuffer::HBL_DISCARD));
+    unsigned char* pBase = static_cast<unsigned char*>(mMainBuffer->lock(HardwareBuffer::HBL_DISCARD));
 
     for ( int j = options.startz; j < endz; j++ )
     {
         for ( int i = options.startx; i < endx; i++ )
         {
-            Real height = options._worldheight( i, j ) * options.scaley;
+            Real *pPos, *pTex0, *pTex1;
+            poselem->baseVertexPointerToElement(pBase, &pPos);
+            texelem0->baseVertexPointerToElement(pBase, &pTex0);
+            texelem1->baseVertexPointerToElement(pBase, &pTex1);
 
-            *pPos++ = ( Real ) i * options.scalex; //x
-            *pPos++ = height; //y
-            *pPos++ = ( Real ) j * options.scalez; //z
+            Real height = options._worldheight( i, j );
 
-            *pTex++ = ( Real ) i / ( Real ) options.world_size ;
-            *pTex++ = ( Real ) ( Real ) j / ( Real ) options.world_size;
+            *pSysPos++ = *pPos++ = ( Real ) i * options.scalex; //x
+            *pSysPos++ = *pPos++ = height; //y
+            *pSysPos++ = *pPos++ = ( Real ) j * options.scalez; //z
 
-            *pTex++ = ( ( Real ) i / ( Real ) mSize ) * options.detail_tile;
-            *pTex++ = ( ( Real ) ( Real ) j / ( Real ) mSize ) * options.detail_tile;
+            *pTex0++ = ( Real ) i / ( Real ) options.world_size ;
+            *pTex0++ = ( Real ) ( Real ) j / ( Real ) options.world_size;
+
+            *pTex1++ = ( ( Real ) i / ( Real ) mSize ) * options.detail_tile;
+            *pTex1++ = ( ( Real ) ( Real ) j / ( Real ) mSize ) * options.detail_tile;
 
             if ( height < min )
                 min = ( Real ) height;
 
             if ( height > max )
                 max = ( Real ) height;
+
+            pBase += mMainBuffer->getVertexSize();
         }
     }
 
-    vtexbuf->unlock();
-    vbuf->unlock();
+    mMainBuffer->unlock();
 
     mBounds.setExtents( ( Real ) options.startx * options.scalex, min, ( Real ) options.startz * options.scalez,
                         ( Real ) ( endx - 1 ) * options.scalex, max, ( Real ) ( endz - 1 ) * options.scalez );
 
 
-    mCenter = Vector3( ( options.startx * options.scalex + endx - 1 ) / 2,
+    mCenter = Vector3( ( options.startx * options.scalex + (endx - 1) * options.scalex ) / 2,
                        ( min + max ) / 2,
-                       ( options.startz * options.scalez + endz - 1 ) / 2 );
+                       ( options.startz * options.scalez + (endz - 1) * options.scalez ) / 2 );
 
+    // Create delta buffer list if required to morph
+    if (msUseLODMorph)
+    {
+        // Create delta buffer for all except the lowest mip
+        mDeltaBuffers = new HardwareVertexBufferSharedPtr[mNumMipMaps - 1];
+    }
 
     Real C = _calculateCFactor();
 
     _calculateMinLevelDist2( C );
-    _calculateNormals();
+    if (mLit)
+        _calculateNormals();
 
 }
 
 void TerrainRenderable::_getNormalAt( float x, float z, Vector3 * result )
 {
+
+    assert(mLit && "No normals present");
 
     Vector3 here, left, down;
     here.x = x;
@@ -283,9 +315,13 @@ void TerrainRenderable::_calculateNormals()
 {
     Vector3 norm;
 
+    assert (mLit && "No normals present");
+
     HardwareVertexBufferSharedPtr vbuf = 
-        mTerrain->vertexBufferBinding->getBuffer(NORMAL_BINDING);
-    Real* pNorm = static_cast<Real*>( vbuf->lock(HardwareBuffer::HBL_DISCARD) );
+        mTerrain->vertexBufferBinding->getBuffer(MAIN_BINDING);
+    const VertexElement* elem = mTerrain->vertexDeclaration->findElementBySemantic(VES_NORMAL);
+    unsigned char* pBase = static_cast<unsigned char*>( vbuf->lock(HardwareBuffer::HBL_DISCARD) );
+    Real* pNorm;
 
     for ( int j = 0; j < mSize; j++ )
     {
@@ -295,10 +331,11 @@ void TerrainRenderable::_calculateNormals()
             _getNormalAt( _vertex( i, j, 0 ), _vertex( i, j, 2 ), &norm );
 
             //  printf( "Normal = %5f,%5f,%5f\n", norm.x, norm.y, norm.z );
-
+            elem->baseVertexPointerToElement(pBase, &pNorm);
             *pNorm++ = norm.x;
             *pNorm++ = norm.y;
             *pNorm++ = norm.z;
+            pBase += vbuf->getVertexSize();
         }
 
     }
@@ -317,13 +354,10 @@ void TerrainRenderable::_notifyCurrentCamera( Camera* cam )
 
     int old_level = mRenderLevel;
 
-    Vector3 cpos = cam -> getPosition();
+    Vector3 cpos = cam -> getDerivedPosition();
     Vector3 diff = mCenter - cpos;
 
     Real L = diff.squaredLength();
-
-    current_L = L;
-
 
     mRenderLevel = -1;
 
@@ -339,8 +373,37 @@ void TerrainRenderable::_notifyCurrentCamera( Camera* cam )
     if ( mRenderLevel < 0 )
         mRenderLevel = mNumMipMaps - 1;
 
+    if (msUseLODMorph)
+    {
+        // Get the next LOD level down
+        int nextLevel = mNextLevelDown[mRenderLevel];
+        if (nextLevel == 0)
+        {
+            // No next level, so never morph
+            mLODMorphFactor = 0;
+        }
+        else
+        {
+            // Set the morph such that the morph happens in the last 0.25 of
+            // the distance range
+            Real range = mMinLevelDistSqr[nextLevel] - mMinLevelDistSqr[mRenderLevel];
+            Real percent = (L - mMinLevelDistSqr[mRenderLevel]) / range;
+            // scale result so that msLODMorphStart == 0, 1 == 1, clamp to 0 below that
+            Real rescale = 1.0f / (1.0f - msLODMorphStart);
+            mLODMorphFactor = std::max((percent - msLODMorphStart) * rescale, 0.0f);
+            assert(mLODMorphFactor >= 0 && mLODMorphFactor <= 1);
+        }
 
-    // mRenderLevel = 4;
+        // Bind the correct delta buffer if it has changed
+        // nextLevel - 1 since the first entry is for LOD 1 (since LOD 0 never needs it)
+        if (mLastNextLevel != nextLevel && nextLevel > 0)
+        {
+            mTerrain->vertexBufferBinding->setBinding(DELTA_BINDING, 
+                mDeltaBuffers[nextLevel - 1]);
+            mLastNextLevel = nextLevel;
+        }
+
+    }
 
 }
 
@@ -353,240 +416,13 @@ void TerrainRenderable::getRenderOperation( RenderOperation& op )
 {
     //setup indexes for vertices and uvs...
 
-    if ( !mInit )
-    {
-        printf( "Uninitialized\n" );
-        return ;
-    }
-
-    /*
-    int j=0;
-    for( j=0; j<mSize; j+= (mRenderLevel*2) ) //depth
-    {
-    int i=0;
-    if( j != 0 )
-    {
-    //two degenerate tris to turn the corner...
-    pIndexes[nupIndexes] = _index(i, j+mRenderLevel ); nupIndexes++;
-    pIndexes[numIndexes] = _index(i, j+mRenderLevel ); numIndexes++;
-}
-
-    //forward strip...
-    for( i=0; i<mSize; i+= mRenderLevel ) //accross
-    {
-    pIndexes[numIndexes] = _index(i, j ); numIndexes++;
-    pIndexes[numIndexes] = _index(i, j+mRenderLevel ); numIndexes++;
-}
-    i -= mRenderLevel; //backtrack...
-
-
-    //degenerate tris to turn the corner...
-
-    pIndexes[numIndexes] = _index(i, j+mRenderLevel ); numIndexes++;
-    pIndexes[numIndexes] = _index(i, j+mRenderLevel ); numIndexes++;
-
-    //back strip
-    for( i = mSize-mRenderLevel; i>=0; i-=mRenderLevel )
-    {
-    pIndexes[numIndexes] = _index(i, j+mRenderLevel ); numIndexes++;
-    pIndexes[numIndexes] = _index(i, j ); numIndexes++;
-}
-
-}
-    */
-
-    int east = 0, west = 0, north = 0, south = 0;
-
-    int step = 1 << mRenderLevel;
-
-    int index_array = 0;
-
-    int numIndexes = 0;
-
-    if ( mNeighbors[ EAST ] != 0 && mNeighbors[ EAST ] -> mRenderLevel > mRenderLevel )
-    {
-        east = step; index_array |= TILE_EAST;
-    }
-
-    if ( mNeighbors[ WEST ] != 0 && mNeighbors[ WEST ] -> mRenderLevel > mRenderLevel )
-    {
-        west = step; index_array |= TILE_WEST;
-    }
-
-    if ( mNeighbors[ NORTH ] != 0 && mNeighbors[ NORTH ] -> mRenderLevel > mRenderLevel )
-    {
-        north = step; index_array |= TILE_NORTH;
-    }
-
-    if ( mNeighbors[ SOUTH ] != 0 && mNeighbors[ SOUTH ] -> mRenderLevel > mRenderLevel )
-    {
-        south = step; index_array |= TILE_SOUTH;
-    }
-
-    IndexData* indexData = 0;
-
-    if ( mLevelIndex[ mRenderLevel ][ index_array ] != 0 )
-    {
-        indexData = mLevelIndex[ mRenderLevel ][ index_array ];
-    }
-    else
-    {
-        int new_length = ( mSize / step ) * ( mSize / step ) * 2 * 2 * 2 ;
-        //this is the maximum for a level.  It wastes a little, but shouldn't be a problem.
-        
-        indexData = new IndexData;
-        indexData->indexBuffer = 
-            HardwareBufferManager::getSingleton().createIndexBuffer(
-                HardwareIndexBuffer::IT_16BIT,
-                new_length, HardwareBuffer::HBU_STATIC_WRITE_ONLY);//, false);
-
-	    gIndexCache.mCache.push_back( indexData );
-
-        numIndexes = 0;
-
-        unsigned short* pIdx = static_cast<unsigned short*>(
-            indexData->indexBuffer->lock(0, 
-              indexData->indexBuffer->getSizeInBytes(), 
-              HardwareBuffer::HBL_DISCARD));
-
-        for ( int j = north; j < mSize - 1 - south; j += step )
-        {
-            for ( int i = west; i < mSize - 1 - east; i += step )
-            {
-                //triangles
-                *pIdx++ = _index( i, j ); numIndexes++;
-                *pIdx++ = _index( i, j + step ); numIndexes++;
-                *pIdx++ = _index( i + step, j ); numIndexes++;
-
-                *pIdx++ = _index( i, j + step ); numIndexes++;
-                *pIdx++ = _index( i + step, j + step ); numIndexes++;
-                *pIdx++ = _index( i + step, j ); numIndexes++;
-            }
-        }
-
-        int substep = step << 1;
-
-        if ( west > 0 )
-        {
-
-            for ( int j = 0; j < mSize - 1; j += substep )
-            {
-                //skip the first bit of the corner if the north side is a different level as well.
-                if ( j > 0 || north == 0 )
-                {
-                    *pIdx++ = _index( 0, j ); numIndexes++;
-                    *pIdx++ = _index( step, j + step ); numIndexes++;
-                    *pIdx++ = _index( step, j ); numIndexes++;
-                }
-
-                *pIdx++ = _index( step, j + step ); numIndexes++;
-                *pIdx++ = _index( 0, j ); numIndexes++;
-                *pIdx++ = _index( 0, j + step + step ); numIndexes++;
-
-                if ( j < mSize - 1 - substep || south == 0 )
-                {
-                    *pIdx++ = _index( step, j + step ); numIndexes++;
-                    *pIdx++ = _index( 0, j + step + step ); numIndexes++;
-                    *pIdx++ = _index( step, j + step + step ); numIndexes++;
-                }
-            }
-        }
-
-        if ( east > 0 )
-        {
-            int x = mSize - 1;
-
-            for ( int j = 0; j < mSize - 1; j += substep )
-            {
-                //skip the first bit of the corner if the north side is a different level as well.
-                if ( j > 0 || north == 0 )
-                {
-                    *pIdx++ = _index( x, j ); numIndexes++;
-                    *pIdx++ = _index( x - step, j ); numIndexes++;
-                    *pIdx++ = _index( x - step, j + step ); numIndexes++;
-                }
-
-                *pIdx++ = _index( x, j ); numIndexes++;
-                *pIdx++ = _index( x - step, j + step ); numIndexes++;
-                *pIdx++ = _index( x, j + step + step ); numIndexes++;
-
-                if ( j < mSize - 1 - substep || south == 0 )
-                {
-                    *pIdx++ = _index( x, j + step + step ); numIndexes++;
-                    *pIdx++ = _index( x - step, j + step ); numIndexes++;
-                    *pIdx++ = _index( x - step, j + step + step ); numIndexes++;
-                }
-            }
-        }
-
-        if ( south > 0 )
-        {
-            int x = mSize - 1;
-
-            for ( int j = 0; j < mSize - 1; j += substep )
-            {
-                //skip the first bit of the corner if the north side is a different level as well.
-                if ( j > 0 || west == 0 )
-                {
-                    *pIdx++ = _index( j, x - step ); numIndexes++;
-                    *pIdx++ = _index( j, x ); numIndexes++;
-                    *pIdx++ = _index( j + step, x - step ); numIndexes++;
-                }
-
-                *pIdx++ = _index( j + step, x - step ); numIndexes++;
-                *pIdx++ = _index( j, x ); numIndexes++;
-                *pIdx++ = _index( j + step + step, x ); numIndexes++;
-
-                if ( j < mSize - 1 - substep || east == 0 )
-                {
-                    *pIdx++ = _index( j + step, x - step ); numIndexes++;
-                    *pIdx++ = _index( j + step + step, x ); numIndexes++;
-                    *pIdx++ = _index( j + step + step, x - step ); numIndexes++;
-                }
-            }
-
-        }
-
-        if ( north > 0 )
-        {
-            for ( int j = 0; j < mSize - 1; j += substep )
-            {
-                //skip the first bit of the corner if the north side is a different level as well.
-                if ( j > 0 || west == 0 )
-                {
-                    *pIdx++ = _index( j, 0 ); numIndexes++;
-                    *pIdx++ = _index( j, step ); numIndexes++;
-                    *pIdx++ = _index( j + step, step ); numIndexes++;
-                }
-
-                *pIdx++ = _index( j, 0 ); numIndexes++;
-                *pIdx++ = _index( j + step, step ); numIndexes++;
-                *pIdx++ = _index( j + step + step, 0 ); numIndexes++;
-
-                if ( j < mSize - 1 - substep || east == 0 )
-                {
-                    *pIdx++ = _index( j + step + step, 0 ); numIndexes++;
-                    *pIdx++ = _index( j + step, step ); numIndexes++;
-                    *pIdx++ = _index( j + step + step, step ); numIndexes++;
-                }
-            }
-
-        }
-
-        indexData->indexBuffer->unlock();
-        indexData->indexCount = numIndexes;
-        indexData->indexStart = 0;
-
-        mLevelIndex[ mRenderLevel ][ index_array ] = indexData;
-    }
+    assert( mInit && "Uninitialized" );
 
     op.useIndexes = true;
-    op.operationType = RenderOperation::OT_TRIANGLE_LIST;
+    op.operationType = msUseTriStrips ? 
+        RenderOperation::OT_TRIANGLE_STRIP : RenderOperation::OT_TRIANGLE_LIST;
     op.vertexData = mTerrain;
-    op.indexData = indexData;
-
-    mRenderedTris += ( indexData->indexCount / 3 );
-
+    op.indexData = getIndexData();
 
     mRenderLevelChanged = false;
 
@@ -623,57 +459,171 @@ void TerrainRenderable::_calculateMinLevelDist2( Real C )
     //level 0 has no delta.
     mMinLevelDistSqr[ 0 ] = 0;
 
+    int i, j;
+
     for ( int level = 1; level < mNumMipMaps; level++ )
     {
         mMinLevelDistSqr[ level ] = 0;
 
         int step = 1 << level;
+        // The step of the next higher LOD
+        int higherstep = step >> 1;
 
-        for ( int j = 0; j < mSize - step; j += step )
+        Real* pDeltas = 0;
+        if (msUseLODMorph)
         {
-            for ( int i = 0; i < mSize - step; i += step )
-            {
-                //check each height inbetween the steps.
-                Real h1 = _vertex( i, j, 1 );
-                Real h2 = _vertex( i + step, j, 1 );
-                Real h3 = _vertex( i + step, j + step, 1 );
-                Real h4 = _vertex( i, j + step, 1 );
+            // Create a set of delta values (store at index - 1 since 0 has none)
+            mDeltaBuffers[level - 1]  = createDeltaBuffer();
+            // Lock, but don't discard (we want the pre-initialised zeros)
+            pDeltas = static_cast<Real*>(
+                mDeltaBuffers[level - 1]->lock(HardwareBuffer::HBL_NORMAL));
+        }
 
-                for ( int z = 1; z < step; z++ )
+        for ( j = 0; j < mSize - step; j += step )
+        {
+            for ( i = 0; i < mSize - step; i += step )
+            {
+                /* Form planes relating to the lower detail tris to be produced
+                For tri lists and even tri strip rows, they are this shape:
+                x---x
+                | / |
+                x---x
+                For odd tri strip rows, they are this shape:
+                x---x
+                | \ |
+                x---x
+                */
+
+                Vector3 v1(_vertex( i, j, 0 ), _vertex( i, j, 1 ), _vertex( i, j, 2 ));
+                Vector3 v2(_vertex( i + step, j, 0 ), _vertex( i + step, j, 1 ), _vertex( i + step, j, 2 ));
+                Vector3 v3(_vertex( i, j + step, 0 ), _vertex( i, j + step, 1 ), _vertex( i, j + step, 2 ));
+                Vector3 v4(_vertex( i + step, j + step, 0 ), _vertex( i + step, j + step, 1 ), _vertex( i + step, j + step, 2 ));
+
+                Plane t1, t2;
+                bool backwardTri = false;
+                if (!msUseTriStrips || j % 2 == 0)
                 {
-                    for ( int x = 1; x < step; x++ )
+                    t1.redefine(v1, v3, v2);
+                    t2.redefine(v2, v3, v4);
+                }
+                else
+                {
+                    t1.redefine(v1, v3, v4);
+                    t2.redefine(v1, v4, v2);
+                    backwardTri = true;
+                }
+
+                // include the bottommost row of vertices if this is the last row
+                int zubound = (j == (mSize - step)? step : step - 1);
+                for ( int z = 0; z <= zubound; z++ )
+                {
+                    // include the rightmost col of vertices if this is the last col
+                    int xubound = (i == (mSize - step)? step : step - 1);
+                    for ( int x = 0; x <= xubound; x++ )
                     {
+                        int fulldetailx = i + x;
+                        int fulldetailz = j + z;
+                        if ( fulldetailx % step == 0 && 
+                             fulldetailz % step == 0 )
+                        {
+                            // Skip, this one is a vertex at this level
+                            continue;
+                        }
 
                         Real zpct = z / step;
                         Real xpct = x / step;
 
                         //interpolated height
-                        float top = h3 * ( 1.0f - xpct ) + xpct * h4;
-                        float bottom = h1 * ( 1.0f - xpct ) + xpct * h2;
+                        Vector3 actualPos(
+                            _vertex( fulldetailx, fulldetailz, 0 ), 
+                            _vertex( fulldetailx, fulldetailz, 1 ), 
+                            _vertex( fulldetailx, fulldetailz, 2 ));
+                        Real interp_h;
+                        // Determine which tri we're on 
+                        if ((xpct + zpct <= 1.0f && !backwardTri) ||
+                            (xpct + (1-zpct) <= 1.0f && backwardTri))
+                        {
+                            // Solve for x/z
+                            interp_h = 
+                                (-(t1.normal.x * actualPos.x)
+                                - t1.normal.z * actualPos.z
+                                - t1.d) / t1.normal.y;
+                        }
+                        else
+                        {
+                            // Second tri
+                            interp_h = 
+                                (-(t2.normal.x * actualPos.x)
+                                - t2.normal.z * actualPos.z
+                                - t2.d) / t2.normal.y;
+                        }
 
-                        Real interp_h = top * ( 1.0f - zpct ) + zpct * bottom;
-
-                        Real actual_h = _vertex( i + x, j + z, 1 );
+                        Real actual_h = _vertex( fulldetailx, fulldetailz, 1 );
                         Real delta = fabs( interp_h - actual_h );
 
                         Real D2 = delta * delta * C * C;
 
                         if ( mMinLevelDistSqr[ level ] < D2 )
                             mMinLevelDistSqr[ level ] = D2;
+                        
+                        // Should be save height difference?
+                        // Don't morph along edges
+                        if (msUseLODMorph && 
+                            fulldetailx != 0  && fulldetailx != (mSize - 1) && 
+                            fulldetailz != 0  && fulldetailz != (mSize - 1) )
+                        {
+                            // Save height difference 
+                            pDeltas[fulldetailx + (fulldetailz * mSize)] = 
+                                interp_h - actual_h;
+                        }
+
                     }
 
                 }
             }
         }
 
+        // Unlock morph deltas if required
+        if (msUseLODMorph)
+        {
+            mDeltaBuffers[level - 1]->unlock();
+        }
     }
 
-    //make sure the levels are increasing...
-    for ( int i = 1; i < mNumMipMaps; i++ )
+
+
+    // Post validate the whole set
+    for ( i = 1; i < mNumMipMaps; i++ )
     {
+    
+        // Make sure no LOD transition within the tile
+        // This is especially a problem when using large tiles with flat areas
+        Vector3 delta(_vertex(0,0,0), mCenter.y, _vertex(0,0,2));
+        delta = delta - mCenter;
+        Real minDist = delta.squaredLength();
+        mMinLevelDistSqr[ i ] = std::max(mMinLevelDistSqr[ i ], minDist);
+
+        //make sure the levels are increasing...
         if ( mMinLevelDistSqr[ i ] < mMinLevelDistSqr[ i - 1 ] )
-            mMinLevelDistSqr[ i ] = mMinLevelDistSqr[ i - 1 ] + 1;
+        {
+            mMinLevelDistSqr[ i ] = mMinLevelDistSqr[ i - 1 ];
+        }
     }
+
+    // Now reverse traverse the list setting the 'next level down'
+    Real lastDist = 0;
+    int lastIndex = 0;
+    for (i = mNumMipMaps - 1; i >= 0; --i)
+    {
+        if (mMinLevelDistSqr[i] != lastDist)
+        {
+            mNextLevelDown[i] = lastIndex;
+            lastIndex = i;
+            lastDist = mMinLevelDistSqr[i];
+        }
+
+    }
+
 
 }
 
@@ -902,9 +852,9 @@ bool TerrainRenderable::intersectSegment( const Vector3 & start, const Vector3 &
 
 void TerrainRenderable::_generateVertexLighting( const Vector3 &sun, ColourValue ambient )
 {
-    if ( !mColored )
+    if ( !mColored || !mLit )
     {
-        printf( "Can't generate terrain vertex lighting with out vertex colors enabled.\n" );
+        printf( "Can't generate terrain vertex lighting with out vertex normals and colors enabled.\n" );
         return ;
     }
 
@@ -913,6 +863,9 @@ void TerrainRenderable::_generateVertexLighting( const Vector3 &sun, ColourValue
     Vector3 normal;
     Vector3 light;
 
+    HardwareVertexBufferSharedPtr vbuf = 
+        mTerrain->vertexBufferBinding->getBuffer(MAIN_BINDING);
+    const VertexElement* elem = mTerrain->vertexDeclaration->findElementBySemantic(VES_DIFFUSE);
     //for each point in the terrain, see if it's in the line of sight for the sun.
     for ( int i = 0; i < mSize; i++ )
     {
@@ -953,9 +906,9 @@ void TerrainRenderable::_generateVertexLighting( const Vector3 &sun, ColourValue
 
                 RGBA colour;
                 Root::getSingleton().convertColourValue( v, &colour );
-                HardwareVertexBufferSharedPtr vbuf = 
-                    mTerrain->vertexBufferBinding->getBuffer(COLOUR_BINDING);
-                vbuf->writeData(_index( i, j ) * sizeof(RGBA), sizeof(RGBA), &colour);
+                vbuf->writeData(
+                    (_index( i, j ) * vbuf->getVertexSize()) + elem->getOffset(),
+                    sizeof(RGBA), &colour);
             }
 
             else
@@ -963,9 +916,9 @@ void TerrainRenderable::_generateVertexLighting( const Vector3 &sun, ColourValue
                 RGBA colour;
                 Root::getSingleton().convertColourValue( ambient, &colour );
 
-                HardwareVertexBufferSharedPtr vbuf = 
-                    mTerrain->vertexBufferBinding->getBuffer(COLOUR_BINDING);
-                vbuf->writeData(_index( i, j ) * sizeof(RGBA), sizeof(RGBA), &colour);
+                vbuf->writeData(
+                    (_index( i, j ) * vbuf->getVertexSize()) + elem->getOffset(), 
+                    sizeof(RGBA), &colour);
             }
 
         }
@@ -986,6 +939,434 @@ Real TerrainRenderable::getSquaredViewDepth(const Camera* cam) const
 const LightList& TerrainRenderable::getLights(void) const
 {
     return mParentNode->getLights();
+}
+//-----------------------------------------------------------------------
+IndexData* TerrainRenderable::getIndexData(void)
+{
+    int stitchFlags = 0;
+
+    if ( mNeighbors[ EAST ] != 0 && mNeighbors[ EAST ] -> mRenderLevel > mRenderLevel )
+    {
+        stitchFlags |= STITCH_EAST;
+    }
+
+    if ( mNeighbors[ WEST ] != 0 && mNeighbors[ WEST ] -> mRenderLevel > mRenderLevel )
+    {
+        stitchFlags |= STITCH_WEST;
+    }
+
+    if ( mNeighbors[ NORTH ] != 0 && mNeighbors[ NORTH ] -> mRenderLevel > mRenderLevel )
+    {
+        stitchFlags |= STITCH_NORTH;
+    }
+
+    if ( mNeighbors[ SOUTH ] != 0 && mNeighbors[ SOUTH ] -> mRenderLevel > mRenderLevel )
+    {
+        stitchFlags |= STITCH_SOUTH;
+    }
+
+    // Check preexisting
+    IndexData* indexData = indexData = mLevelIndex[ mRenderLevel ][ stitchFlags ];
+    if ( !indexData )
+    {
+        // Create
+        if (msUseTriStrips)
+        {
+            indexData = generateTriStripIndexes(stitchFlags);
+        }
+        else
+        {
+            indexData = generateTriListIndexes(stitchFlags);
+        }
+        mLevelIndex[ mRenderLevel ][ stitchFlags ] = indexData;
+    }
+
+
+    return indexData;
+
+
+}
+//-----------------------------------------------------------------------
+IndexData* TerrainRenderable::generateTriStripIndexes(int stitchFlags)
+{
+    // The step used for the current level
+    int step = 1 << mRenderLevel;
+    // The step used for the lower level
+    int lowstep = 1 << (mRenderLevel + 1);
+
+    int numIndexes = 0;
+
+    // Calculate the number of indexes required
+    // This is the number of 'cells' at this detail level x 2
+    // plus 3 degenerates to turn corners
+    int numTrisAcross = (((mSize-1) / step) * 2) + 3;
+    // Num indexes is number of tris + 2
+    int new_length = numTrisAcross * ((mSize-1) / step) + 2;
+    //this is the maximum for a level.  It wastes a little, but shouldn't be a problem.
+
+    IndexData* indexData = new IndexData;
+    indexData->indexBuffer = 
+        HardwareBufferManager::getSingleton().createIndexBuffer(
+        HardwareIndexBuffer::IT_16BIT,
+        new_length, HardwareBuffer::HBU_STATIC_WRITE_ONLY);//, false);
+
+    gIndexCache.mCache.push_back( indexData );
+
+    unsigned short* pIdx = static_cast<unsigned short*>(
+        indexData->indexBuffer->lock(0, 
+        indexData->indexBuffer->getSizeInBytes(), 
+        HardwareBuffer::HBL_DISCARD));
+
+    // Stripified mesh
+    for ( int j = 0; j < mSize - 1; j += step )
+    {
+        int i;
+        // Forward strip
+        // We just do the |/ here, final | done after
+        for ( i = 0; i < mSize - 1; i += step )
+        {
+            int x[4], y[4];
+            x[0] = x[1] = i;
+            x[2] = x[3] = i + step;
+            y[0] = y[2] = j;
+            y[1] = y[3] = j + step;
+
+            if (j == 0  && (stitchFlags & STITCH_NORTH))
+            {
+                // North reduction means rounding x[0] and x[2]
+                if (x[0] % lowstep != 0)
+                {
+                    // Since we know we only drop down one level of LOD,
+                    // removing 1 step of higher LOD should return to lower
+                    x[0] -= step;
+                }
+                if (x[2] % lowstep != 0)
+                {
+                    x[2] -= step;
+                }
+            }
+
+            // Never get a south tiling on a forward strip (always finish on 
+            // a backward strip)
+
+            if (i == 0  && (stitchFlags & STITCH_WEST))
+            {
+                // West reduction means rounding y[0] / y[1]
+                if (y[0] % lowstep != 0)
+                {
+                    y[0] -= step;
+                }
+                if (y[1] % lowstep != 0)
+                {
+                    y[1] -= step;
+                }
+            }
+            if (i == (mSize - 1 - step) && (stitchFlags & STITCH_EAST))
+            {
+                // East tiling means rounding y[2] & y[3]
+                if (y[2] % lowstep != 0)
+                {
+                    y[2] -= step;
+                }
+                if (y[3] % lowstep != 0)
+                {
+                    y[3] -= step;
+                }
+            }
+
+            //triangles
+            if (i == 0)
+            {
+                // Starter
+                *pIdx++ = _index( x[0], y[0] ); numIndexes++;
+            }
+            *pIdx++ = _index( x[1], y[1] ); numIndexes++;
+            *pIdx++ = _index( x[2], y[2] ); numIndexes++;
+
+            if (i == mSize - 1 - step)
+            {
+                // Emit extra index to finish row
+                *pIdx++ = _index( x[3], y[3] ); numIndexes++;
+                if (j < mSize - 1 - step)
+                {
+                    // Emit this index twice more (this is to turn around without
+                    // artefacts)
+                    // ** Hmm, looks like we can drop this and it's unnoticeable
+                    //*pIdx++ = _index( x[3], y[3] ); numIndexes++;
+                    //*pIdx++ = _index( x[3], y[3] ); numIndexes++;
+                }
+            }
+
+        }
+        // Increment row
+        j += step;
+        // Backward strip
+        for ( i = mSize - 1; i > 0 ; i -= step )
+        {
+            int x[4], y[4];
+            x[0] = x[1] = i;
+            x[2] = x[3] = i - step;
+            y[0] = y[2] = j;
+            y[1] = y[3] = j + step;
+
+            // Never get a north tiling on a backward strip (always
+            // start on a forward strip)
+            if (j == (mSize - 1 - step) && (stitchFlags & STITCH_SOUTH))
+            {
+                // South reduction means rounding x[1] / x[3]
+                if (x[1] % lowstep != 0)
+                {
+                    x[1] -= step;
+                }
+                if (x[3] % lowstep != 0)
+                {
+                    x[3] -= step;
+                }
+            }
+
+            if (i == step  && (stitchFlags & STITCH_WEST))
+            {
+                // West tiling on backward strip is rounding of y[2] / y[3]
+                if (y[2] % lowstep != 0)
+                {
+                    y[2] -= step;
+                }
+                if (y[3] % lowstep != 0)
+                {
+                    y[3] -= step;
+                }
+            }
+            if (i == mSize - 1 && (stitchFlags & STITCH_EAST))
+            {
+                // East tiling means rounding y[0] and y[1] on backward strip
+                if (y[0] % lowstep != 0)
+                {
+                    y[0] -= step;
+                }
+                if (y[1] % lowstep != 0)
+                {
+                    y[1] -= step;
+                }
+            }
+
+            //triangles
+            if (i == mSize)
+            {
+                // Starter
+                *pIdx++ = _index( x[0], y[0] ); numIndexes++;
+            }
+            *pIdx++ = _index( x[1], y[1] ); numIndexes++;
+            *pIdx++ = _index( x[2], y[2] ); numIndexes++;
+
+            if (i == step)
+            {
+                // Emit extra index to finish row
+                *pIdx++ = _index( x[3], y[3] ); numIndexes++;
+                if (j < mSize - 1 - step)
+                {
+                    // Emit this index once more (this is to turn around)
+                    *pIdx++ = _index( x[3], y[3] ); numIndexes++;
+                }
+            }
+        }
+    }
+
+
+    indexData->indexBuffer->unlock();
+    indexData->indexCount = numIndexes;
+    indexData->indexStart = 0;
+
+    return indexData;
+
+}
+//-----------------------------------------------------------------------
+IndexData* TerrainRenderable::generateTriListIndexes(int stitchFlags)
+{
+
+    int numIndexes = 0;
+    int step = 1 << mRenderLevel;
+
+    IndexData* indexData = 0;
+
+    int north = stitchFlags & STITCH_NORTH ? step : 0;
+    int south = stitchFlags & STITCH_SOUTH ? step : 0;
+    int east = stitchFlags & STITCH_EAST ? step : 0;
+    int west = stitchFlags & STITCH_WEST ? step : 0;
+
+    int new_length = ( mSize / step ) * ( mSize / step ) * 2 * 2 * 2 ;
+    //this is the maximum for a level.  It wastes a little, but shouldn't be a problem.
+
+    indexData = new IndexData;
+    indexData->indexBuffer = 
+        HardwareBufferManager::getSingleton().createIndexBuffer(
+        HardwareIndexBuffer::IT_16BIT,
+        new_length, HardwareBuffer::HBU_STATIC_WRITE_ONLY);//, false);
+
+    gIndexCache.mCache.push_back( indexData );
+
+    unsigned short* pIdx = static_cast<unsigned short*>(
+        indexData->indexBuffer->lock(0, 
+        indexData->indexBuffer->getSizeInBytes(), 
+        HardwareBuffer::HBL_DISCARD));
+
+    for ( int j = north; j < mSize - 1 - south; j += step )
+    {
+        for ( int i = west; i < mSize - 1 - east; i += step )
+        {
+            //triangles
+            *pIdx++ = _index( i, j ); numIndexes++;
+            *pIdx++ = _index( i, j + step ); numIndexes++;
+            *pIdx++ = _index( i + step, j ); numIndexes++;
+
+            *pIdx++ = _index( i, j + step ); numIndexes++;
+            *pIdx++ = _index( i + step, j + step ); numIndexes++;
+            *pIdx++ = _index( i + step, j ); numIndexes++;
+        }
+    }
+
+    int substep = step << 1;
+
+    if ( west > 0 )
+    {
+
+        for ( int j = 0; j < mSize - 1; j += substep )
+        {
+            //skip the first bit of the corner if the north side is a different level as well.
+            if ( j > 0 || north == 0 )
+            {
+                *pIdx++ = _index( 0, j ); numIndexes++;
+                *pIdx++ = _index( step, j + step ); numIndexes++;
+                *pIdx++ = _index( step, j ); numIndexes++;
+            }
+
+            *pIdx++ = _index( step, j + step ); numIndexes++;
+            *pIdx++ = _index( 0, j ); numIndexes++;
+            *pIdx++ = _index( 0, j + step + step ); numIndexes++;
+
+            if ( j < mSize - 1 - substep || south == 0 )
+            {
+                *pIdx++ = _index( step, j + step ); numIndexes++;
+                *pIdx++ = _index( 0, j + step + step ); numIndexes++;
+                *pIdx++ = _index( step, j + step + step ); numIndexes++;
+            }
+        }
+    }
+
+    if ( east > 0 )
+    {
+        int x = mSize - 1;
+
+        for ( int j = 0; j < mSize - 1; j += substep )
+        {
+            //skip the first bit of the corner if the north side is a different level as well.
+            if ( j > 0 || north == 0 )
+            {
+                *pIdx++ = _index( x, j ); numIndexes++;
+                *pIdx++ = _index( x - step, j ); numIndexes++;
+                *pIdx++ = _index( x - step, j + step ); numIndexes++;
+            }
+
+            *pIdx++ = _index( x, j ); numIndexes++;
+            *pIdx++ = _index( x - step, j + step ); numIndexes++;
+            *pIdx++ = _index( x, j + step + step ); numIndexes++;
+
+            if ( j < mSize - 1 - substep || south == 0 )
+            {
+                *pIdx++ = _index( x, j + step + step ); numIndexes++;
+                *pIdx++ = _index( x - step, j + step ); numIndexes++;
+                *pIdx++ = _index( x - step, j + step + step ); numIndexes++;
+            }
+        }
+    }
+
+    if ( south > 0 )
+    {
+        int x = mSize - 1;
+
+        for ( int j = 0; j < mSize - 1; j += substep )
+        {
+            //skip the first bit of the corner if the north side is a different level as well.
+            if ( j > 0 || west == 0 )
+            {
+                *pIdx++ = _index( j, x - step ); numIndexes++;
+                *pIdx++ = _index( j, x ); numIndexes++;
+                *pIdx++ = _index( j + step, x - step ); numIndexes++;
+            }
+
+            *pIdx++ = _index( j + step, x - step ); numIndexes++;
+            *pIdx++ = _index( j, x ); numIndexes++;
+            *pIdx++ = _index( j + step + step, x ); numIndexes++;
+
+            if ( j < mSize - 1 - substep || east == 0 )
+            {
+                *pIdx++ = _index( j + step, x - step ); numIndexes++;
+                *pIdx++ = _index( j + step + step, x ); numIndexes++;
+                *pIdx++ = _index( j + step + step, x - step ); numIndexes++;
+            }
+        }
+
+    }
+
+    if ( north > 0 )
+    {
+        for ( int j = 0; j < mSize - 1; j += substep )
+        {
+            //skip the first bit of the corner if the north side is a different level as well.
+            if ( j > 0 || west == 0 )
+            {
+                *pIdx++ = _index( j, 0 ); numIndexes++;
+                *pIdx++ = _index( j, step ); numIndexes++;
+                *pIdx++ = _index( j + step, step ); numIndexes++;
+            }
+
+            *pIdx++ = _index( j, 0 ); numIndexes++;
+            *pIdx++ = _index( j + step, step ); numIndexes++;
+            *pIdx++ = _index( j + step + step, 0 ); numIndexes++;
+
+            if ( j < mSize - 1 - substep || east == 0 )
+            {
+                *pIdx++ = _index( j + step + step, 0 ); numIndexes++;
+                *pIdx++ = _index( j + step, step ); numIndexes++;
+                *pIdx++ = _index( j + step + step, step ); numIndexes++;
+            }
+        }
+
+    }
+
+    indexData->indexBuffer->unlock();
+    indexData->indexCount = numIndexes;
+    indexData->indexStart = 0;
+
+    return indexData;
+}
+//-----------------------------------------------------------------------
+HardwareVertexBufferSharedPtr TerrainRenderable::createDeltaBuffer(void)
+{
+    // Delta buffer is a 1D float buffer of height offsets
+    HardwareVertexBufferSharedPtr buf = 
+        HardwareBufferManager::getSingleton().createVertexBuffer(
+        VertexElement::getTypeSize(VET_FLOAT1), 
+        mSize * mSize,
+        HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+    // Fill the buffer with zeros, we will only fill in delta
+    void* pVoid = buf->lock(HardwareBuffer::HBL_DISCARD);
+    memset(pVoid, 0, mSize * mSize * sizeof(Real));
+    buf->unlock();
+
+    return buf;
+
+}
+//-----------------------------------------------------------------------
+void TerrainRenderable::updateCustomGpuParameter(
+    const GpuProgramParameters::AutoConstantEntry& constantEntry, 
+    GpuProgramParameters* params) const
+{
+    if (constantEntry.data == MORPH_CUSTOM_PARAM_ID)
+    {
+        // Update morph LOD factor
+        params->setConstant(constantEntry.index, mLODMorphFactor);
+    }
+
 }
 
 } //namespace

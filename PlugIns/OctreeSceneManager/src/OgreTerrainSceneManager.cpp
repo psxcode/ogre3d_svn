@@ -1,20 +1,37 @@
+/*
+-----------------------------------------------------------------------------
+This source file is part of OGRE
+(Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.ogre3d.org/
+
+Copyright © 2000-2004 The OGRE Team
+Also see acknowledgements in Readme.html
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+-----------------------------------------------------------------------------
+*/
 /***************************************************************************
 terrainscenemanager.cpp  -  description
 -------------------
 begin                : Mon Sep 23 2002
 copyright            : (C) 2002 by Jon Anderson
 email                : janders@users.sf.net
-***************************************************************************/
 
-/***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU Lesser General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
-***************************************************************************/
+Enhancements 2003 - 2004 (C) The OGRE Team
 
+***************************************************************************/
 #include <OgreTerrainSceneManager.h>
 #include <OgreImage.h>
 #include <OgreConfigFile.h>
@@ -24,8 +41,11 @@ email                : janders@users.sf.net
 #include <OgreCamera.h>
 #include "OgreException.h"
 #include "OgreStringConverter.h"
-#include <OgreRenderSystem.h>
+#include "OgreRenderSystem.h"
+#include "OgreRenderSystemCapabilities.h"
 #include <fstream>
+
+#define TERRAIN_MATERIAL_NAME "TerrainSceneManager/Terrain"
 
 namespace Ogre
 {
@@ -34,6 +54,14 @@ TerrainSceneManager::TerrainSceneManager() : OctreeSceneManager( )
 {
     //setDisplaySceneNodes( true );
     //setShowBoxes( true );
+
+    mUseCustomMaterial = false;
+    mUseNamedParameterLodMorph = false;
+    mLodMorphParamIndex = 3;
+    mTerrainRoot = 0;
+    mTerrainMaterial = 0;
+
+
 }
 
 TerrainSceneManager::~TerrainSceneManager()
@@ -45,108 +73,245 @@ TerrainSceneManager::~TerrainSceneManager()
             delete mTiles[ i ][ j ];
 }
 
-void TerrainSceneManager::setWorldGeometry( const String& filename )
+void TerrainSceneManager::loadConfig(const String& filename)
 {
-    int i, j;
-
     /* Set up the options */
     ConfigFile config;
-    TerrainOptions options;
+    String val;
 
     config.load( filename );
 
-    if ( config.getSetting( "DetailTile" ) != "" )
-        options.detail_tile = atoi( config.getSetting( "DetailTile" ) );
+    val = config.getSetting( "DetailTile" );
+    if ( val != "" )
+        setDetailTextureRepeat(atoi(val));
 
-    options.max_mipmap = atoi( config.getSetting( "MaxMipMapLevel" ) );
+    val = config.getSetting( "MaxMipMapLevel" );
+    if ( val != "" )
+        setMaxGeoMipMapLevel(atoi( val ));
 
-    options.scalex = atof( config.getSetting( "ScaleX" ) );
+    Vector3 v = Vector3::UNIT_SCALE;
 
-    options.scaley = atof( config.getSetting( "ScaleY" ) );
+    val = config.getSetting( "ScaleX" );
+    if ( val != "" )
+        v.x = atof( val );
 
-    options.scalez = atof( config.getSetting( "ScaleZ" ) );
+    val = config.getSetting( "ScaleY" );
+    if ( val != "" )
+        v.y = atof( val );
 
-    options.max_pixel_error = atoi( config.getSetting( "MaxPixelError" ) );
+    val = config.getSetting( "ScaleZ" );
+    if ( val != "" )
+        v.z = atof( val );
 
-    options.size = atoi( config.getSetting( "TileSize" ) );
+    setScale(v);
 
-    String terrain_filename = config.getSetting( "Terrain" );
+    val = config.getSetting( "MaxPixelError" );
+    if ( val != "" )
+        setMaxPixelError(atoi( val ));
 
-    String detail_texture = config.getSetting( "DetailTexture" );
+    val = config.getSetting( "TileSize" );
+    if ( val != "" )
+        setTileSize(atoi( val ));
 
-    String world_texture = config.getSetting( "WorldTexture" );
+    mHeightmapName = config.getSetting( "Terrain" );
+
+    mDetailTextureName = config.getSetting( "DetailTexture" );
+
+    mWorldTextureName = config.getSetting( "WorldTexture" );
 
     if ( config.getSetting( "VertexColors" ) == "yes" )
-        options.colored = true;
+        mOptions.colored = true;
 
     if ( config.getSetting( "VertexNormals" ) == "yes" )
-        options.lit = true;
+        mOptions.lit = true;
 
-    mScale = Vector3( options.scalex, options.scaley, options.scalez );
+    if ( config.getSetting( "UseTriStrips" ) == "yes" )
+        setUseTriStrips(true);
 
-    mTileSize = options.size;
+    if ( config.getSetting( "VertexProgramMorph" ) == "yes" )
+        setUseLODMorph(true);
 
+    val = config.getSetting( "LODMorphStart");
+    if ( val != "" )
+        setLODMorphStart(atof(val));
+
+    val = config.getSetting( "CustomMaterialName" );
+    if ( val != "" )
+        setCustomMaterial(val);
+
+    val = config.getSetting( "MorphLODFactorParamName" );
+    if ( val != "" )
+        setCustomMaterialMorphFactorParam(val);
+
+    val = config.getSetting( "MorphLODFactorParamIndex" );
+    if ( val != "" )
+        setCustomMaterialMorphFactorParam(atoi(val));
+}
+
+void TerrainSceneManager::loadHeightmap(void)
+{
     Image image;
 
-    image.load( terrain_filename );
+    image.load( mHeightmapName );
 
     //check to make sure it's 2^n + 1 size.
     if ( image.getWidth() != image.getHeight() ||
-            ! _checkSize( image.getWidth() ) )
+        ! _checkSize( image.getWidth() ) )
     {
         String err = "Error: Invalid heightmap size : " +
-                     StringConverter::toString( image.getWidth() ) +
-                     "," + StringConverter::toString( image.getHeight() ) +
-                     ". Should be 2^n+1, 2^n+1";
-        Except( Exception::ERR_INVALIDPARAMS, err, "TerrainSceneManager::setWorldGeometry" );
+            StringConverter::toString( image.getWidth() ) +
+            "," + StringConverter::toString( image.getHeight() ) +
+            ". Should be 2^n+1, 2^n+1";
+        Except( Exception::ERR_INVALIDPARAMS, err, "TerrainSceneManager::loadHeightmap" );
     }
 
-    if ( image.getFormat() != PF_L8 )
-    {
-        Except( Exception::ERR_INVALIDPARAMS, "Error: Image is not a grayscale image.",
-                "TerrainSceneManager::setWorldGeometry" );
-    }
-
-    const uchar *data = image. getData();
-
+    int upperRange = 0;
     int size = image.getWidth();
 
+    if ( image.getFormat() == PF_L8 )
+    {
+        upperRange = 255;
+
+        // Parse the char data into floats
+        mOptions.heightData = new Real[size*size];
+        const uchar* pSrc = image. getData();
+        Real* pDest = mOptions.heightData;
+        for (int i = 0; i < size*size; ++i)
+        {
+            *pDest++ = *pSrc++ * mScale.y;
+        }
+    }
+    /*
+    else if ( image.getFormat() == PF_L16 )
+    {
+    }
+    */
+    else
+    {
+        Except( Exception::ERR_INVALIDPARAMS, "Error: Image is not a grayscale image.",
+            "TerrainSceneManager::setWorldGeometry" );
+    }
+
+
     // set up the octree size.
-    float max_x = options.scalex * size;
+    float max_x = mOptions.scalex * size;
 
-    float max_y = 255 * options.scaley;
+    float max_y = upperRange * mOptions.scaley;
 
-    float max_z = options.scalez * size;
+    float max_z = mOptions.scalez * size;
 
     resize( AxisAlignedBox( 0, 0, 0, max_x, max_y, max_z ) );
 
+    mOptions.world_size = size;
 
+}
 
-    options.data = data;
-
-    options.world_size = size;
-
-    mTerrainMaterial = createMaterial( "Terrain" );
-
-    if ( world_texture != "" )
-        mTerrainMaterial->getTechnique(0)->getPass(0)->createTextureUnitState( world_texture, 0 );
-
-    if ( detail_texture != "" )
+void TerrainSceneManager::setupTerrainMaterial(void)
+{
+    if (mCustomMaterialName == "")
     {
-        mTerrainMaterial->getTechnique(0)->getPass(0)->createTextureUnitState( detail_texture, 1 );
+        // define our own material
+        mTerrainMaterial = static_cast<Material*>(
+            MaterialManager::getSingleton().getByName(TERRAIN_MATERIAL_NAME));
+        if (!mTerrainMaterial)
+        {
+            mTerrainMaterial = createMaterial( "TerrainSceneManager/Terrain" );
+
+        }
+        else
+        {
+            mTerrainMaterial->getTechnique(0)->getPass(0)->removeAllTextureUnitStates();
+        }
+
+        if ( mWorldTextureName != "" )
+        {
+            mTerrainMaterial->getTechnique(0)->getPass(0)->
+                createTextureUnitState( mWorldTextureName, 0 );
+        }
+        if ( mDetailTextureName != "" )
+        {
+            mTerrainMaterial->getTechnique(0)->getPass(0)->
+                createTextureUnitState( mDetailTextureName, 1 );
+        }
+
+        mTerrainMaterial -> setLightingEnabled( mOptions.lit );
+
+        if (mOptions.lodMorph)
+        {
+            // Create & assign LOD morphing vertex program
+            
+
+            // Set param index
+            mLodMorphParamName = "";
+            mLodMorphParamIndex = 4;
+        }
+
+        mTerrainMaterial->load();
+
+    }
+    else
+    {
+        // Custom material
+        mTerrainMaterial = static_cast<Material*>(
+            MaterialManager::getSingleton().getByName(mCustomMaterialName));
+        mTerrainMaterial->load();
+
     }
 
-    mTerrainMaterial -> setLightingEnabled( options.lit );
+    // now set up the linkage between vertex program and LOD morph param
+    if (mOptions.lodMorph)
+    {
+        Technique* t = mTerrainMaterial->getBestTechnique();
+        for (ushort i = 0; i < t->getNumPasses(); ++i)
+        {
+            Pass* p = t->getPass(i);
+            if (p->hasVertexProgram())
+            {
+                // we have to assume vertex program includes LOD morph capability
+                GpuProgramParametersSharedPtr params = 
+                    p->getVertexProgramParameters();
+                // Check to see if custom param is already there
+                GpuProgramParameters::AutoConstantIterator aci = params->getAutoConstantIterator();
+                bool found = false;
+                while (aci.hasMoreElements())
+                {
+                    const GpuProgramParameters::AutoConstantEntry& ace = aci.getNext();
+                    if (ace.paramType == GpuProgramParameters::ACT_CUSTOM && 
+                        ace.data == MORPH_CUSTOM_PARAM_ID)
+                    {
+                        found = true;
+                    }
+                }
+                if (!found)
+                {
+                    if(mLodMorphParamName != "")
+                    {
+                        params->setNamedAutoConstant(mLodMorphParamName, 
+                            GpuProgramParameters::ACT_CUSTOM, MORPH_CUSTOM_PARAM_ID);
+                    }
+                    else
+                    {
+                        params->setAutoConstant(mLodMorphParamIndex, 
+                            GpuProgramParameters::ACT_CUSTOM, MORPH_CUSTOM_PARAM_ID);
+                    }
+                }
 
-    mTerrainMaterial->load();
+            }
+        }
+    }
 
+}
+
+void TerrainSceneManager::setupTerrainTiles(void)
+{
 
     //create a root terrain node.
-    mTerrainRoot = getRootSceneNode() -> createChildSceneNode( "Terrain" );
+    if (!mTerrainRoot)
+        mTerrainRoot = getRootSceneNode() -> createChildSceneNode( "Terrain" );
 
     //setup the tile array.
-    int num_tiles = ( options.world_size - 1 ) / ( options.size - 1 );
-
+    int num_tiles = ( mOptions.world_size - 1 ) / ( mOptions.size - 1 );
+    int i, j;
     for ( i = 0; i < num_tiles; i++ )
     {
         mTiles.push_back( TerrainRow() );
@@ -161,21 +326,21 @@ void TerrainSceneManager::setWorldGeometry( const String& filename )
     int p = 0;
     int q = 0;
 
-    for ( j = 0; j < options.world_size - 1; j += ( options.size - 1 ) )
+    for ( j = 0; j < mOptions.world_size - 1; j += ( mOptions.size - 1 ) )
     {
         p = 0;
 
-        for ( i = 0; i < options.world_size - 1; i += ( options.size - 1 ) )
+        for ( i = 0; i < mOptions.world_size - 1; i += ( mOptions.size - 1 ) )
         {
-            options.startx = i;
-            options.startz = j;
+            mOptions.startx = i;
+            mOptions.startz = j;
             sprintf( name, "tile[%d,%d]", p, q );
 
             SceneNode *c = mTerrainRoot -> createChildSceneNode( name );
-            TerrainRenderable *tile = new TerrainRenderable();
+            TerrainRenderable *tile = new TerrainRenderable(name);
 
             tile -> setMaterial( mTerrainMaterial );
-            tile -> init( options );
+            tile -> init( mOptions );
 
             mTiles[ p ][ q ] = tile;
 
@@ -189,7 +354,7 @@ void TerrainSceneManager::setWorldGeometry( const String& filename )
 
 
     //setup the neighbor links.
-    size = ( int ) mTiles.size();
+    int size = ( int ) mTiles.size();
 
     for ( j = 0; j < size; j++ )
     {
@@ -210,7 +375,8 @@ void TerrainSceneManager::setWorldGeometry( const String& filename )
         }
     }
 
-    if(options.lit)
+    // Dynamic terrain lighting?
+    if(mOptions.lit)
     {
         for ( j = 0; j < size; j++ )
         {
@@ -222,34 +388,28 @@ void TerrainSceneManager::setWorldGeometry( const String& filename )
         }
     }
 
-    /*
-     for ( j = 0; j < size; j++ )
-     {
-         for ( i = 0; i < size; i++ )
-         {
-             mTiles[ i ][ j ] -> _generateVertexLighting( Vector3( 255, 50, 255 ), ColourValue( .25, .25, .25 ) );
-         }
-     }
-     */
-
-
-
-    //    intersectSegment( Vector3(255, getHeightAt(255,255), 255), Vector3(255,50,255), 0 );
-
 
 }
 
-
-void TerrainSceneManager::_updateSceneGraph( Camera * cam )
-
+void TerrainSceneManager::setWorldGeometry( const String& filename )
 {
+   
+    // Load the configuration
+    loadConfig(filename);
 
-    //Vector3 c = cam -> getPosition();
-    //c.y = getHeightAt(c.x, c.z ) + 2;
-    //cam -> setPosition( c );
+    // Load heightmap data
+    loadHeightmap();
 
-    OctreeSceneManager::_updateSceneGraph( cam );
+    setupTerrainMaterial();
+
+    setupTerrainTiles();
+
+
+    delete [] mOptions.heightData;
+
+
 }
+
 
 void TerrainSceneManager::_renderVisibleObjects( void )
 {
@@ -265,8 +425,6 @@ void TerrainSceneManager::_renderVisibleObjects( void )
     mDestRenderSystem -> setLightingEnabled( false );
 
     OctreeSceneManager::_renderVisibleObjects();
-
-    TerrainRenderable::mRenderedTris = 0;
 
 }
 
@@ -334,4 +492,76 @@ bool TerrainSceneManager::intersectSegment( const Vector3 & start, const Vector3
     return t -> intersectSegment( start, end, result );
 }
 
+void TerrainSceneManager::setUseTriStrips(bool useStrips)
+{
+    TerrainRenderable::_setUseTriStrips(useStrips);
+}
+void TerrainSceneManager::setUseLODMorph(bool morph)
+{
+    mOptions.lodMorph = morph;
+    // Set true only if vertex programs are supported
+    TerrainRenderable::_setUseLODMorph(
+        morph && mDestRenderSystem->getCapabilities()->hasCapability(RSC_VERTEX_PROGRAM));
+}
+
+void TerrainSceneManager::setHeightmap(const String& heightmapName)
+{
+    mHeightmapName = heightmapName;
+}
+void TerrainSceneManager::setWorldTexture(const String& textureName)
+{
+    mWorldTextureName = textureName;
+}
+void TerrainSceneManager::setDetailTexture(const String& textureName)
+{
+    mDetailTextureName = textureName;
+
+}
+void TerrainSceneManager::setDetailTextureRepeat(int repeat)
+{
+    mOptions.detail_tile = repeat;
+}
+void TerrainSceneManager::setTileSize(int size) 
+{
+    mOptions.size = size;
+    mTileSize = size;
+}
+void TerrainSceneManager::setMaxPixelError(int pixelError) 
+{
+    mOptions.max_pixel_error = pixelError;
+}
+void TerrainSceneManager::setScale(const Vector3& scale)
+{
+    mOptions.scalex = scale.x;
+    mOptions.scaley = scale.y;
+    mOptions.scalez = scale.z;
+    mScale = scale;
+}
+void TerrainSceneManager::setMaxGeoMipMapLevel(int maxMip)
+{
+    mOptions.max_mipmap = maxMip;
+}
+void TerrainSceneManager::setCustomMaterial(const String& materialName)
+{
+    mCustomMaterialName = materialName;
+    if (materialName != "")
+        mUseCustomMaterial = true;
+    else
+        mUseCustomMaterial = false;
+}
+void TerrainSceneManager::setCustomMaterialMorphFactorParam(const String& paramName)
+{
+    mUseNamedParameterLodMorph = true;
+    mLodMorphParamName = paramName;
+    
+}
+void TerrainSceneManager::setCustomMaterialMorphFactorParam(size_t paramIndex)
+{
+    mUseNamedParameterLodMorph = false;
+    mLodMorphParamIndex = paramIndex;
+}
+void TerrainSceneManager::setLODMorphStart(Real morphStart)
+{
+    TerrainRenderable::_setLODMorphStart(morphStart);
+}
 } //namespace

@@ -28,6 +28,7 @@ D:        Step right
 			 R:        Render mode
              T:        Cycle texture filtering
                        Bilinear, Trilinear, Anisotropic(8)
+             P:        Toggle on/off display of camera position / orientation
 -----------------------------------------------------------------------------
 */
 
@@ -259,7 +260,20 @@ public:
 			mTimeUntilNextToggle = 0.5;
 		}
 
-
+        static bool displayCameraDetails = false;
+        if (mInputDevice->isKeyDown(KC_P) && mTimeUntilNextToggle <= 0)
+        {
+            displayCameraDetails = !displayCameraDetails;
+            mTimeUntilNextToggle = 0.5;
+            if (!displayCameraDetails)
+                mWindow->setDebugText("");
+        }
+        if (displayCameraDetails)
+        {
+            // Print camera details
+            mWindow->setDebugText("P: " + StringConverter::toString(mCamera->getDerivedPosition()) + " " + 
+                "O: " + StringConverter::toString(mCamera->getDerivedOrientation()));
+        }
 
         // Return true to continue rendering
         return true;

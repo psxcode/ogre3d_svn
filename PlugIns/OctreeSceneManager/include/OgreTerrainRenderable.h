@@ -1,19 +1,37 @@
+/*
+-----------------------------------------------------------------------------
+This source file is part of OGRE
+(Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.ogre3d.org/
+
+Copyright © 2000-2004 The OGRE Team
+Also see acknowledgements in Readme.html
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+-----------------------------------------------------------------------------
+*/
 /***************************************************************************
-                        terrainrenderable.h  -  description
-                           -------------------
+terrainrenderable.h  -  description
+-------------------
   begin                : Sat Oct 5 2002
   copyright            : (C) 2002 by Jon Anderson
   email                : janders@users.sf.net
-***************************************************************************/
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU Lesser General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
+  Enhancements 2003 - 2004 (C) The OGRE Team
+  
+***************************************************************************/
 
 #ifndef TERRAINRENDERABLE_H
 #define TERRAINRENDERABLE_H
@@ -25,6 +43,8 @@
 #include <OgreHardwareBufferManager.h>
 
 #include <vector>
+
+#define MORPH_CUSTOM_PARAM_ID 77
 
 namespace Ogre
 {
@@ -64,7 +84,7 @@ class TerrainOptions
 public:
     TerrainOptions()
     {
-        data = 0;
+        heightData = 0;
         size = 0;
         world_size = 0;
         startx = 0;
@@ -80,15 +100,16 @@ public:
         detail_tile = 1;
         lit = false;
         colored = false;
+        lodMorph = false;
     };
 
 
-    int _worldheight( int x, int z ) const
+    Real _worldheight( int x, int z ) const
     {
-        return data[ ( ( z * world_size ) + x ) ];
+        return heightData[ ( ( z * world_size ) + x ) ];
     };
 
-    const uchar * data;     //pointer to the world 2D data.
+    Real* heightData;     //pointer to the world 2D height data
     int size;         //size of this square block
     int world_size;   //size of the world.
     int startx;
@@ -104,13 +125,14 @@ public:
 
     bool lit;
     bool colored;
+    bool lodMorph;
 
 };
 
-#define TILE_NORTH  0x00000001
-#define TILE_SOUTH  0x00000002
-#define TILE_WEST   0x00000004
-#define TILE_EAST   0x00000008
+#define STITCH_NORTH  0x00000001
+#define STITCH_SOUTH  0x00000002
+#define STITCH_WEST   0x00000004
+#define STITCH_EAST   0x00000008
 
 /**
    Represents a terrain tile.
@@ -124,7 +146,7 @@ class TerrainRenderable : public Renderable, public MovableObject
 {
 public:
 
-    TerrainRenderable();
+    TerrainRenderable(const String& name);
     ~TerrainRenderable();
 
     void deleteGeometry();
@@ -253,8 +275,6 @@ public:
     void _generateVertexLighting( const Vector3 &sun, ColourValue ambient );
 
 
-    static size_t mRenderedTris;
-
     /** Overridden, see Renderable */
     Real getSquaredViewDepth(const Camera* cam) const;
 
@@ -263,9 +283,19 @@ public:
 
     /** @copydoc Renderable::getLights */
     const LightList& getLights(void) const;
+    /** Sets whether or not terrain tiles should be stripified */
+    static void _setUseTriStrips(bool useStrips) { msUseTriStrips = useStrips; }
+    /** Sets whether or not terrain tiles should be morphed between LODs
+        (NB requires vertex program support). */
+    static void _setUseLODMorph(bool useMorph) { msUseLODMorph = useMorph; }
+    /** Sets the distance at which the LOD will start to morph downwards, as
+        a proportion of the distance between the LODs. */
+    static void _setLODMorphStart(Real morphStart) { msLODMorphStart = morphStart; }
 
-
-
+    /// Overridden from Renderable to allow the morph LOD entry to be set
+    void updateCustomGpuParameter(
+        const GpuProgramParameters::AutoConstantEntry& constantEntry,
+        GpuProgramParameters* params) const;
 protected:
 
     /** Returns the index into the height array for the given coords. */
@@ -277,17 +307,7 @@ protected:
     /** Returns the  vertex coord for the given coordinates */
     inline float _vertex( int x, int z, int n )
     {
-        HardwareVertexBufferSharedPtr vbuf = 
-            mTerrain->vertexBufferBinding->getBuffer(0);
-
-        Real vertex = 0.0;
-
-        vbuf->readData((x * 3 + z * mSize * 3 + n) * sizeof(Real), sizeof(Real), &vertex);
-
-        return vertex;
-      /* 
-        return mTerrain.pVertices[ x * 3 + z * mSize * 3 + n ];
-        */
+        return mPositionBuffer[x * 3 + z * mSize * 3 + n];
     };
 
 
@@ -330,6 +350,8 @@ protected:
 
     int mNumMipMaps;
     int mRenderLevel;
+    int mLastNextLevel; // frame coherency, remember last morph target
+    Real mLODMorphFactor;
 
     Real *mMinLevelDistSqr;
 
@@ -357,15 +379,33 @@ protected:
     int mMaxPixelError;
     int mVertResolution;
     Real mTopCoord;
+    /// The buffer with all the renderable geometry in it
+    HardwareVertexBufferSharedPtr mMainBuffer;
+    /// Optional set of delta buffers, used to morph from one LOD to the next
+    HardwareVertexBufferSharedPtr* mDeltaBuffers;
+    /// System-memory buffer with just positions in it, for CPU operations
+    Real* mPositionBuffer;
 
     Real old_L;
-
-    Real current_L;
 
     bool mColored;
     bool mLit;
 
     int mForcedRenderLevel;
+    static bool msUseTriStrips;
+    static bool msUseLODMorph;
+    static Real msLODMorphStart;
+
+    int mNextLevelDown[10];
+
+    /// Gets the index data for this tile based on current settings
+    IndexData* getIndexData(void);
+    /// Internal method for generating stripified terrain indexes
+    IndexData* generateTriStripIndexes(int stitchFlags);
+    /// Internal method for generating triangle list terrain indexes
+    IndexData* generateTriListIndexes(int stitchFlags);
+    /// Create a blank delta buffer for usein morphing
+    HardwareVertexBufferSharedPtr createDeltaBuffer(void);
 
 };
 
