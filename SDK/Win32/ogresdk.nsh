@@ -50,8 +50,8 @@ var ICONS_GROUP
 
 ; MUI end ------
 
-Name "${PRODUCT_NAME} ${PRODUCT_VERSION} for ${TARGET_COMPILER}"
-OutFile "Setup.exe"
+Name "${PRODUCT_NAME} ${PRODUCT_VERSION} for ${TARGET_COMPILER_DESCRIPTION}"
+OutFile "OgreSDKSetup${PRODUCT_VERSION}_${TARGET_COMPILER}.exe"
 InstallDir "c:\OgreSDK"
 ShowInstDetails show
 ShowUnInstDetails show
@@ -66,13 +66,25 @@ Section "MainSection" SEC01
   File "..\..\Samples\Common\include\*.h"
   File "..\..\Samples\Common\include\*.h"
   File "..\..\Samples\Common\CEGUIRenderer\include\*.h"
-  ; Dependencies
-  File /r /x CVS "..\..\Dependencies\include\*.*"
+  ; Dependencies - only ODE and CEGui
+  SetOutPath "$INSTDIR\include\CEGUI"
+  SetOverwrite try
+  File /r /x CVS "..\..\Dependencies\include\CEGUI\*.*"
+  SetOutPath "$INSTDIR\include\ode"
+  SetOverwrite try
+  File /r /x CVS "..\..\Dependencies\include\ode\*.*"
+
+  ; Reference app
+  SetOutPath "$INSTDIR\include\refapp"
+  SetOverwrite try
+  File /r /x CVS "..\..\ReferenceApplication\ReferenceAppLayer\include\*.*"
+
 
   ; Optional headers (for linking direct to plugins)
   SetOutPath "$INSTDIR\include\opt"
   SetOverwrite try
   File /r /x CVS "..\..\Plugins\OctreeSceneManager\include\*.h"
+  File /r /x CVS "..\..\Plugins\BspSceneManager\include\*.h"
 
 
   ; Library files
@@ -80,18 +92,29 @@ Section "MainSection" SEC01
   SetOverwrite try
   File "..\..\OgreMain\lib\Debug\OgreMain_d.lib"
   File "..\..\OgreMain\lib\Debug\OgreMain_d.pdb"
+  File "..\..\Dependencies\lib\Debug\CEGUIBase_d.lib"
+  ; ode.lib is only one available, no separate release version
+  File "..\..\Dependencies\lib\Debug\ode.lib"
   File "..\..\Samples\Common\CEGUIRenderer\lib\OgreGUIRenderer_d.lib"
   File "..\..\Samples\Common\CEGUIRenderer\lib\OgreGUIRenderer_d.pdb"
+
   File "..\..\OgreMain\lib\Release\OgreMain.lib"
+  File "..\..\Dependencies\lib\Release\CEGUIBase.lib"
   File "..\..\Samples\Common\CEGUIRenderer\lib\OgreGUIRenderer.lib"
+
   ; Optional library files (for linking direct to plugins)
   SetOutPath "$INSTDIR\lib\opt\debug"
   SetOverwrite try
   File "..\..\Plugins\OctreeSceneManager\lib\debug\Plugin_OctreeSceneManager.lib"
   File "..\..\Plugins\OctreeSceneManager\lib\debug\Plugin_OctreeSceneManager.pdb"
+  File "..\..\Plugins\OctreeSceneManager\lib\debug\Plugin_BspSceneManager.lib"
+  File "..\..\Plugins\OctreeSceneManager\lib\debug\Plugin_BspSceneManager.pdb"
+  File "..\..\ReferenceApplication\ReferenceAppLayer\lib\Debug\ReferenceAppLayer.lib"
   SetOutPath "$INSTDIR\lib\opt\release"
   SetOverwrite try
   File "..\..\Plugins\OctreeSceneManager\lib\release\Plugin_OctreeSceneManager.lib"
+  File "..\..\Plugins\OctreeSceneManager\lib\release\Plugin_BspSceneManager.lib"
+  File "..\..\ReferenceApplication\ReferenceAppLayer\lib\Release\ReferenceAppLayer.lib"
 
   ; Samples
   
