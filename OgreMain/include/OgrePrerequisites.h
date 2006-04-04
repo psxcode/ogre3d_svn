@@ -73,15 +73,6 @@ http://www.gnu.org/copyleft/lesser.txt
 #	pragma warning( disable: 4996)
 #endif
 
-#if OGRE_COMPILER == OGRE_COMPILER_MSVC
-#   undef _DEFINE_DEPRECATED_HASH_CLASSES
-#   if OGRE_COMP_VER > 1300
-#       define _DEFINE_DEPRECATED_HASH_CLASSES 0
-#   else
-#      define _DEFINE_DEPRECATED_HASH_CLASSES 1
-#   endif
-#endif
-
 /* Include all the standard header *after* all the configuration
    settings have been made.
 */
