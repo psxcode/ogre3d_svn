@@ -84,7 +84,9 @@ public:
 	virtual void endOcclusionQuery() = 0;
 
 	/**
-      * Pulls the hardware occlusion query too see if there is a result.
+      * Pulls the hardware occlusion query.
+	  * @note Waits until the query result is available; use isStillOutstanding
+	  *		if just want to test if the result is available.
       * @retval NumOfFragments will get the resulting number of fragments.
       * @return True if success or false if not.
       */
@@ -101,7 +103,7 @@ public:
 	  * Lets you know when query is done, or still be processed by the Hardware
 	  * @return true if query isn't finished.
 	  */
-	 virtual bool HardwareOcclusionQuery::isStillOutstanding(void) = 0; 
+	 virtual bool isStillOutstanding(void) = 0; 
 
 
     //----------------------------------------------------------------------
