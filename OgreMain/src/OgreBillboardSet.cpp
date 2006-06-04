@@ -33,6 +33,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreMath.h"
 #include "OgreSphere.h"
 #include "OgreRoot.h"
+#include "OgreRenderSystem.h"
+#include "OgreRenderSystemCapabilities.h"
 #include "OgreException.h"
 #include "OgreStringConverter.h"
 #include "OgreLogManager.h"
@@ -1345,6 +1347,7 @@ namespace Ogre {
     {
       if( !numCoords || !coords ) {
         setTextureStacksAndSlices( 1, 1 );
+		return;
       }
       //  clear out any previous allocation (as vectors may not shrink)
       TextureCoordSets().swap( mTextureCoords );
@@ -1390,6 +1393,12 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void BillboardSet::setPointRenderingEnabled(bool enabled)
 	{
+		// Override point rendering if not supported
+		if (enabled && !Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_POINT_SPRITES))
+		{
+			enabled = false;
+		}
+
 		if (enabled != mPointRendering)
 		{
 			mPointRendering = enabled;

@@ -1463,7 +1463,7 @@
 		82A3A31207A1AAEA001CBF8B /* OgreEXRCodec.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreEXRCodec.cpp; path = ../../../PlugIns/EXRCodec/src/OgreEXRCodec.cpp; sourceTree = SOURCE_ROOT; };
 		82A3A31307A1AAEA001CBF8B /* OgreEXRCodecDll.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreEXRCodecDll.cpp; path = ../../../PlugIns/EXRCodec/src/OgreEXRCodecDll.cpp; sourceTree = SOURCE_ROOT; };
 		82A3A31807A1AB00001CBF8B /* OgreEXRCodec.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreEXRCodec.h; path = ../../../PlugIns/EXRCodec/include/OgreEXRCodec.h; sourceTree = SOURCE_ROOT; };
-		82A3A35207A1ABBD001CBF8B /* zzip.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = zzip.framework; path = "/Users/temas/work/zziplib-0.10.82/Xcode/build/zzip.framework"; sourceTree = "<absolute>"; };
+		82A3A35207A1ABBD001CBF8B /* zzip.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = zzip.framework; path = /Library/Frameworks/zzip.framework; sourceTree = "<absolute>"; };
 		82A3A35407A1AE6E001CBF8B /* OgreGLContext.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreGLContext.h; path = ../../../RenderSystems/GL/include/OgreGLContext.h; sourceTree = SOURCE_ROOT; };
 		82A3A35507A1AE6E001CBF8B /* OgreGLHardwarePixelBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreGLHardwarePixelBuffer.h; path = ../../../RenderSystems/GL/include/OgreGLHardwarePixelBuffer.h; sourceTree = SOURCE_ROOT; };
 		82A3A35607A1AE6E001CBF8B /* OgreGLPixelFormat.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreGLPixelFormat.h; path = ../../../RenderSystems/GL/include/OgreGLPixelFormat.h; sourceTree = SOURCE_ROOT; };
@@ -3792,7 +3792,12 @@
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				FRAMEWORK_SEARCH_PATHS = "$(HOME)/Library/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
+					"$(HOME)/Library/Frameworks",
+					/Library/Frameworks,
+					/System/Library/Frameworks,
+				);
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -3829,7 +3834,12 @@
 				COPY_PHASE_STRIP = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				FRAMEWORK_SEARCH_PATHS = "$(HOME)/Library/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
+					"$(HOME)/Library/Frameworks",
+					/Library/Frameworks,
+					/System/Library/Frameworks,
+				);
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_PASCAL_STRINGS = YES;
@@ -3858,7 +3868,12 @@
 			buildSettings = {
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				FRAMEWORK_SEARCH_PATHS = "$(HOME)/Library/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
+					"$(HOME)/Library/Frameworks",
+					/Library/Frameworks,
+					/System/Library/Frameworks,
+				);
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_PASCAL_STRINGS = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
@@ -3884,9 +3899,10 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
 					"$(HOME)/Library/Frameworks",
-					"/Users/temas/work/zziplib-0.10.82/Xcode/build",
-					"$(SRCROOT)/build",
+					/Library/Frameworks,
+					/System/Library/Frameworks,
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -3925,9 +3941,10 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
 					"$(HOME)/Library/Frameworks",
-					"/Users/temas/work/zziplib-0.10.82/Xcode/build",
-					"$(SRCROOT)/build",
+					/Library/Frameworks,
+					/System/Library/Frameworks,
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_PFE_FILE_C_DIALECTS = "c++";
@@ -3958,9 +3975,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
 					"$(HOME)/Library/Frameworks",
-					"/Users/temas/work/zziplib-0.10.82/Xcode/build",
-					"$(SRCROOT)/build",
+					/Library/Frameworks,
+					/System/Library/Frameworks,
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
