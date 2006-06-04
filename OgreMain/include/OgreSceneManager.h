@@ -194,6 +194,31 @@ namespace Ogre {
 			/// Render all except the queues in the special case list
 			SCRQM_EXCLUDE
 		};
+
+		struct SkyDomeGenParameters
+		{
+			Real skyDomeCurvature;
+			Real skyDomeTiling;
+			Real skyDomeDistance;
+			int skyDomeXSegments; 
+			int skyDomeYSegments;
+			int skyDomeYSegments_keep;
+		};
+
+		struct SkyPlaneGenParameters
+		{
+			Real skyPlaneScale;
+			Real skyPlaneTiling; 
+			Real skyPlaneBow; 
+			int skyPlaneXSegments; 
+			int skyPlaneYSegments; 
+		};
+
+		struct SkyBoxGenParameters
+		{
+			Real skyBoxDistance;
+		};
+
     protected:
 		/// Instance name
 		String mName;
@@ -248,17 +273,22 @@ namespace Ogre {
         SceneNode* mSkyDomeNode;
         SceneNode* mSkyBoxNode;
 
+        // Sky plane
         bool mSkyPlaneEnabled;
         bool mSkyPlaneDrawFirst;
         Plane mSkyPlane;
+        SkyPlaneGenParameters mSkyPlaneGenParameters;
         // Sky box
         bool mSkyBoxEnabled;
         bool mSkyBoxDrawFirst;
         Quaternion mSkyBoxOrientation;
+        SkyBoxGenParameters mSkyBoxGenParameters;
         // Sky dome
         bool mSkyDomeEnabled;
         bool mSkyDomeDrawFirst;
         Quaternion mSkyDomeOrientation;
+        SkyDomeGenParameters mSkyDomeGenParameters;
+
         // Fog
         FogMode mFogMode;
         ColourValue mFogColour;
@@ -487,10 +517,10 @@ namespace Ogre {
 		Pass* mShadowTextureCustomReceiverPass;
 		String mShadowTextureCustomCasterVertexProgram;
 		String mShadowTextureCustomReceiverVertexProgram;
+		String mShadowTextureCustomReceiverFragmentProgram;
 		GpuProgramParametersSharedPtr mShadowTextureCustomCasterVPParams;
 		GpuProgramParametersSharedPtr mShadowTextureCustomReceiverVPParams;
-		bool mShadowTextureCasterVPDirty;
-		bool mShadowTextureReceiverVPDirty;
+		GpuProgramParametersSharedPtr mShadowTextureCustomReceiverFPParams;
 
 		/// Visibility mask used to show / hide objects
 		uint32 mVisibilityMask;
@@ -653,8 +683,13 @@ namespace Ogre {
         virtual Camera* createCamera(const String& name);
 
         /** Retrieves a pointer to the named camera.
+		@note Throws an exception if the named instance does not exist
         */
         virtual Camera* getCamera(const String& name);
+
+		/** Returns whether a camera with the given name exists.
+		*/
+		virtual bool hasCamera(const String& name) const;
 
         /** Removes a camera from the scene.
             @remarks
@@ -696,10 +731,15 @@ namespace Ogre {
         virtual Light* createLight(const String& name);
 
         /** Returns a pointer to the named Light which has previously been added to the scene.
+		@note Throws an exception if the named instance does not exist
         */
         virtual Light* getLight(const String& name);
 
-        /** Removes the named light from the scene and destroys it.
+		/** Returns whether a light with the given name exists.
+		*/
+		virtual bool hasLight(const String& name) const;
+
+		/** Removes the named light from the scene and destroys it.
             @remarks
                 Any pointers held to this light after calling this method will be invalid.
         */
@@ -800,8 +840,14 @@ namespace Ogre {
             If you chose to name a SceneNode as you created it, or if you
             happened to make a note of the generated name, you can look it
             up wherever it is in the scene graph using this method.
+			@note Throws an exception if the named instance does not exist
         */
         virtual SceneNode* getSceneNode(const String& name) const;
+
+		/** Returns whether a scene node with the given name exists.
+		*/
+		virtual bool hasSceneNode(const String& name) const;
+
 
         /** Create an Entity (instance of a discrete mesh).
             @param
@@ -829,8 +875,13 @@ namespace Ogre {
                 ptype The prefab type.
         */
         virtual Entity* createEntity(const String& entityName, PrefabType ptype);
-        /** Retrieves a pointer to the named Entity. */
+        /** Retrieves a pointer to the named Entity. 
+		@note Throws an exception if the named instance does not exist
+		*/
         virtual Entity* getEntity(const String& name);
+		/** Returns whether an entity with the given name exists.
+		*/
+		virtual bool hasEntity(const String& name) const;
 
         /** Removes & destroys an Entity from the SceneManager.
             @warning
@@ -869,8 +920,13 @@ namespace Ogre {
             name The name to be given to the object (must be unique).
         */
         virtual ManualObject* createManualObject(const String& name);
-        /** Retrieves a pointer to the named ManualObject. */
+        /** Retrieves a pointer to the named ManualObject. 
+		@note Throws an exception if the named instance does not exist
+		*/
         virtual ManualObject* getManualObject(const String& name);
+		/** Returns whether a manual object with the given name exists.
+		*/
+		virtual bool hasManualObject(const String& name) const;
 
         /** Removes & destroys a ManualObject from the SceneManager.
         */
@@ -887,8 +943,13 @@ namespace Ogre {
             name The name to be given to the object (must be unique).
         */
         virtual BillboardChain* createBillboardChain(const String& name);
-        /** Retrieves a pointer to the named BillboardChain. */
+        /** Retrieves a pointer to the named BillboardChain. 
+		@note Throws an exception if the named instance does not exist
+		*/
         virtual BillboardChain* getBillboardChain(const String& name);
+		/** Returns whether a billboard chain with the given name exists.
+		*/
+		virtual bool hasBillboardChain(const String& name) const;
 
         /** Removes & destroys a BillboardChain from the SceneManager.
         */
@@ -905,8 +966,13 @@ namespace Ogre {
             name The name to be given to the object (must be unique).
         */
         virtual RibbonTrail* createRibbonTrail(const String& name);
-        /** Retrieves a pointer to the named RibbonTrail. */
+        /** Retrieves a pointer to the named RibbonTrail. 
+		@note Throws an exception if the named instance does not exist
+		*/
         virtual RibbonTrail* getRibbonTrail(const String& name);
+		/** Returns whether a ribbon trail with the given name exists.
+		*/
+		virtual bool hasRibbonTrail(const String& name) const;
 
         /** Removes & destroys a RibbonTrail from the SceneManager.
         */
@@ -962,8 +1028,13 @@ namespace Ogre {
         virtual ParticleSystem* createParticleSystem(const String& name,
 			size_t quota = 500, 
             const String& resourceGroup = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        /** Retrieves a pointer to the named ParticleSystem. */
+        /** Retrieves a pointer to the named ParticleSystem. 
+		@note Throws an exception if the named instance does not exist
+		*/
         virtual ParticleSystem* getParticleSystem(const String& name);
+		/** Returns whether a particle system with the given name exists.
+		*/
+		virtual bool hasParticleSystem(const String& name) const;
 
         /** Removes & destroys a ParticleSystem from the SceneManager.
         */
@@ -1268,7 +1339,10 @@ namespace Ogre {
 		virtual bool isSkyPlaneEnabled(void) const { return mSkyPlaneEnabled; }
 
 		/** Get the sky plane node, if enabled. */
-		virtual SceneNode* getSkyPlaneNode(void) { return mSkyPlaneNode; }		
+		virtual SceneNode* getSkyPlaneNode(void) const { return mSkyPlaneNode; }
+
+		/** Get the parameters used to construct the SkyPlane, if any **/
+		virtual const SkyPlaneGenParameters& getSkyPlaneGenParameters(void) const { return mSkyPlaneGenParameters; }
 
         /** Enables / disables a 'sky box' i.e. a 6-sided box at constant
             distance from the camera representing the sky.
@@ -1322,7 +1396,10 @@ namespace Ogre {
 		/** Get the skybox node, if enabled. */
 		virtual SceneNode* getSkyBoxNode(void) const { return mSkyBoxNode; }
 
-        /** Enables / disables a 'sky dome' i.e. an illusion of a curved sky.
+		/** Get the parameters used to generate the current SkyBox, if any */
+		virtual const SkyBoxGenParameters& getSkyBoxGenParameters(void) const { return mSkyBoxGenParameters; }
+
+		/** Enables / disables a 'sky dome' i.e. an illusion of a curved sky.
             @remarks
                 A sky dome is actually formed by 5 sides of a cube, but with
                 texture coordinates generated such that the surface appears
@@ -1388,7 +1465,10 @@ namespace Ogre {
 		virtual bool isSkyDomeEnabled(void) const { return mSkyDomeEnabled; }
 
 		/** Get the sky dome node, if enabled. */
-		virtual SceneNode* getSkyDomeNode(void) { return mSkyDomeNode; }		
+		virtual SceneNode* getSkyDomeNode(void) const { return mSkyDomeNode; }
+
+		/** Get the parameters used to generate the current SkyDome, if any */
+		virtual const SkyDomeGenParameters& getSkyDomeGenParameters(void) const { return mSkyDomeGenParameters; }
 
 		/** Sets the fogging mode applied to the scene.
             @remarks
@@ -1459,8 +1539,12 @@ namespace Ogre {
         virtual BillboardSet* createBillboardSet(const String& name, unsigned int poolSize = 20);
 
         /** Retrieves a pointer to the named BillboardSet.
+		@note Throws an exception if the named instance does not exist
         */
         virtual BillboardSet* getBillboardSet(const String& name);
+		/** Returns whether a billboardset with the given name exists.
+		*/
+		virtual bool hasBillboardSet(const String& name) const;
 
         /** Removes & destroys an BillboardSet from the SceneManager.
             @warning
@@ -1522,8 +1606,13 @@ namespace Ogre {
         */
         virtual Animation* createAnimation(const String& name, Real length);
 
-        /** Looks up an Animation object previously created with createAnimation. */
+        /** Looks up an Animation object previously created with createAnimation. 
+		@note Throws an exception if the named instance does not exist
+		*/
         virtual Animation* getAnimation(const String& name) const;
+		/** Returns whether an animation with the given name exists.
+		*/
+		virtual bool hasAnimation(const String& name) const;
 
         /** Destroys an Animation. 
         @remarks
@@ -1560,8 +1649,13 @@ namespace Ogre {
         */
         virtual AnimationState* createAnimationState(const String& animName);
 
-        /** Retrieves animation state as previously created using createAnimationState */
+        /** Retrieves animation state as previously created using createAnimationState. 
+		@note Throws an exception if the named instance does not exist
+		*/
         virtual AnimationState* getAnimationState(const String& animName);
+		/** Returns whether an animation state with the given name exists.
+		*/
+		virtual bool hasAnimationState(const String& name) const;
 
         /** Destroys an AnimationState. 
         @remarks
@@ -2118,8 +2212,12 @@ namespace Ogre {
 		@returns The new StaticGeometry instance
 		*/
 		virtual StaticGeometry* createStaticGeometry(const String& name);
-		/** Retrieve a previously created StaticGeometry instance. */
+		/** Retrieve a previously created StaticGeometry instance. 
+		@note Throws an exception if the named instance does not exist
+		*/
 		virtual StaticGeometry* getStaticGeometry(const String& name) const;
+		/** Returns whether a static geometry instance with the given name exists. */
+		virtual bool hasStaticGeometry(const String& name) const;
 		/** Remove & destroy a StaticGeometry instance. */
 		virtual void destroyStaticGeometry(StaticGeometry* geom);
 		/** Remove & destroy a StaticGeometry instance. */
@@ -2156,8 +2254,12 @@ namespace Ogre {
 		virtual void destroyAllMovableObjectsByType(const String& typeName);
 		/** Destroy all MovableObjects. */
 		virtual void destroyAllMovableObjects(void);
-		/** Get a reference to a previously created MovableObject. */
+		/** Get a reference to a previously created MovableObject. 
+		@note Throws an exception if the named instance does not exist
+		*/
 		virtual MovableObject* getMovableObject(const String& name, const String& typeName);
+		/** Returns whether a movable object instance with the given name exists. */
+		virtual bool hasMovableObject(const String& name, const String& typeName) const;
 		typedef MapIterator<MovableObjectMap> MovableObjectIterator;
 		/** Get an iterator over all MovableObect instances of a given type. */
 		virtual MovableObjectIterator getMovableObjectIterator(const String& typeName);
@@ -2221,8 +2323,9 @@ namespace Ogre {
 		/** Render something as if it came from the current queue.
 			@param pass		Material pass to use for setting up this quad.
 			@param rend		Renderable to render
+			@param shadowDerivation Whether passes should be replaced with shadow caster / receiver passes
 		 */
-		virtual void _injectRenderWithPass(Pass *pass, Renderable *rend);
+		virtual void _injectRenderWithPass(Pass *pass, Renderable *rend, bool shadowDerivation = true);
 
 		/** Indicates to the SceneManager whether it should suppress changing
 			the RenderSystem states when rendering objects.
@@ -2256,11 +2359,14 @@ namespace Ogre {
 				changes are suppressed; if you are using this to manually set state
 				when render state changes are suppressed, you should set this to 
 				true.
+			@param shadowDerivation If false, disables the derivation of shadow
+				passes from original passes
             @returns
                 A Pass object that was used instead of the one passed in, can
                 happen when rendering shadow passes
         */
-        virtual const Pass* _setPass(const Pass* pass, bool evenIfSuppressed = false);
+        virtual const Pass* _setPass(const Pass* pass, 
+			bool evenIfSuppressed = false, bool shadowDerivation = true);
 
 
 		/** Indicates to the SceneManager whether it should suppress the 
@@ -2290,6 +2396,11 @@ namespace Ogre {
 			gets sent
 		*/
 		RenderSystem *getDestinationRenderSystem();
+
+		/** Gets the current viewport being rendered (advanced use only, only 
+			valid during viewport update. */
+		Viewport* getCurrentViewport(void) { return mCurrentViewport; }
+
     };
 
     /** Default implementation of IntersectionSceneQuery. */

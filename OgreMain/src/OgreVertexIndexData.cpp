@@ -195,7 +195,7 @@ namespace Ogre {
             float* pDest2 = pDest + oldVertexCount * 3; 
 
             // Precalculate any dimensions of vertex areas outside the position
-            size_t prePosVertexSize, postPosVertexSize, postPosVertexOffset;
+            size_t prePosVertexSize = 0, postPosVertexSize, postPosVertexOffset;
             unsigned char *pBaseDestRem = 0;
             if (wasSharedBuffer)
             {
@@ -470,7 +470,7 @@ namespace Ogre {
                         destelem.getSemantic(), destelem.getIndex());
                 // get buffer
                 HardwareVertexBufferSharedPtr srcbuf = 
-                    vertexBufferBinding->getBuffer(srcelem->getIndex());
+                    vertexBufferBinding->getBuffer(srcelem->getSource());
                 // improve flexibility only
                 if (srcbuf->getUsage() & HardwareBuffer::HBU_DYNAMIC)
                 {
