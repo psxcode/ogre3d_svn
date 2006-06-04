@@ -89,9 +89,15 @@ mSkyPlaneEnabled(false),
 mSkyBoxEnabled(false),
 mSkyDomeEnabled(false),
 mFogMode(FOG_NONE),
+mFogColour(),
+mFogStart(0),
+mFogEnd(0),
+mFogDensity(0),
 mSpecialCaseQueueMode(SCRQM_EXCLUDE),
 mWorldGeometryRenderQueue(RENDER_QUEUE_WORLD_GEOMETRY_1),
 mLastFrameNumber(0),
+mResetIdentityView(false),
+mResetIdentityProj(false),
 mShadowCasterPlainBlackPass(0),
 mShadowReceiverPass(0),
 mDisplayNodes(false),
@@ -121,8 +127,6 @@ mShadowTextureFadeEnd(0.9),
 mShadowTextureSelfShadow(false),
 mShadowTextureCustomCasterPass(0),
 mShadowTextureCustomReceiverPass(0),
-mShadowTextureCasterVPDirty(false),
-mShadowTextureReceiverVPDirty(false),
 mVisibilityMask(0xFFFFFFFF),
 mFindVisibleObjects(true),
 mSuppressRenderStateChanges(false),
@@ -268,6 +272,11 @@ Camera* SceneManager::getCamera(const String& name)
         return i->second;
     }
 }
+//-----------------------------------------------------------------------
+bool SceneManager::hasCamera(const String& name) const
+{
+	return (mCameras.find(name) != mCameras.end());
+}
 
 //-----------------------------------------------------------------------
 void SceneManager::destroyCamera(Camera *cam)
@@ -327,6 +336,11 @@ Light* SceneManager::getLight(const String& name)
 {
 	return static_cast<Light*>(
 		getMovableObject(name, LightFactory::FACTORY_TYPE_NAME));
+}
+//-----------------------------------------------------------------------
+bool SceneManager::hasLight(const String& name) const
+{
+	return hasMovableObject(name, LightFactory::FACTORY_TYPE_NAME);
 }
 //-----------------------------------------------------------------------
 void SceneManager::destroyLight(Light *l)
@@ -426,6 +440,11 @@ Entity* SceneManager::getEntity(const String& name)
 	return static_cast<Entity*>(
 		getMovableObject(name, EntityFactory::FACTORY_TYPE_NAME));
 }
+//-----------------------------------------------------------------------
+bool SceneManager::hasEntity(const String& name) const
+{
+	return hasMovableObject(name, EntityFactory::FACTORY_TYPE_NAME);
+}
 
 //-----------------------------------------------------------------------
 void SceneManager::destroyEntity(Entity *e)
@@ -466,6 +485,12 @@ ManualObject* SceneManager::getManualObject(const String& name)
 
 }
 //-----------------------------------------------------------------------
+bool SceneManager::hasManualObject(const String& name) const
+{
+	return hasMovableObject(name, ManualObjectFactory::FACTORY_TYPE_NAME);
+
+}
+//-----------------------------------------------------------------------
 void SceneManager::destroyManualObject(ManualObject* obj)
 {
 	destroyMovableObject(obj);
@@ -494,6 +519,12 @@ BillboardChain* SceneManager::getBillboardChain(const String& name)
 
 }
 //-----------------------------------------------------------------------
+bool SceneManager::hasBillboardChain(const String& name) const
+{
+	return hasMovableObject(name, BillboardChainFactory::FACTORY_TYPE_NAME);
+}
+
+//-----------------------------------------------------------------------
 void SceneManager::destroyBillboardChain(BillboardChain* obj)
 {
 	destroyMovableObject(obj);
@@ -521,6 +552,12 @@ RibbonTrail* SceneManager::getRibbonTrail(const String& name)
 		getMovableObject(name, RibbonTrailFactory::FACTORY_TYPE_NAME));
 
 }
+//-----------------------------------------------------------------------
+bool SceneManager::hasRibbonTrail(const String& name) const
+{
+	return hasMovableObject(name, RibbonTrailFactory::FACTORY_TYPE_NAME);
+}
+
 //-----------------------------------------------------------------------
 void SceneManager::destroyRibbonTrail(RibbonTrail* obj)
 {
@@ -566,6 +603,12 @@ ParticleSystem* SceneManager::getParticleSystem(const String& name)
 		getMovableObject(name, ParticleSystemFactory::FACTORY_TYPE_NAME));
 
 }
+//-----------------------------------------------------------------------
+bool SceneManager::hasParticleSystem(const String& name) const
+{
+	return hasMovableObject(name, ParticleSystemFactory::FACTORY_TYPE_NAME);
+}
+
 //-----------------------------------------------------------------------
 void SceneManager::destroyParticleSystem(ParticleSystem* obj)
 {
@@ -700,16 +743,23 @@ SceneNode* SceneManager::getSceneNode(const String& name) const
 
 }
 //-----------------------------------------------------------------------
-const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed)
+bool SceneManager::hasSceneNode(const String& name) const
+{
+	return (mSceneNodes.find(name) != mSceneNodes.end());
+}
+
+//-----------------------------------------------------------------------
+const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed, 
+								   bool shadowDerivation)
 {
 	if (!mSuppressRenderStateChanges || evenIfSuppressed)
 	{
-		if (mIlluminationStage == IRS_RENDER_TO_TEXTURE)
+		if (mIlluminationStage == IRS_RENDER_TO_TEXTURE && shadowDerivation)
 		{
 			// Derive a special shadow caster pass from this one
 			pass = deriveShadowCasterPass(pass);
 		}
-		else if (mIlluminationStage == IRS_RENDER_RECEIVER_PASS)
+		else if (mIlluminationStage == IRS_RENDER_RECEIVER_PASS && shadowDerivation)
 		{
 			pass = deriveShadowReceiverPass(pass);
 		}
@@ -801,11 +851,13 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed)
             newFogEnd = mFogEnd;
             newFogDensity = mFogDensity;
         }
-        // Tell params about current fog
-        mAutoParamDataSource.setFog(
-            newFogMode, newFogColour, newFogDensity, newFogStart, newFogEnd);
         mDestRenderSystem->_setFog(
             newFogMode, newFogColour, newFogDensity, newFogStart, newFogEnd);
+        // Tell params about ORIGINAL fog
+		// Need to be able to override fixed function fog, but still have
+		// original fog parameters available to a shader than chooses to use
+        mAutoParamDataSource.setFog(
+            mFogMode, mFogColour, mFogDensity, mFogStart, mFogEnd);
 
 		// The rest of the settings are the same no matter whether we use programs or not
 
@@ -1221,6 +1273,11 @@ void SceneManager::setSkyPlane(
 
     }
 	mSkyPlaneEnabled = enable;
+	mSkyPlaneGenParameters.skyPlaneBow = bow;
+	mSkyPlaneGenParameters.skyPlaneScale = gscale;
+	mSkyPlaneGenParameters.skyPlaneTiling = tiling;
+	mSkyPlaneGenParameters.skyPlaneXSegments = xsegments;
+	mSkyPlaneGenParameters.skyPlaneYSegments = ysegments;
 }
 //-----------------------------------------------------------------------
 void SceneManager::setSkyBox(
@@ -1292,8 +1349,12 @@ void SceneManager::setSkyBox(
                 boxMat->load();
             }
             // Set active frame
-            boxMat->getBestTechnique()->getPass(0)->getTextureUnitState(0)
-                ->setCurrentFrame(i);
+			Material::TechniqueIterator ti = boxMat->getSupportedTechniqueIterator();
+			while (ti.hasMoreElements())
+			{
+				Technique* tech = ti.getNext();
+				tech->getPass(0)->getTextureUnitState(0)->setCurrentFrame(i);
+			}
 
             mSkyBoxEntity[i]->setMaterialName(boxMat->getName());
 
@@ -1303,6 +1364,7 @@ void SceneManager::setSkyBox(
 
     }
 	mSkyBoxEnabled = enable;
+	mSkyBoxGenParameters.skyBoxDistance = distance;
 }
 //-----------------------------------------------------------------------
 void SceneManager::setSkyDome(
@@ -1367,6 +1429,12 @@ void SceneManager::setSkyDome(
 
     }
 	mSkyDomeEnabled = enable;
+	mSkyDomeGenParameters.skyDomeCurvature = curvature;
+	mSkyDomeGenParameters.skyDomeDistance = distance;
+	mSkyDomeGenParameters.skyDomeTiling = tiling;
+	mSkyDomeGenParameters.skyDomeXSegments = xsegments;
+	mSkyDomeGenParameters.skyDomeYSegments = ysegments;
+	mSkyDomeGenParameters.skyDomeYSegments_keep = ySegmentsToKeep;
 }
 //-----------------------------------------------------------------------
 MeshPtr SceneManager::createSkyboxPlane(
@@ -1945,7 +2013,7 @@ void SceneManager::renderModulativeTextureShadowedQueueGroupObjects(
 						targetPass->removeTextureUnitState(1);
 
                     TextureUnitState* t = 
-                        mShadowReceiverPass->createTextureUnitState("spot_shadow_fade.png");
+                        targetPass->createTextureUnitState("spot_shadow_fade.png");
                     t->setProjectiveTexturing(true, cam);
                     t->setColourOperation(LBO_ADD);
                     t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
@@ -2167,8 +2235,8 @@ void SceneManager::SceneMgrQueuedRenderableVisitor::visit(const RenderablePass* 
 	// Give SM a chance to eliminate
 	if (targetSceneMgr->validateRenderableForRendering(rp->pass, rp->renderable))
 	{
-		targetSceneMgr->_setPass(rp->pass);
-		targetSceneMgr->renderSingleObject(rp->renderable, rp->pass, autoLights, 
+		mUsedPass = targetSceneMgr->_setPass(rp->pass);
+		targetSceneMgr->renderSingleObject(rp->renderable, mUsedPass, autoLights, 
 			manualLightList);
 	}
 }
@@ -2176,14 +2244,13 @@ void SceneManager::SceneMgrQueuedRenderableVisitor::visit(const RenderablePass* 
 bool SceneManager::validatePassForRendering(const Pass* pass)
 {
     // Bypass if we're doing a texture shadow render and 
-    // this pass is after the first (only 1 pass needed for modulative shadow texture)
+    // this pass is after the first (only 1 pass needed for shadow texture render, and 
+	// one pass for shadow texture receive for modulative technique)
 	// Also bypass if passes above the first if render state changes are
 	// suppressed since we're not actually using this pass data anyway
     if (!mSuppressShadows && mCurrentViewport->getShadowsEnabled() &&
-		isShadowTechniqueModulative() &&
-		(mIlluminationStage == IRS_RENDER_TO_TEXTURE ||
-        mIlluminationStage == IRS_RENDER_RECEIVER_PASS ||
-		mSuppressRenderStateChanges) && 
+		((isShadowTechniqueModulative() && mIlluminationStage == IRS_RENDER_RECEIVER_PASS)
+		 || mIlluminationStage == IRS_RENDER_TO_TEXTURE || mSuppressRenderStateChanges) && 
         pass->getIndex() > 0)
     {
         return false;
@@ -2196,13 +2263,22 @@ bool SceneManager::validateRenderableForRendering(const Pass* pass, const Render
 {
     // Skip this renderable if we're doing modulative texture shadows, it casts shadows
     // and we're doing the render receivers pass and we're not self-shadowing
+	// also if pass number > 0
     if (!mSuppressShadows && mCurrentViewport->getShadowsEnabled() &&
-		isShadowTechniqueTextureBased() && 
-        mIlluminationStage == IRS_RENDER_RECEIVER_PASS && 
-        rend->getCastsShadows() && !mShadowTextureSelfShadow && 
-		isShadowTechniqueModulative())
-    {
-        return false;
+		isShadowTechniqueTextureBased())
+	{
+		if (mIlluminationStage == IRS_RENDER_RECEIVER_PASS && 
+			rend->getCastsShadows() && !mShadowTextureSelfShadow)
+		{
+			return false;
+		}
+		// Some duplication here with validatePassForRendering, for transparents
+		if (((isShadowTechniqueModulative() && mIlluminationStage == IRS_RENDER_RECEIVER_PASS)
+			|| mIlluminationStage == IRS_RENDER_TO_TEXTURE || mSuppressRenderStateChanges) && 
+			pass->getIndex() > 0)
+		{
+			return false;
+		}
     }
 
     return true;
@@ -2583,6 +2659,12 @@ BillboardSet* SceneManager::getBillboardSet(const String& name)
 		getMovableObject(name, BillboardSetFactory::FACTORY_TYPE_NAME));
 }
 //-----------------------------------------------------------------------
+bool SceneManager::hasBillboardSet(const String& name) const
+{
+	return hasMovableObject(name, BillboardSetFactory::FACTORY_TYPE_NAME);
+}
+
+//-----------------------------------------------------------------------
 void SceneManager::destroyBillboardSet(BillboardSet* set)
 {
 	destroyMovableObject(set);
@@ -2624,6 +2706,11 @@ Animation* SceneManager::getAnimation(const String& name) const
             "SceneManager::getAnimation");
     }
     return i->second;
+}
+//-----------------------------------------------------------------------
+bool SceneManager::hasAnimation(const String& name) const
+{
+	return (mAnimationsList.find(name) != mAnimationsList.end());
 }
 //-----------------------------------------------------------------------
 void SceneManager::destroyAnimation(const String& name)
@@ -2676,6 +2763,11 @@ AnimationState* SceneManager::getAnimationState(const String& animName)
 {
 	return mAnimationStates.getAnimationState(animName);
 
+}
+//-----------------------------------------------------------------------
+bool SceneManager::hasAnimationState(const String& name) const
+{
+	return mAnimationStates.hasAnimationState(name);
 }
 //-----------------------------------------------------------------------
 void SceneManager::destroyAnimationState(const String& name)
@@ -3527,6 +3619,7 @@ const Pass* SceneManager::deriveShadowCasterPass(const Pass* pass)
 		retPass->setManualCullingMode(pass->getManualCullingMode());
 		
 
+		// Does incoming pass have a custom shadow caster program?
 		if (!pass->getShadowCasterVertexProgramName().empty())
 		{
 			// Have to merge the shadow caster vertex program in
@@ -3539,28 +3632,32 @@ const Pass* SceneManager::deriveShadowCasterPass(const Pass* pass)
 			// Copy params
 			retPass->setVertexProgramParameters(
 				pass->getShadowCasterVertexProgramParameters());
-			if (retPass == mShadowTextureCustomCasterPass)
-			{
-				// mark that we've overridden the standard
-				mShadowTextureCasterVPDirty = true;
-			}
 			// Also have to hack the light autoparams, that is done later
 		}
 		else 
 		{
-			retPass->setVertexProgram(StringUtil::BLANK);
-			if (mShadowTextureCasterVPDirty)
+			if (retPass == mShadowTextureCustomCasterPass)
 			{
-				// reset
-				mShadowTextureCustomCasterPass->setVertexProgram(
-					mShadowTextureCustomCasterVertexProgram);
-				if(mShadowTextureCustomCasterPass->hasVertexProgram())
+				// reset vp?
+				if (mShadowTextureCustomCasterPass->getVertexProgramName() !=
+					mShadowTextureCustomCasterVertexProgram)
 				{
-					mShadowTextureCustomCasterPass->setVertexProgramParameters(
-						mShadowTextureCustomCasterVPParams);
+					mShadowTextureCustomCasterPass->setVertexProgram(
+						mShadowTextureCustomCasterVertexProgram);
+					if(mShadowTextureCustomCasterPass->hasVertexProgram())
+					{
+						mShadowTextureCustomCasterPass->setVertexProgramParameters(
+							mShadowTextureCustomCasterVPParams);
+
+					}
 
 				}
-				mShadowTextureCasterVPDirty = false;
+
+			}
+			else
+			{
+				// Standard shadow caster pass, reset to no vp
+				retPass->setVertexProgram(StringUtil::BLANK);
 			}
 		}
 		return retPass;
@@ -3580,36 +3677,48 @@ const Pass* SceneManager::deriveShadowReceiverPass(const Pass* pass)
 		Pass* retPass = mShadowTextureCustomReceiverPass ? 
 			mShadowTextureCustomReceiverPass : mShadowReceiverPass;
 
-		if (pass->hasVertexProgram())
+		// Does incoming pass have a custom shadow receiver program?
+		if (!pass->getShadowReceiverVertexProgramName().empty())
 		{
-			// Have to merge the receiver vertex program in
+			// Have to merge the shadow receiver vertex program in
 			retPass->setVertexProgram(
 				pass->getShadowReceiverVertexProgramName());
-			// Did this result in a new vertex program?
-			if (retPass->hasVertexProgram())
-			{
-				const GpuProgramPtr& prg = retPass->getVertexProgram();
-				// Load this program if required
-				if (!prg->isLoaded())
-					prg->load();
-				// Copy params
-				retPass->setVertexProgramParameters(
-					pass->getShadowReceiverVertexProgramParameters());
-
-				if (retPass == mShadowTextureCustomReceiverPass)
-				{
-					// mark that we've overridden the standard
-					mShadowTextureReceiverVPDirty = true;
-				}
-			}
+			const GpuProgramPtr& prg = retPass->getVertexProgram();
+			// Load this program if not done already
+			if (!prg->isLoaded())
+				prg->load();
+			// Copy params
+			retPass->setVertexProgramParameters(
+				pass->getShadowReceiverVertexProgramParameters());
 			// Also have to hack the light autoparams, that is done later
 		}
-		else
+		else 
 		{
-			retPass->setVertexProgram(StringUtil::BLANK);
+			if (retPass == mShadowTextureCustomReceiverPass)
+			{
+				// reset vp?
+				if (mShadowTextureCustomReceiverPass->getVertexProgramName() !=
+					mShadowTextureCustomReceiverVertexProgram)
+				{
+					mShadowTextureCustomReceiverPass->setVertexProgram(
+						mShadowTextureCustomReceiverVertexProgram);
+					if(mShadowTextureCustomReceiverPass->hasVertexProgram())
+					{
+						mShadowTextureCustomReceiverPass->setVertexProgramParameters(
+							mShadowTextureCustomReceiverVPParams);
+
+					}
+
+				}
+
+			}
+			else
+			{
+				// Standard shadow receiver pass, reset to no vp
+				retPass->setVertexProgram(StringUtil::BLANK);
+			}
 		}
 
-		bool resetFragmentProgram = true;
         size_t keepTUCount;
 		// If additive, need lighting parameters & standard programs
 		if (isShadowTechniqueAdditive())
@@ -3646,45 +3755,62 @@ const Pass* SceneManager::deriveShadowReceiverPass(const Pass* pass)
             keepTUCount = origPassTUCount + 1;
 
 			// Will also need fragment programs since this is a complex light setup
-			if (pass->hasFragmentProgram())
+			if (!pass->getShadowReceiverFragmentProgramName().empty())
 			{
-				String fragName = pass->getShadowReceiverFragmentProgramName();
-				GpuProgramParametersSharedPtr params;
-				if (!fragName.empty())
+				// Have to merge the shadow receiver vertex program in
+				retPass->setFragmentProgram(
+					pass->getShadowReceiverFragmentProgramName());
+				const GpuProgramPtr& prg = retPass->getFragmentProgram();
+				// Load this program if not done already
+				if (!prg->isLoaded())
+					prg->load();
+				// Copy params
+				retPass->setFragmentProgramParameters(
+					pass->getShadowReceiverFragmentProgramParameters());
+
+				// Did we bind a shadow vertex program?
+				if (pass->hasVertexProgram() && !retPass->hasVertexProgram())
 				{
-					resetFragmentProgram = false;
-
-					params = pass->getShadowReceiverFragmentProgramParameters();
-
-					retPass->setFragmentProgram(fragName);
-					const GpuProgramPtr& prg = retPass->getFragmentProgram();
+					// We didn't bind a receiver-specific program, so bind the original
+					retPass->setVertexProgram(pass->getVertexProgramName());
+					const GpuProgramPtr& prg = retPass->getVertexProgram();
 					// Load this program if required
 					if (!prg->isLoaded())
 						prg->load();
 					// Copy params
-					retPass->setFragmentProgramParameters(params);
+					retPass->setVertexProgramParameters(
+						pass->getVertexProgramParameters());
 
-					// Did we bind a shadow vertex program?
-					if (pass->hasVertexProgram() && !retPass->hasVertexProgram())
+				}
+			}
+			else 
+			{
+				// Reset any merged fragment programs from last time
+				if (retPass == mShadowTextureCustomReceiverPass)
+				{
+					// reset fp?
+					if (mShadowTextureCustomReceiverPass->getFragmentProgramName() !=
+						mShadowTextureCustomReceiverFragmentProgram)
 					{
-						// We didn't bind a receiver-specific program, so bind the original
-						retPass->setVertexProgram(pass->getVertexProgramName());
-						const GpuProgramPtr& prg = retPass->getVertexProgram();
-						// Load this program if required
-						if (!prg->isLoaded())
-							prg->load();
-						// Copy params
-						retPass->setVertexProgramParameters(
-							pass->getVertexProgramParameters());
-
-						if (retPass == mShadowTextureCustomReceiverPass)
+						mShadowTextureCustomReceiverPass->setFragmentProgram(
+							mShadowTextureCustomReceiverFragmentProgram);
+						if(mShadowTextureCustomReceiverPass->hasFragmentProgram())
 						{
-							// mark that we've overridden the standard
-							mShadowTextureReceiverVPDirty = true;
+							mShadowTextureCustomReceiverPass->setFragmentProgramParameters(
+								mShadowTextureCustomReceiverFPParams);
+
 						}
+
 					}
-				} // valid shadow fragment program
-			} // ori pass has fragment program
+
+				}
+				else
+				{
+					// Standard shadow receiver pass, reset to no fp
+					retPass->setFragmentProgram(StringUtil::BLANK);
+				}
+
+			}
 			
 		}// additive lighting
 		else
@@ -3693,37 +3819,11 @@ const Pass* SceneManager::deriveShadowReceiverPass(const Pass* pass)
 			keepTUCount = retPass->getNumTextureUnitStates();
 		}
 
-		// reset fragment program
-		if (resetFragmentProgram)
-		{
-			retPass->setFragmentProgram(StringUtil::BLANK);
-		}
         // Remove any extra texture units
         while (retPass->getNumTextureUnitStates() > keepTUCount)
         {
             retPass->removeTextureUnitState(keepTUCount);
         }
-
-		// reset vertex program
-		if (retPass->hasVertexProgram() && !pass->hasVertexProgram())
-		{
-			// reset
-			retPass->setVertexProgram("");
-
-			if (mShadowTextureReceiverVPDirty)
-			{
-				// reset
-				mShadowTextureCustomReceiverPass->setVertexProgram(
-					mShadowTextureCustomReceiverVertexProgram);
-				if(mShadowTextureCustomReceiverPass->hasVertexProgram())
-				{
-					mShadowTextureCustomReceiverPass->setVertexProgramParameters(
-						mShadowTextureCustomReceiverVPParams);
-
-				}
-				mShadowTextureReceiverVPDirty = false;
-			}
-		}
 
 		retPass->_load();
 
@@ -4142,7 +4242,7 @@ void SceneManager::setShadowIndexBufferSize(size_t size)
         // re-create shadow buffer with new size
         mShadowIndexBuffer = HardwareBufferManager::getSingleton().
             createIndexBuffer(HardwareIndexBuffer::IT_16BIT, 
-            mShadowIndexBufferSize, 
+            size, 
             HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE, 
             false);
     }
@@ -4217,7 +4317,6 @@ void SceneManager::setShadowTextureCasterMaterial(const String& name)
 				mShadowTextureCustomCasterPass->getVertexProgramName();
 			mShadowTextureCustomCasterVPParams = 
 				mShadowTextureCustomCasterPass->getVertexProgramParameters();
-			mShadowTextureCasterVPDirty = false;
 
 		}
 	}
@@ -4247,7 +4346,25 @@ void SceneManager::setShadowTextureReceiverMaterial(const String& name)
 				mShadowTextureCustomReceiverPass->getVertexProgramName();
 			mShadowTextureCustomReceiverVPParams = 
 				mShadowTextureCustomReceiverPass->getVertexProgramParameters();
-			mShadowTextureReceiverVPDirty = false;
+
+		}
+		else
+		{
+			mShadowTextureCustomReceiverVertexProgram = StringUtil::BLANK;
+
+		}
+		if (mShadowTextureCustomReceiverPass->hasFragmentProgram())
+		{
+			// Save fragment program and params in case we have to swap them out
+			mShadowTextureCustomReceiverFragmentProgram = 
+				mShadowTextureCustomReceiverPass->getFragmentProgramName();
+			mShadowTextureCustomReceiverFPParams = 
+				mShadowTextureCustomReceiverPass->getFragmentProgramParameters();
+
+		}
+		else
+		{
+			mShadowTextureCustomReceiverFragmentProgram = StringUtil::BLANK;
 
 		}
 	}
@@ -4348,7 +4465,9 @@ void SceneManager::createShadowTextures(unsigned short size,
             mat->getTechnique(0)->getPass(0)->createTextureUnitState(targName);
         // set projective based on camera
         texUnit->setProjectiveTexturing(true, cam);
-        texUnit->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+		// clamp to border colour
+        texUnit->setTextureAddressingMode(TextureUnitState::TAM_BORDER);
+		texUnit->setTextureBorderColour(ColourValue::White);
         mat->touch();
 
     }
@@ -4399,11 +4518,13 @@ void SceneManager::prepareShadowTextures(Camera* cam, Viewport* vp)
 	Real shadowEnd = shadowDist + shadowOffset;
 	Real fadeStart = shadowEnd * mShadowTextureFadeStart;
 	Real fadeEnd = shadowEnd * mShadowTextureFadeEnd;
-	// set fogging to hide the shadow edge 
-	// Additive lighting needs fading too (directional)
-	mShadowReceiverPass->setFog(true, FOG_LINEAR, ColourValue::White, 
-		0, fadeStart, fadeEnd);
-
+	// Additive lighting should not use fogging, since it will overbrighten; use border clamp
+	if (!isShadowTechniqueAdditive())
+	{
+		// set fogging to hide the shadow edge 
+		mShadowReceiverPass->setFog(true, FOG_LINEAR, ColourValue::White, 
+			0, fadeStart, fadeEnd);
+	}
     // Iterate over the lights we've found, max out at the limit of light textures
 
     LightList::iterator i, iend;
@@ -4585,6 +4706,12 @@ StaticGeometry* SceneManager::getStaticGeometry(const String& name) const
 	}
 	return i->second;
 }
+//-----------------------------------------------------------------------
+bool SceneManager::hasStaticGeometry(const String& name) const
+{
+	return (mStaticGeometryList.find(name) != mStaticGeometryList.end());
+}
+
 //---------------------------------------------------------------------
 void SceneManager::destroyStaticGeometry(StaticGeometry* geom)
 {
@@ -4778,6 +4905,17 @@ MovableObject* SceneManager::getMovableObject(const String& name, const String& 
 	return mi->second;
 	
 }
+//-----------------------------------------------------------------------
+bool SceneManager::hasMovableObject(const String& name, const String& typeName) const
+{
+	MovableObjectCollectionMap::const_iterator i = 
+		mMovableObjectCollectionMap.find(typeName);
+	if (i == mMovableObjectCollectionMap.end())
+		return false;
+
+	return (i->second->find(name) != i->second->end());
+}
+
 //---------------------------------------------------------------------
 SceneManager::MovableObjectIterator 
 SceneManager::getMovableObjectIterator(const String& typeName)
@@ -4823,10 +4961,10 @@ void SceneManager::extractAllMovableObjectsByType(const String& typeName)
 
 }
 //---------------------------------------------------------------------
-void SceneManager::_injectRenderWithPass(Pass *pass, Renderable *rend)
+void SceneManager::_injectRenderWithPass(Pass *pass, Renderable *rend, bool shadowDerivation )
 {
 	// render something as if it came from the current queue
-    const Pass *usedPass = _setPass(pass);
+    const Pass *usedPass = _setPass(pass, false, shadowDerivation);
     renderSingleObject(rend, usedPass, false);
 }
 //---------------------------------------------------------------------
