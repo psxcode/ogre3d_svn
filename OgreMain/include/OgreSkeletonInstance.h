@@ -80,7 +80,7 @@ namespace Ogre {
         /** Creates a TagPoint ready to be attached to a bone */
         TagPoint* createTagPointOnBone(Bone* bone, 
             const Quaternion &offsetOrientation = Quaternion::IDENTITY, 
-            const Vector3	  &offsetPosition    = Vector3::UNIT_SCALE);
+            const Vector3 &offsetPosition = Vector3::ZERO);
 
         /** Frees a TagPoint that already attached to a bone */
         void freeTagPoint(TagPoint* tagPoint);
@@ -99,6 +99,14 @@ namespace Ogre {
 
 		/// @copydoc Skeleton::_refreshAnimationState
 		void _refreshAnimationState(AnimationStateSet* animSet);
+
+		/// @copydoc Resource::getName
+		const String& getName(void) const;
+		/// @copydoc Resource::getHandle
+		ResourceHandle getHandle(void) const;
+		/// @copydoc Resource::getGroup
+		const String& getGroup(void);
+
     protected:
         /// Pointer back to master Skeleton
         SkeletonPtr mSkeleton;
