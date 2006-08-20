@@ -88,7 +88,7 @@ void main(void)
 
     // ------------------------------------------------------------------------------
 
-    // Non-PCF code (comment out above section and uncomment the following two lines)
+    // Non-PCF code (comment out above section and uncomment the following three lines)
 
     //float zvalue = texture2D(uShadowMap, scoord.xy).x;
     //float visibility = (zvalue <= scoord.z) ? 0.0 : 1.0;
