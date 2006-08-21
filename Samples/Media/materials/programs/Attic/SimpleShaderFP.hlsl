@@ -16,7 +16,7 @@ struct Vertex
 {
   float4 position       : POSITION;     // fragment position in post projective space
   float4 texCoord    	: TEXCOORD0;    // fragment position in shadow map coordinates
-  float  diffuse        : COLOR;    	// diffuse shading value
+  float  diffuse        : TEXCOORD1;    	// diffuse shading value
 };
 
 struct Fragment
@@ -29,8 +29,8 @@ Fragment main(Vertex In)
     Fragment Out;
 
     Out.color = tex2D(TextureMap, In.texCoord);
-    // The ogre head model does not seem to have an outward pointing normal...
-    //Out.color.xyz *= In.diffuse;
+    // Ogre is automatically handling diffuse lighting for us.
+    //Out.color.xyz *= In.diffuse.x;
 
     return Out;
 }

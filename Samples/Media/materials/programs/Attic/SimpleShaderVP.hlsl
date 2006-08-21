@@ -21,7 +21,7 @@ struct Vertex
 {
   float4 position       : POSITION;     // vertex position in post projective space
   float4 texCoord    	: TEXCOORD0;    // texture coordinate for vertex
-  float  diffuse        : COLOR;    	// diffuse shading value
+  float  diffuse        : TEXCOORD1;    	// diffuse shading value
 };
 
 Vertex main(VertexIn         In,
