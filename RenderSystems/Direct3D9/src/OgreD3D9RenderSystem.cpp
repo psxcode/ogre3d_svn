@@ -679,7 +679,7 @@ namespace Ogre
             // create & register HLSL factory
             mHLSLProgramFactory = new D3D9HLSLProgramFactory();
             HighLevelGpuProgramManager::getSingleton().addFactory(mHLSLProgramFactory);
-            mGpuProgramManager->_pushSyntaxCode("hlsl");
+            mCapabilities->addShaderProfile("hlsl");
 
 
             // Initialise the capabilities structures
@@ -971,16 +971,16 @@ namespace Ogre
         switch(major)
         {
         case 3:
-            mGpuProgramManager->_pushSyntaxCode("vs_3_0");
+            mCapabilities->addShaderProfile("vs_3_0");
         case 2:
             if (vs2x)
-                mGpuProgramManager->_pushSyntaxCode("vs_2_x");
+                mCapabilities->addShaderProfile("vs_2_x");
             if (vs2a)
-                mGpuProgramManager->_pushSyntaxCode("vs_2_a");
+                mCapabilities->addShaderProfile("vs_2_a");
 
-            mGpuProgramManager->_pushSyntaxCode("vs_2_0");
+            mCapabilities->addShaderProfile("vs_2_0");
         case 1:
-            mGpuProgramManager->_pushSyntaxCode("vs_1_1");
+            mCapabilities->addShaderProfile("vs_1_1");
             mCapabilities->setCapability(RSC_VERTEX_PROGRAM);
         }
     }
@@ -1098,27 +1098,27 @@ namespace Ogre
         {
         case 3:
             if (minor > 0)
-                mGpuProgramManager->_pushSyntaxCode("ps_3_x");
+                mCapabilities->addShaderProfile("ps_3_x");
 
-            mGpuProgramManager->_pushSyntaxCode("ps_3_0");
+            mCapabilities->addShaderProfile("ps_3_0");
         case 2:
             if (ps2x)
-                mGpuProgramManager->_pushSyntaxCode("ps_2_x");
+                mCapabilities->addShaderProfile("ps_2_x");
             if (ps2a)
-                mGpuProgramManager->_pushSyntaxCode("ps_2_a");
+                mCapabilities->addShaderProfile("ps_2_a");
             if (ps2b)
-                mGpuProgramManager->_pushSyntaxCode("ps_2_b");
+                mCapabilities->addShaderProfile("ps_2_b");
 
-            mGpuProgramManager->_pushSyntaxCode("ps_2_0");
+            mCapabilities->addShaderProfile("ps_2_0");
         case 1:
             if (major > 1 || minor >= 4)
-                mGpuProgramManager->_pushSyntaxCode("ps_1_4");
+                mCapabilities->addShaderProfile("ps_1_4");
             if (major > 1 || minor >= 3)
-                mGpuProgramManager->_pushSyntaxCode("ps_1_3");
+                mCapabilities->addShaderProfile("ps_1_3");
             if (major > 1 || minor >= 2)
-                mGpuProgramManager->_pushSyntaxCode("ps_1_2");
+                mCapabilities->addShaderProfile("ps_1_2");
             
-            mGpuProgramManager->_pushSyntaxCode("ps_1_1");
+            mCapabilities->addShaderProfile("ps_1_1");
             mCapabilities->setCapability(RSC_FRAGMENT_PROGRAM);
         }
     }
