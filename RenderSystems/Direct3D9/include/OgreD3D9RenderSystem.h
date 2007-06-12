@@ -143,10 +143,14 @@ namespace Ogre
 
 
         /// Internal method for populating the capabilities structure
-        void initCapabilities(void);
+				void RenderSystemCapabilities* createRenderSystemCapabilities();
 
-        void convertVertexShaderCaps(void);
-        void convertPixelShaderCaps(void);
+				/** See RenderSystem definition */
+				virtual void initialiseFromRenderSystemCapabilities(RenderSystemCapabilities* caps, RenderTarget* primary);
+
+
+        void convertVertexShaderCaps(RenderSystemCapabilities* rsc);
+        void convertPixelShaderCaps(RenderSystemCapabilities* rsc);
 		bool checkVertexTextureFormats(void);
 
         unsigned short mCurrentLights;
