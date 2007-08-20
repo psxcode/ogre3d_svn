@@ -41,6 +41,10 @@ Torus Knot Software Ltd.
 #include "OgreException.h"
 #include "OgreAny.h"
 
+#include "OgreAllocWrapper.h"
+#include "OgreAllocator.h"
+#include "OgreSmallAllocPolicy.h"
+
 namespace Ogre {
 
     /** Abstract class defining the interface all renderable objects must implement.
@@ -54,7 +58,7 @@ namespace Ogre {
             classes e.g. entities. Only once it is decided that the specific class is to be rendered is the abstract version
             created (could be more than one per visible object) and pushed onto the rendering queue.
     */
-    class _OgreExport Renderable
+	class _OgreExport Renderable : public AllocWrapper<Allocator<Renderable ,SmallAllocPolicy<Renderable > > >
     {
     public:
 		Renderable() : mPolygonModeOverrideable(true), mUseIdentityProjection(false), mUseIdentityView(false) {}
