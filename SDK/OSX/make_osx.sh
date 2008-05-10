@@ -88,8 +88,8 @@ sed -i -e "s/\.\.\/\.\.\/\.\.\/\.\.\/Samples/..\/..\/..\/Samples/g" sdk_contents
 
 echo Media copied.
 
-#remove CVS files to avoid accidental commit of these copies!
-find sdk_contents -iname CVS  -exec rm -rf \{\} \;
+#remove SVN files to avoid increasing the size of the SDK with duplicates
+find sdk_contents -iname .svn -exec rm -rf \{\} \;
 
 echo Building DMG...
 
