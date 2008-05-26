@@ -230,9 +230,13 @@ namespace Ogre {
 #endif
 			// NVIDIA 175.16 drivers break hardware mip generation
 			// disable until fixed
+			// However DON'T do this on Apple, their drivers aren't subject to this
+			// problem yet and in fact software generation appears to cause a crash 
+			// in some cases which I've yet to track down
+#if OGRE_PLATFORM != OGRE_PLATFORM_APPLE
 			if (mGLSupport->getGLVendor().find("NVIDIA") != std::string::npos)
-				disableAutoMip = true;
-
+				disableAutoMip = true
+#endif
 			if (!disableAutoMip)				
 				mCapabilities->setCapability(RSC_AUTOMIPMAP);
         }
