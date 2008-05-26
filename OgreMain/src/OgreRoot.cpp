@@ -67,6 +67,7 @@ Torus Knot Software Ltd.
 #include "OgreRenderQueueInvocation.h"
 #include "OgrePlatformInformation.h"
 #include "OgreConvexBody.h"
+#include "OgreDistanceLodStrategy.h"
 	
 #if OGRE_NO_FREEIMAGE == 0
 #include "OgreFreeImageCodec.h"
@@ -185,6 +186,11 @@ namespace Ogre {
         mOverlayManager->addOverlayElementFactory(mTextAreaFactory);
         // Font manager
         mFontManager = new FontManager();
+
+        // Lod strategy manager
+        mLodStrategyManager = new LodStrategyManager();
+        // Add default (distance) strategy
+        mLodStrategyManager->addStrategy(new DistanceLodStrategy());
 
 #if OGRE_PROFILING
         // Profiler

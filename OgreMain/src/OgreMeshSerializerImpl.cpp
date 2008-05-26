@@ -44,6 +44,7 @@ Torus Knot Software Ltd.
 #include "OgreAnimationTrack.h"
 #include "OgreKeyFrame.h"
 #include "OgreRoot.h"
+#include "OgreLodStrategyManager.h"
 
 #if OGRE_COMPILER == OGRE_COMPILER_MSVC
 // Disable conversion warnings, we do a lot of them, intentionally
@@ -60,7 +61,7 @@ namespace Ogre {
     {
 
         // Version number
-        mVersion = "[MeshSerializer_v1.40]";
+        mVersion = "[MeshSerializer_v1.41]";
     }
     //---------------------------------------------------------------------
     MeshSerializerImpl::~MeshSerializerImpl()
@@ -1207,7 +1208,7 @@ namespace Ogre {
         size += manualSize;
 
         writeChunkHeader(M_MESH_LOD_USAGE, size);
-        writeFloats(&(usage.fromDepthSquared), 1);
+        writeFloats(&(usage.value), 1);
 
         writeChunkHeader(M_MESH_LOD_MANUAL, manualSize);
         writeString(usage.manualName);
@@ -1252,7 +1253,7 @@ namespace Ogre {
 		}
 
         writeChunkHeader(M_MESH_LOD_USAGE, size);
-        writeFloats(&(usage.fromDepthSquared), 1);
+        writeFloats(&(usage.value), 1);
 
 		// Now write sections
         // Calc generated SubMesh sections size
@@ -1353,6 +1354,11 @@ namespace Ogre {
 	{
 		unsigned short streamID, i;
 
+        // Read the strategy to be used for this mesh
+        String strategyName = readString(stream);
+        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy(strategyName);
+        pMesh->setLodStrategy(strategy);
+
         // unsigned short numLevels;
 		readShorts(stream, &(pMesh->mNumLods), 1);
         // bool manual;  (true for manual alternate meshes, false for generated)
@@ -1381,7 +1387,7 @@ namespace Ogre {
 			}
 			// Read depth
 			MeshLodUsage usage;
-			readFloats(stream, &(usage.fromDepthSquared), 1);
+			readFloats(stream, &(usage.value), 1);
 
 			if (pMesh->isLodManual())
 			{
@@ -2443,6 +2449,73 @@ namespace Ogre {
 				stream->skip(-STREAM_OVERHEAD_SIZE);
 			}
 		}
+
+	}
+    //---------------------------------------------------------------------
+    //---------------------------------------------------------------------
+    //---------------------------------------------------------------------
+    MeshSerializerImpl_v1_4::MeshSerializerImpl_v1_4()
+    {
+        // Version number
+        mVersion = "[MeshSerializer_v1.40]";
+    }
+    //---------------------------------------------------------------------
+    MeshSerializerImpl_v1_4::~MeshSerializerImpl_v1_4()
+    {
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl_v1_4::readMeshLodInfo(DataStreamPtr& stream, Mesh* pMesh)
+    {
+        unsigned short streamID, i;
+
+        // Use the old strategy for this mesh
+        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy("Distance");
+        pMesh->setLodStrategy(strategy);
+
+        // unsigned short numLevels;
+        readShorts(stream, &(pMesh->mNumLods), 1);
+        // bool manual;  (true for manual alternate meshes, false for generated)
+        readBools(stream, &(pMesh->mIsLodManual), 1);
+
+        // Preallocate submesh lod face data if not manual
+        if (!pMesh->mIsLodManual)
+        {
+            unsigned short numsubs = pMesh->getNumSubMeshes();
+            for (i = 0; i < numsubs; ++i)
+            {
+                SubMesh* sm = pMesh->getSubMesh(i);
+                sm->mLodFaceList.resize(pMesh->mNumLods-1);
+            }
+        }
+
+        // Loop from 1 rather than 0 (full detail index is not in file)
+        for (i = 1; i < pMesh->mNumLods; ++i)
+        {
+            streamID = readChunk(stream);
+            if (streamID != M_MESH_LOD_USAGE)
+            {
+                OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
+                    "Missing M_MESH_LOD_USAGE stream in " + pMesh->getName(),
+                    "MeshSerializerImpl::readMeshLodInfo");
+            }
+            // Read depth
+            MeshLodUsage usage;
+            readFloats(stream, &(usage.value), 1);
+
+            if (pMesh->isLodManual())
+            {
+                readMeshLodUsageManual(stream, pMesh, i, usage);
+            }
+            else //(!pMesh->isLodManual)
+            {
+                readMeshLodUsageGenerated(stream, pMesh, i, usage);
+            }
+            usage.edgeData = NULL;
+
+            // Save usage
+            pMesh->mMeshLodUsageList.push_back(usage);
+        }
+
 
 	}
     //---------------------------------------------------------------------

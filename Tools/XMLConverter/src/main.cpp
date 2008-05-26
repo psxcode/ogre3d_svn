@@ -555,7 +555,7 @@ void XMLToBinary(XmlOptions opts)
             unsigned short numLod;
             ProgressiveMesh::VertexReductionQuota quota;
             Real reduction;
-            Mesh::LodDistanceList distanceList;
+            Mesh::LodValueList distanceList;
 
             if (askLodDtls)
             {
@@ -611,7 +611,8 @@ void XMLToBinary(XmlOptions opts)
                 for (unsigned short iLod = 0; iLod < numLod; ++iLod)
                 {
                     currDist += opts.lodDist;
-                    distanceList.push_back(currDist);
+                    Real currDistSq = Ogre::Math::Sqr(currDist);
+                    distanceList.push_back(currDistSq);
                 }
 
             }

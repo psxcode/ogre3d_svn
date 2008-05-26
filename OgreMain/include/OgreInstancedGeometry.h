@@ -36,6 +36,7 @@ Torus Knot Software Ltd.
 #include "OgreSkeletonInstance.h"
 #include "OgreAnimationTrack.h"
 #include "OgreBone.h"
+#include "OgreMesh.h"
 
 namespace Ogre {
 
@@ -433,8 +434,8 @@ namespace Ogre {
 
 			ObjectsMap mInstancesMap;
 		public:
-			/// LOD distances (squared) as built up - use the max at each level
-			std::vector<Real> mLodSquaredDistances;
+			/// Lod values as built up - use the max at each level
+			Mesh::LodValueList mLodValues;
 			/// Local AABB relative to BatchInstance centre
 			AxisAlignedBox mAABB;
 			/// Local bounding radius

@@ -696,7 +696,7 @@ namespace Ogre {
 		mCurrentLod(0), mEdgeList(0), mVertexProgramInUse(false)
 	{
 		// First LOD mandatory, and always from 0
-		mLodSquaredDistances.push_back(0.0f);
+		mLodValues.push_back(0.0f);
 	}
 	//--------------------------------------------------------------------------
 	StaticGeometry::Region::~Region()
@@ -739,17 +739,17 @@ namespace Ogre {
 		ushort lodLevels = qmesh->submesh->parent->getNumLodLevels();
 		assert(qmesh->geometryLodList->size() == lodLevels);
 
-		while(mLodSquaredDistances.size() < lodLevels)
+		while(mLodValues.size() < lodLevels)
 		{
-			mLodSquaredDistances.push_back(0.0f);
+			mLodValues.push_back(0.0f);
 		}
 		// Make sure LOD levels are max of all at the requested level
 		for (ushort lod = 1; lod < lodLevels; ++lod)
 		{
 			const MeshLodUsage& meshLod =
 				qmesh->submesh->parent->getLodLevel(lod);
-			mLodSquaredDistances[lod] = std::max(mLodSquaredDistances[lod],
-				meshLod.fromDepthSquared);
+			mLodValues[lod] = std::max(mLodValues[lod],
+				meshLod.value);
 		}
 
 		// update bounds
@@ -771,10 +771,10 @@ namespace Ogre {
 		mNode->attachObject(this);
 		// We need to create enough LOD buckets to deal with the highest LOD
 		// we encountered in all the meshes queued
-		for (ushort lod = 0; lod < mLodSquaredDistances.size(); ++lod)
+		for (ushort lod = 0; lod < mLodValues.size(); ++lod)
 		{
 			LODBucket* lodBucket =
-				new LODBucket(this, lod, mLodSquaredDistances[lod]);
+				new LODBucket(this, lod, mLodValues[lod]);
 			mLodBucketList.push_back(lodBucket);
 			// Now iterate over the meshes and assign to LODs
 			// LOD bucket will pick the right LOD to use
@@ -873,10 +873,10 @@ namespace Ogre {
 		mCamDistanceSquared = std::max(static_cast<Real>(0.0), mCamDistanceSquared);
 
 		// Determine active lod
-		mCurrentLod = static_cast<ushort>(mLodSquaredDistances.size() - 1);
-		for (ushort i = 0; i < mLodSquaredDistances.size(); ++i)
+		mCurrentLod = static_cast<ushort>(mLodValues.size() - 1);
+		for (ushort i = 0; i < mLodValues.size(); ++i)
 		{
-			if (mLodSquaredDistances[i] > mCamDistanceSquared)
+			if (mLodValues[i] > mCamDistanceSquared)
 			{
 				mCurrentLod = i - 1;
 				break;

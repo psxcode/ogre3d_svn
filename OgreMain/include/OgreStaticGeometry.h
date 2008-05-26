@@ -32,6 +32,7 @@ Torus Knot Software Ltd.
 #include "OgrePrerequisites.h"
 #include "OgreMovableObject.h"
 #include "OgreRenderable.h"
+#include "OgreMesh.h"
 
 namespace Ogre {
 
@@ -384,8 +385,8 @@ namespace Ogre {
 			uint32 mRegionID;
 			/// Center of the region
 			Vector3 mCentre;
-			/// LOD distances (squared) as built up - use the max at each level
-			std::vector<Real> mLodSquaredDistances;
+			/// Lod values as built up - use the max at each level
+			Mesh::LodValueList mLodValues;
 			/// Local AABB relative to region centre
 			AxisAlignedBox mAABB;
 			/// Local bounding radius

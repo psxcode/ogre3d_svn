@@ -734,7 +734,8 @@ namespace Ogre {
 		void visitRenderables(Renderable::Visitor* visitor, 
 			bool debugRenderables = false);
 
-
+        /** Get the inverse of the mesh lod factor. */
+        Real _getMeshLodFactorInverse() const;
 
 
 	};

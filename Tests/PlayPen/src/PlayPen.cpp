@@ -2114,8 +2114,8 @@ protected:
 		MeshPtr msh1 = (MeshPtr)MeshManager::getSingleton().load("robot.mesh", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
-		msh1->createManualLodLevel(200, "razor.mesh");
-		msh1->createManualLodLevel(500, "sphere.mesh");
+        msh1->createManualLodLevel(Math::Sqr(200), "razor.mesh");
+		msh1->createManualLodLevel(Math::Sqr(500), "sphere.mesh");
 
 		Entity *ent;
 		for (int i = 0; i < 5; ++i)
@@ -2194,13 +2194,13 @@ protected:
 
 		msh1->removeLodLevels();
 
-		Mesh::LodDistanceList lodList;
-		lodList.push_back(50);
-		lodList.push_back(100);
-		lodList.push_back(150);
-		lodList.push_back(200);
-		lodList.push_back(250);
-		lodList.push_back(300);
+		Mesh::LodValueList lodList;
+        lodList.push_back(Math::Sqr(50));
+		lodList.push_back(Math::Sqr(100));
+		lodList.push_back(Math::Sqr(150));
+		lodList.push_back(Math::Sqr(200));
+		lodList.push_back(Math::Sqr(250));
+		lodList.push_back(Math::Sqr(300));
 
 		msh1->generateLodLevels(lodList, ProgressiveMesh::VRQ_PROPORTIONAL, 0.3);
 

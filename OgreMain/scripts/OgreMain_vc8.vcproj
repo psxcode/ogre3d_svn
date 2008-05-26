@@ -520,6 +520,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreDistanceLodStrategy.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreDynLib.cpp"
 				>
 			</File>
@@ -629,6 +633,14 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreLight.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreLodStrategy.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreLodStrategyManager.cpp"
 				>
 			</File>
 			<File
@@ -1309,6 +1321,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreDistanceLodStrategy.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreDynLib.h"
 				>
 			</File>
@@ -1438,6 +1454,14 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreLight.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreLodStrategy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreLodStrategyManager.h"
 				>
 			</File>
 			<File

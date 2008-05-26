@@ -52,6 +52,7 @@ Torus Knot Software Ltd.
 #include "OgreAlignedAllocator.h"
 #include "OgreOptimisedUtil.h"
 #include "OgreSceneNode.h"
+#include "OgreLodStrategy.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -369,15 +370,10 @@ namespace Ogre {
         // Calculate the LOD
         if (mParentNode)
         {
-            Real squaredDepth = mParentNode->getSquaredViewDepth(cam);
-
-            // Do Mesh LOD
-            // Adjust this depth by the entity bias factor
-            Real tmp = squaredDepth * mMeshLodFactorInv;
-            // Now adjust it by the camera bias
-            tmp = tmp * cam->_getLodBiasInverse();
+            // Get the appropriate lod value
+            Real lodValue = mMesh->getLodStrategy()->getValue(this, cam);
             // Get the index at this biased depth
-            mMeshLodIndex = mMesh->getLodIndexSquaredDepth(tmp);
+            mMeshLodIndex = mMesh->getLodIndex(lodValue);
             // Apply maximum detail restriction (remember lower = higher detail)
             mMeshLodIndex = std::max(mMaxMeshLodIndex, mMeshLodIndex);
             // Apply minimum detail restriction (remember higher = lower detail)
@@ -385,7 +381,7 @@ namespace Ogre {
 
             // Now do material LOD
             // Adjust this depth by the entity bias factor
-            tmp = squaredDepth * mMaterialLodFactorInv;
+            Real tmp = mParentNode->getSquaredViewDepth(cam) * mMaterialLodFactorInv;
             // Now adjust it by the camera bias
             tmp = tmp * cam->_getLodBiasInverse();
             SubEntityList::iterator i, iend;
@@ -1499,6 +1495,11 @@ namespace Ogre {
         {
             mFrameAnimationLastUpdated = mAnimationState->getDirtyFrameNumber() - 1;
         }
+    }
+    //-----------------------------------------------------------------------
+    Real Entity::_getMeshLodFactorInverse() const
+    {
+        return mMeshLodFactorInv;
     }
     //-----------------------------------------------------------------------
     ShadowCaster::ShadowRenderableListIterator
