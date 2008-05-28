@@ -195,7 +195,7 @@ namespace Ogre {
 
 			btmp -> setPosition(pos);
 			quat.FromAngleAxis(angle,axis);
-			btmp -> setOrientation(quat) ;
+			btmp -> setOrientation(quat) ;  //here convert readable angle and axis format in XML to quaternion format in .skeleton  in binary file format
             btmp -> setScale(scale);
 
         } // bones
@@ -549,6 +549,27 @@ namespace Ogre {
         }
 
     }
+
+	//westine
+	void XMLSkeletonSerializer::addAnimation(TiXmlElement* animsNode, const Animation* anim)
+	{
+		TiXmlElement* animNode = 
+			animsNode->InsertEndChild(TiXmlElement("animation"))->ToElement();
+
+		animNode->SetAttribute("name", anim->getName());
+		animNode->SetAttribute("length", StringConverter::toString(anim->getLength()));
+
+		// Write all tracks
+		TiXmlElement* tracksNode = 
+			animNode->InsertEndChild(TiXmlElement("tracks"))->ToElement();
+
+		Animation::NodeTrackIterator trackIt = anim->getNodeTrackIterator();
+		while (trackIt.hasMoreElements())
+		{
+			writeAnimationTrack(tracksNode, trackIt.getNext());
+		}
+	}
+
     //---------------------------------------------------------------------
     void XMLSkeletonSerializer::writeAnimationTrack(TiXmlElement* tracksNode, 
         const NodeAnimationTrack* track)
