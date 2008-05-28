@@ -35,6 +35,7 @@ Torus Knot Software Ltd.
 #include "OgreSkeletonSerializer.h"
 #include "OgreXMLPrerequisites.h"
 #include "OgreDefaultHardwareBufferManager.h"
+#include "Bvh.h"
 #include <iostream>
 #include <sys/stat.h>
 
@@ -48,6 +49,9 @@ struct XmlOptions
     String sourceExt;
     String destExt;
     String logFile;
+	//westine 2008-05-27
+	String bvhfile;
+
     bool interactiveMode;
     unsigned short numLods;
     Real lodDist;
@@ -97,6 +101,8 @@ void help(void)
 	cout << "-x num         = Generate no more than num eXtremes for every submesh (default 0)" << endl;
 	cout << "-q             = Quiet mode, less output" << endl;
     cout << "-log filename  = name of the log file (default: 'OgreXMLConverter.log')" << endl;
+	//westine
+	cout << "-addanimation filename = name of the bvh mocap file" << endl;
     cout << "sourcefile     = name of file to convert" << endl;
     cout << "destfile       = optional name of file to write to. If you don't" << endl;
     cout << "                 specify this OGRE works it out through the extension " << endl;
@@ -155,6 +161,8 @@ XmlOptions parseArgs(int numArgs, char **args)
     binOpt["-E"] = "";
     binOpt["-x"] = "";
     binOpt["-log"] = "OgreXMLConverter.log";
+	//westine 2008-05-27
+	binOpt["-addanimation"] = "";
 	binOpt["-td"] = "";
 	binOpt["-ts"] = "";
 
@@ -262,6 +270,14 @@ XmlOptions parseArgs(int numArgs, char **args)
         {
             opts.logFile = bi->second;
         }
+
+		//westine 2008-05-27
+		bi = binOpt.find("-addanimation");
+		if (!bi->second.empty())
+		{
+			opts.bvhfile = bi->second;
+		}
+		
 
         bi = binOpt.find("-E");
         if (!bi->second.empty())
@@ -389,6 +405,7 @@ XMLSkeletonSerializer* xmlSkeletonSerializer = 0;
 DefaultHardwareBufferManager *bufferManager = 0;
 MeshManager* meshMgr = 0;
 ResourceGroupManager* rgm = 0;
+Bvh* bvh = 0;
 
 
 void meshToXML(XmlOptions opts)
@@ -412,6 +429,49 @@ void meshToXML(XmlOptions opts)
     meshSerializer->importMesh(stream, mesh.getPointer());
    
     xmlMeshSerializer->exportMesh(mesh.getPointer(), opts.dest);
+
+}
+
+//westine  add bvh mocap animation into .skeleton.xml
+void AddAnimation(XmlOptions opts)
+{
+	Animation * anim ;
+	NodeAnimationTrack * track ;
+	String response;
+	TiXmlDocument* doc = new TiXmlDocument(opts.source);
+	// Some double-parsing here but never mind
+	if (!doc->LoadFile())
+	{
+		cout << "Unable to open file " << opts.source << " - fatal error." << endl;
+		delete doc;
+		exit (1);
+	}
+	TiXmlElement* elem; 
+	TiXmlElement* rootElem = doc->RootElement();
+	if ( !stricmp(rootElem->Value(),"skeleton") )
+	{
+		delete doc;
+		bvh = new Bvh(opts.bvhfile);
+		SkeletonPtr newSkel = SkeletonManager::getSingleton().create("conversion", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		xmlSkeletonSerializer->importSkeleton(opts.source, newSkel.getPointer());
+		/*
+		if (opts.optimiseAnimations)
+		{
+			newSkel->optimiseAllAnimations();
+		}*/
+		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
+		anim = newSkel->createAnimation(opts.bvhfile,Ogre::Real(bvh->FrameDuration()*bvh->FrameNum()));
+		anim->setInterpolationMode(Animation::IM_LINEAR) ;
+		elem = rootElem->FirstChildElement("animations");
+		xmlSkeletonSerializer->addAnimation(elem,anim);
+		
+		xmlSkeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
+	}
+	else
+	{
+		delete doc;
+	}
 
 }
 
@@ -805,6 +865,11 @@ int main(int numargs, char** args)
 		{
 			XMLToBinary(opts);
 		}
+		else if ( !opts.bvhfile.empty() )
+		{
+			AddAnimation(opts);
+		}
+		
 		else
 		{
 			cout << "Unknown input type.\n";
