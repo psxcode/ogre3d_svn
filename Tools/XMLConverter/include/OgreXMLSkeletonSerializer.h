@@ -62,6 +62,8 @@ namespace Ogre {
 
         /** Exports a skeleton to the named XML file. */
         void exportSkeleton(const Skeleton* pSkeleton, const String& filename);
+		//westine
+		void addAnimation(TiXmlElement* animsNode, const Animation* anim);
 
     private:
         // State for export
@@ -73,6 +75,8 @@ namespace Ogre {
         void writeBone(TiXmlElement* bonesElement, const Bone* pBone);
         void writeBoneParent(TiXmlElement* boneHierarchyNode, String boneName , String parentName);
         void writeAnimation(TiXmlElement* animsNode, const Animation* anim);
+		
+
         void writeAnimationTrack(TiXmlElement* tracksNode, 
 			const NodeAnimationTrack* track);
         void writeKeyFrame(TiXmlElement* keysNode, const TransformKeyFrame* key);
