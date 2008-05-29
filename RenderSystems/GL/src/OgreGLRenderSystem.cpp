@@ -235,7 +235,7 @@ namespace Ogre {
 			// in some cases which I've yet to track down
 #if OGRE_PLATFORM != OGRE_PLATFORM_APPLE
 			if (mGLSupport->getGLVendor().find("NVIDIA") != std::string::npos)
-				disableAutoMip = true
+				disableAutoMip = true;
 #endif
 			if (!disableAutoMip)				
 				mCapabilities->setCapability(RSC_AUTOMIPMAP);
