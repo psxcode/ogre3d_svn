@@ -1,14 +1,18 @@
 
 #include "Bvh.h"
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <stack>
-#include <strstream>
-#include <sstream>
+//#include <strstream>  this is for char* stringstream
+
 #include "OgrePrerequisites.h"
 
+Bvh::~Bvh()
+{
+}
 
-Bvh::Bvh(const std::string &filename)
+Bvh::Bvh(const std::string &filename):m_AnimName(filename)
 {
 	std::ifstream ifs;
 	int ChannelSum;
@@ -20,42 +24,37 @@ Bvh::Bvh(const std::string &filename)
 	}
 
 	std::stack<BVH_Node*> hierarchy;
-	char line[256];
+	std::string line;
 
 	std::getline(ifs,line);
 	std::stringstream ss(line);
 	std::string str;
-	str << ss;
+	ss >> str;
 	if ( !strcmp(str.c_str(),"HIERARCHY"))
 	{
 		ChannelSum = ReadHierarchy(ifs,hierarchy,false,ss);
 	}
+	//because "MOTION" has already been read in ReadHierarchy()
 	std::getline(ifs,line);
-	str.clear();
+	ss.clear();
 	ss.str(line);
-	str << ss;
-	if ( !strcmp(str.c_str(),"MOTION"))
+	ss >> str;
+	if ( !strcmp(str.c_str(),"Frames:"))
 	{
 		
+		ss >> m_FrameNum ;
+	
 		std::getline(ifs,line);
-		str.clear();
+		ss.clear();
 		ss.str(line);
-		str << ss;
-		if ( !strcmp(str.c_str(),"Frames:"))
-		{
-			m_FrameNum << ss;
-		}
-		std::getline(ifs,line);
-		str.clear();
-		ss.str(line);
-		str << ss;
+		ss >> str;
 		if ( !strcmp(str.c_str(),"Frame"))
 		{
 			str.clear();
-			str << ss;
-			if ( !strcmp(str.c_str(),"Time:")
+			ss >> str;
+			if ( !strcmp(str.c_str(),"Time:") )
 			{
-				m_FrameDuration << ss;
+				ss >> m_FrameDuration ;
 			}
 		}
 
@@ -63,48 +62,52 @@ Bvh::Bvh(const std::string &filename)
 		int FrameNum = 0;
 		while ( !ifs.eof() )
 		{
-			
 			std::getline(ifs,line);
-			str.clear();
+			if ( !strcmp(line.c_str(),""))
+				break;
+			ss.clear();
 			ss.str(line);
 			Ogre::Real channelValue;
 
 			for ( int i = 0; i < ChannelSum; i++)
 			{
-			channelValue << ss;
+			ss >> channelValue ;
 			m_Motion[FrameNum].push_back(channelValue);	 
 			}
+			FrameNum++;
 		}
 	}
+	ifs.close();
 }
 
 
-int Bvh::ReadHierarchy(const ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bool bLineReady, std::stringstream& preSs )
+int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bool bLineReady, std::stringstream& preSs)
 {
 
 	static int ChannelSum = 0;
-	char line[256];
+	std::string line;
 	std::stringstream ss;
 	if ( bLineReady == true )
 	{
-		ss = preSs;
+		ss.str(preSs.str());
 	}else
 	{
 		std::getline(ifs,line);
 		ss.str(line);
 	}
 	std::string str;
-	str << ss;
+	ss >> str;
 	
 	BVH_Node* pBN = new BVH_Node;
 	if ( !strcmp(str.c_str(),"ROOT"))
 	{
-		str << ss;
+		ss >> str;
 		pBN->name = str;
-		pBN->pParent NULL;
+		pBN->pParent = NULL;
+		m_ChannelMap.push_back(ChannelSum);
 	}else if ( !strcmp(str.c_str(),"JOINT"))
 	{
-		str << ss;
+		ss >> str;
 		pBN->name = str;
 		pBN->pParent = static_cast<BVH_Node*>(hierarchy.top());
 
@@ -118,7 +121,7 @@ int Bvh::ReadHierarchy(const ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bo
 	std::getline(ifs,line);
 	ss.clear();
 	ss.str(line);
-	str << ss;
+	ss >> str;
 	if ( !strcmp(str.c_str(),"{"))
 	{
 		hierarchy.push(pBN);
@@ -127,26 +130,27 @@ int Bvh::ReadHierarchy(const ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bo
 	std::getline(ifs,line);
 	ss.clear();
 	ss.str(line);
-	str << ss;
+	ss >> str;
 	if ( !strcmp(str.c_str(),"OFFSET"))
 	{
-		pBN->offset.x << ss;
-		pBN->offset.y << ss;
-		pBN->offset.z << ss;
+		ss >> pBN->offset.x;
+		ss >> pBN->offset.y;
+		ss >> pBN->offset.z;
 	}
 
 	
 	std::getline(ifs,line);
 	ss.clear();
 	ss.str(line);
-	str << ss;
+	ss >> str;
 
 	if ( !strcmp(str.c_str(),"CHANNELS"))
 	{
 		int ChannelNum;
-		ChannelNum << ss;
+		ss >> ChannelNum;
 		if ( ChannelNum == 6)
 		{
+			m_ChannelMap.push_back(ChannelSum);
 			pBN->pPChannel = new PositionChannel;
 			ChannelSum += 3;
 			pBN->pPChannel->Xposition = 0;
@@ -159,6 +163,7 @@ int Bvh::ReadHierarchy(const ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bo
 			pBN->pRChannel->Zrotation = 0;
 		}else if ( ChannelNum == 3)
 		{
+			m_ChannelMap.push_back(ChannelSum);
 			pBN->pPChannel = NULL;
 			pBN->pRChannel = new RotationChannel;
 			ChannelSum += 3;
@@ -166,20 +171,43 @@ int Bvh::ReadHierarchy(const ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bo
 			pBN->pRChannel->Yrotation = 0;
 			pBN->pRChannel->Zrotation = 0;
 		}
-		ReadHierarchy(ifs,hierarchy,false,ss);
+		return ReadHierarchy(ifs,hierarchy,false,ss);
 
-	}else 
+	}else {
 	    while( !strcmp(str.c_str(),"}"))
 	{
 		hierarchy.pop();
 		std::getline(ifs,line);
 		ss.clear();
 		ss.str(line);
-		str << ss;
+		ss >> str;
 	}
-		ss.clear();
-		ss.str(line);
-		ReadHierarchy(ifs,hierarchy,true,ss);
+		if ( !strcmp(str.c_str(),"JOINT"))
+		{
+			ss.clear();
+			ss.str(line);
+			return ReadHierarchy(ifs,hierarchy,true,ss);
+		}
+		else// "MOTION" has been read here
+        return ChannelSum;
+	}
+}
 
-   return ChannelSum;
+void Bvh::LogBoneHierarchy()
+{
+	std::ofstream ofs;
+	
+	ofs.open(std::string(m_AnimName+"_bonetable").c_str(), std::ios_base::out);
+	if (ofs.bad())
+	{
+		std::cout << "Unable to create file " << m_AnimName << std::endl;
+		exit(1);
+	}
+
+	for ( Bvh_Hierarchy::size_type i = 0; i < m_Hierarchy.size(); i++)
+	{
+		ofs<<"bone id = \""<< i << "\" name = \""<<m_Hierarchy[i]->name<<"\""<<std::endl;
+	}
+	ofs.close();
+
 }
