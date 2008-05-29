@@ -35,6 +35,7 @@ Torus Knot Software Ltd.
 #include "OgreSkeletonSerializer.h"
 #include "OgreXMLPrerequisites.h"
 #include "OgreDefaultHardwareBufferManager.h"
+#include "OgreQuaternion.h"
 #include "Bvh.h"
 #include <iostream>
 #include <sys/stat.h>
@@ -436,7 +437,6 @@ void meshToXML(XmlOptions opts)
 void AddAnimation(XmlOptions opts)
 {
 	Animation * anim ;
-	NodeAnimationTrack * track ;
 	String response;
 	TiXmlDocument* doc = new TiXmlDocument(opts.source);
 	// Some double-parsing here but never mind
@@ -452,6 +452,8 @@ void AddAnimation(XmlOptions opts)
 	{
 		delete doc;
 		bvh = new Bvh(opts.bvhfile);
+		Bvh::Bvh_Hierarchy::size_type BoneNum = bvh->GetHierarchy().size();
+
 		SkeletonPtr newSkel = SkeletonManager::getSingleton().create("conversion", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 		xmlSkeletonSerializer->importSkeleton(opts.source, newSkel.getPointer());
@@ -463,6 +465,48 @@ void AddAnimation(XmlOptions opts)
 		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
 		anim = newSkel->createAnimation(opts.bvhfile,Ogre::Real(bvh->FrameDuration()*bvh->FrameNum()));
 		anim->setInterpolationMode(Animation::IM_LINEAR) ;
+		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
+
+        ushort handle;
+		// create track for each bone from bvh
+		for (handle = 0; handle < BoneNum; ++handle)
+		{
+
+				
+				NodeAnimationTrack* pTrack = anim->createNodeTrack(handle,newSkel->getBone(handle));
+				
+				//pTrack->setUseShortestRotationPath(true);
+
+				int numKeyFrames = bvh->FrameNum();
+				for (ushort k = 0; k < numKeyFrames; ++k)
+				{
+					
+					TransformKeyFrame* pKeyFrame = pTrack->createNodeKeyFrame(bvh->FrameDuration()*k);
+
+					const Bvh::Bvh_Motion& motiondata = bvh->MotionData();
+					if ( handle == 0)
+					{
+						Ogre::Vector3 trans(motiondata[k][0],motiondata[k][1],motiondata[k][2]);
+						pKeyFrame->setTranslate(trans);
+					}else
+					{
+						Ogre::Vector3 trans(0,0,0);
+						pKeyFrame->setTranslate(trans);
+					}
+
+					Ogre::Quaternion qu;
+					ushort ChannelIndex = bvh->GetChannelMap()[handle];
+					Ogre::Vector3 euler(motiondata[k][ChannelIndex],motiondata[k][ChannelIndex+1],
+						motiondata[k][ChannelIndex+2]);
+					qu.MakeFromEuler(euler);
+
+						pKeyFrame->setRotation(qu);
+				
+				}
+			
+		}
+	
+
 		elem = rootElem->FirstChildElement("animations");
 		xmlSkeletonSerializer->addAnimation(elem,anim);
 		
