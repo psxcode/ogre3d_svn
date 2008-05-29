@@ -452,6 +452,7 @@ void AddAnimation(XmlOptions opts)
 	{
 		delete doc;
 		bvh = new Bvh(opts.bvhfile);
+		bvh->LogBoneHierarchy();
 		Bvh::Bvh_Hierarchy::size_type BoneNum = bvh->GetHierarchy().size();
 
 		SkeletonPtr newSkel = SkeletonManager::getSingleton().create("conversion", 
@@ -896,8 +897,11 @@ int main(int numargs, char** args)
 		bufferManager = new DefaultHardwareBufferManager(); // needed because we don't have a rendersystem
 
 
-
-		if (opts.sourceExt == "mesh")
+		if ( !opts.bvhfile.empty() )
+		{
+			AddAnimation(opts);
+		}
+		else if (opts.sourceExt == "mesh")
 		{
 			meshToXML(opts);
 		}
@@ -909,11 +913,6 @@ int main(int numargs, char** args)
 		{
 			XMLToBinary(opts);
 		}
-		else if ( !opts.bvhfile.empty() )
-		{
-			AddAnimation(opts);
-		}
-		
 		else
 		{
 			cout << "Unknown input type.\n";
