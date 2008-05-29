@@ -50,6 +50,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
+				ShowIncludes="false"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -196,6 +197,10 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
+				RelativePath="..\src\Bvh.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\main.cpp"
 				>
 				<FileConfiguration
@@ -236,6 +241,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
+			<File
+				RelativePath="..\include\Bvh.h"
+				>
+			</File>
 			<File
 				RelativePath="..\include\OgreXMLMeshSerializer.h"
 				>
