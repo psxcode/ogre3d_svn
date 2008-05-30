@@ -30,7 +30,10 @@ Lucas Westine
 		Bvh();
 	public:
 
-		
+		enum BoneMapping
+		{
+			NON_BONE_ID = -1
+		};
 		typedef struct	
 		{
 			Ogre::Real Xposition;
@@ -84,8 +87,10 @@ Lucas Westine
 		const Bvh_Motion&   MotionData() const { return m_Motion; }    
 		const ChannelMap&   GetChannelMap() const { return m_ChannelMap; }
 		const Bvh_Hierarchy&  GetHierarchy() const { return m_Hierarchy; }
+		const Bone_Map&  GetBoneMap() const { return m_BoneMap; }
 		void  LoadBoneMap();
 		void LogBoneHierarchy();
+		bool IsBoneMapping() const { return m_bIsBoneMapping; }
 	protected:	
 		Bvh_Hierarchy m_Hierarchy;
 		int           m_FrameNum;
@@ -95,6 +100,8 @@ Lucas Westine
 		std::string   m_AnimName;
 		Bone_Map      m_BoneMap;
 		bool          m_bIsBoneMapping;
+		// because there end_effector in bvh, the m_Hierarchy.size() is larger than or equal to the joint num in bvh 
+		int           m_BoneNum;   
 	};
 
 
