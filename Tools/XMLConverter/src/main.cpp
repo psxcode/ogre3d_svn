@@ -468,13 +468,18 @@ void AddAnimation(XmlOptions opts)
 		anim->setInterpolationMode(Animation::IM_LINEAR) ;
 		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
 
-        ushort handle;
+        ushort handle,SkeletonHandle;
 		// create track for each bone from bvh
 		for (handle = 0; handle < BoneNum; ++handle)
 		{
 
+				//here do the bone mapping between bvh and skeleton if boneMap is loaded
+			    if( bvh->IsBoneMapping() )
+					SkeletonHandle =(bvh->GetBoneMap()[handle])->pSkeleton_part->id;
+				if ( SkeletonHandle == Bvh::NON_BONE_ID)
+				continue;
 				
-				NodeAnimationTrack* pTrack = anim->createNodeTrack(handle,newSkel->getBone(handle));
+				NodeAnimationTrack* pTrack = anim->createNodeTrack(SkeletonHandle,newSkel->getBone(SkeletonHandle));
 				
 				//pTrack->setUseShortestRotationPath(true);
 

@@ -12,7 +12,7 @@ Bvh::~Bvh()
 {
 }
 
-Bvh::Bvh(const std::string &filename):m_AnimName(filename)
+Bvh::Bvh(const std::string &filename):m_AnimName(filename),m_BoneNum(0)
 {
 	std::ifstream ifs;
 	int ChannelSum;
@@ -89,7 +89,7 @@ void Bvh::LoadBoneMap()
 	std::ifstream iBoneMap;
 
 	iBoneMap.open("boneMap.txt", std::ios_base::in);
-	if (iBoneMap.bad())
+	if (iBoneMap.is_open() == false )
 	{
 		std::cout << "Unable to load BoneMap file " << std::endl;
 		m_bIsBoneMapping = false;
@@ -138,6 +138,10 @@ void Bvh::LoadBoneMap()
 		ss >> token; // "
 		ss >> pSkeletonElem->name; // name value
 		ss >> token; // "
+		if ( !strcmp(pSkeletonElem->name.c_str(),"") )
+		{
+			pSkeletonElem->id = NON_BONE_ID;
+		}
 		pElem->pBvh_part = pBvhElem;
 		pElem->pSkeleton_part = pSkeletonElem;
 		m_BoneMap.push_back(pElem);
@@ -171,11 +175,13 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 		pBN->name = str;
 		pBN->pParent = NULL;
 		m_ChannelMap.push_back(ChannelSum);
+		m_BoneNum++;
 	}else if ( !strcmp(str.c_str(),"JOINT"))
 	{
 		ss >> str;
 		pBN->name = str;
 		pBN->pParent = static_cast<BVH_Node*>(hierarchy.top());
+		m_BoneNum++;
 
 	}else if ( !strcmp(str.c_str(),"End"))
 	{
