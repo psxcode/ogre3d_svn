@@ -60,6 +60,18 @@ Lucas Westine
 		typedef std::vector<BVH_Node*> Bvh_Hierarchy;
 		typedef std::vector<std::vector<Ogre::Real> > Bvh_Motion ;
 		typedef std::vector<int>  ChannelMap;
+		typedef struct  
+		{
+			int id;
+			std::string name;
+		} Bone_Element;
+		typedef struct
+		{
+			Bone_Element* pBvh_part;
+			Bone_Element* pSkeleton_part;
+		} Bone_Mapping_Element;
+		typedef std::vector<Bone_Mapping_Element*> Bone_Map;
+		
 
 	public:
 		Bvh(const std::string& filename);
@@ -72,6 +84,7 @@ Lucas Westine
 		const Bvh_Motion&   MotionData() const { return m_Motion; }    
 		const ChannelMap&   GetChannelMap() const { return m_ChannelMap; }
 		const Bvh_Hierarchy&  GetHierarchy() const { return m_Hierarchy; }
+		void  LoadBoneMap();
 		void LogBoneHierarchy();
 	protected:	
 		Bvh_Hierarchy m_Hierarchy;
@@ -80,7 +93,8 @@ Lucas Westine
 		Bvh_Motion    m_Motion;
 		ChannelMap    m_ChannelMap;
 		std::string   m_AnimName;
-
+		Bone_Map      m_BoneMap;
+		bool          m_bIsBoneMapping;
 	};
 
 

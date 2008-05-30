@@ -23,6 +23,8 @@ Bvh::Bvh(const std::string &filename):m_AnimName(filename)
 		exit(1);
 	}
 
+	LoadBoneMap();
+
 	std::stack<BVH_Node*> hierarchy;
 	std::string line;
 
@@ -80,6 +82,70 @@ Bvh::Bvh(const std::string &filename):m_AnimName(filename)
 	ifs.close();
 }
 
+
+void Bvh::LoadBoneMap()
+{
+
+	std::ifstream iBoneMap;
+
+	iBoneMap.open("boneMap.txt", std::ios_base::in);
+	if (iBoneMap.bad())
+	{
+		std::cout << "Unable to load BoneMap file " << std::endl;
+		m_bIsBoneMapping = false;
+	}
+	else
+		m_bIsBoneMapping = true;
+
+	std::string line;
+	std::stringstream ss;
+	std::string str;
+	char token;
+	if (m_bIsBoneMapping == true)
+	{
+		while (!iBoneMap.eof())
+		{
+		
+		std::getline(iBoneMap,line);
+		if ( strcmp(line.c_str(),"") == 0 ) //at the end of file there is a an additional blank line 
+		{
+			break;
+		}
+		ss.clear();
+		ss.str(line);
+		Bone_Mapping_Element* pElem = new Bone_Mapping_Element;
+		Bone_Element* pBvhElem = new Bone_Element;
+		Bone_Element* pSkeletonElem = new Bone_Element;
+		ss >> str;  // bvh_bone
+		ss >> str; // id
+		ss >> token; //=
+		ss >> token; //"
+		ss >> pBvhElem->id; // id value
+		ss >> token; //"
+		ss >> str; // name
+		ss >> token; // =
+		ss >> token; // "
+		ss >> pBvhElem->name; // name value
+		ss >> token; // "
+		ss >> str; // skeleton_bone
+		ss >> str; // id
+		ss >> token; // =
+		ss >> token; // "
+		ss >> pSkeletonElem->id; // id value
+		ss >> token; // "
+		ss >> str;  // name
+		ss >> token; // =
+		ss >> token; // "
+		ss >> pSkeletonElem->name; // name value
+		ss >> token; // "
+		pElem->pBvh_part = pBvhElem;
+		pElem->pSkeleton_part = pSkeletonElem;
+		m_BoneMap.push_back(pElem);
+		}
+
+	}
+
+}
 
 int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bool bLineReady, std::stringstream& preSs)
 {
@@ -206,7 +272,7 @@ void Bvh::LogBoneHierarchy()
 
 	for ( Bvh_Hierarchy::size_type i = 0; i < m_Hierarchy.size(); i++)
 	{
-		ofs<<"bone id = \""<< i << "\" name = \""<<m_Hierarchy[i]->name<<"\""<<std::endl;
+		ofs<<"bvh_bone id = \""<< i << "\" name = \""<<m_Hierarchy[i]->name<<"\""<<std::endl;
 	}
 	ofs.close();
 
