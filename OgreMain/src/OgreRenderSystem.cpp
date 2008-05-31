@@ -619,6 +619,9 @@ namespace Ogre {
 
             mVertexProgramBound = true;
 	        break;
+        case GPT_GEOMETRY_PROGRAM:
+			mGeometryProgramBound = true;
+			break;
         case GPT_FRAGMENT_PROGRAM:
             mFragmentProgramBound = true;
 	        break;
@@ -635,6 +638,9 @@ namespace Ogre {
 				mClipPlanesDirty = true;
             mVertexProgramBound = false;
 	        break;
+        case GPT_GEOMETRY_PROGRAM:
+			mGeometryProgramBound = false;
+			break;
         case GPT_FRAGMENT_PROGRAM:
             mFragmentProgramBound = false;
 	        break;

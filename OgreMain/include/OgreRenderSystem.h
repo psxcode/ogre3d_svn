@@ -1253,6 +1253,7 @@ namespace Ogre
 		HardwareOcclusionQueryList mHwOcclusionQueries;
 
 		bool mVertexProgramBound;
+		bool mGeometryProgramBound;
 		bool mFragmentProgramBound;
 
 		// Recording user clip planes

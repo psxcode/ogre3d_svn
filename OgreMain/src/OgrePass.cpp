@@ -1215,7 +1215,7 @@ namespace Ogre {
         {
             if (!mGeometryProgramUsage)
             {
-                mGeometryProgramUsage = new GpuProgramUsage(GPT_FRAGMENT_PROGRAM);
+                mGeometryProgramUsage = new GpuProgramUsage(GPT_GEOMETRY_PROGRAM);
             }
 		    mGeometryProgramUsage->setProgramName(name, resetParams);
         }
