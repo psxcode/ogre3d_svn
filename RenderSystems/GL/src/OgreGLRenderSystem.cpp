@@ -408,6 +408,14 @@ namespace Ogre {
 			rsc->addShaderProfile("glsl");
 		}
 
+		// Check if geometry shaders are supported
+		if (GLEW_VERSION_2_0 ||
+			GLEW_NV_geometry_shader4)
+		{
+			rsc->setCapability(RSC_GEOMETRY_PROGRAM);
+			rsc->addShaderProfile("gp40");
+		}
+
 		// Check for texture compression
         if(GLEW_VERSION_1_3 || GLEW_ARB_texture_compression)
         {   
