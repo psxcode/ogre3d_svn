@@ -42,7 +42,8 @@ namespace Ogre {
 	enum GpuProgramType
 	{
 		GPT_VERTEX_PROGRAM,
-		GPT_FRAGMENT_PROGRAM
+		GPT_FRAGMENT_PROGRAM,
+		GPT_GEOMETRY_PROGRAM
 	};
 
 	/** Enumeration of the types of constant we may encounter in programs. 

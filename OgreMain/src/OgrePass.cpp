@@ -159,6 +159,7 @@ namespace Ogre {
 		, mShadowCasterVertexProgramUsage(0)
 		, mShadowReceiverVertexProgramUsage(0)
 		, mFragmentProgramUsage(0)
+		, mGeometryProgramUsage(0)
 		, mShadowReceiverFragmentProgramUsage(0)
 		, mQueuedForDeletion(false)
 		, mPassIterationCount(1)
@@ -291,6 +292,14 @@ namespace Ogre {
         else
         {
 		    mFragmentProgramUsage = NULL;
+        }
+		if (oth.mGeometryProgramUsage)
+		{
+		    mGeometryProgramUsage = new GpuProgramUsage(*(oth.mGeometryProgramUsage));
+        }
+        else
+        {
+		    mGeometryProgramUsage = NULL;
         }
 		if (oth.mShadowReceiverFragmentProgramUsage)
 		{
@@ -1194,6 +1203,37 @@ namespace Ogre {
 		mFragmentProgramUsage->setParameters(params);
 	}
 	//-----------------------------------------------------------------------
+	void Pass::setGeometryProgram(const String& name, bool resetParams)
+	{
+        // Turn off geometry program if name blank
+        if (name.empty())
+        {
+            if (mGeometryProgramUsage) delete mGeometryProgramUsage;
+            mGeometryProgramUsage = NULL;
+        }
+        else
+        {
+            if (!mGeometryProgramUsage)
+            {
+                mGeometryProgramUsage = new GpuProgramUsage(GPT_FRAGMENT_PROGRAM);
+            }
+		    mGeometryProgramUsage->setProgramName(name, resetParams);
+        }
+        // Needs recompilation
+        mParent->_notifyNeedsRecompile();
+	}
+    //-----------------------------------------------------------------------
+	void Pass::setGeometryProgramParameters(GpuProgramParametersSharedPtr params)
+	{
+		if (!mGeometryProgramUsage)
+        {
+            OGRE_EXCEPT (Exception::ERR_INVALIDPARAMS,
+                "This pass does not have a geometry program assigned!",
+                "Pass::setGeometryProgramParameters");
+        }
+		mGeometryProgramUsage->setParameters(params);
+	}
+	//-----------------------------------------------------------------------
 	const String& Pass::getVertexProgramName(void) const
 	{
         if (!mVertexProgramUsage)
@@ -1234,6 +1274,24 @@ namespace Ogre {
 	const GpuProgramPtr& Pass::getFragmentProgram(void) const
 	{
 		return mFragmentProgramUsage->getProgram();
+	}
+	//-----------------------------------------------------------------------
+	const String& Pass::getGeometryProgramName(void) const
+	{
+        if (!mGeometryProgramUsage)
+            return StringUtil::BLANK;
+        else
+    		return mGeometryProgramUsage->getProgramName();
+	}
+	//-----------------------------------------------------------------------
+	GpuProgramParametersSharedPtr Pass::getGeometryProgramParameters(void) const
+	{
+		return mGeometryProgramUsage->getParameters();
+	}
+	//-----------------------------------------------------------------------
+	const GpuProgramPtr& Pass::getGeometryProgram(void) const
+	{
+		return mGeometryProgramUsage->getProgram();
 	}
 	//-----------------------------------------------------------------------
     bool Pass::isLoaded(void) const
@@ -1302,6 +1360,12 @@ namespace Ogre {
             mVertexProgramUsage->getParameters()->_updateAutoParamsNoLights(source);
         }
 
+        if (hasGeometryProgram())
+        {
+            // Update geometry program auto params
+            mGeometryProgramUsage->getParameters()->_updateAutoParamsNoLights(source);
+        }
+
         if (hasFragmentProgram())
         {
             // Update fragment program auto params
@@ -1315,6 +1379,12 @@ namespace Ogre {
         {
             // Update vertex program auto params
             mVertexProgramUsage->getParameters()->_updateAutoParamsLightsOnly(source);
+        }
+
+        if (hasGeometryProgram())
+        {
+            // Update geometry program auto params
+            mGeometryProgramUsage->getParameters()->_updateAutoParamsLightsOnly(source);
         }
 
         if (hasFragmentProgram())
@@ -1372,6 +1442,11 @@ namespace Ogre {
         {
             delete mShadowReceiverVertexProgramUsage;
             mShadowReceiverVertexProgramUsage = 0;
+        }
+        if (mGeometryProgramUsage)
+        {
+            delete mGeometryProgramUsage;
+            mGeometryProgramUsage = 0;
         }
         if (mFragmentProgramUsage)
         {
