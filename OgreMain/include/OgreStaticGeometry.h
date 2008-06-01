@@ -280,7 +280,7 @@ namespace Ogre {
 			void build(bool stencilShadows);
 			/// Add children to the render queue
 			void addRenderables(RenderQueue* queue, uint8 group, 
-				Real camSquaredDist);
+				Real lodValue);
 			/// Get the material for this bucket
 			const MaterialPtr& getMaterial(void) const { return mMaterial; }
 			/// Iterator over geometry
@@ -328,7 +328,7 @@ namespace Ogre {
 			void build(bool stencilShadows);
 			/// Add children to the render queue
 			void addRenderables(RenderQueue* queue, uint8 group, 
-				Real camSquaredDistance);
+				Real lodValue);
 			/// Iterator over the materials in this LOD
 			typedef MapIterator<MaterialBucketMap> MaterialIterator;
 			/// Get an iterator over the materials in this LOD

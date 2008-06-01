@@ -31,6 +31,7 @@ Torus Knot Software Ltd.
 #include "OgreLodStrategy.h"
 
 #include "OgreMesh.h"
+#include "OgreMaterial.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -51,6 +52,12 @@ namespace Ogre {
     {
         // Get index assuming ascending values
         return getIndexAscending(value, meshLodUsageList);
+    }
+        //-----------------------------------------------------------------------
+    ushort LodStrategy::getIndex(Real value, const Material::LodValueList& materialLodValueList) const
+    {
+        // Get index assuming ascending values
+        return getIndexAscending(value, materialLodValueList);
     }
     //-----------------------------------------------------------------------
     void LodStrategy::assertSorted(const Mesh::LodValueList &values) const
@@ -147,5 +154,21 @@ namespace Ogre {
         return static_cast<ushort>(meshLodUsageList.size() - 1);
     }
     //---------------------------------------------------------------------
+    ushort LodStrategy::getIndexAscending(Real value, const Material::LodValueList& materialLodValueList)
+    {
+        Material::LodValueList::const_iterator i, iend;
+        iend = materialLodValueList.end();
+        unsigned short index = 0;
+        for (i = materialLodValueList.begin(); i != iend; ++i, ++index)
+        {
+            if (*i > value)
+            {
+                return index - 1;
+            }
+        }
+
+        // If we fall all the way through, use the highest value
+        return static_cast<ushort>(materialLodValueList.size() - 1);
+    }
 
 } // namespace

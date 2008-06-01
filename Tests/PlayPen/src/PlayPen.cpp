@@ -5226,8 +5226,8 @@ protected:
 		t->createPass()->createTextureUnitState("r2skin.jpg");
 		t->setSchemeName("newscheme");
 
-		Material::LodDistanceList ldl;
-		ldl.push_back(500.0f);
+		Material::LodValueList ldl;
+		ldl.push_back(Math::Sqr(500.0f));
 		mat->setLodLevels(ldl);
 
 
@@ -5275,9 +5275,9 @@ protected:
 
 		// No LOD 2 for newscheme! Should fallback on LOD 1
 
-		Material::LodDistanceList ldl;
-		ldl.push_back(250.0f);
-		ldl.push_back(500.0f);
+		Material::LodValueList ldl;
+		ldl.push_back(Math::Sqr(250.0f));
+		ldl.push_back(Math::Sqr(500.0f));
 		mat->setLodLevels(ldl);
 
 
@@ -6763,6 +6763,48 @@ protected:
 
 
 
+    void testLod()
+    {
+        // Setup lighting
+        mSceneMgr->setAmbientLight(ColourValue(0.2, 0.2, 0.2));
+        Light* l = mSceneMgr->createLight("LodTestLight");
+        l->setPosition(500, 500, 200);
+        l->setDiffuseColour(ColourValue::White);
+
+        // Create material
+        MaterialPtr material = MaterialManager::getSingleton().create("LodTestMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        Technique *technique;
+        Pass *pass;
+        technique = material->getTechnique(0);
+        technique->setLodIndex(0);
+        pass = technique->getPass(0);
+        pass->setAmbient(Ogre::ColourValue::Red);
+        pass->setDiffuse(Ogre::ColourValue::Red);
+        technique = material->createTechnique();
+        technique->setLodIndex(1);
+        pass = technique->createPass();
+        pass->setAmbient(Ogre::ColourValue::Blue);
+        pass->setDiffuse(Ogre::ColourValue::Blue);
+        technique = material->createTechnique();
+        technique->setLodIndex(2);
+        pass = technique->createPass();
+        pass->setAmbient(Ogre::ColourValue::Green);
+        pass->setDiffuse(Ogre::ColourValue::Green);
+
+        // Create material lods
+        Material::LodValueList lods;
+        lods.push_back(Math::Sqr(100));
+        lods.push_back(Math::Sqr(200));
+        material->setLodLevels(lods);
+
+        // Create entity
+        Entity *entity = mSceneMgr->createEntity("LodTestEntity", "knot.mesh");
+        entity->setMaterialName(material->getName());
+        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(entity);
+    }
+
+
+
 	void testBug()
 	{
 		// NOTE: enable flag only turns on SRGB for texture sampling, you may
@@ -6894,7 +6936,7 @@ protected:
 		//testBlendDiffuseColour();
 
         //testRaySceneQuery();
-		testNegativeScale();
+		//testNegativeScale();
 		//testMaterialSerializer();
         //testIntersectionSceneQuery();
 
@@ -6972,6 +7014,8 @@ protected:
 		//testReinitialiseEntityAlteredMesh();
 		//testSRGBtexture(true);
 		//testLightClipPlanesMoreLights(true);
+
+        testLod();
 		
     }
     // Create new frame listener

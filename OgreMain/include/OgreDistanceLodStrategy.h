@@ -40,6 +40,8 @@ namespace Ogre {
     protected:
         virtual Real getValueImpl(const Entity *entity, const Camera *camera) const;
 
+        virtual Real transformBias(Real factor) const;
+
     public:
         DistanceLodStrategy();
 

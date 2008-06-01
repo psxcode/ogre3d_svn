@@ -1,0 +1,10 @@
+Removed Mesh::getLodIndexSquaredDepth.
+Mesh::getLodIndex now requires a squared distances when using DistanceLodStrategy.
+Mesh::generateLodLevels and Mesh::createManualLodLevel also require squared distances when using DistanceLodStrategy.
+Renamed MeshLodUsage::fromDepthSquared to value.
+Renamed LodDistanceList to LodValueList and LodDistanceIterator to LodValueIterator.
+Material::getLodIndex and Material::setLodLevels now require squared distances when using DistanceLodStrategy.
+Renamed Material::mLodDistances to mLodValues.
+Renamed Material::getLodDistanceIterator to getLodValueIterator
+Removed Material::getLodIndexSquaredDepth as it no longer applies.
+Renamed Entity::_getMeshLodFactorInverse to Entity::_getMeshLodFactorTransformed as this method does not neccessarily return the inverse anymore (but will when using DistanceLodStrategy).

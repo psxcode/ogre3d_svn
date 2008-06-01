@@ -40,14 +40,14 @@ namespace Ogre {
     {
         // Get squared depth
         Real squaredDepth = entity->getParentNode()->getSquaredViewDepth(camera);
-        // Adjust this depth by the entity bias factor
-        Real tmp = squaredDepth * entity->_getMeshLodFactorInverse();
-        // Now adjust it by the camera bias
-        tmp *= camera->_getLodBiasInverse();
-
-        // Return the computed value
-        return tmp;
+        // Now adjust it by the camera bias and return the computed value
+        return squaredDepth * camera->_getLodBiasInverse();
     }
     //---------------------------------------------------------------------
+    Real DistanceLodStrategy::transformBias(Real factor) const
+    {
+        assert(factor > 0.0f && "Bias factor must be > 0!");
+        return 1.0f / factor;
+    }
 
 } // namespace

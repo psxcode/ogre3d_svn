@@ -1158,14 +1158,14 @@ namespace Ogre {
 	}
 	//--------------------------------------------------------------------------
 	void StaticGeometry::LODBucket::addRenderables(RenderQueue* queue,
-		uint8 group, Real camDistanceSquared)
+		uint8 group, Real lodValue)
 	{
 		// Just pass this on to child buckets
 		MaterialBucketMap::iterator i, iend;
 		iend =  mMaterialBucketMap.end();
 		for (i = mMaterialBucketMap.begin(); i != iend; ++i)
 		{
-			i->second->addRenderables(queue, group, camDistanceSquared);
+			i->second->addRenderables(queue, group, lodValue);
 		}
 	}
 	//--------------------------------------------------------------------------
@@ -1273,11 +1273,11 @@ namespace Ogre {
 	}
 	//--------------------------------------------------------------------------
 	void StaticGeometry::MaterialBucket::addRenderables(RenderQueue* queue,
-		uint8 group, Real camDistanceSquared)
+		uint8 group, Real lodValue)
 	{
 		// Determine the current material technique
 		mTechnique = mMaterial->getBestTechnique(
-			mMaterial->getLodIndexSquaredDepth(camDistanceSquared));
+			mMaterial->getLodIndex(lodValue));
 
 		GeometryBucketList::iterator i, iend;
 		iend =  mGeometryBucketList.end();

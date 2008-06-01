@@ -59,11 +59,17 @@ namespace Ogre {
         //** Get the value of the first (highest) level of detail. */
         //virtual Real getBaseValue() const;
 
+        /** Transform lod bias so it only needs to be multiplied by the lod value. */
+        virtual Real transformBias(Real factor) const = 0;
+
         /** Compute the lod value for a given entity relative to a given camera. */
         Real getValue(const Entity *entity, const Camera *camera) const;
 
         /** Get the index of the lod usage which applies to a given value. */
         virtual ushort getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const;
+
+        /** Get the index of the lod usage which applies to a given value. */
+        virtual ushort getIndex(Real value, const Material::LodValueList& materialLodValueList) const;
 
         /** Sort mesh lod usage list from greatest to least detail */
         virtual void sort(Mesh::MeshLodUsageList& meshLodUsageList) const;
@@ -85,6 +91,8 @@ namespace Ogre {
         static void sortDecending(Mesh::MeshLodUsageList& meshLodUsageList);
 
         static ushort getIndexAscending(Real value, const Mesh::MeshLodUsageList& meshLodUsageList);
+
+        static ushort getIndexAscending(Real value, const Material::LodValueList& materialLodValueList);
     };
 
 } // namespace

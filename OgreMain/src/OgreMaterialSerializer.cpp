@@ -39,6 +39,7 @@ Torus Knot Software Ltd.
 #include "OgreGpuProgramManager.h"
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreExternalTextureSourceManager.h"
+#include "OgreLodStrategyManager.h"
 
 namespace Ogre
 {
@@ -1686,12 +1687,12 @@ namespace Ogre
 		return false;
 	}
     //-----------------------------------------------------------------------
-    bool parseLodDistances(String& params, MaterialScriptContext& context)
+    bool parseLodValues(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
 
-        // iterate over the parameters and parse distances out of them
-        Material::LodDistanceList lodList;
+        // iterate over the parameters and parse values out of them
+        Material::LodValueList lodList;
         StringVector::iterator i, iend;
         iend = vecparams.end();
         for (i = vecparams.begin(); i != iend; ++i)
@@ -2828,6 +2829,42 @@ namespace Ogre
 		return false;
 
 	}
+    //-----------------------------------------------------------------------
+    bool parseLodStrategy(String& params, MaterialScriptContext& context)
+    {
+        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy(params);
+        
+        if (strategy == 0)
+            logParseError(
+            "Bad lod_strategy attribute, available lod strategy name expected.",
+            context);
+
+        context.material->setLodStrategy(strategy);
+
+        return false;
+    }
+    //-----------------------------------------------------------------------
+    bool parseLodDistances(String& params, MaterialScriptContext& context)
+    {
+        // Set to distance strategy
+        parseLodStrategy(String("Distance"), context);
+
+        StringVector vecparams = StringUtil::split(params, " \t");
+
+        // iterate over the parameters and parse values out of them
+        Material::LodValueList lodList;
+        StringVector::iterator i, iend;
+        iend = vecparams.end();
+        for (i = vecparams.begin(); i != iend; ++i)
+        {
+            // Square each distance to get correct lod value
+            lodList.push_back(Math::Sqr(StringConverter::parseReal(*i)));
+        }
+
+        context.material->setLodLevels(lodList);
+
+        return false;
+    }
 	//-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     MaterialSerializer::MaterialSerializer()
@@ -2838,6 +2875,8 @@ namespace Ogre
         mRootAttribParsers.insert(AttribParserList::value_type("fragment_program", (ATTRIBUTE_PARSER)parseFragmentProgram));
 
         // Set up material attribute parsers
+        mMaterialAttribParsers.insert(AttribParserList::value_type("lod_values", (ATTRIBUTE_PARSER)parseLodValues));
+        mMaterialAttribParsers.insert(AttribParserList::value_type("lod_strategy", (ATTRIBUTE_PARSER)parseLodStrategy));
         mMaterialAttribParsers.insert(AttribParserList::value_type("lod_distances", (ATTRIBUTE_PARSER)parseLodDistances));
         mMaterialAttribParsers.insert(AttribParserList::value_type("receive_shadows", (ATTRIBUTE_PARSER)parseReceiveShadows));
 		mMaterialAttribParsers.insert(AttribParserList::value_type("transparency_casts_shadows", (ATTRIBUTE_PARSER)parseTransparencyCastsShadows));
@@ -3401,21 +3440,20 @@ namespace Ogre
         beginSection(0);
         {
             // Write LOD information
-            Material::LodDistanceIterator distIt = pMat->getLodDistanceIterator();
+            Material::LodValueIterator valueIt = pMat->getLodValueIterator();
             // Skip zero value
-            if (distIt.hasMoreElements())
-                distIt.getNext();
+            if (valueIt.hasMoreElements())
+                valueIt.getNext();
             String attributeVal;
-            while (distIt.hasMoreElements())
+            while (valueIt.hasMoreElements())
             {
-                Real sqdist = distIt.getNext();
-                attributeVal.append(StringConverter::toString(Math::Sqrt(sqdist)));
-                if (distIt.hasMoreElements())
+                attributeVal.append(StringConverter::toString(valueIt.getNext()));
+                if (valueIt.hasMoreElements())
                     attributeVal.append(" ");
             }
             if (!attributeVal.empty())
             {
-                writeAttribute(1, "lod_distances");
+                writeAttribute(1, "lod_values");
                 writeValue(attributeVal);
             }
 
