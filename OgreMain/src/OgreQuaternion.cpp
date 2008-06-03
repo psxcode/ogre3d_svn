@@ -46,6 +46,7 @@ Torus Knot Software Ltd.
 #include "OgreMath.h"
 #include "OgreMatrix3.h"
 #include "OgreVector3.h"
+#include <math.h>
 
 namespace Ogre {
 
@@ -60,10 +61,14 @@ namespace Ogre {
 	Quaternion Quaternion::MakeFromEuler(const Vector3& Euler)
 	{
 		Quaternion qu;
-		qu.x = cos(Euler.x/2)*cos(Euler.y/2)*cos(Euler.z/2)+sin(Euler.x/2)*sin(Euler.y/2)*sin(Euler.z/2);
-		qu.y = sin(Euler.x/2)*cos(Euler.y/2)*cos(Euler.z/2)-cos(Euler.x/2)*sin(Euler.y/2)*sin(Euler.z/2);
-		qu.z = cos(Euler.x/2)*sin(Euler.y/2)*cos(Euler.z/2)+sin(Euler.x/2)*cos(Euler.y/2)*sin(Euler.z/2);
-		qu.w = cos(Euler.x/2)*cos(Euler.y/2)*sin(Euler.z/2)-sin(Euler.x/2)*sin(Euler.y/2)*cos(Euler.z/2);
+		Vector3 radian;
+		radian.x = Euler.x*Math::PI/180;
+		radian.y = Euler.y*Math::PI/180;
+		radian.z = Euler.z*Math::PI/180;
+		qu.x = cos(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
+		qu.y = sin(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)-cos(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
+		qu.z = cos(radian.x/2)*sin(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*cos(radian.y/2)*sin(radian.z/2);
+		qu.w = cos(radian.x/2)*cos(radian.y/2)*sin(radian.z/2)-sin(radian.x/2)*sin(radian.y/2)*cos(radian.z/2);
 		return qu;
 	}
 
