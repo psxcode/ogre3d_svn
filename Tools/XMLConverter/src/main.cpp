@@ -450,7 +450,7 @@ void AddAnimation(XmlOptions opts)
 	TiXmlElement* rootElem = doc->RootElement();
 	if ( !stricmp(rootElem->Value(),"skeleton") )
 	{
-		delete doc;
+		
 		bvh = new Bvh(opts.bvhfile);
 		bvh->LogBoneHierarchy();
 		Bvh::Bvh_Hierarchy::size_type BoneNum = bvh->GetHierarchy().size();
@@ -468,9 +468,9 @@ void AddAnimation(XmlOptions opts)
 		anim->setInterpolationMode(Animation::IM_LINEAR) ;
 		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
 
-        ushort handle,SkeletonHandle;
+		int handle,SkeletonHandle;
 		// create track for each bone from bvh
-		for (handle = 0; handle < BoneNum; ++handle)
+		for (handle = 0; static_cast<Bvh::Bvh_Hierarchy::size_type>(handle) < BoneNum; ++handle)
 		{
 
 				//here do the bone mapping between bvh and skeleton if boneMap is loaded
@@ -501,10 +501,10 @@ void AddAnimation(XmlOptions opts)
 					}
 
 					Ogre::Quaternion qu;
-					ushort ChannelIndex = bvh->GetChannelMap()[handle];
+					ushort ChannelIndex = bvh->GetChannelMap()[(bvh->GetHierarchy()[handle])->pRChannel->ChannelIndex];
 					Ogre::Vector3 euler(motiondata[k][ChannelIndex],motiondata[k][ChannelIndex+1],
 						motiondata[k][ChannelIndex+2]);
-					qu.MakeFromEuler(euler);
+					qu = Quaternion::MakeFromEuler(euler);
 
 						pKeyFrame->setRotation(qu);
 				
@@ -517,6 +517,7 @@ void AddAnimation(XmlOptions opts)
 		xmlSkeletonSerializer->addAnimation(elem,anim);
 		
 		xmlSkeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
+		delete doc;
 	}
 	else
 	{

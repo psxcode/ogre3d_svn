@@ -155,6 +155,7 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 {
 
 	static int ChannelSum = 0;
+	int ChannelIndex = 0;
 	std::string line;
 	std::stringstream ss;
 	if ( bLineReady == true )
@@ -174,7 +175,6 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 		ss >> str;
 		pBN->name = str;
 		pBN->pParent = NULL;
-		m_ChannelMap.push_back(ChannelSum);
 		m_BoneNum++;
 	}else if ( !strcmp(str.c_str(),"JOINT"))
 	{
@@ -223,12 +223,20 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 		if ( ChannelNum == 6)
 		{
 			m_ChannelMap.push_back(ChannelSum);
+			
 			pBN->pPChannel = new PositionChannel;
+			pBN->pPChannel->ChannelIndex = ChannelIndex;
+			ChannelIndex++;
 			ChannelSum += 3;
 			pBN->pPChannel->Xposition = 0;
 			pBN->pPChannel->Yposition = 0;
 			pBN->pPChannel->Zposition = 0;
-			pBN->pRChannel = new RotationChannel;
+
+			m_ChannelMap.push_back(ChannelSum);
+           
+			pBN->pRChannel = new RotationChannel; 
+			pBN->pRChannel->ChannelIndex = ChannelIndex;
+			ChannelIndex++;
 			ChannelSum += 3;
 			pBN->pRChannel->Xrotation = 0;
 			pBN->pRChannel->Yrotation = 0;
@@ -236,8 +244,11 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 		}else if ( ChannelNum == 3)
 		{
 			m_ChannelMap.push_back(ChannelSum);
+			
 			pBN->pPChannel = NULL;
 			pBN->pRChannel = new RotationChannel;
+			pBN->pRChannel->ChannelIndex = ChannelIndex;
+			ChannelIndex++;
 			ChannelSum += 3;
 			pBN->pRChannel->Xrotation = 0;
 			pBN->pRChannel->Yrotation = 0;
