@@ -16,6 +16,7 @@ Lucas Westine
 #include <stack>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 
 
@@ -36,6 +37,7 @@ Lucas Westine
 		};
 		typedef struct	
 		{
+			int		   ChannelIndex;
 			Ogre::Real Xposition;
 			Ogre::Real Yposition;
 			Ogre::Real Zposition;
@@ -44,6 +46,7 @@ Lucas Westine
 
 		typedef struct  
 		{
+			int		   ChannelIndex;
 			Ogre::Real Xrotation;
 			Ogre::Real Yrotation;
 			Ogre::Real Zrotation;
@@ -54,7 +57,6 @@ Lucas Westine
 		{
 			std::string name;
 			BVH_Node_tag* pParent;
-			
 			Ogre::Vector3 offset;
 			PositionChannel*   pPChannel;
 			RotationChannel*   pRChannel; 
