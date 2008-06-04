@@ -22,7 +22,7 @@ Description: Specialisation of OGRE's framework application to show the
 
 #include "ExampleApplication.h"
 
-#define NUM_JAIQUAS 6
+#define NUM_JAIQUAS 1
 AnimationState* mAnimState[NUM_JAIQUAS];
 Real mAnimationSpeed[NUM_JAIQUAS];
 Vector3 mSneakStartOffset;
@@ -32,7 +32,7 @@ Quaternion mOrientations[NUM_JAIQUAS];
 Vector3 mBasePositions[NUM_JAIQUAS];
 SceneNode* mSceneNode[NUM_JAIQUAS];
 Degree mAnimationRotation(-60);
-Real mAnimChop = 7.96666f;
+Real mAnimChop = 3.96666f;
 Real mAnimChopBlend = 0.3f;
 
 // Event handler to animate
@@ -167,7 +167,7 @@ protected:
 			mSceneNode[i]->rotate(q);
 			mSceneNode[i]->translate(mBasePositions[i]);
 			
-            mAnimState[i] = ent->getAnimationState("Sneak");
+            mAnimState[i] = ent->getAnimationState("rush.bvh");
             mAnimState[i]->setEnabled(true);
 			mAnimState[i]->setLoop(false); // manual loop since translation involved
             mAnimationSpeed[i] = Math::RangeRandom(0.5, 1.5);
