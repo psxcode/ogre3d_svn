@@ -69,8 +69,21 @@ namespace Ogre {
 		{
 			checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
 			// create shader object
-			mGLHandle = glCreateShaderObjectARB(
-				(mType == GPT_VERTEX_PROGRAM) ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB );
+
+			GLenum shaderType;
+			switch (mType)
+			{
+			case GPT_VERTEX_PROGRAM:
+				shaderType = GL_VERTEX_SHADER_ARB;
+				break;
+			case GPT_FRAGMENT_PROGRAM:
+				shaderType = GL_FRAGMENT_SHADER_ARB;
+				break;
+			case GPT_GEOMETRY_PROGRAM:
+				shaderType = GL_GEOMETRY_SHADER_EXT;
+				break;
+			}
+			mGLHandle = glCreateShaderObjectARB(shaderType);
 
 			checkForGLSLError( "GLSLProgram::GLSLProgram", "Error creating GLSL shader Object", 0 );
 		}

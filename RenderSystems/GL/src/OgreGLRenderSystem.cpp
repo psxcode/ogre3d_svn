@@ -140,6 +140,7 @@ namespace Ogre {
 		mMinFilter = FO_LINEAR;
 		mMipFilter = FO_POINT;
 		mCurrentVertexProgram = 0;
+		mCurrentGeometryProgram = 0;
 		mCurrentFragmentProgram = 0;
 
 	}
@@ -2712,6 +2713,14 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 				mCurrentFragmentProgram = glprg;
 			}
 			break;
+		case GPT_GEOMETRY_PROGRAM:
+			if (mCurrentGeometryProgram != glprg)
+			{
+				if (mCurrentGeometryProgram)
+					mCurrentGeometryProgram->unbindProgram();
+				mCurrentGeometryProgram = glprg;
+			}
+			break;
 		}
 
 		// Bind the program
@@ -2729,6 +2738,12 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 			mCurrentVertexProgram->unbindProgram();
 			mCurrentVertexProgram = 0;
 		}
+		else if (gptype == GPT_GEOMETRY_PROGRAM && mCurrentGeometryProgram)
+		{
+			mActiveGeometryGpuProgramParameters.setNull();
+			mCurrentGeometryProgram->unbindProgram();
+			mCurrentGeometryProgram = 0;
+		}
 		else if (gptype == GPT_FRAGMENT_PROGRAM && mCurrentFragmentProgram)
 		{
 			mActiveFragmentGpuProgramParameters.setNull();
@@ -2741,27 +2756,36 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	//---------------------------------------------------------------------
 	void GLRenderSystem::bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params)
 	{
-		if (gptype == GPT_VERTEX_PROGRAM)
+		switch (gptype)
 		{
+		case GPT_VERTEX_PROGRAM:
 			mActiveVertexGpuProgramParameters = params;
 			mCurrentVertexProgram->bindProgramParameters(params);
-		}
-		else
-		{
+			break;
+		case GPT_GEOMETRY_PROGRAM:
+			mActiveGeometryGpuProgramParameters = params;
+			mCurrentGeometryProgram->bindProgramParameters(params);
+			break;
+		case GPT_FRAGMENT_PROGRAM:
 			mActiveFragmentGpuProgramParameters = params;
 			mCurrentFragmentProgram->bindProgramParameters(params);
+			break;
 		}
 	}
 	//---------------------------------------------------------------------
 	void GLRenderSystem::bindGpuProgramPassIterationParameters(GpuProgramType gptype)
 	{
-		if (gptype == GPT_VERTEX_PROGRAM)
+		switch (gptype)
 		{
+		case GPT_VERTEX_PROGRAM:
 			mCurrentVertexProgram->bindProgramPassIterationParameters(mActiveVertexGpuProgramParameters);
-		}
-		else
-		{
+			break;
+		case GPT_GEOMETRY_PROGRAM:
+			mCurrentGeometryProgram->bindProgramPassIterationParameters(mActiveGeometryGpuProgramParameters);
+			break;
+		case GPT_FRAGMENT_PROGRAM:
 			mCurrentFragmentProgram->bindProgramPassIterationParameters(mActiveFragmentGpuProgramParameters);
+			break;
 		}
 	}
 	//---------------------------------------------------------------------

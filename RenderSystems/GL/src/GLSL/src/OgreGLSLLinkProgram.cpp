@@ -73,8 +73,9 @@ namespace Ogre {
 	};
 
 	//-----------------------------------------------------------------------
-	GLSLLinkProgram::GLSLLinkProgram(GLSLGpuProgram* vertexProgram, GLSLGpuProgram* fragmentProgram)
+	GLSLLinkProgram::GLSLLinkProgram(GLSLGpuProgram* vertexProgram, GLSLGpuProgram* geometryProgram, GLSLGpuProgram* fragmentProgram)
         : mVertexProgram(vertexProgram)
+		, mGeometryProgram(geometryProgram)
 		, mFragmentProgram(fragmentProgram)
 		, mUniformRefsBuilt(false)
         , mLinked(false)
@@ -92,7 +93,11 @@ namespace Ogre {
 				mVertexProgram->getGLSLProgram()->attachToProgramObject(mGLHandle);
 				setSkeletalAnimationIncluded(mVertexProgram->isSkeletalAnimationIncluded());
 			}
-
+			if (mGeometryProgram)
+			{
+				mGeometryProgram->getGLSLProgram()->attachToProgramObject(mGLHandle);
+				//TODO : Set linked primitive type.
+			}
 			if (mFragmentProgram)
 			{
 				mFragmentProgram->getGLSLProgram()->attachToProgramObject(mGLHandle);

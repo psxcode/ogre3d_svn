@@ -62,6 +62,7 @@ namespace Ogre {
 
 		/// active objects defining the active rendering gpu state
 		GLSLGpuProgram* mActiveVertexGpuProgram;
+		GLSLGpuProgram* mActiveGeometryGpuProgram;
 		GLSLGpuProgram* mActiveFragmentGpuProgram;
 		GLSLLinkProgram* mActiveLinkProgram;
 
@@ -98,6 +99,11 @@ namespace Ogre {
 			Normally called from the GLSLGpuProgram::bindProgram and unbindProgram methods
 		*/
 		void setActiveVertexShader(GLSLGpuProgram* vertexGpuProgram);
+		/** Set the active geometry shader for the next rendering state.
+			The active program object will be cleared.
+			Normally called from the GLSLGpuProgram::bindProgram and unbindProgram methods
+		*/
+		void setActiveGeometryShader(GLSLGpuProgram* geometryGpuProgram);
 
 		/** Populate a list of uniforms based on a program object.
 		@param programObject Handle to the program object to query

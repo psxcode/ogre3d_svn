@@ -52,7 +52,7 @@ namespace Ogre {
 
 	//-----------------------------------------------------------------------
 	GLSLLinkProgramManager::GLSLLinkProgramManager(void) : mActiveVertexGpuProgram(NULL),
-		mActiveFragmentGpuProgram(NULL), mActiveLinkProgram(NULL)
+		mActiveGeometryGpuProgram(NULL), mActiveFragmentGpuProgram(NULL), mActiveLinkProgram(NULL)
 	{
 		// Fill in the relationship between type names and enums
 		mTypeEnumMap.insert(StringToEnumMap::value_type("float", GL_FLOAT));
@@ -112,13 +112,17 @@ namespace Ogre {
 		{
 			activeKey = mActiveVertexGpuProgram->getProgramID() << 16;
 		}
-
+		if (mActiveGeometryGpuProgram)
+		{
+			//TODO : Are 32 bits enough when we have 3 program types?
+			activeKey += mActiveGeometryGpuProgram->getProgramID() << 8;
+		}
 		if (mActiveFragmentGpuProgram)
 		{
 			activeKey += mActiveFragmentGpuProgram->getProgramID();
 		}
 
-		// only return a link program object if a vertex or fragment program exist
+		// only return a link program object if a vertex, geometry or fragment program exist
 		if (activeKey > 0)
 		{
 			// find the key in the hash map
@@ -126,7 +130,7 @@ namespace Ogre {
 			// program object not found for key so need to create it
 			if (programFound == LinkPrograms.end())
 			{
-				mActiveLinkProgram = new GLSLLinkProgram(mActiveVertexGpuProgram, mActiveFragmentGpuProgram);
+				mActiveLinkProgram = new GLSLLinkProgram(mActiveVertexGpuProgram, mActiveGeometryGpuProgram,mActiveFragmentGpuProgram);
 				LinkPrograms[activeKey] = mActiveLinkProgram;
 			}
 			else
@@ -162,6 +166,18 @@ namespace Ogre {
 		if (vertexGpuProgram != mActiveVertexGpuProgram)
 		{
 			mActiveVertexGpuProgram = vertexGpuProgram;
+			// ActiveLinkProgram is no longer valid
+			mActiveLinkProgram = NULL;
+			// change back to fixed pipeline
+			glUseProgramObjectARB(0);
+		}
+	}
+	//-----------------------------------------------------------------------
+	void GLSLLinkProgramManager::setActiveGeometryShader(GLSLGpuProgram* geometryGpuProgram)
+	{
+		if (geometryGpuProgram != mActiveGeometryGpuProgram)
+		{
+			mActiveGeometryGpuProgram = geometryGpuProgram;
 			// ActiveLinkProgram is no longer valid
 			mActiveLinkProgram = NULL;
 			// change back to fixed pipeline

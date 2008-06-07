@@ -119,6 +119,7 @@ namespace Ogre {
 
         GLGpuProgram* mCurrentVertexProgram;
         GLGpuProgram* mCurrentFragmentProgram;
+		GLGpuProgram* mCurrentGeometryProgram;
 
 		/* The main GL context - main thread only */
         GLContext *mMainContext;
