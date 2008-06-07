@@ -145,6 +145,9 @@ namespace Ogre {
 		if (mLinked)
 		{
 		    glUseProgramObjectARB( mGLHandle );
+
+			checkForGLSLError( "GLSLLinkProgram::Activate",
+				"Error using GLSL Program Object", mGLHandle, false, false);
 		}
 	}
 

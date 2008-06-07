@@ -18,7 +18,14 @@ Description: Demo of a Shader Model 4 geometry shader in action
 -----------------------------------------------------------------------------
 */
 
-const char* POINT_RENDERING_GLSL_PROGRAM = "													\n\
+const char* PASS_THROUGH_GLSL_VERTEX_PROGRAM = "												\n\
+	void main()																					\n\
+	{																							\n\
+		//Transform the vertex (ModelViewProj matrix)											\n\
+		gl_Position = ftransform();																\n\
+	}\n";
+
+const char* SWIZZLE_GLSL_GEOMETRY_PROGRAM = "													\n\
 	#version 120																				\n\
 	#extension GL_EXT_geometry_shader4 : enable													\n\
 																								\n\
@@ -42,6 +49,7 @@ const char* POINT_RENDERING_GLSL_PROGRAM = "													\n\
 		//Pass-thru!																			\n\
 		for(i=0; i< gl_VerticesIn; i++){														\n\
 			gl_Position = gl_PositionIn[i];														\n\
+			gl_FrontColor = vec4(1,0,0,1);														\n\
 			EmitVertex();																		\n\
 		}																						\n\
 		EndPrimitive();																			\n\
@@ -49,6 +57,7 @@ const char* POINT_RENDERING_GLSL_PROGRAM = "													\n\
 		for(i=0; i< gl_VerticesIn; i++){														\n\
 			gl_Position = gl_PositionIn[i];														\n\
 			gl_Position.xy = gl_Position.yx;													\n\
+			gl_FrontColor = vec4(0,0,1,1);														\n\
 			EmitVertex();																		\n\
 		}																						\n\
 		EndPrimitive();																			\n\
@@ -60,26 +69,6 @@ const char* POINT_RENDERING_GLSL_PROGRAM = "													\n\
 
 SceneNode* rotNode;
 
-// Listener class for frame updates
-class GeometryShadingListener : public ExampleFrameListener
-{
-protected:
-public:
-    GeometryShadingListener(RenderWindow* win, Camera* cam)
-        : ExampleFrameListener(win, cam)
-    {
-    }
-
-    bool frameRenderingQueued(const FrameEvent& evt)
-    {
-	if( ExampleFrameListener::frameRenderingQueued(evt) == false )
-		return false;
-
-        rotNode->yaw(Degree(evt.timeSinceLastFrame * 30));
-        return true;
-    }
-};
-
 class GeometryShadingApplication : public ExampleApplication
 {
 public:
@@ -89,15 +78,6 @@ public:
     ~GeometryShadingApplication() {  }
 
 protected:
-    
-	void createFrameListener(void)
-    {
-		// This is where we instantiate our own frame listener
-        mFrameListener= new GeometryShadingListener(mWindow, mCamera);
-        mRoot->addFrameListener(mFrameListener);
-
-    }
-    
 
     // Just override the mandatory create scene method
     void createScene(void)
@@ -126,19 +106,26 @@ protected:
 
 		MaterialPtr newMaterial = MaterialManager::getSingleton().create(
 			"SampleGeometryShaderMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-		Pass* pointPass = newMaterial->getTechnique(0)->getPass(0);
+		
+		Pass* swizzlePass = newMaterial->getTechnique(0)->getPass(0);
+		swizzlePass->setName("GeometryProgramPass");
 
 		HighLevelGpuProgramPtr vp = 
 			HighLevelGpuProgramManager::getSingleton().createProgram(
-			"SampleGeometryShaderMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			"glsl", GPT_GEOMETRY_PROGRAM);
-		vp->setSource(POINT_RENDERING_GLSL_PROGRAM);
+			"PassThroughVertexShaderProgram", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+			"glsl", GPT_VERTEX_PROGRAM);
+		vp->setSource(PASS_THROUGH_GLSL_VERTEX_PROGRAM);
 		vp->load();
-
-		pointPass->setName("GeometryProgramPass");
-		pointPass->setGeometryProgram(vp->getName());
+		swizzlePass->setVertexProgram(vp->getName());
 		
-        // Set all of the material's sub entities to use the new material
+		vp = HighLevelGpuProgramManager::getSingleton().createProgram(
+			"SwizzleGeometryShaderProgram", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+			"glsl", GPT_GEOMETRY_PROGRAM);
+		vp->setSource(SWIZZLE_GLSL_GEOMETRY_PROGRAM);
+		vp->load();
+		swizzlePass->setGeometryProgram(vp->getName());
+
+		// Set all of the material's sub entities to use the new material
 		for (unsigned int i=0; i<ent->getNumSubEntities(); i++)
 		{
 			ent->getSubEntity(i)->setMaterialName(newMaterial->getName());
