@@ -67,8 +67,6 @@ const char* SWIZZLE_GLSL_GEOMETRY_PROGRAM = "													\n\
 
 #include "ExampleApplication.h"
 
-SceneNode* rotNode;
-
 class GeometryShadingApplication : public ExampleApplication
 {
 public:
@@ -90,13 +88,6 @@ protected:
                 "run this demo. Sorry!", 
                 "GeometryShading::createScene");
         }
-
-        // Create a point light
-        Light* l = mSceneMgr->createLight("MainLight");
-        // Accept default settings: point light, white diffuse, just set position
-        // Add light to the scene node
-        rotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-        rotNode->createChildSceneNode(Vector3(20,40,50))->attachObject(l);
 
         Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
 
@@ -123,6 +114,9 @@ protected:
 			"glsl", GPT_GEOMETRY_PROGRAM);
 		vp->setSource(SWIZZLE_GLSL_GEOMETRY_PROGRAM);
 		vp->load();
+		vp->setInputPrimitiveType(RenderOperation::OT_TRIANGLE_LIST);
+		vp->setOutputPrimitiveType(RenderOperation::OT_TRIANGLE_LIST);
+		vp->setMaxOutputVertices(6); //3 vertices per triangle, two triangles per input triangle
 		swizzlePass->setGeometryProgram(vp->getName());
 
 		// Set all of the material's sub entities to use the new material

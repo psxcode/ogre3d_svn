@@ -415,6 +415,17 @@ namespace Ogre {
 		{
 			rsc->setCapability(RSC_GEOMETRY_PROGRAM);
 			rsc->addShaderProfile("gp40");
+
+			rsc->setGeometryProgramConstantBoolCount(0);
+			rsc->setGeometryProgramConstantIntCount(0);
+
+			GLint floatConstantCount;
+			glGetProgramivARB(GL_GEOMETRY_PROGRAM_NV, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &floatConstantCount);
+			rsc->setGeometryProgramConstantFloatCount(floatConstantCount);
+
+			GLint maxOutputVertices;
+			glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT,&maxOutputVertices);
+			rsc->setGeometryProgramNumOutputVertices(maxOutputVertices);
 		}
 
 		// Check for texture compression

@@ -112,6 +112,9 @@ namespace Ogre {
 		pLog->logMessage(
 			" * Fragment programs: "
 			+ StringConverter::toString(hasCapability(RSC_FRAGMENT_PROGRAM), true));
+		pLog->logMessage(
+			" * Geometry programs: "
+			+ StringConverter::toString(hasCapability(RSC_GEOMETRY_PROGRAM), true));
 		String profileList = "";
 		for(ShaderProfiles::iterator iter = mSupportedShaderProfiles.begin(), end = mSupportedShaderProfiles.end();
 			iter != end; ++iter)

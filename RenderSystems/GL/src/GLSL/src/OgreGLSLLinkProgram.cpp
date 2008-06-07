@@ -33,6 +33,7 @@ Torus Knot Software Ltd.
 #include "OgreGLSLGpuProgram.h"
 #include "OgreGLSLProgram.h"
 #include "OgreGLSLLinkProgramManager.h"
+#include "OgreException.h"
 
 namespace Ogre {
 
@@ -72,6 +73,26 @@ namespace Ogre {
 		CustomAttribute("binormal", GLGpuProgram::getFixedAttributeIndex(VES_BINORMAL, 0)),
 	};
 
+	GLint renderOperationTypeToGLGeometryPrimitiveType(RenderOperation::OperationType operationType)
+	{
+		switch (operationType)
+		{
+		case RenderOperation::OT_POINT_LIST:
+			return GL_POINTS;
+		case RenderOperation::OT_LINE_LIST:
+			return GL_LINES;
+		case RenderOperation::OT_LINE_STRIP:
+			return GL_LINE_STRIP_ADJACENCY_EXT;
+		default:
+		case RenderOperation::OT_TRIANGLE_LIST:
+			return GL_TRIANGLES;
+		case RenderOperation::OT_TRIANGLE_STRIP:
+			return GL_TRIANGLE_STRIP_ADJACENCY_EXT;
+		case RenderOperation::OT_TRIANGLE_FAN:
+			return GL_TRIANGLE_FAN;
+		}
+	}
+
 	//-----------------------------------------------------------------------
 	GLSLLinkProgram::GLSLLinkProgram(GLSLGpuProgram* vertexProgram, GLSLGpuProgram* geometryProgram, GLSLGpuProgram* fragmentProgram)
         : mVertexProgram(vertexProgram)
@@ -96,7 +117,6 @@ namespace Ogre {
 			if (mGeometryProgram)
 			{
 				mGeometryProgram->getGLSLProgram()->attachToProgramObject(mGLHandle);
-				//TODO : Set linked primitive type.
 			}
 			if (mFragmentProgram)
 			{
@@ -130,13 +150,33 @@ namespace Ogre {
 
 			if (mGeometryProgram)
 			{
-				//HACK! Need to get proper geometry type
-				//TODO: Add to program declaration and use accordingly.
-				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_INPUT_TYPE_EXT,GL_TRIANGLES);
-				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_OUTPUT_TYPE_EXT,GL_TRIANGLES);
-				int temp;
-				glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT,&temp);
-				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_VERTICES_OUT_EXT,temp);
+				RenderOperation::OperationType inputPrimitiveType = mGeometryProgram->getGLSLProgram()->getInputPrimitiveType();
+				if (inputPrimitiveType == RenderOperation::OT_TRIANGLE_FAN)
+				{
+					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+						"Geometry shader input primitive type can not be triangle fan", 
+						"GLSLLinkProgram::activate");
+				}
+				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_INPUT_TYPE_EXT,
+					renderOperationTypeToGLGeometryPrimitiveType(inputPrimitiveType));
+				
+				RenderOperation::OperationType outputPrimitiveType = mGeometryProgram->getGLSLProgram()->getOutputPrimitiveType();
+				switch (outputPrimitiveType)
+				{
+				case RenderOperation::OT_POINT_LIST:
+				case RenderOperation::OT_LINE_LIST:
+				case RenderOperation::OT_TRIANGLE_LIST:
+					break;
+				default:
+					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
+						"Geometry shader output primitive type can only be point list, line list or triangle list",
+						"GLSLLinkProgram::activate");
+				}
+				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_OUTPUT_TYPE_EXT,
+					renderOperationTypeToGLGeometryPrimitiveType(outputPrimitiveType));
+
+				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_VERTICES_OUT_EXT,
+					mGeometryProgram->getGLSLProgram()->getMaxOutputVertices());
 			}
 
 			glLinkProgramARB( mGLHandle );

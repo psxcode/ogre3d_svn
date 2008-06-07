@@ -35,6 +35,7 @@ Torus Knot Software Ltd.
 #include "OgreSharedPtr.h"
 #include "OgreIteratorWrappers.h"
 #include "OgreSerializer.h"
+#include "OgreRenderOperation.h"
 
 namespace Ogre {
 
@@ -1436,6 +1437,24 @@ namespace Ogre {
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
+		class _OgreExport CmdInputPrimitiveType : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
+		class _OgreExport CmdOutputPrimitiveType : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
+		class _OgreExport CmdMaxOutputVertices : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
 		// Command object for setting / getting parameters
 		static CmdType msTypeCmd;
 		static CmdSyntax msSyntaxCmd;
@@ -1444,7 +1463,10 @@ namespace Ogre {
 		static CmdPose msPoseCmd;
 		static CmdVTF msVTFCmd;
 		static CmdManualNamedConstsFile msManNamedConstsFileCmd;
-	
+		static CmdInputPrimitiveType msInputPrimitiveTypeCmd;
+		static CmdOutputPrimitiveType msOutputPrimitiveTypeCmd;
+		static CmdMaxOutputVertices msMaxOutputVerticesCmd;
+
 		/// The type of the program
 		GpuProgramType mType;
 		/// The name of the file to load source from (may be blank)
@@ -1463,6 +1485,12 @@ namespace Ogre {
 		ushort mPoseAnimation;
 		/// Does this (vertex) program require support for vertex texture fetch?
 		bool mVertexTextureFetch;
+		/// The input primitive type for this (geometry) program
+		RenderOperation::OperationType mInputPrimitiveType;
+		/// The output primitive type for this (geometry) program
+		RenderOperation::OperationType mOutputPrimitiveType;
+		/// The maximum amount of vertices that this (geometry) program can output
+		int mMaxOutputVertices;
 		/// The default parameters for use with this object
 		GpuProgramParametersSharedPtr mDefaultParams;
 		/// Does this program want light states passed through fixed pipeline
@@ -1616,6 +1644,34 @@ namespace Ogre {
 			texture fetch from the hardware.
 		*/
 		virtual bool isVertexTextureFetchRequired(void) const { return mVertexTextureFetch; }
+
+		/** Returns the primitive type that this geometry program expects to
+			receive as input
+		*/
+		virtual RenderOperation::OperationType getInputPrimitiveType(void) const 
+		{ return mInputPrimitiveType; }
+		/** Returns the primitive type that this geometry program will emit
+		*/
+		virtual RenderOperation::OperationType getOutputPrimitiveType(void) const 
+		{ return mOutputPrimitiveType; }
+		/** Returns the maximum number of vertices that this geometry program can
+			output in a single run
+		*/
+		virtual int getMaxOutputVertices(void) const { return mMaxOutputVertices; }
+
+		/** Sets the primitive type that this geometry program expects to receive
+		*/
+		virtual void setInputPrimitiveType(RenderOperation::OperationType operationType) 
+		{ mInputPrimitiveType = operationType; }
+		/** Set the primitive type that this geometry program will emit
+		*/
+		virtual void setOutputPrimitiveType(RenderOperation::OperationType operationType) 
+		{ mOutputPrimitiveType = operationType; }
+		/** Set the maximum number of vertices that a single run of this geometry program
+			can emit.
+		*/
+		virtual void setMaxOutputVertices(int maxOutputVertices) 
+		{ mMaxOutputVertices = maxOutputVertices; }
 
 		/** Get a reference to the default parameters which are to be used for all
 			uses of this program.
