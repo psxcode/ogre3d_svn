@@ -51,6 +51,7 @@ Torus Knot Software Ltd.
 #include "OgreShadowTextureManager.h"
 #include "OgreCamera.h"
 #include "OgreInstancedGeometry.h"
+#include "OgreLodListener.h"
 
 namespace Ogre {
 
@@ -886,6 +887,22 @@ namespace Ogre {
 		SceneMgrQueuedRenderableVisitor* mActiveQueuedRenderableVisitor;
 		/// Storage for default renderable visitor
 		SceneMgrQueuedRenderableVisitor mDefaultQueuedRenderableVisitor;
+
+        /// Set of registered lod listeners
+        typedef std::set<LodListener*> LodListenerSet;
+        LodListenerSet mLodListeners;
+
+        /// List of movable object lod changed events
+        typedef std::vector<MovableObjectLodChangedEvent> MovableObjectLodChangedEventList;
+        MovableObjectLodChangedEventList mMovableObjectLodChangedEvents;
+
+        /// List of entity mesh lod changed events
+        typedef std::vector<EntityMeshLodChangedEvent> EntityMeshLodChangedEventList;
+        EntityMeshLodChangedEventList mEntityMeshLodChangedEvents;
+
+        /// List of entity material lod changed events
+        typedef std::vector<EntityMaterialLodChangedEvent> EntityMaterialLodChangedEventList;
+        EntityMaterialLodChangedEventList mEntityMaterialLodChangedEvents;
 
     public:
         /** Constructor.
@@ -3022,6 +3039,29 @@ namespace Ogre {
 
 		/**  Returns the shadow caster AAB for a specific light-camera combination */
 		const VisibleObjectsBoundsInfo& getShadowCasterBoundsInfo(const Light* light) const;
+
+
+        /** Add a level of detail listener. */
+        void addLodListener(LodListener *listener);
+
+        /**
+        Remove a level of detail listener.
+        @remarks
+            Do not call from inside an LodListener callback method.
+        */
+        void removeLodListener(LodListener *listener);
+
+        /** Notify that a movable object lod change event has occurred. */
+        void _notifyMovableObjectLodChanged(const MovableObjectLodChangedEvent& evt);
+
+        /** Notify that an entity mesh lod change event has occurred. */
+        void _notifyEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt);
+
+        /** Notify that an entity material lod change event has occurred. */
+        void _notifyEntityMaterialLodChanged(const EntityMaterialLodChangedEvent& evt);
+
+        /** Handle lod events. */
+        void _handleLodEvents();
     };
 
     /** Default implementation of IntersectionSceneQuery. */

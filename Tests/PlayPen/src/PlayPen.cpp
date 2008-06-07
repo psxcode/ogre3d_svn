@@ -6761,7 +6761,32 @@ protected:
 
 	}
 
+    class MyLodListener
+        : public LodListener
+    {
+        SceneManager *mSceneMgr;
 
+    public:
+        MyLodListener(SceneManager *sceneMgr)
+            : mSceneMgr(sceneMgr)
+        { }
+
+        virtual bool prequeueEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt)
+        {
+            // Queue event
+            return true;
+        }
+
+        virtual void postqueueEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt)
+        {
+            // Check for change
+            if (evt.newLodIndex != evt.previousLodIndex)
+            {
+                double value = 0.2 * (1 + evt.newLodIndex);
+                mSceneMgr->setAmbientLight(ColourValue(value, value, value));
+            }
+        }
+    };
 
     void testLod()
     {
@@ -6770,6 +6795,15 @@ protected:
         Light* l = mSceneMgr->createLight("LodTestLight");
         l->setPosition(500, 500, 200);
         l->setDiffuseColour(ColourValue::White);
+
+        // Generate mesh lods
+        MeshManager *meshManager = MeshManager::getSingletonPtr();
+        MeshPtr mesh = meshManager->load("knot.mesh", "General");
+        Mesh::LodValueList distances;
+        distances.push_back(100);
+        distances.push_back(300);
+        distances.push_back(500);
+        mesh->generateLodLevels(distances, Ogre::ProgressiveMesh::VRQ_PROPORTIONAL, 0.5);
 
         // Create material
         MaterialPtr material = MaterialManager::getSingleton().create("LodTestMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -6793,14 +6827,17 @@ protected:
 
         // Create material lods
         Material::LodValueList lods;
-        lods.push_back(Math::Sqr(100));
         lods.push_back(Math::Sqr(200));
+        lods.push_back(Math::Sqr(400));
         material->setLodLevels(lods);
 
         // Create entity
-        Entity *entity = mSceneMgr->createEntity("LodTestEntity", "knot.mesh");
+        Entity *entity = mSceneMgr->createEntity("LodTestEntity", mesh->getName());
         entity->setMaterialName(material->getName());
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(entity);
+
+        // Add lod listener
+        mSceneMgr->addLodListener(new MyLodListener(mSceneMgr));
     }
 
 

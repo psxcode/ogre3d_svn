@@ -1457,6 +1457,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreLodListener.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreLodStrategy.h"
 				>
 			</File>
