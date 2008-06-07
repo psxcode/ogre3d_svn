@@ -3074,6 +3074,11 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 						mDestRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
 							pass->getVertexProgramParameters());
 					}
+					if (pass->hasGeometryProgram())
+					{
+						mDestRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
+							pass->getGeometryProgramParameters());
+					}
 					if (pass->hasFragmentProgram())
 					{
 						mDestRenderSystem->bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
