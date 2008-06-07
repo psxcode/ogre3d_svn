@@ -61,11 +61,11 @@ const char* POINT_RENDERING_GLSL_PROGRAM = "													\n\
 SceneNode* rotNode;
 
 // Listener class for frame updates
-class CelShadingListener : public ExampleFrameListener
+class GeometryShadingListener : public ExampleFrameListener
 {
 protected:
 public:
-    CelShadingListener(RenderWindow* win, Camera* cam)
+    GeometryShadingListener(RenderWindow* win, Camera* cam)
         : ExampleFrameListener(win, cam)
     {
     }
@@ -80,25 +80,20 @@ public:
     }
 };
 
-// Custom parameter bindings
-#define CUSTOM_SHININESS 1
-#define CUSTOM_DIFFUSE 2
-#define CUSTOM_SPECULAR 3
-
-class CelShadingApplication : public ExampleApplication
+class GeometryShadingApplication : public ExampleApplication
 {
 public:
-    CelShadingApplication() { 
+    GeometryShadingApplication() { 
     }
 
-    ~CelShadingApplication() {  }
+    ~GeometryShadingApplication() {  }
 
 protected:
     
 	void createFrameListener(void)
     {
 		// This is where we instantiate our own frame listener
-        mFrameListener= new CelShadingListener(mWindow, mCamera);
+        mFrameListener= new GeometryShadingListener(mWindow, mCamera);
         mRoot->addFrameListener(mFrameListener);
 
     }
@@ -113,7 +108,7 @@ protected:
         {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support geometry programs, so cannot "
                 "run this demo. Sorry!", 
-                "CelShading::createScene");
+                "GeometryShading::createScene");
         }
 
         // Create a point light
@@ -174,7 +169,7 @@ int main(int argc, char **argv)
 #endif
 {
     // Create application object
-    CelShadingApplication app;
+    GeometryShadingApplication app;
 
     try {
         app.go();
