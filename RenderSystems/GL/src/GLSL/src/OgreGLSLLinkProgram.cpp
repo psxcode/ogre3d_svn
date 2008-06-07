@@ -128,6 +128,17 @@ namespace Ogre {
 				glBindAttribLocationARB(mGLHandle, a.attrib, a.name.c_str());
 			}
 
+			if (mGeometryProgram)
+			{
+				//HACK! Need to get proper geometry type
+				//TODO: Add to program declaration and use accordingly.
+				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_INPUT_TYPE_EXT,GL_TRIANGLES);
+				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_OUTPUT_TYPE_EXT,GL_TRIANGLES);
+				int temp;
+				glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT,&temp);
+				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_VERTICES_OUT_EXT,temp);
+			}
+
 			glLinkProgramARB( mGLHandle );
 			glGetObjectParameterivARB( mGLHandle, GL_OBJECT_LINK_STATUS_ARB, &mLinked );
 			// force logging and raise exception if not linked

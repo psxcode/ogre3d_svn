@@ -349,17 +349,6 @@ namespace Ogre {
 		}
 		glAttachObjectARB( programObject, mGLHandle );
 
-		if (mType == GPT_GEOMETRY_PROGRAM)
-		{
-			//HACK! Need to get proper geometry type
-			//TODO: Add to program declaration and use accordingly.
-			glProgramParameteriEXT(programObject,GL_GEOMETRY_INPUT_TYPE_EXT,GL_TRIANGLES);
-			glProgramParameteriEXT(programObject,GL_GEOMETRY_OUTPUT_TYPE_EXT,GL_TRIANGLES);
-			int temp;
-			glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT,&temp);
-			glProgramParameteriEXT(programObject,GL_GEOMETRY_VERTICES_OUT_EXT,temp);
-		}
-
 		checkForGLSLError( "GLSLLinkProgram::GLSLLinkProgram",
 			"Error attaching " + mName + " shader object to GLSL Program Object", programObject );
 
