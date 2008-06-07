@@ -1197,6 +1197,7 @@ namespace Ogre
 		RenderTarget * mActiveRenderTarget;
 		/** The Active GPU programs and gpu program parameters*/
 		GpuProgramParametersSharedPtr mActiveVertexGpuProgramParameters;
+		GpuProgramParametersSharedPtr mActiveGeometryGpuProgramParameters;
 		GpuProgramParametersSharedPtr mActiveFragmentGpuProgramParameters;
 
 		// Texture manager
