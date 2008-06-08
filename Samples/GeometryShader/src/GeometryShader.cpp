@@ -125,13 +125,12 @@ protected:
 		vp->setOutputOperationType(RenderOperation::OT_TRIANGLE_LIST);
 		vp->setMaxOutputVertices(6); //3 vertices per triangle, two triangles per input triangle
 		
-		GpuProgramParametersSharedPtr geomParams = vp->createParameters();
+		swizzlePass->setGeometryProgram(vp->getName());
+
+		GpuProgramParametersSharedPtr geomParams = swizzlePass->getGeometryProgramParameters();
 		geomParams->setNamedConstant("origColor", ColourValue::Blue);
 		geomParams->setNamedConstant("cloneColor", ColourValue::Red);
 		
-
-		swizzlePass->setGeometryProgram(vp->getName());
-
 		// Set all of the material's sub entities to use the new material
 		for (unsigned int i=0; i<ent->getNumSubEntities(); i++)
 		{
