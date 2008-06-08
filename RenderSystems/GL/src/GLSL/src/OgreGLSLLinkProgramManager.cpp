@@ -301,7 +301,8 @@ namespace Ogre {
 	bool GLSLLinkProgramManager::completeParamSource(
 		const String& paramName,
 		const GpuConstantDefinitionMap* vertexConstantDefs, 
-		const GpuConstantDefinitionMap* fragmentConstantDefs, 
+		const GpuConstantDefinitionMap* geometryConstantDefs,
+		const GpuConstantDefinitionMap* fragmentConstantDefs,
 		GLUniformReference& refToUpdate)
 	{
 		if (vertexConstantDefs)
@@ -311,6 +312,18 @@ namespace Ogre {
 			if (parami != vertexConstantDefs->end())
 			{
 				refToUpdate.mSourceProgType = GPT_VERTEX_PROGRAM;
+				refToUpdate.mConstantDef = &(parami->second);
+				return true;
+			}
+
+		}
+		if (geometryConstantDefs)
+		{
+			GpuConstantDefinitionMap::const_iterator parami = 
+				geometryConstantDefs->find(paramName);
+			if (parami != geometryConstantDefs->end())
+			{
+				refToUpdate.mSourceProgType = GPT_GEOMETRY_PROGRAM;
 				refToUpdate.mConstantDef = &(parami->second);
 				return true;
 			}
@@ -334,7 +347,8 @@ namespace Ogre {
 	//---------------------------------------------------------------------
 	void GLSLLinkProgramManager::extractUniforms(GLhandleARB programObject, 
 		const GpuConstantDefinitionMap* vertexConstantDefs, 
-		const GpuConstantDefinitionMap* fragmentConstantDefs, 
+		const GpuConstantDefinitionMap* geometryConstantDefs,
+		const GpuConstantDefinitionMap* fragmentConstantDefs,
 		GLUniformReferenceList& list)
 	{
 		// scan through the active uniforms and add them to the reference list
@@ -379,7 +393,7 @@ namespace Ogre {
 
 				// find out which params object this comes from
 				bool foundSource = completeParamSource(paramName,
-						vertexConstantDefs,	fragmentConstantDefs, newGLUniformReference);
+						vertexConstantDefs,	geometryConstantDefs, fragmentConstantDefs, newGLUniformReference);
 
 				// only add this parameter if we found the source
 				if (foundSource)

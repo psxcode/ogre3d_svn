@@ -235,10 +235,14 @@ namespace Ogre {
 		{
 			const GpuConstantDefinitionMap* vertParams = 0;
 			const GpuConstantDefinitionMap* fragParams = 0;
-
+			const GpuConstantDefinitionMap* geomParams = 0;
 			if (mVertexProgram)
 			{
 				vertParams = &(mVertexProgram->getGLSLProgram()->getConstantDefinitions().map);
+			}
+			if (mGeometryProgram)
+			{
+				geomParams = &(mGeometryProgram->getGLSLProgram()->getConstantDefinitions().map);
 			}
 			if (mFragmentProgram)
 			{
@@ -246,7 +250,7 @@ namespace Ogre {
 			}
 
 			GLSLLinkProgramManager::getSingleton().extractUniforms(
-				mGLHandle, vertParams, fragParams, mGLUniformReferences);
+				mGLHandle, vertParams, geomParams, fragParams, mGLUniformReferences);
 
 			mUniformRefsBuilt = true;
 		}
