@@ -1437,13 +1437,13 @@ namespace Ogre {
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
-		class _OgreExport CmdInputPrimitiveType : public ParamCommand
+		class _OgreExport CmdInputOperationType : public ParamCommand
 		{
 		public:
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
-		class _OgreExport CmdOutputPrimitiveType : public ParamCommand
+		class _OgreExport CmdOutputOperationType : public ParamCommand
 		{
 		public:
 			String doGet(const void* target) const;
@@ -1463,8 +1463,8 @@ namespace Ogre {
 		static CmdPose msPoseCmd;
 		static CmdVTF msVTFCmd;
 		static CmdManualNamedConstsFile msManNamedConstsFileCmd;
-		static CmdInputPrimitiveType msInputPrimitiveTypeCmd;
-		static CmdOutputPrimitiveType msOutputPrimitiveTypeCmd;
+		static CmdInputOperationType msInputOperationTypeCmd;
+		static CmdOutputOperationType msOutputOperationTypeCmd;
 		static CmdMaxOutputVertices msMaxOutputVerticesCmd;
 
 		/// The type of the program
@@ -1485,10 +1485,10 @@ namespace Ogre {
 		ushort mPoseAnimation;
 		/// Does this (vertex) program require support for vertex texture fetch?
 		bool mVertexTextureFetch;
-		/// The input primitive type for this (geometry) program
-		RenderOperation::OperationType mInputPrimitiveType;
-		/// The output primitive type for this (geometry) program
-		RenderOperation::OperationType mOutputPrimitiveType;
+		/// The input operation type for this (geometry) program
+		RenderOperation::OperationType mInputOperationType;
+		/// The output operation type for this (geometry) program
+		RenderOperation::OperationType mOutputOperationType;
 		/// The maximum amount of vertices that this (geometry) program can output
 		int mMaxOutputVertices;
 		/// The default parameters for use with this object
@@ -1645,28 +1645,28 @@ namespace Ogre {
 		*/
 		virtual bool isVertexTextureFetchRequired(void) const { return mVertexTextureFetch; }
 
-		/** Returns the primitive type that this geometry program expects to
+		/** Returns the operation type that this geometry program expects to
 			receive as input
 		*/
-		virtual RenderOperation::OperationType getInputPrimitiveType(void) const 
-		{ return mInputPrimitiveType; }
-		/** Returns the primitive type that this geometry program will emit
+		virtual RenderOperation::OperationType getInputOperationType(void) const 
+		{ return mInputOperationType; }
+		/** Returns the operation type that this geometry program will emit
 		*/
-		virtual RenderOperation::OperationType getOutputPrimitiveType(void) const 
-		{ return mOutputPrimitiveType; }
+		virtual RenderOperation::OperationType getOutputOperationType(void) const 
+		{ return mOutputOperationType; }
 		/** Returns the maximum number of vertices that this geometry program can
 			output in a single run
 		*/
 		virtual int getMaxOutputVertices(void) const { return mMaxOutputVertices; }
 
-		/** Sets the primitive type that this geometry program expects to receive
+		/** Sets the operation type that this geometry program expects to receive
 		*/
-		virtual void setInputPrimitiveType(RenderOperation::OperationType operationType) 
-		{ mInputPrimitiveType = operationType; }
-		/** Set the primitive type that this geometry program will emit
+		virtual void setInputOperationType(RenderOperation::OperationType operationType) 
+		{ mInputOperationType = operationType; }
+		/** Set the operation type that this geometry program will emit
 		*/
-		virtual void setOutputPrimitiveType(RenderOperation::OperationType operationType) 
-		{ mOutputPrimitiveType = operationType; }
+		virtual void setOutputOperationType(RenderOperation::OperationType operationType) 
+		{ mOutputOperationType = operationType; }
 		/** Set the maximum number of vertices that a single run of this geometry program
 			can emit.
 		*/

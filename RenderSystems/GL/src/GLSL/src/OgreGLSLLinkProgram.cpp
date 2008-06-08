@@ -150,18 +150,18 @@ namespace Ogre {
 
 			if (mGeometryProgram)
 			{
-				RenderOperation::OperationType inputPrimitiveType = mGeometryProgram->getGLSLProgram()->getInputPrimitiveType();
-				if (inputPrimitiveType == RenderOperation::OT_TRIANGLE_FAN)
+				RenderOperation::OperationType inputOperationType = mGeometryProgram->getGLSLProgram()->getInputOperationType();
+				if (inputOperationType == RenderOperation::OT_TRIANGLE_FAN)
 				{
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-						"Geometry shader input primitive type can not be triangle fan", 
+						"Geometry shader input operation type can not be triangle fan", 
 						"GLSLLinkProgram::activate");
 				}
 				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_INPUT_TYPE_EXT,
-					renderOperationTypeToGLGeometryPrimitiveType(inputPrimitiveType));
+					renderOperationTypeToGLGeometryPrimitiveType(inputOperationType));
 				
-				RenderOperation::OperationType outputPrimitiveType = mGeometryProgram->getGLSLProgram()->getOutputPrimitiveType();
-				switch (outputPrimitiveType)
+				RenderOperation::OperationType outputOperationType = mGeometryProgram->getGLSLProgram()->getOutputOperationType();
+				switch (outputOperationType)
 				{
 				case RenderOperation::OT_POINT_LIST:
 				case RenderOperation::OT_LINE_LIST:
@@ -169,11 +169,11 @@ namespace Ogre {
 					break;
 				default:
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
-						"Geometry shader output primitive type can only be point list, line list or triangle list",
+						"Geometry shader output operation type can only be point list, line list or triangle list",
 						"GLSLLinkProgram::activate");
 				}
 				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_OUTPUT_TYPE_EXT,
-					renderOperationTypeToGLGeometryPrimitiveType(outputPrimitiveType));
+					renderOperationTypeToGLGeometryPrimitiveType(outputOperationType));
 
 				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_VERTICES_OUT_EXT,
 					mGeometryProgram->getGLSLProgram()->getMaxOutputVertices());

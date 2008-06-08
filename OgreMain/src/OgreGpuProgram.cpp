@@ -50,8 +50,8 @@ namespace Ogre
 	GpuProgram::CmdPose GpuProgram::msPoseCmd;
 	GpuProgram::CmdVTF GpuProgram::msVTFCmd;
 	GpuProgram::CmdManualNamedConstsFile GpuProgram::msManNamedConstsFileCmd;
-	GpuProgram::CmdInputPrimitiveType GpuProgram::msInputPrimitiveTypeCmd;
-	GpuProgram::CmdOutputPrimitiveType GpuProgram::msOutputPrimitiveTypeCmd;
+	GpuProgram::CmdInputOperationType GpuProgram::msInputOperationTypeCmd;
+	GpuProgram::CmdOutputOperationType GpuProgram::msOutputOperationTypeCmd;
 	GpuProgram::CmdMaxOutputVertices GpuProgram::msMaxOutputVerticesCmd;
 
 
@@ -243,8 +243,8 @@ namespace Ogre
         :Resource(creator, name, handle, group, isManual, loader),
         mType(GPT_VERTEX_PROGRAM), mLoadFromFile(true), mSkeletalAnimation(false),
         mVertexTextureFetch(false), mPassSurfaceAndLightStates(false), mCompileError(false), 
-		mLoadedManualNamedConstants(false), mInputPrimitiveType(RenderOperation::OT_TRIANGLE_LIST),
-		mOutputPrimitiveType(RenderOperation::OT_TRIANGLE_LIST), mMaxOutputVertices(3)
+		mLoadedManualNamedConstants(false), mInputOperationType(RenderOperation::OT_TRIANGLE_LIST),
+		mOutputOperationType(RenderOperation::OT_TRIANGLE_LIST), mMaxOutputVertices(3)
     {
     }
     //-----------------------------------------------------------------------------
@@ -455,17 +455,17 @@ namespace Ogre
 			"File containing named parameter mappings for low-level programs.", PT_BOOL), 
 			&msManNamedConstsFileCmd);
 		dict->addParameter(
-			ParameterDef("input_primitive_type",
-			"The input primitive type for this geometry program. \
+			ParameterDef("input_operation_type",
+			"The input operation type for this geometry program. \
 			Can be 'point_list', 'line_list', 'line_strip', 'triangle_list', \
 			'triangle_strip' or 'triangle_fan'", PT_STRING),
-			&msInputPrimitiveTypeCmd);
+			&msInputOperationTypeCmd);
 		dict->addParameter(
-			ParameterDef("output_primitive_type",
-			"The input primitive type for this geometry program. \
+			ParameterDef("output_operation_type",
+			"The input operation type for this geometry program. \
 			Can be 'point_list', 'line_list', 'line_strip', 'triangle_list', \
 			'triangle_strip' or 'triangle_fan'", PT_STRING),
-			&msOutputPrimitiveTypeCmd);
+			&msOutputOperationTypeCmd);
 		dict->addParameter(
 			ParameterDef("max_output_vertices", 
 			"The maximum number of vertices a single run of this geometry program can output", PT_INT),
@@ -2236,26 +2236,26 @@ namespace Ogre
 		}
 	}
 	//-----------------------------------------------------------------------
-    String GpuProgram::CmdInputPrimitiveType::doGet(const void* target) const
+    String GpuProgram::CmdInputOperationType::doGet(const void* target) const
     {
         const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return operationTypeToString(t->getInputPrimitiveType());
+		return operationTypeToString(t->getInputOperationType());
     }
-    void GpuProgram::CmdInputPrimitiveType::doSet(void* target, const String& val)
+    void GpuProgram::CmdInputOperationType::doSet(void* target, const String& val)
     {
         GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setInputPrimitiveType(parseOperationType(val));
+		t->setInputOperationType(parseOperationType(val));
     }
 	//-----------------------------------------------------------------------
-	String GpuProgram::CmdOutputPrimitiveType::doGet(const void* target) const
+	String GpuProgram::CmdOutputOperationType::doGet(const void* target) const
     {
         const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return operationTypeToString(t->getOutputPrimitiveType());
+		return operationTypeToString(t->getOutputOperationType());
     }
-    void GpuProgram::CmdOutputPrimitiveType::doSet(void* target, const String& val)
+    void GpuProgram::CmdOutputOperationType::doSet(void* target, const String& val)
     {
         GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setOutputPrimitiveType(parseOperationType(val));
+		t->setOutputOperationType(parseOperationType(val));
     }
 	//-----------------------------------------------------------------------
 	String GpuProgram::CmdMaxOutputVertices::doGet(const void* target) const

@@ -88,6 +88,10 @@ protected:
                 "run this demo. Sorry!", 
                 "GeometryShading::createScene");
         }
+		
+		int maxOutputVertices = caps->getGeometryProgramNumOutputVertices();
+		Ogre::LogManager::getSingleton().getDefaultLog()->stream() << 
+			"Num output vertices per geometry shader run : " << maxOutputVertices << "\n";
 
         Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
 
@@ -114,8 +118,8 @@ protected:
 			"glsl", GPT_GEOMETRY_PROGRAM);
 		vp->setSource(SWIZZLE_GLSL_GEOMETRY_PROGRAM);
 		vp->load();
-		vp->setInputPrimitiveType(RenderOperation::OT_TRIANGLE_LIST);
-		vp->setOutputPrimitiveType(RenderOperation::OT_TRIANGLE_LIST);
+		vp->setInputOperationType(RenderOperation::OT_TRIANGLE_LIST);
+		vp->setOutputOperationType(RenderOperation::OT_TRIANGLE_LIST);
 		vp->setMaxOutputVertices(6); //3 vertices per triangle, two triangles per input triangle
 		swizzlePass->setGeometryProgram(vp->getName());
 
