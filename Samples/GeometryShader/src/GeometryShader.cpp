@@ -29,6 +29,9 @@ const char* SWIZZLE_GLSL_GEOMETRY_PROGRAM = "													\n\
 	#version 120																				\n\
 	#extension GL_EXT_geometry_shader4 : enable													\n\
 																								\n\
+	uniform vec4 origColor;																		\n\
+	uniform vec4 cloneColor;																	\n\
+																								\n\
 	void main(void)																				\n\
 	{																							\n\
 																								\n\
@@ -49,7 +52,7 @@ const char* SWIZZLE_GLSL_GEOMETRY_PROGRAM = "													\n\
 		//Pass-thru!																			\n\
 		for(i=0; i< gl_VerticesIn; i++){														\n\
 			gl_Position = gl_PositionIn[i];														\n\
-			gl_FrontColor = vec4(1,0,0,1);														\n\
+			gl_FrontColor = origColor;															\n\
 			EmitVertex();																		\n\
 		}																						\n\
 		EndPrimitive();																			\n\
@@ -57,7 +60,7 @@ const char* SWIZZLE_GLSL_GEOMETRY_PROGRAM = "													\n\
 		for(i=0; i< gl_VerticesIn; i++){														\n\
 			gl_Position = gl_PositionIn[i];														\n\
 			gl_Position.xy = gl_Position.yx;													\n\
-			gl_FrontColor = vec4(0,0,1,1);														\n\
+			gl_FrontColor = cloneColor;															\n\
 			EmitVertex();																		\n\
 		}																						\n\
 		EndPrimitive();																			\n\
@@ -121,6 +124,12 @@ protected:
 		vp->setInputOperationType(RenderOperation::OT_TRIANGLE_LIST);
 		vp->setOutputOperationType(RenderOperation::OT_TRIANGLE_LIST);
 		vp->setMaxOutputVertices(6); //3 vertices per triangle, two triangles per input triangle
+		
+		GpuProgramParametersSharedPtr geomParams = vp->createParameters();
+		geomParams->setNamedConstant("origColor", ColourValue::Blue);
+		geomParams->setNamedConstant("cloneColor", ColourValue::Red);
+		
+
 		swizzlePass->setGeometryProgram(vp->getName());
 
 		// Set all of the material's sub entities to use the new material
