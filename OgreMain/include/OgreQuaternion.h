@@ -116,11 +116,6 @@ namespace Ogre {
 			return &w;
 		}
 
-
-	//westine 
-			static Quaternion MakeFromEuler(const Vector3& Euler);
-			Vector3 Euler() const;
-
 		void FromRotationMatrix (const Matrix3& kRot);
         void ToRotationMatrix (Matrix3& kRot) const;
         void FromAngleAxis (const Radian& rfAngle, const Vector3& rkAxis);
