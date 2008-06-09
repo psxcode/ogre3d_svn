@@ -46,7 +46,6 @@ Torus Knot Software Ltd.
 #include "OgreMath.h"
 #include "OgreMatrix3.h"
 #include "OgreVector3.h"
-#include <math.h>
 
 namespace Ogre {
 
@@ -55,43 +54,6 @@ namespace Ogre {
     const Quaternion Quaternion::IDENTITY(1.0,0.0,0.0,0.0);
 
     //-----------------------------------------------------------------------
-
-
-	/** Convert an Euler angles (in degrees) into a Quaternion. */
-	Quaternion Quaternion::MakeFromEuler(const Vector3& Euler)
-	{
-		Quaternion qu;
-		Vector3 radian;
-		radian.x = Euler.x*Math::PI/180;
-		radian.y = Euler.y*Math::PI/180;
-		radian.z = Euler.z*Math::PI/180;
-		qu.x = cos(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
-		qu.y = sin(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)-cos(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
-		qu.z = cos(radian.x/2)*sin(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*cos(radian.y/2)*sin(radian.z/2);
-		qu.w = cos(radian.x/2)*cos(radian.y/2)*sin(radian.z/2)-sin(radian.x/2)*sin(radian.y/2)*cos(radian.z/2);
-		return qu;
-	}
-
-	/** Convert a Quaternion into floating-point Euler angles (in degrees). */
-	/* Roll - ¦Õ: rotation about the X-axis
-	* Pitch - ¦È: rotation about the Y-axis
-	* Yaw - ¦×: rotation about the Z-axis
-	*/
-
-	Vector3 Quaternion::Euler() const
-	{
-		Vector3 euler;
-		float tempangle = atan(2*(x*y+z*w)/(1-2*(y*y+z*z)));
-		euler.x = tempangle;
-		tempangle = asin(2*(x*z - w*y));
-		euler.y = tempangle;
-		tempangle = atan(2*(x*w+y*z)/(1-2*(z*z+w*w)));
-		euler.z = tempangle;
-
-		return euler;
-	}
-
-
     void Quaternion::FromRotationMatrix (const Matrix3& kRot)
     {
         // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
