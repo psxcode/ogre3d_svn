@@ -37,7 +37,7 @@ Lucas Westine
 		};
 		typedef struct	
 		{
-			int		   ChannelIndex;
+			int		   ChannelBlockIndex;
 			Ogre::Real Xposition;
 			Ogre::Real Yposition;
 			Ogre::Real Zposition;
@@ -46,7 +46,7 @@ Lucas Westine
 
 		typedef struct  
 		{
-			int		   ChannelIndex;
+			int		   ChannelBlockIndex;
 			Ogre::Real Xrotation;
 			Ogre::Real Yrotation;
 			Ogre::Real Zrotation;
