@@ -51,32 +51,43 @@ using namespace Ogre;
 Quaternion EulerToQuaternion(const Vector3& Euler)
 {
 	Quaternion qu;
-	Vector3 radian;
-	radian.x = Euler.x*Math::PI/180;
-	radian.y = Euler.y*Math::PI/180;
-	radian.z = Euler.z*Math::PI/180;
-	qu.x = cos(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
-	qu.y = sin(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)-cos(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
-	qu.z = cos(radian.x/2)*sin(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*cos(radian.y/2)*sin(radian.z/2);
-	qu.w = cos(radian.x/2)*cos(radian.y/2)*sin(radian.z/2)-sin(radian.x/2)*sin(radian.y/2)*cos(radian.z/2);
+	
+	float radX = Euler.x*Math::PI/180;
+	float radY = Euler.y*Math::PI/180;
+	float radZ = Euler.z*Math::PI/180;
+	radX = radX/2;
+	radY = radY/2;
+	radZ = radZ/2;
+
+	double cosX = cos(radX);
+	double sinX = sin(radX);
+	double cosY = cos(radY);
+	double sinY = sin(radY);
+	double cosZ = cos(radZ);
+	double sinZ = sin(radZ);
+	
+	qu.w = cosX*cosY*cosZ+sinX*sinY*sinZ;
+	qu.x = sinX*cosY*cosZ-cosX*sinY*sinZ;
+	qu.y = cosX*sinY*cosZ+sinX*cosY*sinZ;
+	qu.z = cosX*cosY*sinZ-sinX*sinY*cosZ;
 	qu.normalise();
 	return qu;
 	
 }
 
 
-//another version of EulerToQuaternion conversion, using another method
+//another version of EulerToQuaternion conversion, using the method used in MoCapSim http://www.tabinda.net/mocapsim/ 
 // because Quaternion does not normalise automatically after FromAngleAxis, we 
 // need to normalise every time we do Quaternion operations
 Quaternion EulerToQuaternion(float radX, float radY, float radZ)
 {
 	Quaternion QuaternionX, QuaternionY, QuaternionZ, QuaternionResult;
 
-	QuaternionX.FromAngleAxis( Radian(radX), Vector3(1,0,0) );
+	QuaternionX.FromAngleAxis( Degree(radX), Vector3(1,0,0) );
 	QuaternionX.normalise();
-	QuaternionY.FromAngleAxis( Radian(radY), Vector3(0,1,0) );
+	QuaternionY.FromAngleAxis( Degree(radY), Vector3(0,1,0) );
 	QuaternionY.normalise();
-	QuaternionZ.FromAngleAxis( Radian(radZ), Vector3(0,0,1) );
+	QuaternionZ.FromAngleAxis( Degree(radZ), Vector3(0,0,1) );
 	QuaternionZ.normalise();
 
 	QuaternionResult = QuaternionZ * QuaternionX * QuaternionY;
@@ -94,7 +105,7 @@ Quaternion EulerToQuaternion(float radX, float radY, float radZ)
 
 Vector3 QuaternionToEuler(const Quaternion& qu) 
 {
-	
+	//It is assumed that qu has been normalised already
 	Vector3 euler;
 	Real x = qu.x;
 	Real y = qu.y;
@@ -573,7 +584,7 @@ void AddAnimation(XmlOptions opts)
 					//take care of ZYX rotation order of bvh, euler angle is in XYZ order
 					Ogre::Vector3 euler(motiondata[k][ChannelIndex+2],motiondata[k][ChannelIndex+1],
 						motiondata[k][ChannelIndex]);
-					//qu = EulerToQuaternion(euler);//my version
+					qu = EulerToQuaternion(euler);//my version
 					qu = EulerToQuaternion(motiondata[k][ChannelIndex+2],
 					motiondata[k][ChannelIndex+1],motiondata[k][ChannelIndex]);  // MoCapSim version
 						pKeyFrame->setRotation(qu);
