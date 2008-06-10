@@ -119,29 +119,26 @@ void Bvh::LoadBoneMap()
 		ss >> str;  // bvh_bone
 		ss >> str; // id
 		ss >> token; //=
-		ss >> token; //"
+		//ss >> token; //"
 		ss >> pBvhElem->id; // id value
-		ss >> token; //"
+		//ss >> token; //"
 		ss >> str; // name
 		ss >> token; // =
-		ss >> token; // "
+		//ss >> token; // "
 		ss >> pBvhElem->name; // name value
-		ss >> token; // "
+		//ss >> token; // "
 		ss >> str; // skeleton_bone
 		ss >> str; // id
 		ss >> token; // =
-		ss >> token; // "
+		//ss >> token; // "
 		ss >> pSkeletonElem->id; // id value
-		ss >> token; // "
+		//ss >> token; // "
 		ss >> str;  // name
 		ss >> token; // =
-		ss >> token; // "
+		//ss >> token; // "
 		ss >> pSkeletonElem->name; // name value
-		ss >> token; // "
-		if ( !strcmp(pSkeletonElem->name.c_str(),"") )
-		{
-			pSkeletonElem->id = NON_BONE_ID;
-		}
+		//ss >> token; // "
+	
 		pElem->pBvh_part = pBvhElem;
 		pElem->pSkeleton_part = pSkeletonElem;
 		m_BoneMap.push_back(pElem);
@@ -155,7 +152,7 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 {
 
 	static int ChannelSum = 0;
-	int ChannelIndex = 0;
+	static int ChannelBlockIndex = 0;
 	std::string line;
 	std::stringstream ss;
 	if ( bLineReady == true )
@@ -225,8 +222,8 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 			m_ChannelMap.push_back(ChannelSum);
 			
 			pBN->pPChannel = new PositionChannel;
-			pBN->pPChannel->ChannelIndex = ChannelIndex;
-			ChannelIndex++;
+			pBN->pPChannel->ChannelBlockIndex = ChannelBlockIndex;
+			ChannelBlockIndex++;
 			ChannelSum += 3;
 			pBN->pPChannel->Xposition = 0;
 			pBN->pPChannel->Yposition = 0;
@@ -235,8 +232,8 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 			m_ChannelMap.push_back(ChannelSum);
            
 			pBN->pRChannel = new RotationChannel; 
-			pBN->pRChannel->ChannelIndex = ChannelIndex;
-			ChannelIndex++;
+			pBN->pRChannel->ChannelBlockIndex = ChannelBlockIndex;
+			ChannelBlockIndex++;
 			ChannelSum += 3;
 			pBN->pRChannel->Xrotation = 0;
 			pBN->pRChannel->Yrotation = 0;
@@ -247,8 +244,8 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 			
 			pBN->pPChannel = NULL;
 			pBN->pRChannel = new RotationChannel;
-			pBN->pRChannel->ChannelIndex = ChannelIndex;
-			ChannelIndex++;
+			pBN->pRChannel->ChannelBlockIndex = ChannelBlockIndex;
+			ChannelBlockIndex++;
 			ChannelSum += 3;
 			pBN->pRChannel->Xrotation = 0;
 			pBN->pRChannel->Yrotation = 0;
@@ -289,8 +286,28 @@ void Bvh::LogBoneHierarchy()
 
 	for ( Bvh_Hierarchy::size_type i = 0; i < m_Hierarchy.size(); i++)
 	{
-		ofs<<"bvh_bone id = \""<< i << "\" name = \""<<m_Hierarchy[i]->name<<"\""<<std::endl;
+		ofs<<"bvh_bone id = "<< i << " name = "<<m_Hierarchy[i]->name<<std::endl;
 	}
 	ofs.close();
+
+	//this is for initializing BoneMap.txt, the actual bone matching work is up to users,
+	// it is planned to design automatically bone matching method instead of manual one after all
+	// the motion graph has be implemented 
+
+#ifdef BONE_MAP
+	ofs.open("BoneMap1.txt",std::ios_base::out);
+	if (ofs.bad())
+	{
+		std::cout << "Unable to create file BoneMap.txt" << std::endl;
+		exit(1);
+	}
+	for ( Bvh_Hierarchy::size_type i = 0; i < m_Hierarchy.size(); i++)
+	{
+		ofs<<"bvh_bone id = "<< i << " name = "<<m_Hierarchy[i]->name;
+		ofs<<"\t \t skeleton_bone id = "" name ="""<<std::endl;
+	}
+
+#endif
+
 
 }
