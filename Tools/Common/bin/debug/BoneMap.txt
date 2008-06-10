@@ -19,20 +19,20 @@ bvh_bone id = 17 name = upperneck          skeleton_bone id = 1 name = neck
 bvh_bone id = 18 name = head               skeleton_bone id = 0 name = head
 bvh_bone id = 19 name = head_End           skeleton_bone id = -1 name =
 bvh_bone id = 20 name = lclavicle          skeleton_bone id = -1 name = 
-bvh_bone id = 21 name = lhumerus           skeleton_bone id = -1 name = 
-bvh_bone id = 22 name = lradius            skeleton_bone id = -1 name = 
-bvh_bone id = 23 name = lwrist             skeleton_bone id = -1 name = 
-bvh_bone id = 24 name = lhand              skeleton_bone id = -1 name = 
-bvh_bone id = 25 name = lfingers           skeleton_bone id = -1 name = 
+bvh_bone id = 21 name = lhumerus           skeleton_bone id = 26 name = Lshoulderroot
+bvh_bone id = 22 name = lradius            skeleton_bone id = 23 name = Larmroot
+bvh_bone id = 23 name = lwrist             skeleton_bone id = 9 name = Lforearm
+bvh_bone id = 24 name = lhand              skeleton_bone id = 25 name = Lhandroot
+bvh_bone id = 25 name = lfingers           skeleton_bone id = 22 name = Lfingers
 bvh_bone id = 26 name = lfingers_End       skeleton_bone id = -1 name =
 bvh_bone id = 27 name = lthumb             skeleton_bone id = -1 name =
 bvh_bone id = 28 name = lthumb_End         skeleton_bone id = -1 name =
 bvh_bone id = 29 name = rclavicle          skeleton_bone id = -1 name = 
-bvh_bone id = 30 name = rhumerus           skeleton_bone id = -1 name = 
-bvh_bone id = 31 name = rradius            skeleton_bone id = -1 name = 
-bvh_bone id = 32 name = rwrist             skeleton_bone id = -1 name = 
-bvh_bone id = 33 name = rhand              skeleton_bone id = -1 name = 
-bvh_bone id = 34 name = rfingers           skeleton_bone id = -1 name = 
+bvh_bone id = 30 name = rhumerus           skeleton_bone id = 31 name = Rshoulderroot
+bvh_bone id = 31 name = rradius            skeleton_bone id = 28 name = Rarmroot
+bvh_bone id = 32 name = rwrist             skeleton_bone id = 3 name = Rforearm
+bvh_bone id = 33 name = rhand              skeleton_bone id = 4 name = Rhand
+bvh_bone id = 34 name = rfingers           skeleton_bone id = 5 name = Rfingers
 bvh_bone id = 35 name = rfingers_End       skeleton_bone id = -1 name =
 bvh_bone id = 36 name = rthumb             skeleton_bone id = -1 name =
 bvh_bone id = 37 name = rthumb_End         skeleton_bone id = -1 name =
