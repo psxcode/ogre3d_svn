@@ -1,0 +1,273 @@
+<skeleton>
+    <bones>
+        <bone id="0" name="head">
+            <position x="0.5" y="0" z="-4.44089e-016" />
+            <rotation angle="0.309934">
+                <axis x="0.283808" y="0.564704" z="0.77496" />
+            </rotation>
+        </bone>
+        <bone id="1" name="neck">
+            <position x="0" y="-3.55271e-015" z="0" />
+            <rotation angle="1.25688">
+                <axis x="0.0431474" y="-0.0144685" z="0.998964" />
+            </rotation>
+        </bone>
+        <bone id="2" name="Rbicept">
+            <position x="0" y="-7.10543e-015" z="0" />
+            <rotation angle="2.82911">
+                <axis x="-0.234001" y="0.932227" z="-0.276037" />
+            </rotation>
+        </bone>
+        <bone id="3" name="Rforearm">
+            <position x="2.95" y="0" z="0" />
+            <rotation angle="1.61285">
+                <axis x="-0.213599" y="0.130622" z="-0.96815" />
+            </rotation>
+        </bone>
+        <bone id="4" name="Rhand">
+            <position x="0" y="0" z="-3.55271e-015" />
+            <rotation angle="2.60944">
+                <axis x="0.00327905" y="-0.000470234" z="-0.999995" />
+            </rotation>
+        </bone>
+        <bone id="5" name="Rfingers">
+            <position x="1.219" y="0" z="3.55271e-015" />
+            <rotation angle="1.09864">
+                <axis x="-1.19611e-016" y="-9.30309e-017" z="-1" />
+            </rotation>
+        </bone>
+        <bone id="6" name="Rshoulder">
+            <position x="0" y="0" z="0" />
+            <rotation angle="2.89478">
+                <axis x="0.159237" y="0.314506" z="-0.935804" />
+            </rotation>
+        </bone>
+        <bone id="7" name="Lshoulder">
+            <position x="0" y="0" z="1.77636e-015" />
+            <rotation angle="0.582067">
+                <axis x="0.764636" y="0.527757" z="-0.369871" />
+            </rotation>
+        </bone>
+        <bone id="8" name="Lbicept">
+            <position x="0" y="0" z="7.10543e-015" />
+            <rotation angle="0.775903">
+                <axis x="-0.128701" y="0.988592" z="0.0782465" />
+            </rotation>
+        </bone>
+        <bone id="9" name="Lforearm">
+            <position x="2.95" y="7.10543e-015" z="-3.55271e-015" />
+            <rotation angle="1.57962">
+                <axis x="0.384853" y="-0.309592" z="-0.869506" />
+            </rotation>
+        </bone>
+        <bone id="10" name="Lhand">
+            <position x="0" y="0" z="0" />
+            <rotation angle="0.486836">
+                <axis x="-0.00158311" y="0.0131543" z="-0.999912" />
+            </rotation>
+        </bone>
+        <bone id="11" name="Spine03">
+            <position x="1.94226" y="-7.10543e-015" z="0" />
+            <rotation angle="0.02827">
+                <axis x="-0.88851" y="0.143511" z="-0.435837" />
+            </rotation>
+        </bone>
+        <bone id="12" name="Spine02">
+            <position x="1.87082" y="-7.10543e-015" z="4.44089e-016" />
+            <rotation angle="0.233006">
+                <axis x="-0.136767" y="-0.448578" z="0.883217" />
+            </rotation>
+        </bone>
+        <bone id="13" name="Spine01">
+            <position x="0" y="-1.77636e-015" z="-4.44089e-016" />
+            <rotation angle="1.64006">
+                <axis x="-0.00761255" y="0.0071031" z="0.999946" />
+            </rotation>
+        </bone>
+        <bone id="14" name="Rthigh">
+            <position x="0" y="-1.77636e-015" z="0" />
+            <rotation angle="3.01255">
+                <axis x="-0.640605" y="0.767591" z="0.0207411" />
+            </rotation>
+        </bone>
+        <bone id="15" name="Rshin">
+            <position x="4.93935" y="7.10543e-015" z="-4.44089e-016" />
+            <rotation angle="1.19246">
+                <axis x="-0.399163" y="0.104821" z="-0.910869" />
+            </rotation>
+        </bone>
+        <bone id="16" name="Lthigh">
+            <position x="0" y="0" z="0" />
+            <rotation angle="3.06298">
+                <axis x="0.518302" y="-0.85459" z="-0.032235" />
+            </rotation>
+        </bone>
+        <bone id="17" name="Lshin">
+            <position x="4.93935" y="7.10543e-015" z="0" />
+            <rotation angle="0.805771">
+                <axis x="0.238858" y="0.306688" z="-0.921352" />
+            </rotation>
+        </bone>
+        <bone id="18" name="Lfoot">
+            <position x="0" y="0" z="0" />
+            <rotation angle="0.303507">
+                <axis x="-0.251606" y="0.443423" z="-0.860273" />
+            </rotation>
+        </bone>
+        <bone id="19" name="Rfoot">
+            <position x="0" y="0" z="0" />
+            <rotation angle="0.527238">
+                <axis x="0.458925" y="-0.198051" z="-0.86612" />
+            </rotation>
+        </bone>
+        <bone id="20" name="Ltoe">
+            <position x="1.31031" y="0" z="8.88178e-016" />
+            <rotation angle="0.523158">
+                <axis x="-0.00394925" y="-0.144886" z="0.98944" />
+            </rotation>
+        </bone>
+        <bone id="21" name="Rtoe">
+            <position x="1.31031" y="0" z="8.88178e-016" />
+            <rotation angle="0.497608">
+                <axis x="-0.138251" y="0.183418" z="0.973265" />
+            </rotation>
+        </bone>
+        <bone id="22" name="Lfingers">
+            <position x="1.219" y="3.55271e-015" z="0" />
+            <rotation angle="1.01648">
+                <axis x="-1.1407e-016" y="-1.4564e-031" z="1" />
+            </rotation>
+        </bone>
+        <bone id="23" name="Larmroot">
+            <position x="1.59556" y="-0.000395333" z="0.0316787" />
+            <rotation angle="0.0159721">
+                <axis x="-0.0213653" y="-0.946847" z="0.320974" />
+            </rotation>
+        </bone>
+        <bone id="24" name="Lfooteffector">
+            <position x="4.61361" y="0.000493289" z="-0.0272575" />
+            <rotation angle="1.6005">
+                <axis x="-0.0340546" y="-0.0484472" z="0.998245" />
+            </rotation>
+        </bone>
+        <bone id="25" name="Lhandroot">
+            <position x="2.6" y="1.11022e-015" z="1.77636e-015" />
+            <rotation angle="1.53084">
+                <axis x="-0.984239" y="0.0933214" z="0.150215" />
+            </rotation>
+        </bone>
+        <bone id="26" name="Lshoulderroot">
+            <position x="1.77129" y="-0.0176743" z="0.0611777" />
+            <rotation angle="2.97916">
+                <axis x="0.702744" y="-0.0865932" z="0.706154" />
+            </rotation>
+        </bone>
+        <bone id="27" name="Llegroot">
+            <position x="-0.00969822" y="-0.00352085" z="1.28616" />
+            <rotation angle="0">
+                <axis x="1" y="0" z="0" />
+            </rotation>
+        </bone>
+        <bone id="28" name="Rarmroot">
+            <position x="1.6" y="-2.10942e-015" z="1.06581e-014" />
+            <rotation angle="3.13505">
+                <axis x="5.2042e-018" y="5.91002e-016" z="1" />
+            </rotation>
+        </bone>
+        <bone id="29" name="Rfootroot">
+            <position x="4.62933" y="0.00184721" z="0.0459386" />
+            <rotation angle="1.60104">
+                <axis x="0.0338737" y="0.0628557" z="0.997448" />
+            </rotation>
+        </bone>
+        <bone id="30" name="Rhandroot">
+            <position x="2.6" y="2.5893e-005" z="-0.00361678" />
+            <rotation angle="2.99274">
+                <axis x="-0.107434" y="0.735691" z="0.668742" />
+            </rotation>
+        </bone>
+        <bone id="31" name="Rshoulderroot">
+            <position x="1.76864" y="-0.0285431" z="0.0674289" />
+            <rotation angle="2.97916">
+                <axis x="0.702744" y="-0.0865932" z="0.706154" />
+            </rotation>
+        </bone>
+        <bone id="32" name="Rlegroot">
+            <position x="-0.00969822" y="-0.00352085" z="-1.22337" />
+            <rotation angle="0">
+                <axis x="1" y="0" z="0" />
+            </rotation>
+        </bone>
+        <bone id="33" name="Spineroot">
+            <position x="2.17962" y="8.75564" z="-53.7141" />
+            <rotation angle="1.55034">
+                <axis x="0.0283593" y="-0.998889" z="0.0376242" />
+            </rotation>
+        </bone>
+        <bone id="34" name="neckroot">
+            <position x="2.37584" y="-0.0928594" z="0.0577359" />
+            <rotation angle="3.13014">
+                <axis x="0.772361" y="0.635159" z="0.00555185" />
+            </rotation>
+        </bone>
+        <bone id="35" name="GlobalSRT">
+            <position x="-1.11022e-016" y="0" z="0" />
+            <rotation angle="0">
+                <axis x="1" y="0" z="0" />
+            </rotation>
+        </bone>
+        <bone id="36" name="Jaiqua">
+            <position x="0" y="0" z="0" />
+            <rotation angle="0">
+                <axis x="1" y="0" z="0" />
+            </rotation>
+        </bone>
+        <bone id="37" name="Jaiqua_Mod">
+            <position x="0" y="0" z="0" />
+            <rotation angle="0">
+                <axis x="1" y="0" z="0" />
+            </rotation>
+        </bone>
+    </bones>
+    <bonehierarchy>
+        <boneparent bone="head" parent="neck" />
+        <boneparent bone="neck" parent="neckroot" />
+        <boneparent bone="Rbicept" parent="Rarmroot" />
+        <boneparent bone="Rforearm" parent="Rbicept" />
+        <boneparent bone="Rhand" parent="Rhandroot" />
+        <boneparent bone="Rfingers" parent="Rhand" />
+        <boneparent bone="Rshoulder" parent="Rshoulderroot" />
+        <boneparent bone="Lshoulder" parent="Lshoulderroot" />
+        <boneparent bone="Lbicept" parent="Larmroot" />
+        <boneparent bone="Lforearm" parent="Lbicept" />
+        <boneparent bone="Lhand" parent="Lhandroot" />
+        <boneparent bone="Spine03" parent="Spine02" />
+        <boneparent bone="Spine02" parent="Spine01" />
+        <boneparent bone="Spine01" parent="Spineroot" />
+        <boneparent bone="Rthigh" parent="Rlegroot" />
+        <boneparent bone="Rshin" parent="Rthigh" />
+        <boneparent bone="Lthigh" parent="Llegroot" />
+        <boneparent bone="Lshin" parent="Lthigh" />
+        <boneparent bone="Lfoot" parent="Lfooteffector" />
+        <boneparent bone="Rfoot" parent="Rfootroot" />
+        <boneparent bone="Ltoe" parent="Lfoot" />
+        <boneparent bone="Rtoe" parent="Rfoot" />
+        <boneparent bone="Lfingers" parent="Lhand" />
+        <boneparent bone="Larmroot" parent="Lshoulder" />
+        <boneparent bone="Lfooteffector" parent="Lshin" />
+        <boneparent bone="Lhandroot" parent="Lforearm" />
+        <boneparent bone="Lshoulderroot" parent="Spine03" />
+        <boneparent bone="Llegroot" parent="Spineroot" />
+        <boneparent bone="Rarmroot" parent="Rshoulder" />
+        <boneparent bone="Rfootroot" parent="Rshin" />
+        <boneparent bone="Rhandroot" parent="Rforearm" />
+        <boneparent bone="Rshoulderroot" parent="Spine03" />
+        <boneparent bone="Rlegroot" parent="Spineroot" />
+        <boneparent bone="Spineroot" parent="GlobalSRT" />
+        <boneparent bone="neckroot" parent="Spine03" />
+        <boneparent bone="GlobalSRT" parent="Jaiqua" />
+        <boneparent bone="Jaiqua" parent="Jaiqua_Mod" />
+    </bonehierarchy>
+    <animations>
+    </animations>
+</skeleton>
