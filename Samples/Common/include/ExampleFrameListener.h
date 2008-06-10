@@ -89,7 +89,7 @@ public:
 	// Constructor takes a RenderWindow because it uses that to determine input context
 	ExampleFrameListener(RenderWindow* win, Camera* cam, bool bufferedKeys = false, bool bufferedMouse = false,
 			     bool bufferedJoy = false ) :
-		mCamera(cam), mTranslateVector(Vector3::ZERO), mWindow(win), mStatsOn(true), mNumScreenShots(0),
+		mCamera(cam), mTranslateVector(Vector3::ZERO), mWindow(win), mStatsOn(true), mAnimtionStats(true),mNumScreenShots(0),
 		mMoveScale(0.0f), mRotScale(0.0f), mTimeUntilNextToggle(0), mFiltering(TFO_BILINEAR),
 		mAniso(1), mSceneDetailIndex(0), mMoveSpeed(100), mRotateSpeed(36), mDebugOverlay(0),
 		mInputManager(0), mMouse(0), mKeyboard(0), mJoy(0)
@@ -202,6 +202,13 @@ public:
 			showDebugOverlay(mStatsOn);
 			mTimeUntilNextToggle = 1;
 		}
+
+		//westine added event handle for controlling animation, when "P" is pressed, exchange animation playing stats
+		if ( mKeyboard->isKeyDown(KC_P) )
+		{
+			mAnimtionStats = !mAnimtionStats;
+		}
+		
 
 		if( mKeyboard->isKeyDown(KC_T) && mTimeUntilNextToggle <= 0 )
 		{
@@ -359,12 +366,17 @@ public:
 		return true;
 	}
 
+	//for animation play stats check
+	bool IsAnimated() const { return mAnimtionStats; }
+
 protected:
 	Camera* mCamera;
 
 	Vector3 mTranslateVector;
 	RenderWindow* mWindow;
 	bool mStatsOn;
+	//westine added stats for controlling the playing of animation 
+	bool mAnimtionStats;
 
 	std::string mDebugText;
 
