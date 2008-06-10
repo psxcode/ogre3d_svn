@@ -53,7 +53,11 @@ public:
 
         for (int i = 0; i < NUM_JAIQUAS; ++i)
         {
-			Real inc = evt.timeSinceLastFrame * mAnimationSpeed[i]; 
+			Real inc;
+			if ( IsAnimated() )
+			inc = evt.timeSinceLastFrame * mAnimationSpeed[i]; 
+			else
+				inc = 0;
 			if ((mAnimState[i]->getTimePosition() + inc) >= mAnimChop)
 			{
 				// Loop
@@ -109,7 +113,7 @@ protected:
 		// to give it an offset of where the animation ends
 		SkeletonPtr skel = SkeletonManager::getSingleton().load("jaiqua.skeleton", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Animation* anim = skel->getAnimation("Sneak");
+		Animation* anim = skel->getAnimation("rush.bvh");
 		Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
 		while (trackIter.hasMoreElements())
 		{
