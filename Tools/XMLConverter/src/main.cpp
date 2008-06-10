@@ -39,9 +39,77 @@ Torus Knot Software Ltd.
 #include "Bvh.h"
 #include <iostream>
 #include <sys/stat.h>
+#include <math.h>
 
 using namespace std;
 using namespace Ogre;
+
+
+//westine added Quaternion conversion between Euler angle
+
+/** Convert an Euler angles (in degrees) into a Quaternion. */
+Quaternion EulerToQuaternion(const Vector3& Euler)
+{
+	Quaternion qu;
+	Vector3 radian;
+	radian.x = Euler.x*Math::PI/180;
+	radian.y = Euler.y*Math::PI/180;
+	radian.z = Euler.z*Math::PI/180;
+	qu.x = cos(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
+	qu.y = sin(radian.x/2)*cos(radian.y/2)*cos(radian.z/2)-cos(radian.x/2)*sin(radian.y/2)*sin(radian.z/2);
+	qu.z = cos(radian.x/2)*sin(radian.y/2)*cos(radian.z/2)+sin(radian.x/2)*cos(radian.y/2)*sin(radian.z/2);
+	qu.w = cos(radian.x/2)*cos(radian.y/2)*sin(radian.z/2)-sin(radian.x/2)*sin(radian.y/2)*cos(radian.z/2);
+	qu.normalise();
+	return qu;
+	
+}
+
+
+//another version of EulerToQuaternion conversion, using another method
+// because Quaternion does not normalise automatically after FromAngleAxis, we 
+// need to normalise every time we do Quaternion operations
+Quaternion EulerToQuaternion(float radX, float radY, float radZ)
+{
+	Quaternion QuaternionX, QuaternionY, QuaternionZ, QuaternionResult;
+
+	QuaternionX.FromAngleAxis( Radian(radX), Vector3(1,0,0) );
+	QuaternionX.normalise();
+	QuaternionY.FromAngleAxis( Radian(radY), Vector3(0,1,0) );
+	QuaternionY.normalise();
+	QuaternionZ.FromAngleAxis( Radian(radZ), Vector3(0,0,1) );
+	QuaternionZ.normalise();
+
+	QuaternionResult = QuaternionZ * QuaternionX * QuaternionY;
+	QuaternionResult.normalise();
+
+	return QuaternionResult;
+}
+
+
+/** Convert a Quaternion into floating-point Euler angles (in degrees). */
+/* Roll - ¦Õ: rotation about the X-axis
+* Pitch - ¦È: rotation about the Y-axis
+* Yaw - ¦×: rotation about the Z-axis
+*/
+
+Vector3 QuaternionToEuler(const Quaternion& qu) 
+{
+	
+	Vector3 euler;
+	Real x = qu.x;
+	Real y = qu.y;
+	Real z = qu.z;
+	Real w = qu.w;
+	float tempangle = atan(2*(x*y+z*w)/(1-2*(y*y+z*z)));
+	euler.x = tempangle;
+	tempangle = asin(2*(x*z - w*y));
+	euler.y = tempangle;
+	tempangle = atan(2*(x*w+y*z)/(1-2*(z*z+w*w)));
+	euler.z = tempangle;
+
+	return euler;
+}
+
 
 struct XmlOptions
 {
@@ -501,12 +569,17 @@ void AddAnimation(XmlOptions opts)
 					}
 
 					Ogre::Quaternion qu;
-					ushort ChannelIndex = bvh->GetChannelMap()[(bvh->GetHierarchy()[handle])->pRChannel->ChannelIndex];
-					Ogre::Vector3 euler(motiondata[k][ChannelIndex],motiondata[k][ChannelIndex+1],
-						motiondata[k][ChannelIndex+2]);
-					qu = Quaternion::MakeFromEuler(euler);
-
+					ushort ChannelIndex = bvh->GetChannelMap()[(bvh->GetHierarchy()[handle])->pRChannel->ChannelBlockIndex];
+					//take care of ZYX rotation order of bvh, euler angle is in XYZ order
+					Ogre::Vector3 euler(motiondata[k][ChannelIndex+2],motiondata[k][ChannelIndex+1],
+						motiondata[k][ChannelIndex]);
+					//qu = EulerToQuaternion(euler);//my version
+					qu = EulerToQuaternion(motiondata[k][ChannelIndex+2],
+					motiondata[k][ChannelIndex+1],motiondata[k][ChannelIndex]);  // MoCapSim version
 						pKeyFrame->setRotation(qu);
+
+						Ogre::Vector3 	euler2 = QuaternionToEuler(qu);
+						int t =1;
 				
 				}
 			
