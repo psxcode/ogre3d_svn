@@ -359,6 +359,7 @@ namespace Ogre
         addKeywordType("hwstencil", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("vbo", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("vertex_program", SET_CAPABILITY_ENUM_BOOL);
+		addKeywordType("geometry_program", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("fragment_program", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("scissor_test", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("two_sided_stencil", SET_CAPABILITY_ENUM_BOOL);
@@ -395,6 +396,7 @@ namespace Ogre
         addCapabilitiesMapping("hwstencil", RSC_HWSTENCIL);
         addCapabilitiesMapping("vbo", RSC_VBO);
         addCapabilitiesMapping("vertex_program", RSC_VERTEX_PROGRAM);
+		addCapabilitiesMapping("geometry_program", RSC_GEOMETRY_PROGRAM);
         addCapabilitiesMapping("fragment_program", RSC_FRAGMENT_PROGRAM);
         addCapabilitiesMapping("scissor_test", RSC_SCISSOR_TEST);
         addCapabilitiesMapping("two_sided_stencil", RSC_TWO_SIDED_STENCIL);

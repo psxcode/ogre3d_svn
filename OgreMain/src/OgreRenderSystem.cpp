@@ -569,6 +569,11 @@ namespace Ogre {
             mActiveVertexGpuProgramParameters->incPassIterationNumber();
             bindGpuProgramPassIterationParameters(GPT_VERTEX_PROGRAM);
         }
+        if (!mActiveGeometryGpuProgramParameters.isNull())
+        {
+            mActiveGeometryGpuProgramParameters->incPassIterationNumber();
+            bindGpuProgramPassIterationParameters(GPT_GEOMETRY_PROGRAM);
+        }
         if (!mActiveFragmentGpuProgramParameters.isNull())
         {
             mActiveFragmentGpuProgramParameters->incPassIterationNumber();
@@ -653,6 +658,8 @@ namespace Ogre {
 	    {
         case GPT_VERTEX_PROGRAM:
             return mVertexProgramBound;
+        case GPT_GEOMETRY_PROGRAM:
+            return mGeometryProgramBound;
         case GPT_FRAGMENT_PROGRAM:
             return mFragmentProgramBound;
 	    }
