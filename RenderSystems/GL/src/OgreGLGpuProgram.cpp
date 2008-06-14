@@ -38,11 +38,12 @@ GLenum getGLShaderType(GpuProgramType programType)
 	switch (programType)
 	{
 		case GPT_VERTEX_PROGRAM:
+		default:
 			return GL_VERTEX_PROGRAM_ARB;
-		case GPT_FRAGMENT_PROGRAM:
-			return GL_FRAGMENT_PROGRAM_ARB;
 		case GPT_GEOMETRY_PROGRAM:
 			return GL_GEOMETRY_PROGRAM_NV;
+		case GPT_FRAGMENT_PROGRAM:
+			return GL_FRAGMENT_PROGRAM_ARB;
 	}
 }
 

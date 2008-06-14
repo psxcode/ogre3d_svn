@@ -633,6 +633,7 @@ namespace Ogre {
 		{
 			if(caps->isShaderProfileSupported("nvgp4"))
 			{
+				//TODO : Should this be createGLArbGpuProgram or createGLGpuNVparseProgram?
 				mGpuProgramManager->registerProgramFactory("nvgp4", createGLArbGpuProgram);
 			}
 		}
