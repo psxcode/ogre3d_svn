@@ -414,7 +414,7 @@ namespace Ogre {
 			GLEW_NV_geometry_shader4)
 		{
 			rsc->setCapability(RSC_GEOMETRY_PROGRAM);
-			rsc->addShaderProfile("gp40");
+			rsc->addShaderProfile("nvgp4");
 
 			rsc->setGeometryProgramConstantBoolCount(0);
 			rsc->setGeometryProgramConstantIntCount(0);
@@ -626,6 +626,14 @@ namespace Ogre {
 			if(caps->isShaderProfileSupported("vp40"))
 			{
 				mGpuProgramManager->registerProgramFactory("vp40", createGLArbGpuProgram);
+			}
+		}
+
+		if(caps->hasCapability(RSC_GEOMETRY_PROGRAM))
+		{
+			if(caps->isShaderProfileSupported("nvgp4"))
+			{
+				mGpuProgramManager->registerProgramFactory("nvgp4", createGLArbGpuProgram);
 			}
 		}
 
