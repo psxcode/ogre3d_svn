@@ -8,3 +8,4 @@ Renamed Material::mLodDistances to mLodValues.
 Renamed Material::getLodDistanceIterator to getLodValueIterator
 Removed Material::getLodIndexSquaredDepth as it no longer applies.
 Renamed Entity::_getMeshLodFactorInverse to Entity::_getMeshLodFactorTransformed as this method does not neccessarily return the inverse anymore (but will when using DistanceLodStrategy).
+Renamed InstancedGeometry::BatchInstance::mCamDistanceSquared to mLodValue.
