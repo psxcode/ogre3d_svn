@@ -1093,7 +1093,8 @@ namespace Ogre {
 		SceneManager* mgr, uint32 BatchInstanceID)
 		: MovableObject(name), mParent(parent), mSceneMgr(mgr), mNode(0),
 		mBatchInstanceID(BatchInstanceID), mBoundingRadius(0.0f),
-		mCurrentLod(0)
+		mCurrentLod(0),
+        mLodStrategy(0)
 	{
 		// First LOD mandatory, and always from 0
 		mLodValues.push_back(0.0f);
@@ -1127,7 +1128,21 @@ namespace Ogre {
 	void InstancedGeometry::BatchInstance::assign(QueuedSubMesh* qmesh)
 	{
 		mQueuedSubMeshes.push_back(qmesh);
-		// update lod distances
+
+        // Set/check lod strategy
+        const LodStrategy *lodStrategy = qmesh->submesh->parent->getLodStrategy();
+        if (mLodStrategy == 0)
+        {
+            mLodStrategy = lodStrategy;
+        }
+        else
+        {
+            if (mLodStrategy != lodStrategy)
+                OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Lod strategies do not match",
+                    "InstancedGeometry::InstancedObject::assign");
+        }
+
+		// update lod values
 		ushort lodLevels = qmesh->submesh->parent->getNumLodLevels();
 		assert(qmesh->geometryLodList->size() == lodLevels);
 
@@ -1286,44 +1301,24 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	void InstancedGeometry::BatchInstance::_notifyCurrentCamera(Camera* cam)
 	{
-		// Calculate squared view depth
-		Vector3 diff = cam->getDerivedPosition() ;
-		Real squaredDepth = diff.squaredLength();
+        // Set camera
+        mCamera = cam;
 
-		// Determine whether to still render
-		Real renderingDist = mParent->getRenderingDistance();
-		if (renderingDist > 0)
-		{
-			// Max distance to still render
-			Real maxDist = renderingDist + mBoundingRadius;
-			if (squaredDepth > Math::Sqr(maxDist))
-			{
-				mBeyondFarDistance = true;
-				return;
-			}
-		}
+        // No lod strategy set yet, skip (this indicates that there are no submeshes)
+        if (mLodStrategy == 0)
+            return;
 
-		mBeyondFarDistance = false;
+        // Sanity check
+        assert(!mLodValues.empty());
 
-		// Distance from the edge of the bounding sphere
-		mCamDistanceSquared = squaredDepth - mBoundingRadius * mBoundingRadius;
-		// Clamp to 0
-		mCamDistanceSquared = std::max(static_cast<Real>(0.0), mCamDistanceSquared);
+        // Calculate lod value
+        Real lodValue = mLodStrategy->getValue(this, cam);
 
-		// Determine active lod
-		mCurrentLod = static_cast<ushort>(mLodValues.size() - 1);
-		assert (!mLodValues.empty());
-		mCurrentLod = static_cast <unsigned short> (mLodValues.size() - 1);
-	
-		for (ushort i = 0; i < mLodValues.size(); ++i)
-		{
-			if (mLodValues[i] > mCamDistanceSquared)
-			{
-				mCurrentLod = i - 1;
-				break;
-			}
-		}
+        // Store lod value for this strategy
+        mLodValue = lodValue;
 
+        // Get lod index
+        mCurrentLod = mLodStrategy->getIndex(lodValue, mLodValues);
 	}
 	//--------------------------------------------------------------------------
 	const AxisAlignedBox& InstancedGeometry::BatchInstance::getBoundingBox(void) const
@@ -1353,7 +1348,7 @@ namespace Ogre {
 		}
 	
 		mLodBucketList[mCurrentLod]->addRenderables(queue, mRenderQueueID,
-			mCamDistanceSquared);
+			mLodValue);
 	}
 	//---------------------------------------------------------------------
 	void InstancedGeometry::BatchInstance::visitRenderables(
@@ -1591,6 +1586,15 @@ namespace Ogre {
 	void InstancedGeometry::MaterialBucket::addRenderables(RenderQueue* queue,
 		uint8 group, Real lodValue)
 	{
+        // Get batch instance
+        BatchInstance *batchInstance = mParent->mParent;
+
+        // Get material lod strategy
+        const LodStrategy *materialLodStrategy = mMaterial->getLodStrategy();
+
+        // If material strategy doesn't match, recompute lod value with correct strategy
+        if (materialLodStrategy != batchInstance->mLodStrategy)
+            lodValue = materialLodStrategy->getValue(batchInstance, batchInstance->mCamera);
 
 		// Determine the current material technique
 		mTechnique = mMaterial->getTechnique(

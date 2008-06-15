@@ -33,7 +33,7 @@ Torus Knot Software Ltd.
 
 #include "OgreMesh.h"
 
-#include "OgreEntity.h"
+#include "OgreMovableObject.h"
 #include "OgreCamera.h"
 
 namespace Ogre {
@@ -45,8 +45,8 @@ namespace Ogre {
         /** Name of this strategy. */
         String mName;
 
-        /** Compute the lod value for a given entity relative to a given camera. */
-        virtual Real getValueImpl(const Entity *entity, const Camera *camera) const = 0;
+        /** Compute the lod value for a given movable object relative to a given camera. */
+        virtual Real getValueImpl(const MovableObject *movableObject, const Camera *camera) const = 0;
 
     public:
         /** Constructor accepting name. */
@@ -62,14 +62,18 @@ namespace Ogre {
         /** Transform lod bias so it only needs to be multiplied by the lod value. */
         virtual Real transformBias(Real factor) const = 0;
 
-        /** Compute the lod value for a given entity relative to a given camera. */
-        Real getValue(const Entity *entity, const Camera *camera) const;
+        /** Compute the lod value for a given movable object relative to a given camera. */
+        Real getValue(const MovableObject *movableObject, const Camera *camera) const;
 
         /** Get the index of the lod usage which applies to a given value. */
         virtual ushort getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const;
 
         /** Get the index of the lod usage which applies to a given value. */
         virtual ushort getIndex(Real value, const Material::LodValueList& materialLodValueList) const;
+
+        // This would be required, but Material::LodValueList is the same type.
+        ////** Get the index of the lod usage which applies to a given value. */
+        //virtual ushort getIndex(Real value, const Mesh::LodValueList& meshLodValueList) const;
 
         /** Sort mesh lod usage list from greatest to least detail */
         virtual void sort(Mesh::MeshLodUsageList& meshLodUsageList) const;
@@ -93,6 +97,8 @@ namespace Ogre {
         static ushort getIndexAscending(Real value, const Mesh::MeshLodUsageList& meshLodUsageList);
 
         static ushort getIndexAscending(Real value, const Material::LodValueList& materialLodValueList);
+
+        //static ushort getIndexAscending(Real value, const Mesh::LodValueList& meshLodValueList);
     };
 
 } // namespace

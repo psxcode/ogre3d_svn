@@ -142,12 +142,17 @@ namespace Ogre {
             Do not change the Ogre state from this method, 
             instead return true and perform changes in 
             postqueueEntityMeshLodChanged.
+
+            It is possible to change the event notification 
+            and even alter the newLodIndex field (possibly to 
+            prevent the lod from changing, or to skip an 
+            index).
         @return
             True to indicate the event should be queued and
             postqueueEntityMeshLodChanged called after
             rendering is complete.
         */
-        virtual bool prequeueEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt) { return false; };
+        virtual bool prequeueEntityMeshLodChanged(EntityMeshLodChangedEvent& evt) { return false; };
 
         /**
         Called after an entity's mesh lod has changed.
@@ -163,12 +168,17 @@ namespace Ogre {
             Do not change the Ogre state from this method, 
             instead return true and perform changes in 
             postqueueMaterialLodChanged.
+
+            It is possible to change the event notification 
+            and even alter the newLodIndex field (possibly to 
+            prevent the lod from changing, or to skip an 
+            index).
         @return
             True to indicate the event should be queued and
             postqueueMaterialLodChanged called after
             rendering is complete.
         */
-        virtual bool prequeueEntityMaterialLodChanged(const EntityMaterialLodChangedEvent& evt) { return false; };
+        virtual bool prequeueEntityMaterialLodChanged(EntityMaterialLodChangedEvent& evt) { return false; };
 
         /**
         Called after an entity's material lod has changed.

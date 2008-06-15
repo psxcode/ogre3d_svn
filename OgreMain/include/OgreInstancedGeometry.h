@@ -363,6 +363,7 @@ namespace Ogre {
 		*/
 		class _OgreExport  LODBucket
 		{
+            friend class MaterialBucket;
 		public:
 			/// Lookup of Material Buckets in this BatchInstance
 			typedef std::map<String, MaterialBucket*> MaterialBucketMap;
@@ -413,6 +414,7 @@ namespace Ogre {
 		*/
 		class _OgreExport  BatchInstance : public MovableObject
 		{
+            friend class MaterialBucket;
 			public:
 		
 
@@ -442,11 +444,15 @@ namespace Ogre {
 			Real mBoundingRadius;
 			/// The current lod level, as determined from the last camera
 			ushort mCurrentLod;
-			/// Current camera distance, passed on to do material lod later
-			Real mCamDistanceSquared;
+			/// Current lod value, passed on to do material lod later
+			Real mLodValue;
+            /// Current camera, passed on to do material lod later
+            Camera *mCamera;
 		protected:
 			/// List of LOD buckets			
 			LODBucketList mLodBucketList;
+            /// Lod strategy reference
+            const LodStrategy *mLodStrategy;
 
 		public:
 			BatchInstance(InstancedGeometry* parent, const String& name, SceneManager* mgr, 
@@ -644,6 +650,7 @@ namespace Ogre {
 			this InstancedGeometry if you like. The Entity passed in is simply 
 			used as a definition.
 		@note Must be called before 'build'.
+        @note All added entities must use the same lod strategy.
 		@param ent The Entity to use as a definition (the Mesh and Materials 
 			referenced will be recorded for the build call).
 		@param position The world position at which to add this Entity
@@ -669,6 +676,7 @@ namespace Ogre {
 			versions! We don't do this for you incase you are preparing this 
 			in advance and so don't want the originals detached yet. 
 		@note Must be called before 'build'.
+        @note All added entities must use the same lod strategy.
 		@param node Pointer to the node to use to provide a set of Entity 
 			templates
 		*/

@@ -38,7 +38,7 @@ namespace Ogre {
     class _OgreExport DistanceLodStrategy : public LodStrategy
     {
     protected:
-        virtual Real getValueImpl(const Entity *entity, const Camera *camera) const;
+        virtual Real getValueImpl(const MovableObject *movableObject, const Camera *camera) const;
 
         virtual Real transformBias(Real factor) const;
 

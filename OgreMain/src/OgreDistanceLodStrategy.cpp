@@ -36,10 +36,16 @@ namespace Ogre {
         : LodStrategy("Distance")
     { }
     //-----------------------------------------------------------------------
-    Real DistanceLodStrategy::getValueImpl(const Ogre::Entity *entity, const Ogre::Camera *camera) const
+    Real DistanceLodStrategy::getValueImpl(const MovableObject *movableObject, const Ogre::Camera *camera) const
     {
-        // Get squared depth
-        Real squaredDepth = entity->getParentNode()->getSquaredViewDepth(camera);
+        // Get squared depth taking into account bounding radius
+        // (d - r) ^ 2 = d^2 - 2dr + r^2, but this requires a lot 
+        // more computation (including a sqrt) so we approximate 
+        // it with d^2 - r^2, which is good enough for determining 
+        // lod.
+        Real squaredDepth = movableObject->getParentNode()->getSquaredViewDepth(camera) - Math::Sqr(movableObject->getBoundingRadius());
+        // Squared depth should never be below 0, so clamp
+        squaredDepth = std::max(squaredDepth, Real(0));
         // Now adjust it by the camera bias and return the computed value
         return squaredDepth * camera->_getLodBiasInverse();
     }

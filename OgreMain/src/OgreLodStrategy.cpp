@@ -42,10 +42,10 @@ namespace Ogre {
     LodStrategy::~LodStrategy()
     { }
     //-----------------------------------------------------------------------
-    Real LodStrategy::getValue(const Entity *entity, const Camera *camera) const
+    Real LodStrategy::getValue(const MovableObject *movableObject, const Camera *camera) const
     {
         // Just return implementation for now
-        return getValueImpl(entity, camera);
+        return getValueImpl(movableObject, camera);
     }
     //-----------------------------------------------------------------------
     ushort LodStrategy::getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const
@@ -53,12 +53,18 @@ namespace Ogre {
         // Get index assuming ascending values
         return getIndexAscending(value, meshLodUsageList);
     }
-        //-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
     ushort LodStrategy::getIndex(Real value, const Material::LodValueList& materialLodValueList) const
     {
         // Get index assuming ascending values
         return getIndexAscending(value, materialLodValueList);
     }
+    ////-----------------------------------------------------------------------
+    //ushort LodStrategy::getIndex(Real value, const Mesh::LodValueList& meshLodValueList) const
+    //{
+    //    // Get index assuming ascending values
+    //    return getIndexAscending(value, meshLodValueList);
+    //}
     //-----------------------------------------------------------------------
     void LodStrategy::assertSorted(const Mesh::LodValueList &values) const
     {
@@ -170,5 +176,22 @@ namespace Ogre {
         // If we fall all the way through, use the highest value
         return static_cast<ushort>(materialLodValueList.size() - 1);
     }
+    ////---------------------------------------------------------------------
+    //ushort LodStrategy::getIndexAscending(Real value, const Mesh::LodValueList& meshLodValueList)
+    //{
+    //    Mesh::LodValueList::const_iterator i, iend;
+    //    iend = meshLodValueList.end();
+    //    unsigned short index = 0;
+    //    for (i = meshLodValueList.begin(); i != iend; ++i, ++index)
+    //    {
+    //        if (*i > value)
+    //        {
+    //            return index - 1;
+    //        }
+    //    }
+
+    //    // If we fall all the way through, use the highest value
+    //    return static_cast<ushort>(meshLodValueList.size() - 1);
+    //}
 
 } // namespace

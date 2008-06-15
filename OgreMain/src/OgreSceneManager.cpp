@@ -6212,7 +6212,7 @@ void SceneManager::removeLodListener(LodListener *listener)
         mLodListeners.erase(it);
 }
 //---------------------------------------------------------------------
-void SceneManager::_notifyMovableObjectLodChanged(const MovableObjectLodChangedEvent& evt)
+void SceneManager::_notifyMovableObjectLodChanged(MovableObjectLodChangedEvent& evt)
 {
     // Notify listeners and determine if event needs to be queued
     bool queueEvent = false;
@@ -6227,7 +6227,7 @@ void SceneManager::_notifyMovableObjectLodChanged(const MovableObjectLodChangedE
         mMovableObjectLodChangedEvents.push_back(evt);
 }
 //---------------------------------------------------------------------
-void SceneManager::_notifyEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt)
+void SceneManager::_notifyEntityMeshLodChanged(EntityMeshLodChangedEvent& evt)
 {
     // Notify listeners and determine if event needs to be queued
     bool queueEvent = false;
@@ -6242,7 +6242,7 @@ void SceneManager::_notifyEntityMeshLodChanged(const EntityMeshLodChangedEvent& 
         mEntityMeshLodChangedEvents.push_back(evt);
 }
 //---------------------------------------------------------------------
-void SceneManager::_notifyEntityMaterialLodChanged(const EntityMaterialLodChangedEvent& evt)
+void SceneManager::_notifyEntityMaterialLodChanged(EntityMaterialLodChangedEvent& evt)
 {
     // Notify listeners and determine if event needs to be queued
     bool queueEvent = false;

@@ -110,7 +110,7 @@ namespace Ogre {
         BestTechniquesBySchemeList mBestTechniquesBySchemeList;
 
         LodValueList mLodValues;
-        LodStrategy *mLodStrategy;
+        const LodStrategy *mLodStrategy;
         bool mReceiveShadows;
 		bool mTransparencyCastsShadows;
         /// Does this material require compilation?

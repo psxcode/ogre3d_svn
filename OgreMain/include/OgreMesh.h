@@ -146,7 +146,7 @@ namespace Ogre {
             IndexMap& blendIndexToBoneIndexMap,
             VertexData* targetVertexData);
 
-        LodStrategy *mLodStrategy;
+        const LodStrategy *mLodStrategy;
 		bool mIsLodManual;
 		ushort mNumLods;
 		typedef std::vector<MeshLodUsage> MeshLodUsageList;

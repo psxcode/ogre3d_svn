@@ -398,7 +398,7 @@ namespace Ogre {
             cam->getSceneManager()->_notifyEntityMeshLodChanged(evt);
 
             // Change lod index
-            mMeshLodIndex = newMeshLodIndex;
+            mMeshLodIndex = evt.newLodIndex;
 
             // Now do material LOD
             lodValue *= mMaterialLodFactorTransformed;
@@ -438,7 +438,7 @@ namespace Ogre {
                 cam->getSceneManager()->_notifyEntityMaterialLodChanged(evt);
 
                 // Change lod index
-                (*i)->mMaterialLodIndex = idx;
+                (*i)->mMaterialLodIndex = evt.newLodIndex;
 
 				// Also invalidate any camera distance cache
 				(*i)->_invalidateCameraCache ();

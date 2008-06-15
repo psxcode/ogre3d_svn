@@ -3052,13 +3052,13 @@ namespace Ogre {
         void removeLodListener(LodListener *listener);
 
         /** Notify that a movable object lod change event has occurred. */
-        void _notifyMovableObjectLodChanged(const MovableObjectLodChangedEvent& evt);
+        void _notifyMovableObjectLodChanged(MovableObjectLodChangedEvent& evt);
 
         /** Notify that an entity mesh lod change event has occurred. */
-        void _notifyEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt);
+        void _notifyEntityMeshLodChanged(EntityMeshLodChangedEvent& evt);
 
         /** Notify that an entity material lod change event has occurred. */
-        void _notifyEntityMaterialLodChanged(const EntityMaterialLodChangedEvent& evt);
+        void _notifyEntityMaterialLodChanged(EntityMaterialLodChangedEvent& evt);
 
         /** Handle lod events. */
         void _handleLodEvents();
