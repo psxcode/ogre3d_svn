@@ -687,7 +687,7 @@ namespace Ogre {
 		
 			LODBucket* lod = lodIterator.getNext();
 			//create a new lod bucket for the new BatchInstance
-			LODBucket* lodBucket= new LODBucket(ret,lod->getLod(),lod->getSquaredDistance());
+			LODBucket* lodBucket= new LODBucket(ret,lod->getLod(),lod->getLodValue());
 
 			//add the lod bucket to the BatchInstance list
 			ret->updateContainers(lodBucket);
@@ -1304,6 +1304,9 @@ namespace Ogre {
         // Set camera
         mCamera = cam;
 
+        // Cache squared view depth for use by GeometryBucket
+        mSquaredViewDepth = mParentNode->getSquaredViewDepth(cam);
+
         // No lod strategy set yet, skip (this indicates that there are no submeshes)
         if (mLodStrategy == 0)
             return;
@@ -1395,8 +1398,8 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	//--------------------------------------------------------------------------
 	InstancedGeometry::LODBucket::LODBucket(BatchInstance* parent, unsigned short lod,
-		Real lodDist)
-		: mParent(parent), mLod(lod), mSquaredDistance(lodDist)
+		Real lodValue)
+		: mParent(parent), mLod(lod), mLodValue(lodValue)
 	{
 	}
 	//--------------------------------------------------------------------------
@@ -1499,7 +1502,7 @@ namespace Ogre {
 	{
 		of << "LOD Bucket " << mLod << std::endl;
 		of << "------------------" << std::endl;
-		of << "Distance: " << Math::Sqrt(mSquaredDistance) << std::endl;
+		of << "Lod Value: " << mLodValue << std::endl;
 		of << "Number of Materials: " << mMaterialBucketMap.size() << std::endl;
 		for (MaterialBucketMap::const_iterator i = mMaterialBucketMap.begin();
 			i != mMaterialBucketMap.end(); ++i)
@@ -1587,7 +1590,7 @@ namespace Ogre {
 		uint8 group, Real lodValue)
 	{
         // Get batch instance
-        BatchInstance *batchInstance = mParent->mParent;
+        BatchInstance *batchInstance = mParent->getParent();
 
         // Get material lod strategy
         const LodStrategy *materialLodStrategy = mMaterial->getLodStrategy();
@@ -1832,7 +1835,11 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	Real InstancedGeometry::GeometryBucket::getSquaredViewDepth(const Camera* cam) const
 	{
-		return mParent->getParent()->getSquaredDistance();
+        const BatchInstance *batchInstance = mParent->getParent()->getParent();
+        if (cam == batchInstance->mCamera)
+            return batchInstance->mSquaredViewDepth;
+        else
+            return batchInstance->getParentNode()->getSquaredViewDepth(cam);
 	}
 	//--------------------------------------------------------------------------
 	const LightList& InstancedGeometry::GeometryBucket::getLights(void) const

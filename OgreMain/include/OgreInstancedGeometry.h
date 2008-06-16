@@ -363,7 +363,6 @@ namespace Ogre {
 		*/
 		class _OgreExport  LODBucket
 		{
-            friend class MaterialBucket;
 		public:
 			/// Lookup of Material Buckets in this BatchInstance
 			typedef std::map<String, MaterialBucket*> MaterialBucketMap;
@@ -372,20 +371,20 @@ namespace Ogre {
 			BatchInstance* mParent;
 			/// LOD level (0 == full LOD)
 			unsigned short mLod;
-			/// distance at which this LOD starts to apply (squared)
-			Real mSquaredDistance;
+			/// lod value at which this LOD starts to apply (squared)
+			Real mLodValue;
 			/// Lookup of Material Buckets in this BatchInstance
 			MaterialBucketMap mMaterialBucketMap;
 			/// Geometry queued for a single LOD (deallocated here)
 			QueuedGeometryList mQueuedGeometryList;
 		public:
-			LODBucket(BatchInstance* parent, unsigned short lod, Real lodDist);
+			LODBucket(BatchInstance* parent, unsigned short lod, Real lodValue);
 			virtual ~LODBucket();
 			BatchInstance* getParent(void) { return mParent; }
 			/// Get the lod index
 			ushort getLod(void) const { return mLod; }
-			/// Get the lod squared distance
-			Real getSquaredDistance(void) const { return mSquaredDistance; }
+			/// Get the lod value
+			Real getLodValue(void) const { return mLodValue; }
 			/// Assign a queued submesh to this bucket, using specified mesh LOD
 			void assign(QueuedSubMesh* qsm, ushort atLod);
 			/// Build
@@ -448,6 +447,8 @@ namespace Ogre {
 			Real mLodValue;
             /// Current camera, passed on to do material lod later
             Camera *mCamera;
+            /// Cached squared view depth value to avoid recalculation by GeometryBucket
+            Real mSquaredViewDepth;
 		protected:
 			/// List of LOD buckets			
 			LODBucketList mLodBucketList;

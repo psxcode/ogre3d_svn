@@ -33,6 +33,7 @@ Torus Knot Software Ltd.
 #include "OgreMovableObject.h"
 #include "OgreRenderable.h"
 #include "OgreMesh.h"
+#include "OgreLodStrategy.h"
 
 namespace Ogre {
 
@@ -308,20 +309,20 @@ namespace Ogre {
 			Region* mParent;
 			/// LOD level (0 == full LOD)
 			unsigned short mLod;
-			/// distance at which this LOD starts to apply (squared)
-			Real mSquaredDistance;
+			/// lod value at which this LOD starts to apply (squared)
+			Real mLodValue;
 			/// Lookup of Material Buckets in this region
 			MaterialBucketMap mMaterialBucketMap;
 			/// Geometry queued for a single LOD (deallocated here)
 			QueuedGeometryList mQueuedGeometryList;
 		public:
-			LODBucket(Region* parent, unsigned short lod, Real lodDist);
+			LODBucket(Region* parent, unsigned short lod, Real lodValue);
 			virtual ~LODBucket();
 			Region* getParent(void) { return mParent; }
 			/// Get the lod index
 			ushort getLod(void) const { return mLod; }
-			/// Get the lod squared distance
-			Real getSquaredDistance(void) const { return mSquaredDistance; }
+			/// Get the lod value
+			Real getLodValue(void) const { return mLodValue; }
 			/// Assign a queued submesh to this bucket, using specified mesh LOD
 			void assign(QueuedSubMesh* qsm, ushort atLod);
 			/// Build
@@ -348,6 +349,8 @@ namespace Ogre {
 		*/
 		class _OgreExport Region : public MovableObject
 		{
+            friend class MaterialBucket;
+            friend class GeometryBucket;
 		public:
 			/// list of LOD Buckets in this region
 			typedef std::vector<LODBucket*> LODBucketList;
@@ -393,8 +396,8 @@ namespace Ogre {
 			Real mBoundingRadius;
 			/// The current lod level, as determined from the last camera
 			ushort mCurrentLod;
-			/// Current camera distance, passed on to do material lod later
-			Real mCamDistanceSquared;
+			/// Current lod value, passed on to do material lod later
+			Real mLodValue;
 			/// List of LOD buckets			
 			LODBucketList mLodBucketList;
 			/// List of lights for this region
@@ -407,7 +410,12 @@ namespace Ogre {
 			ShadowRenderableList mShadowRenderables;
 			/// Is a vertex program in use somewhere in this region?
 			bool mVertexProgramInUse;
-
+            /// Lod strategy reference
+            const LodStrategy *mLodStrategy;
+            /// Current camera
+            Camera *mCamera;
+            /// Cached squared view depth value to avoid recalculation by GeometryBucket
+            Real mSquaredViewDepth;
 
 
 		public:
