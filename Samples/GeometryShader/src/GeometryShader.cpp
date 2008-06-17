@@ -71,7 +71,7 @@ const char* SWIZZLE_GLSL_GEOMETRY_PROGRAM = "													\n\
 const char* SWIZZLE_ASSEMBLY_GEOMETRY_PROGRAM = 
 	"!!NVgp4.0																					\n\
 	PRIMITIVE_IN TRIANGLES;																		\n\
-	PRIMITIVE_OUT POINTS;																		\n\
+	PRIMITIVE_OUT TRIANGLE_STRIP;																\n\
 	VERTICES_OUT 6;																				\n\
 	# cgc version 2.0.0015, build date May 15 2008												\n\
 	# command line args: -profile gpu_gp														\n\
@@ -89,26 +89,25 @@ const char* SWIZZLE_ASSEMBLY_GEOMETRY_PROGRAM =
 	MOV.F result.position, vertex[0].position;													\n\
 	MOV.F result.color, {1, 0}.xyyx;															\n\
 	EMIT;																						\n\
-	MOV.F result.position, vertex[0].position.yxzw;												\n\
-	MOV.F result.color, {0, 1}.xxyy;															\n\
-	EMIT;																						\n\
 	MOV.F result.position, vertex[1].position;													\n\
 	MOV.F result.color, {1, 0}.xyyx;															\n\
 	EMIT;																						\n\
-	ENDPRIM;																					\n\
-	MOV.F result.position, vertex[1].position.yxzw;												\n\
-	MOV.F result.color, {0, 1}.xxyy;															\n\
-	EMIT;																						\n\
 	MOV.F result.position, vertex[2].position;													\n\
 	MOV.F result.color, {1, 0}.xyyx;															\n\
+	EMIT;																						\n\
+	ENDPRIM;																					\n\
+	MOV.F result.position, vertex[0].position.yxzw;												\n\
+	MOV.F result.color, {0, 1}.xxyy;															\n\
+	EMIT;																						\n\
+	MOV.F result.position, vertex[1].position.yxzw;												\n\
+	MOV.F result.color, {0, 1}.xxyy;															\n\
 	EMIT;																						\n\
 	MOV.F result.position, vertex[2].position.yxzw;												\n\
 	MOV.F result.color, {0, 1}.xxyy;															\n\
 	EMIT;																						\n\
 	ENDPRIM;																					\n\
 	END																							\n\
-	# 20 instructions, 0 R-regs																	\n\
-	\n";
+	# 20 instructions, 0 R-regs																	\n";	
 
 #include "ExampleApplication.h"
 
