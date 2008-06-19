@@ -55,9 +55,8 @@ namespace Ogre {
         /** Virtual destructor. */
         virtual ~LodStrategy();
 
-        // NOTE: At present this must be 0.
-        //** Get the value of the first (highest) level of detail. */
-        //virtual Real getBaseValue() const;
+        /** Get the value of the first (highest) level of detail. */
+        virtual Real getBaseValue() const;
 
         /** Transform lod bias so it only needs to be multiplied by the lod value. */
         virtual Real transformBias(Real factor) const = 0;

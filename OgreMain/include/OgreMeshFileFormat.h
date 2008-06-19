@@ -103,12 +103,13 @@ namespace Ogre {
                 // float weight;
             M_MESH_LOD = 0x8000,
                 // Optional LOD information
+                // string strategyName;
                 // unsigned short numLevels;
                 // bool manual;  (true for manual alternate meshes, false for generated)
                 M_MESH_LOD_USAGE = 0x8100,
                 // Repeating section, ordered in increasing depth
 				// NB LOD 0 (full detail from 0 depth) is omitted
-                // float fromSquaredDepth;
+                // float lodValue;
                     M_MESH_LOD_MANUAL = 0x8110,
                     // Required if M_MESH_LOD section manual = true
                     // String manualMeshName;

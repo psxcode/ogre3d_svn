@@ -42,6 +42,11 @@ namespace Ogre {
     LodStrategy::~LodStrategy()
     { }
     //-----------------------------------------------------------------------
+    Real LodStrategy::getBaseValue() const
+    {
+        return Real(0);
+    }
+    //-----------------------------------------------------------------------
     Real LodStrategy::getValue(const MovableObject *movableObject, const Camera *camera) const
     {
         // Just return implementation for now

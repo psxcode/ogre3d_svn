@@ -38,6 +38,7 @@ Torus Knot Software Ltd.
 #include "OgreAnimation.h"
 #include "OgreAnimationTrack.h"
 #include "OgreKeyFrame.h"
+#include "OgreLodStrategyManager.h"
 
 namespace Ogre {
 
@@ -1146,8 +1147,10 @@ namespace Ogre {
         TiXmlElement* lodNode = 
             mMeshNode->InsertEndChild(TiXmlElement("levelofdetail"))->ToElement();
 
+        const LodStrategy *strategy = pMesh->getLodStrategy();
 		unsigned short numLvls = pMesh->getNumLodLevels();
 		bool manual = pMesh->isLodManual();
+        lodNode->SetAttribute("strategy", strategy->getName());
 		lodNode->SetAttribute("numlevels", StringConverter::toString(numLvls));
 		lodNode->SetAttribute("manual", StringConverter::toString(manual));
 
@@ -1195,8 +1198,8 @@ namespace Ogre {
 		TiXmlElement* manualNode = 
 			usageNode->InsertEndChild(TiXmlElement("lodmanual"))->ToElement();
 
-		manualNode->SetAttribute("fromdepthsquared", 
-			StringConverter::toString(usage.fromDepthSquared));
+		manualNode->SetAttribute("value", 
+            StringConverter::toString(usage.value));
 		manualNode->SetAttribute("meshname", usage.manualName);
 
 	}
@@ -1207,8 +1210,8 @@ namespace Ogre {
 	{
 		TiXmlElement* generatedNode = 
 			usageNode->InsertEndChild(TiXmlElement("lodgenerated"))->ToElement();
-		generatedNode->SetAttribute("fromdepthsquared", 
-			StringConverter::toString(usage.fromDepthSquared));
+		generatedNode->SetAttribute("value", 
+			StringConverter::toString(usage.value));
 
 		// Iterate over submeshes at this level
 		unsigned short numsubs = pMesh->getNumSubMeshes();
@@ -1302,7 +1305,16 @@ namespace Ogre {
 		
         LogManager::getSingleton().logMessage("Parsing LOD information...");
 
-		const char* val = lodNode->Attribute("numlevels");
+        const char* val = lodNode->Attribute("strategy");
+        // This attribute is optional to maintain backwards compatibility
+        if (val)
+        {
+            String strategyName = val;
+            LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy(strategyName);
+            mpMesh->setLodStrategy(strategy);
+        }
+
+		val = lodNode->Attribute("numlevels");
 		unsigned short numLevels = static_cast<unsigned short>(
 			StringConverter::parseUnsignedInt(val));
 
@@ -1345,8 +1357,15 @@ namespace Ogre {
 	void XMLMeshSerializer::readLodUsageManual(TiXmlElement* manualNode, unsigned short index)
 	{
 		MeshLodUsage usage;
-		const char* val = manualNode->Attribute("fromdepthsquared");
-		usage.fromDepthSquared = StringConverter::parseReal(val);
+		const char* val = manualNode->Attribute("value");
+        // If value attribute not found check for old name
+        if (!val)
+        {
+            val = manualNode->Attribute("fromdepthsquared");
+            if (val)
+                LogManager::getSingleton().logMessage("WARNING: 'fromdepthsquared' attribute has been renamed to 'value'.");
+        }
+		usage.value = StringConverter::parseReal(val);
 		usage.manualName = manualNode->Attribute("meshname");
         usage.edgeData = NULL;
 
@@ -1356,8 +1375,15 @@ namespace Ogre {
 	void XMLMeshSerializer::readLodUsageGenerated(TiXmlElement* genNode, unsigned short index)
 	{
 		MeshLodUsage usage;
-		const char* val = genNode->Attribute("fromdepthsquared");
-		usage.fromDepthSquared = StringConverter::parseReal(val);
+		const char* val = genNode->Attribute("value");
+        // If value attribute not found check for old name
+        if (!val)
+        {
+            val = genNode->Attribute("fromdepthsquared");
+            if (val)
+                LogManager::getSingleton().logMessage("WARNING: 'fromdepthsquared' attribute has been renamed to 'value'.");
+        }
+		usage.value = StringConverter::parseReal(val);
 		usage.manualMesh.setNull();
 		usage.manualName = "";
         usage.edgeData = NULL;

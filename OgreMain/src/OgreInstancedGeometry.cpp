@@ -1096,8 +1096,6 @@ namespace Ogre {
 		mCurrentLod(0),
         mLodStrategy(0)
 	{
-		// First LOD mandatory, and always from 0
-		mLodValues.push_back(0.0f);
 	}
 	//--------------------------------------------------------------------------
 	InstancedGeometry::BatchInstance::~BatchInstance()
@@ -1134,6 +1132,9 @@ namespace Ogre {
         if (mLodStrategy == 0)
         {
             mLodStrategy = lodStrategy;
+
+            // First LOD mandatory, and always from base lod value
+            mLodValues.push_back(mLodStrategy->getBaseValue());
         }
         else
         {

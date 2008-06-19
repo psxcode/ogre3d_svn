@@ -40,6 +40,7 @@ Torus Knot Software Ltd.
 namespace Ogre {
 	
 	class MeshSerializerListener;
+    class LodStrategy;
 
     /** Internal implementation of Mesh reading / writing for the latest version of the
     .mesh format.
@@ -86,7 +87,7 @@ namespace Ogre {
         virtual void writeMeshBoneAssignment(const VertexBoneAssignment& assign);
         virtual void writeSubMeshBoneAssignment(const VertexBoneAssignment& assign);
         virtual void writeLodInfo(const Mesh* pMesh);
-        virtual void writeLodSummary(unsigned short numLevels, bool manual);
+        virtual void writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy);
         virtual void writeLodUsageManual(const MeshLodUsage& usage);
         virtual void writeLodUsageGenerated(const Mesh* pMesh, const MeshLodUsage& usage, unsigned short lodNum);
         virtual void writeBoundsInfo(const Mesh* pMesh);
@@ -177,6 +178,7 @@ namespace Ogre {
         MeshSerializerImpl_v1_4();
         ~MeshSerializerImpl_v1_4();
     protected:
+        virtual void writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy);
         virtual void readMeshLodInfo(DataStreamPtr& stream, Mesh* pMesh);
     };
 

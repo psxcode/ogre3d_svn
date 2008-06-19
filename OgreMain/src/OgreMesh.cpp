@@ -123,7 +123,7 @@ namespace Ogre {
 
 		// Init first (manual) lod
 		MeshLodUsage lod;
-		lod.value = 0.0f;
+		lod.value = mLodStrategy->getBaseValue();
         lod.edgeData = NULL;
         lod.manualMesh.setNull();
 		mMeshLodUsageList.push_back(lod);
@@ -1031,7 +1031,7 @@ namespace Ogre {
         mNumLods = 1;
 		// Init first (manual) lod
 		MeshLodUsage lod;
-		lod.value = 0.0f;
+		lod.value = mLodStrategy->getBaseValue();
         lod.edgeData = 0;
         lod.manualMesh.setNull();
 		mMeshLodUsageList.push_back(lod);
@@ -2092,6 +2092,9 @@ namespace Ogre {
     void Mesh::setLodStrategy(LodStrategy *lodStrategy)
     {
         mLodStrategy = lodStrategy;
+
+        assert(mMeshLodUsageList.size());
+        mMeshLodUsageList[0].value = mLodStrategy->getBaseValue();
     }
     //---------------------------------------------------------------------
 

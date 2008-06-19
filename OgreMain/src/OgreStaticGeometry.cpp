@@ -696,8 +696,6 @@ namespace Ogre {
 		mCurrentLod(0), mEdgeList(0), mVertexProgramInUse(false),
 		mLodStrategy(0)
 	{
-		// First LOD mandatory, and always from 0
-		mLodValues.push_back(0.0f);
 	}
 	//--------------------------------------------------------------------------
 	StaticGeometry::Region::~Region()
@@ -742,6 +740,9 @@ namespace Ogre {
         if (mLodStrategy == 0)
         {
             mLodStrategy = lodStrategy;
+
+            // First LOD mandatory, and always from base lod value
+            mLodValues.push_back(mLodStrategy->getBaseValue());
         }
         else
         {

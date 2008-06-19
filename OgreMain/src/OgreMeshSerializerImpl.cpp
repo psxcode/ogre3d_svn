@@ -1152,9 +1152,10 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void MeshSerializerImpl::writeLodInfo(const Mesh* pMesh)
     {
+        const LodStrategy *strategy = pMesh->getLodStrategy();
         unsigned short numLods = pMesh->getNumLodLevels();
         bool manual = pMesh->isLodManual();
-        writeLodSummary(numLods, manual);
+        writeLodSummary(numLods, manual, strategy);
 
 		// Loop from LOD 1 (not 0, this is full detail)
         for (unsigned short i = 1; i < numLods; ++i)
@@ -1174,7 +1175,7 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void MeshSerializerImpl::writeLodSummary(unsigned short numLevels, bool manual)
+    void MeshSerializerImpl::writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy)
     {
         // Header
         size_t size = STREAM_OVERHEAD_SIZE;
@@ -1185,6 +1186,8 @@ namespace Ogre {
         writeChunkHeader(M_MESH_LOD, size);
 
         // Details
+        // string strategyName;
+        writeString(strategy->getName());
         // unsigned short numLevels;
         writeShorts(&numLevels, 1);
         // bool manual;  (true for manual alternate meshes, false for generated)
@@ -1198,7 +1201,7 @@ namespace Ogre {
         // Header
         size_t size = STREAM_OVERHEAD_SIZE;
         size_t manualSize = STREAM_OVERHEAD_SIZE;
-        // float fromDepthSquared;
+        // float lodValue;
         size += sizeof(float);
         // Manual part size
 
@@ -2462,6 +2465,25 @@ namespace Ogre {
     //---------------------------------------------------------------------
     MeshSerializerImpl_v1_4::~MeshSerializerImpl_v1_4()
     {
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl_v1_4::writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy)
+    {
+        // Header
+        size_t size = STREAM_OVERHEAD_SIZE;
+        // unsigned short numLevels;
+        size += sizeof(unsigned short);
+        // bool manual;  (true for manual alternate meshes, false for generated)
+        size += sizeof(bool);
+        writeChunkHeader(M_MESH_LOD, size);
+
+        // Details
+        // unsigned short numLevels;
+        writeShorts(&numLevels, 1);
+        // bool manual;  (true for manual alternate meshes, false for generated)
+        writeBools(&manual, 1);
+
+
     }
     //---------------------------------------------------------------------
     void MeshSerializerImpl_v1_4::readMeshLodInfo(DataStreamPtr& stream, Mesh* pMesh)

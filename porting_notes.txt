@@ -14,3 +14,4 @@ Renamed InstancedGeomety::LODBucket::getSquaredDistance to getLodValue.
 Renamed StaticGeometry::Region::mCamDistanceSquared to mLodValue.
 Renamed StaticGeomety::LODBucket::mSquaredDistance to mLodValue.
 Renamed StaticGeomety::LODBucket::getSquaredDistance to getLodValue.
+Added LodStrategy argument to MeshSerializerImpl::writeLodSummary.
