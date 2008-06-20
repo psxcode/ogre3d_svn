@@ -18,56 +18,6 @@ Description: Demo of a Shader Model 4 geometry shader in action
 -----------------------------------------------------------------------------
 */
 
-const char* PASS_THROUGH_GLSL_VERTEX_PROGRAM = "												\n\
-	void main()																					\n\
-	{																							\n\
-		//Transform the vertex (ModelViewProj matrix)											\n\
-		gl_Position = ftransform();																\n\
-	}\n";
-
-const char* SWIZZLE_GLSL_GEOMETRY_PROGRAM = "													\n\
-	#version 120																				\n\
-	#extension GL_EXT_geometry_shader4 : enable													\n\
-																								\n\
-	uniform vec4 origColor;																		\n\
-	uniform vec4 cloneColor;																	\n\
-																								\n\
-	void main(void)																				\n\
-	{																							\n\
-																								\n\
-		//increment variable																	\n\
-		int i;																					\n\
-																								\n\
-		/////////////////////////////////////////////////////////////							\n\
-		//This example has two parts															\n\
-		//	step a) draw the primitive pushed down the pipeline									\n\
-		//		 there are gl_Vertices # of vertices											\n\
-		//		 put the vertex value into gl_Position											\n\
-		//		 use EmitVertex => 'create' a new vertex										\n\
-		// 		use EndPrimitive to signal that you are done creating a primitive!				\n\
-		//	step b) create a new piece of geometry (I.E. WHY WE ARE USING A GEOMETRY SHADER!)	\n\
-		//		I just do the same loop, but swizzle the x and y values							\n\
-		//	result => the line we want to draw, and the same line, but along the other axis		\n\
-																								\n\
-		//Pass-thru!																			\n\
-		for(i=0; i< gl_VerticesIn; i++){														\n\
-			gl_Position = gl_PositionIn[i];														\n\
-			gl_FrontColor = origColor;															\n\
-			EmitVertex();																		\n\
-		}																						\n\
-		EndPrimitive();																			\n\
-		//New piece of geometry!  We just swizzle the x and y terms								\n\
-		for(i=0; i< gl_VerticesIn; i++){														\n\
-			gl_Position = gl_PositionIn[i];														\n\
-			gl_Position.xy = gl_Position.yx;													\n\
-			gl_FrontColor = cloneColor;															\n\
-			EmitVertex();																		\n\
-		}																						\n\
-		EndPrimitive();																			\n\
-																								\n\
-																								\n\
-	}\n";
-
 const char* SWIZZLE_ASSEMBLY_GEOMETRY_PROGRAM = 
 	"!!NVgp4.0																					\n\
 	PRIMITIVE_IN TRIANGLES;																		\n\
@@ -121,35 +71,37 @@ public:
 
 	MaterialPtr createGLSLProgramMaterial()
 	{
-		MaterialPtr newMaterial = MaterialManager::getSingleton().create(
-			"GLSLGeometryShaderMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-		
-		Pass* swizzlePass = newMaterial->getTechnique(0)->getPass(0);
-		swizzlePass->setName("GeometryProgramPass");
+		//Now using script interface for GLSL.
+		return MaterialManager::getSingleton().getByName("Ogre/GPTest/SwizzleGLSL");
+		//MaterialPtr newMaterial = MaterialManager::getSingleton().create(
+		//	"GLSLGeometryShaderMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+		//
+		//Pass* swizzlePass = newMaterial->getTechnique(0)->getPass(0);
+		//swizzlePass->setName("GeometryProgramPass");
 
-		HighLevelGpuProgramPtr vp = 
-			HighLevelGpuProgramManager::getSingleton().createProgram(
-			"PassThroughVertexShaderProgram", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			"glsl", GPT_VERTEX_PROGRAM);
-		vp->setSource(PASS_THROUGH_GLSL_VERTEX_PROGRAM);
-		vp->load();
-		swizzlePass->setVertexProgram(vp->getName());
-		
-		vp = HighLevelGpuProgramManager::getSingleton().createProgram(
-			"GLSLSwizzleGeometryShaderProgram", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			"glsl", GPT_GEOMETRY_PROGRAM);
-		vp->setSource(SWIZZLE_GLSL_GEOMETRY_PROGRAM);
-		vp->load();
-		vp->setInputOperationType(RenderOperation::OT_TRIANGLE_LIST);
-		vp->setOutputOperationType(RenderOperation::OT_TRIANGLE_LIST);
-		vp->setMaxOutputVertices(6); //3 vertices per triangle, two triangles per input triangle
-		
-		swizzlePass->setGeometryProgram(vp->getName());
+		//HighLevelGpuProgramPtr vp = 
+		//	HighLevelGpuProgramManager::getSingleton().createProgram(
+		//	"PassThroughVertexShaderProgram", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		//	"glsl", GPT_VERTEX_PROGRAM);
+		//vp->setSource(PASS_THROUGH_GLSL_VERTEX_PROGRAM);
+		//vp->load();
+		//swizzlePass->setVertexProgram(vp->getName());
+		//
+		//vp = HighLevelGpuProgramManager::getSingleton().createProgram(
+		//	"GLSLSwizzleGeometryShaderProgram", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		//	"glsl", GPT_GEOMETRY_PROGRAM);
+		//vp->setSource(SWIZZLE_GLSL_GEOMETRY_PROGRAM);
+		//vp->load();
+		//vp->setInputOperationType(RenderOperation::OT_TRIANGLE_LIST);
+		//vp->setOutputOperationType(RenderOperation::OT_TRIANGLE_LIST);
+		//vp->setMaxOutputVertices(6); //3 vertices per triangle, two triangles per input triangle
+		//
+		//swizzlePass->setGeometryProgram(vp->getName());
 
-		GpuProgramParametersSharedPtr geomParams = swizzlePass->getGeometryProgramParameters();
-		geomParams->setNamedConstant("origColor", ColourValue::Blue);
-		geomParams->setNamedConstant("cloneColor", ColourValue::Red);
-		return newMaterial;
+		//GpuProgramParametersSharedPtr geomParams = swizzlePass->getGeometryProgramParameters();
+		//geomParams->setNamedConstant("origColor", ColourValue::Blue);
+		//geomParams->setNamedConstant("cloneColor", ColourValue::Red);
+		//return newMaterial;
 	}
 
 	MaterialPtr createASMProgramMaterial()
@@ -191,8 +143,8 @@ protected:
         mCamera->setPosition(20, 0, 100);
         mCamera->lookAt(0,0,0);
 		
-		//MaterialPtr geomMaterial = createGLSLProgramMaterial();
-		MaterialPtr geomMaterial = createASMProgramMaterial();
+		MaterialPtr geomMaterial = createGLSLProgramMaterial();
+		//MaterialPtr geomMaterial = createASMProgramMaterial();
 
 		// Set all of the material's sub entities to use the new material
 		for (unsigned int i=0; i<ent->getNumSubEntities(); i++)
