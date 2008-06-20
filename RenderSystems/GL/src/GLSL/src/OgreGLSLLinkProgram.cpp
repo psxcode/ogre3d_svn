@@ -82,12 +82,12 @@ namespace Ogre {
 		case RenderOperation::OT_LINE_LIST:
 			return GL_LINES;
 		case RenderOperation::OT_LINE_STRIP:
-			return GL_LINE_STRIP_ADJACENCY_EXT;
+			return GL_LINE_STRIP;
 		default:
 		case RenderOperation::OT_TRIANGLE_LIST:
 			return GL_TRIANGLES;
 		case RenderOperation::OT_TRIANGLE_STRIP:
-			return GL_TRIANGLE_STRIP_ADJACENCY_EXT;
+			return GL_TRIANGLE_STRIP;
 		case RenderOperation::OT_TRIANGLE_FAN:
 			return GL_TRIANGLE_FAN;
 		}
@@ -164,12 +164,12 @@ namespace Ogre {
 				switch (outputOperationType)
 				{
 				case RenderOperation::OT_POINT_LIST:
-				case RenderOperation::OT_LINE_LIST:
-				case RenderOperation::OT_TRIANGLE_LIST:
+				case RenderOperation::OT_LINE_STRIP:
+				case RenderOperation::OT_TRIANGLE_STRIP:
 					break;
 				default:
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
-						"Geometry shader output operation type can only be point list, line list or triangle list",
+						"Geometry shader output operation type can only be point list, line strip or triangle strip",
 						"GLSLLinkProgram::activate");
 				}
 				glProgramParameteriEXT(mGLHandle,GL_GEOMETRY_OUTPUT_TYPE_EXT,
@@ -183,7 +183,7 @@ namespace Ogre {
 			glGetObjectParameterivARB( mGLHandle, GL_OBJECT_LINK_STATUS_ARB, &mLinked );
 			// force logging and raise exception if not linked
 			checkForGLSLError( "GLSLLinkProgram::Activate",
-				"Error linking GLSL Program Object", mGLHandle, !mLinked, !mLinked );
+				"Error linking GLSL Program Object : ", mGLHandle, !mLinked, !mLinked );
 			if(mLinked)
 			{
 				logObjectInfo( String("GLSL link result : "), mGLHandle );
@@ -195,10 +195,13 @@ namespace Ogre {
 
 		if (mLinked)
 		{
+			checkForGLSLError( "GLSLLinkProgram::Activate",
+				"Error prior to using GLSL Program Object : ", mGLHandle, false, false);
+
 		    glUseProgramObjectARB( mGLHandle );
 
 			checkForGLSLError( "GLSLLinkProgram::Activate",
-				"Error using GLSL Program Object", mGLHandle, false, false);
+				"Error using GLSL Program Object : ", mGLHandle, false, false);
 		}
 	}
 
