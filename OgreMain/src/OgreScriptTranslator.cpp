@@ -56,7 +56,7 @@ namespace Ogre{
 				return GPT_VERTEX_PROGRAM;
 			case ID_GEOMETRY_PROGRAM:
 				return GPT_GEOMETRY_PROGRAM;
-			case ID_FRAGMENT:
+			case ID_FRAGMENT_PROGRAM:
 				return GPT_FRAGMENT_PROGRAM;
 		}
 	}

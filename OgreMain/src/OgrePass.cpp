@@ -1026,7 +1026,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	Pass* Pass::_split(unsigned short numUnits)
 	{
-		if (mVertexProgramUsage || mFragmentProgramUsage)
+		if (mVertexProgramUsage || mGeometryProgramUsage || mFragmentProgramUsage)
 		{
 			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Programmable passes cannot be "
 				"automatically split, define a fallback technique instead.",
@@ -1107,6 +1107,12 @@ namespace Ogre {
             mShadowReceiverVertexProgramUsage->_load();
         }
 
+		if (mGeometryProgramUsage)
+		{
+			// Load vertex program
+            mGeometryProgramUsage->_load();
+        }
+
         if (mFragmentProgramUsage)
         {
 			// Load fragment program
@@ -1132,6 +1138,10 @@ namespace Ogre {
 
 		// Unload programs
 		if (mVertexProgramUsage)
+		{
+			// TODO
+		}
+		if (mGeometryProgramUsage)
 		{
 			// TODO
 		}
