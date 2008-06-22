@@ -30,6 +30,8 @@ Torus Knot Software Ltd.
 #include "OgreStableHeaders.h"
 #include "OgreLodStrategyManager.h"
 
+#include "OgreDistanceLodStrategy.h"
+
 namespace Ogre {
     //-----------------------------------------------------------------------
     template<> LodStrategyManager* Singleton<LodStrategyManager>::ms_Singleton = 0;
@@ -44,6 +46,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     LodStrategyManager::LodStrategyManager()
     {
+        // Add default (distance) strategy
+        addStrategy(new DistanceLodStrategy());
     }
     //-----------------------------------------------------------------------
     LodStrategyManager::~LodStrategyManager()

@@ -874,7 +874,7 @@ namespace Ogre {
         {
             // Record usage
             MeshLodUsage& lod = *++ilod;
-            lod.value = (*ivalue) * (*ivalue);
+            lod.value = (*ivalue);
             lod.edgeData = 0;
             lod.manualMesh.setNull();
         }

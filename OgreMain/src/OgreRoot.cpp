@@ -189,8 +189,6 @@ namespace Ogre {
 
         // Lod strategy manager
         mLodStrategyManager = new LodStrategyManager();
-        // Add default (distance) strategy
-        mLodStrategyManager->addStrategy(new DistanceLodStrategy());
 
 #if OGRE_PROFILING
         // Profiler

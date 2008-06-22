@@ -6798,12 +6798,17 @@ protected:
 
         // Generate mesh lods
         MeshManager *meshManager = MeshManager::getSingletonPtr();
+        //MeshPtr mesh = meshManager->load("TestLod.mesh", "General");
         MeshPtr mesh = meshManager->load("knot.mesh", "General");
         Mesh::LodValueList distances;
-        distances.push_back(100);
-        distances.push_back(300);
-        distances.push_back(500);
+        distances.push_back(Math::Sqr(100));
+        distances.push_back(Math::Sqr(300));
+        distances.push_back(Math::Sqr(500));
         mesh->generateLodLevels(distances, Ogre::ProgressiveMesh::VRQ_PROPORTIONAL, 0.5);
+
+        // Create entity
+        Entity *entity = mSceneMgr->createEntity("LodTestEntity", mesh->getName());
+        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(entity);
 
         // Create material
         MaterialPtr material = MaterialManager::getSingleton().create("LodTestMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -6830,11 +6835,7 @@ protected:
         lods.push_back(Math::Sqr(200));
         lods.push_back(Math::Sqr(400));
         material->setLodLevels(lods);
-
-        // Create entity
-        Entity *entity = mSceneMgr->createEntity("LodTestEntity", mesh->getName());
         entity->setMaterialName(material->getName());
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(entity);
 
         // Add lod listener
         mSceneMgr->addLodListener(new MyLodListener(mSceneMgr));

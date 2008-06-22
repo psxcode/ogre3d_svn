@@ -15,3 +15,5 @@ Renamed StaticGeometry::Region::mCamDistanceSquared to mLodValue.
 Renamed StaticGeomety::LODBucket::mSquaredDistance to mLodValue.
 Renamed StaticGeomety::LODBucket::getSquaredDistance to getLodValue.
 Added LodStrategy argument to MeshSerializerImpl::writeLodSummary.
+Mesh::generateLodLevels now requires squared distances when using the distance lod strategy.
+XmlConverter now requires squared distances when using the distance lod strategy.
