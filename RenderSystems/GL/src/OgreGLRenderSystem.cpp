@@ -410,11 +410,15 @@ namespace Ogre {
 		}
 
 		// Check if geometry shaders are supported
-		if (GLEW_VERSION_2_0 ||
+		if (GLEW_VERSION_2_0 &&
 			GLEW_NV_geometry_shader4)
 		{
 			rsc->setCapability(RSC_GEOMETRY_PROGRAM);
 			rsc->addShaderProfile("nvgp4");
+
+			//Also add the CG profiles
+			rsc->addShaderProfile("gpu_gp");
+			rsc->addShaderProfile("gp4gp");
 
 			rsc->setGeometryProgramConstantBoolCount(0);
 			rsc->setGeometryProgramConstantIntCount(0);
@@ -631,10 +635,18 @@ namespace Ogre {
 
 		if(caps->hasCapability(RSC_GEOMETRY_PROGRAM))
 		{
+			//TODO : Should these be createGLArbGpuProgram or createGLGpuNVparseProgram?
 			if(caps->isShaderProfileSupported("nvgp4"))
 			{
-				//TODO : Should this be createGLArbGpuProgram or createGLGpuNVparseProgram?
 				mGpuProgramManager->registerProgramFactory("nvgp4", createGLArbGpuProgram);
+			}
+			if(caps->isShaderProfileSupported("gp4gp"))
+			{
+				mGpuProgramManager->registerProgramFactory("gp4gp", createGLArbGpuProgram);
+			}
+			if(caps->isShaderProfileSupported("gpu_gp"))
+			{
+				mGpuProgramManager->registerProgramFactory("gpu_gp", createGLArbGpuProgram);
 			}
 		}
 
