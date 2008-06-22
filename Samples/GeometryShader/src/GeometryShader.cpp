@@ -22,6 +22,7 @@ Description: Demo of a Shader Model 4 geometry shader in action
 
 const String GLSL_MATERIAL_NAME = "Ogre/GPTest/SwizzleGLSL";
 const String ASM_MATERIAL_NAME = "Ogre/GPTest/SwizzleASM";
+const String CG_MATERIAL_NAME = "Ogre/GPTest/SwizzleCG";
 
 class GeometryShadingApplication : public ExampleApplication
 {
@@ -53,7 +54,8 @@ protected:
         mCamera->lookAt(0,0,0);
 		
 		//String materialName = GLSL_MATERIAL_NAME;
-		String materialName = ASM_MATERIAL_NAME;
+		//String materialName = ASM_MATERIAL_NAME;
+		String materialName = CG_MATERIAL_NAME;
 
 		// Set all of the material's sub entities to use the new material
 		for (unsigned int i=0; i<ent->getNumSubEntities(); i++)
