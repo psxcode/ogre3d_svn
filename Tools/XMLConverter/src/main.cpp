@@ -83,6 +83,7 @@ Quaternion EulerToQuaternion(float radX, float radY, float radZ)
 {
 	Quaternion QuaternionX, QuaternionY, QuaternionZ, QuaternionResult;
 
+
 	QuaternionX.FromAngleAxis( Degree(radX), Vector3(1,0,0) );
 	QuaternionX.normalise();
 	QuaternionY.FromAngleAxis( Degree(radY), Vector3(0,1,0) );
@@ -90,7 +91,9 @@ Quaternion EulerToQuaternion(float radX, float radY, float radZ)
 	QuaternionZ.FromAngleAxis( Degree(radZ), Vector3(0,0,1) );
 	QuaternionZ.normalise();
 
-	QuaternionResult = QuaternionZ * QuaternionX * QuaternionY;
+	//Multiplication is not generally commutative, here we use XYZ order
+	QuaternionResult = QuaternionZ * QuaternionY * QuaternionX;
+
 	QuaternionResult.normalise();
 
 	return QuaternionResult;
@@ -131,6 +134,7 @@ struct XmlOptions
     String logFile;
 	//westine 2008-05-27
 	String bvhfile;
+	String bvhlistfile; //2008-06-23
 
     bool interactiveMode;
     unsigned short numLods;
@@ -153,6 +157,7 @@ struct XmlOptions
 	Serializer::Endian endian;
 };
 
+void AddAnimation(XmlOptions opts); // forward declaration
 void help(void)
 {
     // Print help message
@@ -183,6 +188,7 @@ void help(void)
     cout << "-log filename  = name of the log file (default: 'OgreXMLConverter.log')" << endl;
 	//westine
 	cout << "-addanimation filename = name of the bvh mocap file" << endl;
+	cout << "-addbatchanim filename = name of bvh list file" << endl;
     cout << "sourcefile     = name of file to convert" << endl;
     cout << "destfile       = optional name of file to write to. If you don't" << endl;
     cout << "                 specify this OGRE works it out through the extension " << endl;
@@ -243,6 +249,7 @@ XmlOptions parseArgs(int numArgs, char **args)
     binOpt["-log"] = "OgreXMLConverter.log";
 	//westine 2008-05-27
 	binOpt["-addanimation"] = "";
+	binOpt["-addbatchanim"] = "";
 	binOpt["-td"] = "";
 	binOpt["-ts"] = "";
 
@@ -356,6 +363,13 @@ XmlOptions parseArgs(int numArgs, char **args)
 		if (!bi->second.empty())
 		{
 			opts.bvhfile = bi->second;
+		}
+		
+		//westine 2008-06-23 batch add animations
+		bi = binOpt.find("-addbatchanim");
+		if ( !bi->second.empty())
+		{
+			opts.bvhlistfile = bi->second;
 		}
 		
 
@@ -512,6 +526,130 @@ void meshToXML(XmlOptions opts)
 
 }
 
+void AddBatchAnimations(XmlOptions opts)
+{
+	std::ifstream bvhlistfile;
+	bvhlistfile.open(opts.bvhlistfile.c_str(),std::ios_base::in);
+
+	if ( bvhlistfile.bad() )
+	{
+		cout<< "Unable to load bvhlistfile " << opts.bvhlistfile << endl;
+		exit(1);
+	}
+	
+	std::vector<std::string> bvhlist;
+	std::string bvhfile;
+	while ( !bvhlistfile.eof() )
+	{
+		std::getline(bvhlistfile,bvhfile);
+		if ( strcmp(bvhfile.c_str(),"") )
+		{
+			bvhlist.push_back(bvhfile);
+		}
+	}
+
+	Animation * anim ;
+	String response;
+	TiXmlDocument* doc = new TiXmlDocument(opts.source);
+	// Some double-parsing here but never mind
+	if (!doc->LoadFile())
+	{
+		cout << "Unable to open file " << opts.source << " - fatal error." << endl;
+		delete doc;
+		exit (1);
+	}
+	TiXmlElement* elem; 
+	TiXmlElement* rootElem = doc->RootElement();
+	SkeletonPtr newSkel = SkeletonManager::getSingleton().create("conversion", 
+		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	xmlSkeletonSerializer->importSkeleton(opts.source, newSkel.getPointer());
+	if ( !stricmp(rootElem->Value(),"skeleton") )
+	{
+		for ( std::vector<std::string>::iterator it = bvhlist.begin(); it != bvhlist.end(); it++)
+        {
+
+		bvh = new Bvh((*it));
+		bvh->LogBoneHierarchy();
+		Bvh::Bvh_Hierarchy::size_type BoneNum = bvh->GetHierarchy().size();
+
+		
+		
+		/*
+		if (opts.optimiseAnimations)
+		{
+		newSkel->optimiseAllAnimations();
+		}*/
+		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
+		anim = newSkel->createAnimation((*it).c_str(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum()));
+		anim->setInterpolationMode(Animation::IM_LINEAR) ;
+		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
+
+		int handle,SkeletonHandle;
+		
+		// create track for each bone from bvh
+		for (handle = 0; static_cast<Bvh::Bvh_Hierarchy::size_type>(handle) < BoneNum; ++handle)
+		{
+
+			//here do the bone mapping between bvh and skeleton if boneMap is loaded
+			if( bvh->IsBoneMapping() )
+				SkeletonHandle = (bvh->GetBoneMap()[handle])->pSkeleton_part->id;
+			if ( SkeletonHandle == Bvh::NON_BONE_ID)
+				continue;
+
+			NodeAnimationTrack* pTrack = anim->createNodeTrack(SkeletonHandle,newSkel->getBone(SkeletonHandle));
+
+			//pTrack->setUseShortestRotationPath(true);
+
+			int numKeyFrames = bvh->FrameNum();
+			for (ushort k = 0; k < numKeyFrames; ++k)
+			{
+
+				TransformKeyFrame* pKeyFrame = pTrack->createNodeKeyFrame(bvh->FrameDuration()*k);
+
+				const Bvh::Bvh_Motion& motiondata = bvh->MotionData();
+				if ( handle == 0)
+				{
+					Ogre::Vector3 trans(motiondata[k][0],motiondata[k][1],motiondata[k][2]);
+					pKeyFrame->setTranslate(trans);
+				}else
+				{
+					Ogre::Vector3 trans(0,0,0);
+					pKeyFrame->setTranslate(trans);
+				}
+
+				Ogre::Quaternion qu;
+				ushort ChannelIndex = bvh->GetChannelMap()[(bvh->GetHierarchy()[handle])->pRChannel->ChannelBlockIndex];
+				//take care of ZYX rotation order of bvh, euler angle is in XYZ order
+				Ogre::Vector3 euler(motiondata[k][ChannelIndex+2],motiondata[k][ChannelIndex+1],
+					motiondata[k][ChannelIndex]);
+				qu = EulerToQuaternion(euler);//my version
+				qu = EulerToQuaternion(motiondata[k][ChannelIndex+2],
+					motiondata[k][ChannelIndex+1],motiondata[k][ChannelIndex]);  // MoCapSim version
+				pKeyFrame->setRotation(qu);
+
+				Ogre::Vector3 	euler2 = QuaternionToEuler(qu);
+				int t =1;
+
+			}
+
+		}
+
+
+		elem = rootElem->FirstChildElement("animations");
+		xmlSkeletonSerializer->addAnimation(elem,anim);
+		delete bvh;
+		}//for bvhlist
+
+		xmlSkeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
+		delete doc;
+	}
+	else
+	{
+		delete doc;
+	}
+	 
+}
+
 //westine  add bvh mocap animation into .skeleton.xml
 void AddAnimation(XmlOptions opts)
 {
@@ -599,7 +737,7 @@ void AddAnimation(XmlOptions opts)
 
 		elem = rootElem->FirstChildElement("animations");
 		xmlSkeletonSerializer->addAnimation(elem,anim);
-		
+		delete bvh;
 		xmlSkeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
 		delete doc;
 	}
@@ -986,8 +1124,11 @@ int main(int numargs, char** args)
 		xmlSkeletonSerializer = new XMLSkeletonSerializer();
 		bufferManager = new DefaultHardwareBufferManager(); // needed because we don't have a rendersystem
 
-
-		if ( !opts.bvhfile.empty() )
+		if ( !opts.bvhlistfile.empty())
+		{
+			AddBatchAnimations(opts);
+		}
+		else if ( !opts.bvhfile.empty() )
 		{
 			AddAnimation(opts);
 		}
