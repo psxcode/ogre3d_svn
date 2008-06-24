@@ -57,6 +57,7 @@ Lucas Westine
 		{
 			std::string name;
 			BVH_Node_tag* pParent;
+			int index;   //record the index in bvh hierarchy
 			Ogre::Vector3 offset;
 			PositionChannel*   pPChannel;
 			RotationChannel*   pRChannel; 
@@ -104,6 +105,8 @@ Lucas Westine
 		bool          m_bIsBoneMapping;
 		// because there end_effector in bvh, the m_Hierarchy.size() is larger than or equal to the joint num in bvh 
 		int           m_BoneNum;   
+		int ChannelSum;       //be used in recursive function ReadHierarchy(), so make it object domain
+		int ChannelBlockIndex;//be used in recursive function ReadHierarchy(), so make if object domain
 	};
 
 
