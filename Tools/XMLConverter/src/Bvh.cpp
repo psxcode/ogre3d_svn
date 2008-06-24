@@ -8,11 +8,28 @@
 
 #include "OgrePrerequisites.h"
 
+
 Bvh::~Bvh()
 {
+	if ( m_Hierarchy.size() > 0)
+	{
+		for ( Bvh_Hierarchy::iterator it = m_Hierarchy.begin(); it != m_Hierarchy.end(); it++)
+		{
+			if ( NULL != *it )
+			delete static_cast<BVH_Node*>(*it);
+		}
+	}
+	if ( m_BoneMap.size() > 0 )
+	{
+		for ( Bone_Map::iterator it = m_BoneMap.begin(); it != m_BoneMap.end(); it++)
+		{
+			if( NULL != *it )
+			delete static_cast<Bone_Mapping_Element*>(*it);
+		}
+	}
 }
 
-Bvh::Bvh(const std::string &filename):m_AnimName(filename),m_BoneNum(0)
+Bvh::Bvh(const std::string &filename):m_AnimName(filename),m_BoneNum(0),ChannelSum(0),ChannelBlockIndex(0)
 {
 	std::ifstream ifs;
 	int ChannelSum;
@@ -151,10 +168,10 @@ void Bvh::LoadBoneMap()
 int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, bool bLineReady, std::stringstream& preSs)
 {
 
-	static int ChannelSum = 0;
-	static int ChannelBlockIndex = 0;
+	
 	std::string line;
 	std::stringstream ss;
+	bool bIsEnd = false;  //If reach EndEffector, do not record this node
 	if ( bLineReady == true )
 	{
 		ss.str(preSs.str());
@@ -182,9 +199,10 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 
 	}else if ( !strcmp(str.c_str(),"End"))
 	{
-	
+		bIsEnd = true;	
 		pBN->name = static_cast<BVH_Node*>(hierarchy.top())->name + "_End";
 		pBN->pParent = static_cast<BVH_Node*>(hierarchy.top());
+		
 	}
 
 	std::getline(ifs,line);
@@ -193,8 +211,11 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 	ss >> str;
 	if ( !strcmp(str.c_str(),"{"))
 	{
+		
 		hierarchy.push(pBN);
-		m_Hierarchy.push_back(pBN);
+		if ( bIsEnd == false ) //no end node is animation control joint, so record it
+		m_Hierarchy.push_back(pBN);// bBN release is up to m_Hierarchy
+		pBN->index = (int)m_Hierarchy.size() - 1;
 	}
 	std::getline(ifs,line);
 	ss.clear();
@@ -251,6 +272,10 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 			pBN->pRChannel->Yrotation = 0;
 			pBN->pRChannel->Zrotation = 0;
 		}
+	    if (  true == bIsEnd && NULL != pBN )
+	    {  
+			delete pBN;
+	    }
 		return ReadHierarchy(ifs,hierarchy,false,ss);
 
 	}else {
@@ -294,6 +319,7 @@ void Bvh::LogBoneHierarchy()
 	// it is planned to design automatically bone matching method instead of manual one after all
 	// the motion graph has be implemented 
 
+#define SKELETON
 #ifdef BONE_MAP
 	ofs.open("BoneMap1.txt",std::ios_base::out);
 	if (ofs.bad())
@@ -309,5 +335,24 @@ void Bvh::LogBoneHierarchy()
 
 #endif
 
+#ifdef SKELETON
+	ofs.open("skeleton.out",std::ios_base::out);
+	if ( ofs.bad())
+	{
+		std::cout<<" Unable to create file skeleton.out"<< std::endl;
+		exit(1);
+	}
+	for (Bvh_Hierarchy::size_type i = 0; i < m_Hierarchy.size(); i++)
+	{
+		ofs<<i<<" "<<m_Hierarchy[i]->offset.x<<" "<<m_Hierarchy[i]->offset.y<<" ";
+		ofs<<m_Hierarchy[i]->offset.z<<" ";
+		if ( m_Hierarchy[i]->pParent )
+		{
+			ofs<<m_Hierarchy[i]->pParent->index;
+		}else
+			ofs<<"-1";
+		ofs<<" #"<<m_Hierarchy[i]->name<<std::endl;
+	}
+#endif
 
 }
