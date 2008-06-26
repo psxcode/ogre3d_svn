@@ -526,6 +526,61 @@ void meshToXML(XmlOptions opts)
 
 }
 
+void AddAnimationTrack(Animation* anim, const SkeletonPtr& skel,const Bvh* bvh)
+{
+
+	int handle;//handle is the index of bone in bvh file, if the bone's animation is assigned to a bone in 
+	// Ogre Skeleton animation track, handle is mapped to SkeletonHandle, and the MaxNum of SkeletonHandle 
+	//is surely to be less than the MaxNum of bvh bone sum
+	int	SkeletonHandle;
+
+	// create track for each bone that is mapped from a bvh bone's animation 
+	if( bvh->IsBoneMapping() ) //bone map is needed
+		for (handle = 0; static_cast<Bvh::Bvh_Hierarchy::size_type>(handle) < bvh->GetHierarchy().size(); ++handle)
+		{
+
+			//here do the bone mapping between bvh and skeleton if boneMap is loaded
+			SkeletonHandle =(bvh->GetBoneMap()[handle])->pSkeleton_part->id;
+			if ( SkeletonHandle == Bvh::NON_BONE_ID)
+				continue;
+
+			NodeAnimationTrack* pTrack = anim->createNodeTrack(SkeletonHandle,skel->getBone(SkeletonHandle));
+
+			//pTrack->setUseShortestRotationPath(true);
+
+			int numKeyFrames = bvh->FrameNum();
+			for (ushort k = 0; k < numKeyFrames; ++k)
+			{
+
+				TransformKeyFrame* pKeyFrame = pTrack->createNodeKeyFrame(bvh->FrameDuration()*k);
+				Bone* bone = skel->getBone(SkeletonHandle);
+				const Bvh::Bvh_Motion& motiondata = bvh->MotionData();
+				if ( handle == 0)
+				{
+					Ogre::Vector3 trans(motiondata[k][0],motiondata[k][1],motiondata[k][2]);
+					pKeyFrame->setTranslate(trans);
+				}else
+				{
+					pKeyFrame->setTranslate(bone->getPosition());
+				}
+
+				Ogre::Quaternion qu;
+				ushort ChannelIndex = bvh->GetChannelMap()[(bvh->GetHierarchy()[handle])->pRChannel->ChannelBlockIndex];
+				//take care of ZYX rotation order of bvh, euler angle is in XYZ order
+				Ogre::Vector3 euler(motiondata[k][ChannelIndex+2],motiondata[k][ChannelIndex+1],
+					motiondata[k][ChannelIndex]);
+				qu = EulerToQuaternion(euler);//my version
+				qu = EulerToQuaternion(motiondata[k][ChannelIndex+2],
+					motiondata[k][ChannelIndex+1],motiondata[k][ChannelIndex]);  // MoCapSim version
+				pKeyFrame->setRotation(qu);
+
+				Ogre::Vector3 	euler2 = QuaternionToEuler(qu);
+
+			}
+
+		}
+}
+
 void AddBatchAnimations(XmlOptions opts)
 {
 	std::ifstream bvhlistfile;
@@ -559,6 +614,7 @@ void AddBatchAnimations(XmlOptions opts)
 		exit (1);
 	}
 	TiXmlElement* elem; 
+	
 	TiXmlElement* rootElem = doc->RootElement();
 	SkeletonPtr newSkel = SkeletonManager::getSingleton().create("conversion", 
 		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -580,60 +636,11 @@ void AddBatchAnimations(XmlOptions opts)
 		newSkel->optimiseAllAnimations();
 		}*/
 		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
-		anim = newSkel->createAnimation((*it).c_str(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum()));
+		anim = newSkel->createAnimation((*it).c_str(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
 		anim->setInterpolationMode(Animation::IM_LINEAR) ;
 		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
 
-		int handle,SkeletonHandle;
-		
-		// create track for each bone from bvh
-		for (handle = 0; static_cast<Bvh::Bvh_Hierarchy::size_type>(handle) < BoneNum; ++handle)
-		{
-
-			//here do the bone mapping between bvh and skeleton if boneMap is loaded
-			if( bvh->IsBoneMapping() )
-				SkeletonHandle = (bvh->GetBoneMap()[handle])->pSkeleton_part->id;
-			if ( SkeletonHandle == Bvh::NON_BONE_ID)
-				continue;
-
-			NodeAnimationTrack* pTrack = anim->createNodeTrack(SkeletonHandle,newSkel->getBone(SkeletonHandle));
-
-			//pTrack->setUseShortestRotationPath(true);
-
-			int numKeyFrames = bvh->FrameNum();
-			for (ushort k = 0; k < numKeyFrames; ++k)
-			{
-
-				TransformKeyFrame* pKeyFrame = pTrack->createNodeKeyFrame(bvh->FrameDuration()*k);
-
-				const Bvh::Bvh_Motion& motiondata = bvh->MotionData();
-				if ( handle == 0)
-				{
-					Ogre::Vector3 trans(motiondata[k][0],motiondata[k][1],motiondata[k][2]);
-					pKeyFrame->setTranslate(trans);
-				}else
-				{
-					Ogre::Vector3 trans(0,0,0);
-					pKeyFrame->setTranslate(trans);
-				}
-
-				Ogre::Quaternion qu;
-				ushort ChannelIndex = bvh->GetChannelMap()[(bvh->GetHierarchy()[handle])->pRChannel->ChannelBlockIndex];
-				//take care of ZYX rotation order of bvh, euler angle is in XYZ order
-				Ogre::Vector3 euler(motiondata[k][ChannelIndex+2],motiondata[k][ChannelIndex+1],
-					motiondata[k][ChannelIndex]);
-				qu = EulerToQuaternion(euler);//my version
-				qu = EulerToQuaternion(motiondata[k][ChannelIndex+2],
-					motiondata[k][ChannelIndex+1],motiondata[k][ChannelIndex]);  // MoCapSim version
-				pKeyFrame->setRotation(qu);
-
-				Ogre::Vector3 	euler2 = QuaternionToEuler(qu);
-				int t =1;
-
-			}
-
-		}
-
+		AddAnimationTrack(anim,newSkel,bvh);
 
 		elem = rootElem->FirstChildElement("animations");
 		xmlSkeletonSerializer->addAnimation(elem,anim);
@@ -670,7 +677,6 @@ void AddAnimation(XmlOptions opts)
 		
 		bvh = new Bvh(opts.bvhfile);
 		bvh->LogBoneHierarchy();
-		Bvh::Bvh_Hierarchy::size_type BoneNum = bvh->GetHierarchy().size();
 
 		SkeletonPtr newSkel = SkeletonManager::getSingleton().create("conversion", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -681,58 +687,11 @@ void AddAnimation(XmlOptions opts)
 			newSkel->optimiseAllAnimations();
 		}*/
 		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
-		anim = newSkel->createAnimation(opts.bvhfile,Ogre::Real(bvh->FrameDuration()*bvh->FrameNum()));
+		anim = newSkel->createAnimation(opts.bvhfile,Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
 		anim->setInterpolationMode(Animation::IM_LINEAR) ;
 		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
 
-		int handle,SkeletonHandle;
-		// create track for each bone from bvh
-		for (handle = 0; static_cast<Bvh::Bvh_Hierarchy::size_type>(handle) < BoneNum; ++handle)
-		{
-
-				//here do the bone mapping between bvh and skeleton if boneMap is loaded
-			    if( bvh->IsBoneMapping() )
-					SkeletonHandle =(bvh->GetBoneMap()[handle])->pSkeleton_part->id;
-				if ( SkeletonHandle == Bvh::NON_BONE_ID)
-				continue;
-				
-				NodeAnimationTrack* pTrack = anim->createNodeTrack(SkeletonHandle,newSkel->getBone(SkeletonHandle));
-				
-				//pTrack->setUseShortestRotationPath(true);
-
-				int numKeyFrames = bvh->FrameNum();
-				for (ushort k = 0; k < numKeyFrames; ++k)
-				{
-					
-					TransformKeyFrame* pKeyFrame = pTrack->createNodeKeyFrame(bvh->FrameDuration()*k);
-
-					const Bvh::Bvh_Motion& motiondata = bvh->MotionData();
-					if ( handle == 0)
-					{
-						Ogre::Vector3 trans(motiondata[k][0],motiondata[k][1],motiondata[k][2]);
-						pKeyFrame->setTranslate(trans);
-					}else
-					{
-						Ogre::Vector3 trans(0,0,0);
-						pKeyFrame->setTranslate(trans);
-					}
-
-					Ogre::Quaternion qu;
-					ushort ChannelIndex = bvh->GetChannelMap()[(bvh->GetHierarchy()[handle])->pRChannel->ChannelBlockIndex];
-					//take care of ZYX rotation order of bvh, euler angle is in XYZ order
-					Ogre::Vector3 euler(motiondata[k][ChannelIndex+2],motiondata[k][ChannelIndex+1],
-						motiondata[k][ChannelIndex]);
-					qu = EulerToQuaternion(euler);//my version
-					qu = EulerToQuaternion(motiondata[k][ChannelIndex+2],
-					motiondata[k][ChannelIndex+1],motiondata[k][ChannelIndex]);  // MoCapSim version
-						pKeyFrame->setRotation(qu);
-
-						Ogre::Vector3 	euler2 = QuaternionToEuler(qu);
-						int t =1;
-				
-				}
-			
-		}
+		AddAnimationTrack(anim,newSkel,bvh);
 	
 
 		elem = rootElem->FirstChildElement("animations");
