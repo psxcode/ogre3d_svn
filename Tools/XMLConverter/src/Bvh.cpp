@@ -171,7 +171,7 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 	
 	std::string line;
 	std::stringstream ss;
-	bool bIsEnd = false;  //If reach EndEffector, do not record this node
+	
 	if ( bLineReady == true )
 	{
 		ss.str(preSs.str());
@@ -199,7 +199,7 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 
 	}else if ( !strcmp(str.c_str(),"End"))
 	{
-		bIsEnd = true;	
+
 		pBN->name = static_cast<BVH_Node*>(hierarchy.top())->name + "_End";
 		pBN->pParent = static_cast<BVH_Node*>(hierarchy.top());
 		
@@ -213,7 +213,7 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 	{
 		
 		hierarchy.push(pBN);
-		if ( bIsEnd == false ) //no end node is animation control joint, so record it
+		
 		m_Hierarchy.push_back(pBN);// bBN release is up to m_Hierarchy
 		pBN->index = (int)m_Hierarchy.size() - 1;
 	}
@@ -272,10 +272,7 @@ int Bvh::ReadHierarchy(std::ifstream& ifs, std::stack<BVH_Node*>& hierarchy, boo
 			pBN->pRChannel->Yrotation = 0;
 			pBN->pRChannel->Zrotation = 0;
 		}
-	    if (  true == bIsEnd && NULL != pBN )
-	    {  
-			delete pBN;
-	    }
+	   
 		return ReadHierarchy(ifs,hierarchy,false,ss);
 
 	}else {
