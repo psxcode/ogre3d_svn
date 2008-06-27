@@ -1437,24 +1437,6 @@ namespace Ogre {
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
-		class _OgreExport CmdInputOperationType : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		class _OgreExport CmdOutputOperationType : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		class _OgreExport CmdMaxOutputVertices : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
 		// Command object for setting / getting parameters
 		static CmdType msTypeCmd;
 		static CmdSyntax msSyntaxCmd;
@@ -1463,10 +1445,7 @@ namespace Ogre {
 		static CmdPose msPoseCmd;
 		static CmdVTF msVTFCmd;
 		static CmdManualNamedConstsFile msManNamedConstsFileCmd;
-		static CmdInputOperationType msInputOperationTypeCmd;
-		static CmdOutputOperationType msOutputOperationTypeCmd;
-		static CmdMaxOutputVertices msMaxOutputVerticesCmd;
-
+		
 		/// The type of the program
 		GpuProgramType mType;
 		/// The name of the file to load source from (may be blank)

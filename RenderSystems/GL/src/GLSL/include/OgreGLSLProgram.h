@@ -93,9 +93,33 @@ namespace Ogre {
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
+		/// Command object for setting the input operation type (geometry shader only)
+		class _OgrePrivate CmdInputOperationType : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
+		/// Command object for setting the output operation type (geometry shader only)
+		class _OgrePrivate CmdOutputOperationType : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
+		/// Command object for setting the maximum output vertices (geometry shader only)
+		class _OgrePrivate CmdMaxOutputVertices : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
 	protected:
 		static CmdPreprocessorDefines msCmdPreprocessorDefines;
         static CmdAttach msCmdAttach;
+		static CmdInputOperationType msInputOperationTypeCmd;
+		static CmdOutputOperationType msOutputOperationTypeCmd;
+		static CmdMaxOutputVertices msMaxOutputVerticesCmd;
 
         /** Internal load implementation, must be implemented by subclasses.
         */

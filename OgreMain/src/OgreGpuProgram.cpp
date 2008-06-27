@@ -50,9 +50,7 @@ namespace Ogre
 	GpuProgram::CmdPose GpuProgram::msPoseCmd;
 	GpuProgram::CmdVTF GpuProgram::msVTFCmd;
 	GpuProgram::CmdManualNamedConstsFile GpuProgram::msManNamedConstsFileCmd;
-	GpuProgram::CmdInputOperationType GpuProgram::msInputOperationTypeCmd;
-	GpuProgram::CmdOutputOperationType GpuProgram::msOutputOperationTypeCmd;
-	GpuProgram::CmdMaxOutputVertices GpuProgram::msMaxOutputVerticesCmd;
+	
 
 
     GpuProgramParameters::AutoConstantDefinition GpuProgramParameters::AutoConstantDictionary[] = {
@@ -454,22 +452,6 @@ namespace Ogre
 			ParameterDef("manual_named_constants", 
 			"File containing named parameter mappings for low-level programs.", PT_BOOL), 
 			&msManNamedConstsFileCmd);
-		dict->addParameter(
-			ParameterDef("input_operation_type",
-			"The input operation type for this geometry program. \
-			Can be 'point_list', 'line_list', 'line_strip', 'triangle_list', \
-			'triangle_strip' or 'triangle_fan'", PT_STRING),
-			&msInputOperationTypeCmd);
-		dict->addParameter(
-			ParameterDef("output_operation_type",
-			"The input operation type for this geometry program. \
-			Can be 'point_list', 'line_list', 'line_strip', 'triangle_list', \
-			'triangle_strip' or 'triangle_fan'", PT_STRING),
-			&msOutputOperationTypeCmd);
-		dict->addParameter(
-			ParameterDef("max_output_vertices", 
-			"The maximum number of vertices a single run of this geometry program can output", PT_INT),
-			&msMaxOutputVerticesCmd);
     }
 
     //-----------------------------------------------------------------------
@@ -2179,94 +2161,6 @@ namespace Ogre
 	{
 		GpuProgram* t = static_cast<GpuProgram*>(target);
 		t->setManualNamedConstantsFile(val);
-	}
-	//-----------------------------------------------------------------------
-	RenderOperation::OperationType parseOperationType(const String& val)
-	{
-		if (val == "point_list")
-		{
-			return RenderOperation::OT_POINT_LIST;
-		}
-		else if (val == "line_list")
-		{
-			return RenderOperation::OT_LINE_LIST;
-		}
-		else if (val == "line_strip")
-		{
-			return RenderOperation::OT_LINE_STRIP;
-		}
-		else if (val == "triangle_strip")
-		{
-			return RenderOperation::OT_TRIANGLE_STRIP;
-		}
-		else if (val == "triangle_fan")
-		{
-			return RenderOperation::OT_TRIANGLE_FAN;
-		}
-		else 
-		{
-			//Triangle list is the default fallback. Keep it this way?
-			return RenderOperation::OT_TRIANGLE_LIST;
-		}
-	}
-	//-----------------------------------------------------------------------
-	String operationTypeToString(RenderOperation::OperationType val)
-	{
-		switch (val)
-		{
-		case RenderOperation::OT_POINT_LIST:
-			return "point_list";
-			break;
-		case RenderOperation::OT_LINE_LIST:
-			return "line_list";
-			break;
-		case RenderOperation::OT_LINE_STRIP:
-			return "line_strip";
-			break;
-		case RenderOperation::OT_TRIANGLE_STRIP:
-			return "triangle_strip";
-			break;
-		case RenderOperation::OT_TRIANGLE_FAN:
-			return "triangle_fan";
-			break;
-		case RenderOperation::OT_TRIANGLE_LIST:
-		default:
-			return "triangle_list";
-			break;
-		}
-	}
-	//-----------------------------------------------------------------------
-    String GpuProgram::CmdInputOperationType::doGet(const void* target) const
-    {
-        const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return operationTypeToString(t->getInputOperationType());
-    }
-    void GpuProgram::CmdInputOperationType::doSet(void* target, const String& val)
-    {
-        GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setInputOperationType(parseOperationType(val));
-    }
-	//-----------------------------------------------------------------------
-	String GpuProgram::CmdOutputOperationType::doGet(const void* target) const
-    {
-        const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return operationTypeToString(t->getOutputOperationType());
-    }
-    void GpuProgram::CmdOutputOperationType::doSet(void* target, const String& val)
-    {
-        GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setOutputOperationType(parseOperationType(val));
-    }
-	//-----------------------------------------------------------------------
-	String GpuProgram::CmdMaxOutputVertices::doGet(const void* target) const
-	{
-		const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return StringConverter::toString(t->getMaxOutputVertices());
-	}
-	void GpuProgram::CmdMaxOutputVertices::doSet(void* target, const String& val)
-	{
-		GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setMaxOutputVertices(StringConverter::parseInt(val));
 	}
     //-----------------------------------------------------------------------
     GpuProgramPtr& GpuProgramPtr::operator=(const HighLevelGpuProgramPtr& r)
