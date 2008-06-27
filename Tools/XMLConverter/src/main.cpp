@@ -574,7 +574,7 @@ void AddAnimationTrack(Animation* anim, const SkeletonPtr& skel,const Bvh* bvh)
 					motiondata[k][ChannelIndex+1],motiondata[k][ChannelIndex]);  // MoCapSim version
 				pKeyFrame->setRotation(qu);
 
-				Ogre::Vector3 	euler2 = QuaternionToEuler(qu);
+				//Ogre::Vector3 	euler2 = QuaternionToEuler(qu);
 
 			}
 
