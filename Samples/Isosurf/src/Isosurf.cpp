@@ -13,8 +13,10 @@ LGPL like the rest of the engine.
 */
 /*
 -----------------------------------------------------------------------------
-Filename:    GeometryShader.cpp
-Description: Demo of a Shader Model 4 geometry shader in action
+Filename:    IsoSurf.cpp
+Description: Demonstrates the use of the geometry shader to tessellate an 
+	isosurface using marching tetrahedrons. Partial implementation of sample from
+	NVIDIA's OpenGL SDK 10 : http://developer.download.nvidia.com/SDK/10/opengl/samples.html
 -----------------------------------------------------------------------------
 */
 
@@ -24,13 +26,13 @@ const String GLSL_MATERIAL_NAME = "Ogre/GPTest/SwizzleGLSL";
 const String ASM_MATERIAL_NAME = "Ogre/GPTest/SwizzleASM";
 const String CG_MATERIAL_NAME = "Ogre/GPTest/SwizzleCG";
 
-class GeometryShadingApplication : public ExampleApplication
+class IsoSurfApplication : public ExampleApplication
 {
 public:
-    GeometryShadingApplication() { 
+    IsoSurfApplication() { 
     }
 
-    ~GeometryShadingApplication() {  }
+    ~IsoSurfApplication() {  }
 protected:
 
     // Just override the mandatory create scene method
@@ -42,7 +44,7 @@ protected:
         {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support geometry programs, so cannot "
                 "run this demo. Sorry!", 
-                "GeometryShading::createScene");
+                "IsoSurfApplication::createScene");
         }
 		
 		int maxOutputVertices = caps->getGeometryProgramNumOutputVertices();
@@ -88,7 +90,7 @@ int main(int argc, char **argv)
 #endif
 {
     // Create application object
-    GeometryShadingApplication app;
+    IsoSurfApplication app;
 
     try {
         app.go();
