@@ -15,8 +15,9 @@ LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 Filename:    IsoSurf.cpp
 Description: Demonstrates the use of the geometry shader to tessellate an 
-	isosurface using marching tetrahedrons. Partial implementation of sample from
-	NVIDIA's OpenGL SDK 10 : http://developer.download.nvidia.com/SDK/10/opengl/samples.html
+	isosurface using marching tetrahedrons. Partial implementation of cg 
+	Isosurf sample from NVIDIA's OpenGL SDK 10 : 
+	http://developer.download.nvidia.com/SDK/10/opengl/samples.html
 -----------------------------------------------------------------------------
 */
 

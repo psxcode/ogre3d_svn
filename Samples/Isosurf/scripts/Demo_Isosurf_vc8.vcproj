@@ -203,11 +203,19 @@
 				RelativePath="..\src\IsoSurf.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\src\ProceduralTools.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
+			<File
+				RelativePath="..\src\ProceduralTools.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
