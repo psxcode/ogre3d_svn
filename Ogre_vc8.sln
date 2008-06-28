@@ -640,6 +640,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlayPen", "Tests\PlayPen\sc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Demo_GeometryShader", "Samples\GeometryShader\scripts\Demo_GeometryShader_vc8.vcproj", "{7E50736E-9ADB-42AD-A07C-F1BC81DA35B3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Demo_IsoSurf", "Samples\Isosurf\scripts\Demo_Isosurf_vc8.vcproj", "{88671C74-F085-4C31-809F-A209AC7C101E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -972,6 +974,14 @@ Global
 		{7E50736E-9ADB-42AD-A07C-F1BC81DA35B3}.Release|Win32.Build.0 = Release|Win32
 		{7E50736E-9ADB-42AD-A07C-F1BC81DA35B3}.ReleaseStaticLib|Win32.ActiveCfg = Release|Win32
 		{7E50736E-9ADB-42AD-A07C-F1BC81DA35B3}.ReleaseStaticLib|Win32.Build.0 = Release|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.Debug|Win32.Build.0 = Debug|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.DebugStaticLib|Win32.ActiveCfg = Debug|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.DebugStaticLib|Win32.Build.0 = Debug|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.Release|Win32.ActiveCfg = Release|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.Release|Win32.Build.0 = Release|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.ReleaseStaticLib|Win32.ActiveCfg = Release|Win32
+		{88671C74-F085-4C31-809F-A209AC7C101E}.ReleaseStaticLib|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
