@@ -88,16 +88,19 @@ namespace Ogre {
 
     protected:
         static bool isSortedAscending(const Mesh::LodValueList& values);
-        static bool isSortedDecending(const Mesh::LodValueList& values);
+        static bool isSortedDescending(const Mesh::LodValueList& values);
 
         static void sortAscending(Mesh::MeshLodUsageList& meshLodUsageList);
-        static void sortDecending(Mesh::MeshLodUsageList& meshLodUsageList);
+        static void sortDescending(Mesh::MeshLodUsageList& meshLodUsageList);
 
         static ushort getIndexAscending(Real value, const Mesh::MeshLodUsageList& meshLodUsageList);
+        static ushort getIndexDescending(Real value, const Mesh::MeshLodUsageList& meshLodUsageList);
 
         static ushort getIndexAscending(Real value, const Material::LodValueList& materialLodValueList);
+        static ushort getIndexDescending(Real value, const Material::LodValueList& materialLodValueList);
 
         //static ushort getIndexAscending(Real value, const Mesh::LodValueList& meshLodValueList);
+        //static ushort getIndexDescending(Real value, const Mesh::LodValueList& meshLodValueList);
     };
 
 } // namespace
