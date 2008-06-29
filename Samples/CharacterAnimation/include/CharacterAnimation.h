@@ -15,9 +15,9 @@ LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 To fix inconsistent newline ending error.
 Filename:    CharacterAnimation.h
-Description: 
+Description: Specialisation of OGRE's framework application to show autonomous character animations.
 
-This character will include the following features:
+An autonomous character will include the following features:
 
 Motion graphs and variants
 Motion interpolation and blending
