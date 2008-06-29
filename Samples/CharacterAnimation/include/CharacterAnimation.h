@@ -24,6 +24,7 @@ Motion interpolation and blending
 Behavior-based graphs and search trees (similar to move trees)
 Motion controllers learnt from existing data or based on physics
 Finite State Machine based AI
+
 -----------------------------------------------------------------------------
 */
 
