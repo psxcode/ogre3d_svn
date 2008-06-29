@@ -15,6 +15,14 @@ LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 To fix inconsistent newline ending error.
 Filename:    CharacterAnimation.h
-Description:
+Description: 
+
+This character will include the following features:
+
+Motion graphs and variants
+Motion interpolation and blending
+Behavior-based graphs and search trees (similar to move trees)
+Motion controllers learnt from existing data or based on physics
+Finite State Machine based AI
 -----------------------------------------------------------------------------
 */
