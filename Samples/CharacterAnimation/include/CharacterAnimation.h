@@ -11,3 +11,9 @@ You may use this sample code for anything you like, it is not covered by the
 LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 */
+/*
+-----------------------------------------------------------------------------
+To fix inconsistent newline ending error.
+
+-----------------------------------------------------------------------------
+*/
