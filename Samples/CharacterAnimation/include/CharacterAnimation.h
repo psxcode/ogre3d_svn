@@ -15,5 +15,6 @@ LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 To fix inconsistent newline ending error.
 Filename:    CharacterAnimation.h
+Description:
 -----------------------------------------------------------------------------
 */
