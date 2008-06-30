@@ -1,238 +1,342 @@
 <?xml version="1.0" encoding="windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="RenderSystem_GL"
 	ProjectGUID="{7D0A20FE-40A6-4E64-AD26-5E34AE391DF4}"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\..\..\lib"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\src\win32;..\..\..\OgreMain\include;..\..\..\Dependencies\include;..\src\nvparse;..\src\nvparse\winheaders;..\src\atifs\include;..\src\glsl\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGRE_GLPLUGIN_EXPORTS;"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				EnableFunctionLevelLinking="TRUE"
-				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
-				IgnoreImportLibrary="TRUE"
+				IgnoreImportLibrary="true"
 				AdditionalDependencies="OgreMain_d.lib OPENGL32.lib GLU32.lib"
 				OutputFile="$(OutDir)/$(ProjectName)_d.dll"
 				Version="0.99"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="&quot;..\..\..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
 				ModuleDefinitionFile=""
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName)_d.pdb"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/$(TargetName).lib"
-				TargetMachine="1"/>
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\..\Samples\Common\bin\$(ConfigurationName)"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\..\Samples\Common\bin\$(ConfigurationName)"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\..\..\lib"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
-			WholeProgramOptimization="TRUE">
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
-				ImproveFloatingPointConsistency="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
-				OptimizeForProcessor="2"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..\include;..\src\win32;..\..\..\OgreMain\include;..\..\..\Dependencies\include;..\src\nvparse;..\src\nvparse\winheaders;..\src\atifs\include;..\src\glsl\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OGRE_GLPLUGIN_EXPORTS;"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
-				RuntimeTypeInfo="TRUE"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
-				IgnoreImportLibrary="TRUE"
+				IgnoreImportLibrary="true"
 				AdditionalDependencies="OgreMain.lib OPENGL32.lib GLU32.lib"
 				Version="0.99"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="&quot;..\..\..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
 				ModuleDefinitionFile=""
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				ImportLibrary="$(OutDir)/$(TargetName).lib"
-				TargetMachine="1"/>
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\..\Samples\Common\bin\$(ConfigurationName)"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\..\Samples\Common\bin\$(ConfigurationName)"
+			/>
 		</Configuration>
 		<Configuration
 			Name="DebugStaticLib|Win32"
 			OutputDirectory="..\..\..\lib"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\src\win32;..\..\..\OgreMain\include;..\..\..\Dependencies\include;..\src\nvparse;..\src\nvparse\winheaders;..\src\atifs\include;..\src\glsl\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGRE_GLPLUGIN_EXPORTS;OGRE_STATIC_LIB"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				EnableFunctionLevelLinking="TRUE"
-				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/$(ProjectName)Static_d.lib"/>
+				OutputFile="$(OutDir)/$(ProjectName)Static_d.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="ReleaseStaticLib|Win32"
 			OutputDirectory="..\..\..\lib"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
-			WholeProgramOptimization="TRUE">
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
-				ImproveFloatingPointConsistency="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
-				OptimizeForProcessor="2"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..\include;..\src\win32;..\..\..\OgreMain\include;..\..\..\Dependencies\include;..\src\nvparse;..\src\nvparse\winheaders;..\src\atifs\include;..\src\glsl\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OGRE_GLPLUGIN_EXPORTS;OGRE_STATIC_LIB"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
-				RuntimeTypeInfo="TRUE"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/$(ProjectName)Static.lib"/>
+				OutputFile="$(OutDir)/$(ProjectName)Static.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -240,403 +344,530 @@
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
+			>
 			<File
-				RelativePath="..\src\glew.cpp">
+				RelativePath="..\src\glew.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLATIFSInit.cpp">
+				RelativePath="..\src\OgreGLATIFSInit.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLContext.cpp">
+				RelativePath="..\src\OgreGLContext.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLDefaultHardwareBufferManager.cpp">
+				RelativePath="..\src\OgreGLDefaultHardwareBufferManager.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLEngineDll.cpp">
+				RelativePath="..\src\OgreGLEngineDll.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLFBOMultiRenderTarget.cpp">
+				RelativePath="..\src\OgreGLFBOMultiRenderTarget.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLFBORenderTexture.cpp">
+				RelativePath="..\src\OgreGLFBORenderTexture.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLFrameBufferObject.cpp">
+				RelativePath="..\src\OgreGLFrameBufferObject.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLGpuNvparseProgram.cpp">
+				RelativePath="..\src\OgreGLGpuNvparseProgram.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLGpuProgram.cpp">
+				RelativePath="..\src\OgreGLGpuProgram.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLGpuProgramManager.cpp">
+				RelativePath="..\src\OgreGLGpuProgramManager.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLHardwareBufferManager.cpp">
+				RelativePath="..\src\OgreGLHardwareBufferManager.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLHardwareIndexBuffer.cpp">
+				RelativePath="..\src\OgreGLHardwareIndexBuffer.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLHardwareOcclusionQuery.cpp">
+				RelativePath="..\src\OgreGLHardwareOcclusionQuery.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLHardwarePixelBuffer.cpp">
+				RelativePath="..\src\OgreGLHardwarePixelBuffer.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLHardwareVertexBuffer.cpp">
+				RelativePath="..\src\OgreGLHardwareVertexBuffer.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLPBRenderTexture.cpp">
+				RelativePath="..\src\OgreGLPBRenderTexture.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLPixelFormat.cpp">
+				RelativePath="..\src\OgreGLPixelFormat.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLPlugin.cpp">
+				RelativePath="..\src\OgreGLPlugin.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLRenderSystem.cpp">
+				RelativePath="..\src\OgreGLRenderSystem.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLRenderTexture.cpp">
+				RelativePath="..\src\OgreGLRenderTexture.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLSupport.cpp">
+				RelativePath="..\src\OgreGLSupport.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLTexture.cpp">
+				RelativePath="..\src\OgreGLTexture.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLTextureManager.cpp">
+				RelativePath="..\src\OgreGLTextureManager.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\win32\OgreWin32Context.cpp">
+				RelativePath="..\src\win32\OgreWin32Context.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreWin32GLSupport.cpp">
+				RelativePath="..\src\OgreWin32GLSupport.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreWin32RenderTexture.cpp">
+				RelativePath="..\src\OgreWin32RenderTexture.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\src\OgreWin32Window.cpp">
+				RelativePath="..\src\OgreWin32Window.cpp"
+				>
 			</File>
 			<Filter
 				Name="nvparse"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\nvparse\_ps1.0_lexer.cpp">
+					RelativePath="..\src\nvparse\_ps1.0_lexer.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_ps1.0_parser.cpp">
+					RelativePath="..\src\nvparse\_ps1.0_parser.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_ps1.0_parser.h">
+					RelativePath="..\src\nvparse\_ps1.0_parser.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_rc1.0_lexer.cpp">
+					RelativePath="..\src\nvparse\_rc1.0_lexer.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_rc1.0_parser.cpp">
+					RelativePath="..\src\nvparse\_rc1.0_parser.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_rc1.0_parser.h">
+					RelativePath="..\src\nvparse\_rc1.0_parser.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_ts1.0_lexer.cpp">
+					RelativePath="..\src\nvparse\_ts1.0_lexer.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_ts1.0_parser.cpp">
+					RelativePath="..\src\nvparse\_ts1.0_parser.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_ts1.0_parser.h">
+					RelativePath="..\src\nvparse\_ts1.0_parser.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_vs1.0_lexer.cpp">
+					RelativePath="..\src\nvparse\_vs1.0_lexer.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_vs1.0_parser.cpp">
+					RelativePath="..\src\nvparse\_vs1.0_parser.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\_vs1.0_parser.h">
+					RelativePath="..\src\nvparse\_vs1.0_parser.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\avp1.0_impl.cpp">
+					RelativePath="..\src\nvparse\avp1.0_impl.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\macro.h">
+					RelativePath="..\src\nvparse\macro.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\nvparse.cpp">
+					RelativePath="..\src\nvparse\nvparse.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\nvparse.h">
+					RelativePath="..\src\nvparse\nvparse.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\nvparse_errors.cpp">
+					RelativePath="..\src\nvparse\nvparse_errors.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\nvparse_errors.h">
+					RelativePath="..\src\nvparse\nvparse_errors.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\nvparse_externs.h">
+					RelativePath="..\src\nvparse\nvparse_externs.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\ps1.0_program.cpp">
+					RelativePath="..\src\nvparse\ps1.0_program.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\ps1.0_program.h">
+					RelativePath="..\src\nvparse\ps1.0_program.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\rc1.0_combiners.cpp">
+					RelativePath="..\src\nvparse\rc1.0_combiners.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\rc1.0_combiners.h">
+					RelativePath="..\src\nvparse\rc1.0_combiners.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\rc1.0_final.cpp">
+					RelativePath="..\src\nvparse\rc1.0_final.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\rc1.0_final.h">
+					RelativePath="..\src\nvparse\rc1.0_final.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\rc1.0_general.cpp">
+					RelativePath="..\src\nvparse\rc1.0_general.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\rc1.0_general.h">
+					RelativePath="..\src\nvparse\rc1.0_general.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\rc1.0_register.h">
+					RelativePath="..\src\nvparse\rc1.0_register.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\ts1.0_inst.cpp">
+					RelativePath="..\src\nvparse\ts1.0_inst.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\ts1.0_inst.h">
+					RelativePath="..\src\nvparse\ts1.0_inst.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\ts1.0_inst_list.cpp">
+					RelativePath="..\src\nvparse\ts1.0_inst_list.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\ts1.0_inst_list.h">
+					RelativePath="..\src\nvparse\ts1.0_inst_list.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\winheaders\unistd.h">
+					RelativePath="..\src\nvparse\winheaders\unistd.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\vcp1.0_impl.cpp">
+					RelativePath="..\src\nvparse\vcp1.0_impl.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\vp1.0_impl.cpp">
+					RelativePath="..\src\nvparse\vp1.0_impl.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\vs1.0_inst.cpp">
+					RelativePath="..\src\nvparse\vs1.0_inst.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\vs1.0_inst.h">
+					RelativePath="..\src\nvparse\vs1.0_inst.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\vs1.0_inst_list.cpp">
+					RelativePath="..\src\nvparse\vs1.0_inst_list.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\vs1.0_inst_list.h">
+					RelativePath="..\src\nvparse\vs1.0_inst_list.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\nvparse\vsp1.0_impl.cpp">
+					RelativePath="..\src\nvparse\vsp1.0_impl.cpp"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="atifs"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\atifs\src\ATI_FS_GLGpuProgram.cpp">
+					RelativePath="..\src\atifs\src\ATI_FS_GLGpuProgram.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\atifs\include\ATI_FS_GLGpuProgram.h">
+					RelativePath="..\src\atifs\include\ATI_FS_GLGpuProgram.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\atifs\src\Compiler2Pass.cpp">
+					RelativePath="..\src\atifs\src\Compiler2Pass.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\atifs\include\Compiler2Pass.h">
+					RelativePath="..\src\atifs\include\Compiler2Pass.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\atifs\src\ps_1_4.cpp">
+					RelativePath="..\src\atifs\src\ps_1_4.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\atifs\include\ps_1_4.h">
+					RelativePath="..\src\atifs\include\ps_1_4.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="glsl"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\GLSL\src\OgreGLSLExtSupport.cpp">
+					RelativePath="..\src\GLSL\src\OgreGLSLExtSupport.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\src\OgreGLSLGpuProgram.cpp">
+					RelativePath="..\src\GLSL\src\OgreGLSLGpuProgram.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\src\OgreGLSLLinkProgram.cpp">
+					RelativePath="..\src\GLSL\src\OgreGLSLLinkProgram.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\src\OgreGLSLLinkProgramManager.cpp">
+					RelativePath="..\src\GLSL\src\OgreGLSLLinkProgramManager.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\src\OgreGLSLProgram.cpp">
+					RelativePath="..\src\GLSL\src\OgreGLSLPreprocessor.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\src\OgreGLSLProgramFactory.cpp">
+					RelativePath="..\src\GLSL\src\OgreGLSLProgram.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\src\OgreGLSLPreprocessor.cpp">
+					RelativePath="..\src\GLSL\src\OgreGLSLProgramFactory.cpp"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc">
+			Filter="h;hpp;hxx;hm;inl;inc"
+			>
 			<File
-				RelativePath="..\..\..\Dependencies\include\GL\gl.h">
+				RelativePath="..\..\..\Dependencies\include\GL\gl.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\GL\glew.h">
+				RelativePath="..\include\GL\glew.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\..\Dependencies\include\GL\glext.h">
+				RelativePath="..\..\..\Dependencies\include\GL\glext.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\..\Dependencies\include\GL\glxext.h">
+				RelativePath="..\..\..\Dependencies\include\GL\glxext.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLContext.h">
+				RelativePath="..\include\OgreGLContext.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLDefaultHardwareBufferManager.h">
+				RelativePath="..\include\OgreGLDefaultHardwareBufferManager.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLFBOMultiRenderTarget.h">
+				RelativePath="..\include\OgreGLFBOMultiRenderTarget.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLFBORenderTexture.h">
+				RelativePath="..\include\OgreGLFBORenderTexture.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLFrameBufferObject.h">
+				RelativePath="..\include\OgreGLFrameBufferObject.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLGpuNvparseProgram.h">
+				RelativePath="..\include\OgreGLGpuNvparseProgram.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLGpuProgram.h">
+				RelativePath="..\include\OgreGLGpuProgram.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLGpuProgramManager.h">
+				RelativePath="..\include\OgreGLGpuProgramManager.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLHardwareBufferManager.h">
+				RelativePath="..\include\OgreGLHardwareBufferManager.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLHardwareIndexBuffer.h">
+				RelativePath="..\include\OgreGLHardwareIndexBuffer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLHardwareOcclusionQuery.h">
+				RelativePath="..\include\OgreGLHardwareOcclusionQuery.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLHardwarePixelBuffer.h">
+				RelativePath="..\include\OgreGLHardwarePixelBuffer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLHardwareVertexBuffer.h">
+				RelativePath="..\include\OgreGLHardwareVertexBuffer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPBRenderTexture.h">
+				RelativePath="..\include\OgreGLPBRenderTexture.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPBuffer.h">
+				RelativePath="..\include\OgreGLPBuffer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPixelFormat.h">
+				RelativePath="..\include\OgreGLPixelFormat.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPlugin.h">
+				RelativePath="..\include\OgreGLPlugin.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPrerequisites.h">
+				RelativePath="..\include\OgreGLPrerequisites.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLRenderSystem.h">
+				RelativePath="..\include\OgreGLRenderSystem.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLRenderTexture.h">
+				RelativePath="..\include\OgreGLRenderTexture.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLSupport.h">
+				RelativePath="..\include\OgreGLSupport.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLTexture.h">
+				RelativePath="..\include\OgreGLTexture.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLTextureManager.h">
+				RelativePath="..\include\OgreGLTextureManager.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreSDLGLSupport.h">
+				RelativePath="..\include\OgreSDLGLSupport.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreSDLPrerequisites.h">
+				RelativePath="..\include\OgreSDLPrerequisites.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreSDLWindow.h">
+				RelativePath="..\include\OgreSDLWindow.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreWin32Context.h">
+				RelativePath="..\include\OgreWin32Context.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreWin32GLSupport.h">
+				RelativePath="..\include\OgreWin32GLSupport.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreWin32Prerequisites.h">
+				RelativePath="..\include\OgreWin32Prerequisites.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreWin32RenderTexture.h">
+				RelativePath="..\include\OgreWin32RenderTexture.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\OgreWin32Window.h">
+				RelativePath="..\include\OgreWin32Window.h"
+				>
 			</File>
 			<File
-				RelativePath="..\include\GL\wglew.h">
+				RelativePath="..\include\GL\wglew.h"
+				>
 			</File>
 			<Filter
 				Name="glsl"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\GLSL\include\OgreGLSLExtSupport.h">
+					RelativePath="..\src\GLSL\include\OgreGLSLExtSupport.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\include\OgreGLSLGpuProgram.h">
+					RelativePath="..\src\GLSL\include\OgreGLSLGpuProgram.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\include\OgreGLSLLinkProgram.h">
+					RelativePath="..\src\GLSL\include\OgreGLSLLinkProgram.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\include\OgreGLSLLinkProgramManager.h">
+					RelativePath="..\src\GLSL\include\OgreGLSLLinkProgramManager.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\include\OgreGLSLProgram.h">
+					RelativePath="..\src\GLSL\include\OgreGLSLPreprocessor.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\include\OgreGLSLProgramFactory.h">
+					RelativePath="..\src\GLSL\include\OgreGLSLProgram.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\GLSL\include\OgreGLSLPreprocessor.h">
+					RelativePath="..\src\GLSL\include\OgreGLSLProgramFactory.h"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
 		</Filter>
 	</Files>
 	<Globals>
