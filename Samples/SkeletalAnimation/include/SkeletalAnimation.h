@@ -22,7 +22,7 @@ Description: Specialisation of OGRE's framework application to show the
 
 #include "ExampleApplication.h"
 
-#define NUM_JAIQUAS 1
+#define NUM_JAIQUAS 6
 AnimationState* mAnimState[NUM_JAIQUAS];
 Real mAnimationSpeed[NUM_JAIQUAS];
 Vector3 mSneakStartOffset;
@@ -32,8 +32,11 @@ Quaternion mOrientations[NUM_JAIQUAS];
 Vector3 mBasePositions[NUM_JAIQUAS];
 SceneNode* mSceneNode[NUM_JAIQUAS];
 Degree mAnimationRotation(-60);
-Real mAnimChop = 3.96666f;
+Real mAnimChop = 4.26662f;
 Real mAnimChopBlend = 0.3f;
+
+const std::string animationName = "jump.bvh";
+const std::string modelname = "stickfigure";
 
 // Event handler to animate
 class SkeletalAnimationFrameListener : public ExampleFrameListener
@@ -111,9 +114,9 @@ protected:
 		// The jaiqua sneak animation doesn't loop properly, so lets hack it so it does
 		// We want to copy the initial keyframes of all bones, but alter the Spineroot
 		// to give it an offset of where the animation ends
-		SkeletonPtr skel = SkeletonManager::getSingleton().load("jaiqua.skeleton", 
+		SkeletonPtr skel = SkeletonManager::getSingleton().load(modelname+".skeleton", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Animation* anim = skel->getAnimation("rush.bvh");
+		Animation* anim = skel->getAnimation(animationName);
 		Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
 		while (trackIter.hasMoreElements())
 		{
@@ -164,14 +167,14 @@ protected:
 			mOrientations[i] = q;
 			mBasePositions[i] = q * Vector3(0,0,-20);
 
-            ent = mSceneMgr->createEntity("jaiqua" + StringConverter::toString(i), "jaiqua.mesh");
+            ent = mSceneMgr->createEntity("man" + StringConverter::toString(i), modelname+".mesh");
             // Add entity to the scene node
 			mSceneNode[i] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 			mSceneNode[i]->attachObject(ent);
 			mSceneNode[i]->rotate(q);
 			mSceneNode[i]->translate(mBasePositions[i]);
 			
-            mAnimState[i] = ent->getAnimationState("rush.bvh");
+            mAnimState[i] = ent->getAnimationState(animationName);
             mAnimState[i]->setEnabled(true);
 			mAnimState[i]->setLoop(false); // manual loop since translation involved
             mAnimationSpeed[i] = Math::RangeRandom(0.5, 1.5);
