@@ -1,0 +1,38 @@
+geometry_program Ogre/IsoSurf/TessellateTetrahedraGS cg
+{
+	source isosurf.cg
+	entry_point TessellateTetrahedraGS
+	profiles gp4gp gpu_gp
+}
+
+vertex_program Ogre/IsoSurf/SampleFieldVS cg
+{
+	source isosurf.cg
+	entry_point SampleFieldVS
+	profiles gp4vp gpu_vp
+
+	default_params
+	{
+		param_named_auto WorldViewProj worldviewproj_matrix
+		param_named_auto WorldViewIT inverse_transpose_worldview_matrix
+	}
+}
+
+material Ogre/IsoSurf/TessellateTetrahedra
+{
+	technique
+	{
+		pass SwizzleCGPass
+		{
+			vertex_program_ref Ogre/IsoSurf/SampleFieldVS
+			{
+			
+			}
+			
+			geometry_program_ref Ogre/IsoSurf/TessellateTetrahedraGS
+			{
+			
+			}
+		}
+	}
+}

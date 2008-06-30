@@ -6,6 +6,7 @@
 //A class containing utility methods to generate procedural content required by the demo
 class ProceduralTools
 {
+public:
 	static Ogre::ManualObject* generateTetrahedra(Ogre::SceneManager* sceneManager);
 };
 

@@ -56,7 +56,7 @@ ManualObject* ProceduralTools::generateTetrahedra(SceneManager* sceneManager)
 	uint nTotalBits = sizeLog2[0] + sizeLog2[1] + sizeLog2[2];
 	uint nPointsTotal = 1 << nTotalBits;
 
-	tetrahedra->begin("");
+	tetrahedra->begin("Ogre/IsoSurf/TessellateTetrahedra");
 	tetrahedra->estimateVertexCount(nPointsTotal);
 	
 	//Generate positions

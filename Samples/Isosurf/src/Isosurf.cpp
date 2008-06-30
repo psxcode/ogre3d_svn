@@ -23,9 +23,7 @@ Description: Demonstrates the use of the geometry shader to tessellate an
 
 #include "ExampleApplication.h"
 
-const String GLSL_MATERIAL_NAME = "Ogre/GPTest/SwizzleGLSL";
-const String ASM_MATERIAL_NAME = "Ogre/GPTest/SwizzleASM";
-const String CG_MATERIAL_NAME = "Ogre/GPTest/SwizzleCG";
+#include "ProceduralTools.h"
 
 class IsoSurfApplication : public ExampleApplication
 {
@@ -52,24 +50,15 @@ protected:
 		Ogre::LogManager::getSingleton().getDefaultLog()->stream() << 
 			"Num output vertices per geometry shader run : " << maxOutputVertices;
 
-        Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
-        mCamera->setPosition(20, 0, 100);
+		mCamera->setPosition(20, 0, 100);
         mCamera->lookAt(0,0,0);
-		
-		String materialName = GLSL_MATERIAL_NAME;
-		//String materialName = ASM_MATERIAL_NAME;
-		//String materialName = CG_MATERIAL_NAME;
+			
+		//Create tetrahedra and add it to the root scene node
+		ManualObject* tetraHedra = ProceduralTools::generateTetrahedra(mSceneMgr);
+        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(tetraHedra);
 
-		// Set all of the material's sub entities to use the new material
-		for (unsigned int i=0; i<ent->getNumSubEntities(); i++)
-		{
-			ent->getSubEntity(i)->setMaterialName(materialName);
-		}
-        
-        // Add entity to the root scene node
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-
-        mWindow->getViewport(0)->setBackgroundColour(ColourValue::Green);
+		//Same setting as Nvidia demo
+		mWindow->getViewport(0)->setBackgroundColour(Ogre::ColourValue(0.2,0.2,0.2));
     }
 };
 

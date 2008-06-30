@@ -348,6 +348,12 @@ namespace Ogre {
 			{
 				rsc->addShaderProfile("vp40");
 			}
+
+			//if (GLEW_NV_vertex_program4)
+			{
+				rsc->addShaderProfile("gp4vp");
+				rsc->addShaderProfile("gpu_vp");
+			}
 		}
 
 		if (GLEW_NV_register_combiners2 &&
@@ -630,6 +636,16 @@ namespace Ogre {
 			if(caps->isShaderProfileSupported("vp40"))
 			{
 				mGpuProgramManager->registerProgramFactory("vp40", createGLArbGpuProgram);
+			}
+
+			if(caps->isShaderProfileSupported("gp4vp"))
+			{
+				mGpuProgramManager->registerProgramFactory("gp4vp", createGLArbGpuProgram);
+			}
+
+			if(caps->isShaderProfileSupported("gpu_vp"))
+			{
+				mGpuProgramManager->registerProgramFactory("gpu_vp", createGLArbGpuProgram);
 			}
 		}
 
