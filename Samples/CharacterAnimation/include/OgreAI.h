@@ -30,6 +30,7 @@ Torus Knot Software Ltd.
 #define __AI_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreMotionGraph.h"
 
 namespace Ogre {
 
@@ -57,8 +58,8 @@ namespace Ogre {
 		AI_Base();
 		virtual ~AI_Base();
 
-		void Initialize() = 0;
-		void Execute() = 0;
+		virtual void Initialize() = 0;
+		virtual void Execute() = 0;
 	};
 
 	class _OgreExport AI_Motiongraph : public AI_Base
@@ -66,16 +67,16 @@ namespace Ogre {
 	public:
 		virtual ~AI_Motiongraph();
 	protected:
-		AI_Motiongraph():
+		AI_Motiongraph();
 	public:
-		AI_Motiongraph(const SkeletonInstance& skelInstance);
+		AI_Motiongraph(const SkeletonInstance& skelInstance){};
 	protected:
 		MotionGraph* m_pMotionGraph;
 	};
 
-	AI_Motiongraph::AI_Motiongraph()
+	AI_Motiongraph::AI_Motiongraph(const SkeletonInstance& skelInstance)
 	{
-		m_pMotionGraph = new MotionGraph(const SkeletonInstance& SkeletonInstance);
+		m_pMotionGraph = new MotionGraph(skelInstance);
 	}
 }
 

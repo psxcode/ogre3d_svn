@@ -185,14 +185,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreActor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreAI.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreMotionGraph.h"
 				>
 			</File>

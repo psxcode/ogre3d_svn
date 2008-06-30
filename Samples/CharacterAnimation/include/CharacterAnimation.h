@@ -31,7 +31,10 @@ Finite State Machine based AI
 #include "ExampleApplication.h"
 
 
+AnimationState* mAnimState;
+SceneNode* mSceneNode;
 const std::string modelname = "stickfigure";
+const std::string animationName = "jump";
 
 // Event handler to animate
 class CharacterAnimationFrameListener : public ExampleFrameListener
@@ -49,6 +52,7 @@ public:
 		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
 			return false;
 
+		mAnimState->addTime(evt.timeSinceLastFrame);
 		return true;
 	}
 };
@@ -85,6 +89,17 @@ protected:
 
 
 		Entity *ent;
+		ent = mSceneMgr->createEntity(modelname, modelname+".mesh");
+		// Add entity to the scene node
+		mSceneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		mSceneNode->attachObject(ent);
+
+
+		mAnimState = ent->getAnimationState(animationName);
+		mAnimState->setEnabled(true);
+		mAnimState->setLoop(true); // manual loop since translation involved
+
+
 
 		// Give it a little ambience with lights
 		Light* l;

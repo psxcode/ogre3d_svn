@@ -54,7 +54,7 @@ namespace Ogre {
 
 
 
-	class _OgreExport MotionGraph : public Resource
+	class _OgreExport MotionGraph : public AnimationStateSet
 	{
 	public:
 		/** A State is a character action unit, it keeps steady until some trigger pulses.
