@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="Demo_PCZTestApp"
 	ProjectGUID="{8748695A-9F76-406A-8E29-4DF53465FF68}"
 	>
