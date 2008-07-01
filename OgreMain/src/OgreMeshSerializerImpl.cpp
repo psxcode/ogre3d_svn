@@ -45,6 +45,7 @@ Torus Knot Software Ltd.
 #include "OgreKeyFrame.h"
 #include "OgreRoot.h"
 #include "OgreLodStrategyManager.h"
+#include "OgreDistanceLodStrategy.h"
 
 #if OGRE_COMPILER == OGRE_COMPILER_MSVC
 // Disable conversion warnings, we do a lot of them, intentionally
@@ -2491,7 +2492,7 @@ namespace Ogre {
         unsigned short streamID, i;
 
         // Use the old strategy for this mesh
-        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy("Distance");
+        LodStrategy *strategy = DistanceLodStrategy::getSingletonPtr();
         pMesh->setLodStrategy(strategy);
 
         // unsigned short numLevels;

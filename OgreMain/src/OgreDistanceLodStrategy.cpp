@@ -32,6 +32,16 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
     //-----------------------------------------------------------------------
+    template<> DistanceLodStrategy* Singleton<DistanceLodStrategy>::ms_Singleton = 0;
+    DistanceLodStrategy* DistanceLodStrategy::getSingletonPtr(void)
+    {
+        return ms_Singleton;
+    }
+    DistanceLodStrategy& DistanceLodStrategy::getSingleton(void)
+    {
+        assert( ms_Singleton );  return ( *ms_Singleton );
+    }
+    //-----------------------------------------------------------------------
     DistanceLodStrategy::DistanceLodStrategy()
         : LodStrategy("Distance")
     { }

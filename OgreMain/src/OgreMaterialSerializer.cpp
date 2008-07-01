@@ -40,6 +40,7 @@ Torus Knot Software Ltd.
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreExternalTextureSourceManager.h"
 #include "OgreLodStrategyManager.h"
+#include "OgreDistanceLodStrategy.h"
 
 namespace Ogre
 {
@@ -2847,7 +2848,7 @@ namespace Ogre
     bool parseLodDistances(String& params, MaterialScriptContext& context)
     {
         // Set to distance strategy
-        parseLodStrategy(String("Distance"), context);
+        context.material->setLodStrategy(DistanceLodStrategy::getSingletonPtr());
 
         StringVector vecparams = StringUtil::split(params, " \t");
 

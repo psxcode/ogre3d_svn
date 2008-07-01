@@ -41,8 +41,8 @@ namespace Ogre {
         return ms_Singleton;
     }
     LodStrategyManager& LodStrategyManager::getSingleton(void)
-    {  
-        assert( ms_Singleton );  return ( *ms_Singleton );  
+    {
+        assert( ms_Singleton );  return ( *ms_Singleton );
     }
     //-----------------------------------------------------------------------
     LodStrategyManager::LodStrategyManager()

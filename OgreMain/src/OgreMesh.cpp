@@ -43,8 +43,7 @@ Torus Knot Software Ltd.
 #include "OgreAnimationTrack.h"
 #include "OgreOptimisedUtil.h"
 #include "OgreTangentSpaceCalc.h"
-#include "OgreLodStrategy.h"
-#include "OgreLodStrategyManager.h"
+#include "OgreDistanceLodStrategy.h"
 
 
 namespace Ogre {
@@ -119,7 +118,7 @@ namespace Ogre {
     {
 
         // Initialise to default strategy
-        mLodStrategy = LodStrategyManager::getSingleton().getStrategy("Distance");
+        mLodStrategy = DistanceLodStrategyr::getSingletonPtr();
 
 		// Init first (manual) lod
 		MeshLodUsage lod;

@@ -40,6 +40,7 @@ Torus Knot Software Ltd.
 #include "OgreTextureUnitState.h"
 #include "OgreException.h"
 #include "OgreLodStrategyManager.h"
+#include "OgreDistanceLodStrategy.h"
 
 namespace Ogre {
 
@@ -117,7 +118,7 @@ namespace Ogre {
         mDefaultSettings->createTechnique()->createPass();
 
         // Set the default lod strategy
-        mDefaultSettings->setLodStrategy(LodStrategyManager::getSingleton().getStrategy("Distance"));
+        mDefaultSettings->setLodStrategy(DistanceLodStrategy::getSingletonPtr());
 
 	    // Set up a lit base white material
 	    create("BaseWhite", ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);

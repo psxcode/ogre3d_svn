@@ -71,7 +71,7 @@ namespace Ogre {
         virtual ushort getIndex(Real value, const Material::LodValueList& materialLodValueList) const;
 
         // This would be required, but Material::LodValueList is the same type.
-        ////** Get the index of the lod usage which applies to a given value. */
+        //** Get the index of the lod usage which applies to a given value. */
         //virtual ushort getIndex(Real value, const Mesh::LodValueList& meshLodValueList) const;
 
         /** Sort mesh lod usage list from greatest to least detail */
@@ -87,20 +87,29 @@ namespace Ogre {
         const String& getName() const { return mName; };
 
     protected:
+        /** Implementation of isSorted suitable for ascending values. */
         static bool isSortedAscending(const Mesh::LodValueList& values);
+        /** Implementation of isSorted suitable for descending values. */
         static bool isSortedDescending(const Mesh::LodValueList& values);
 
+        /** Implementation of sort suitable for ascending values. */
         static void sortAscending(Mesh::MeshLodUsageList& meshLodUsageList);
+        /** Implementation of sort suitable for descending values. */
         static void sortDescending(Mesh::MeshLodUsageList& meshLodUsageList);
 
+        /** Implementation of getIndex suitable for ascending values. */
         static ushort getIndexAscending(Real value, const Mesh::MeshLodUsageList& meshLodUsageList);
+        /** Implementation of getIndex suitable for descending values. */
         static ushort getIndexDescending(Real value, const Mesh::MeshLodUsageList& meshLodUsageList);
 
+        /** Implementation of getIndex suitable for ascending values. */
         static ushort getIndexAscending(Real value, const Material::LodValueList& materialLodValueList);
+        /** Implementation of getIndex suitable for descending values. */
         static ushort getIndexDescending(Real value, const Material::LodValueList& materialLodValueList);
 
         //static ushort getIndexAscending(Real value, const Mesh::LodValueList& meshLodValueList);
         //static ushort getIndexDescending(Real value, const Mesh::LodValueList& meshLodValueList);
+
     };
 
 } // namespace

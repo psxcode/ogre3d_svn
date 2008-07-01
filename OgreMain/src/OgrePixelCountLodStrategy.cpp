@@ -36,6 +36,16 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
     //-----------------------------------------------------------------------
+    template<> PixelCountLodStrategy* Singleton<PixelCountLodStrategy>::ms_Singleton = 0;
+    PixelCountLodStrategy* PixelCountLodStrategy::getSingletonPtr(void)
+    {
+        return ms_Singleton;
+    }
+    PixelCountLodStrategy& PixelCountLodStrategy::getSingleton(void)
+    {
+        assert( ms_Singleton );  return ( *ms_Singleton );
+    }
+    //-----------------------------------------------------------------------
     PixelCountLodStrategy::PixelCountLodStrategy()
         : LodStrategy("PixelCount")
     { }

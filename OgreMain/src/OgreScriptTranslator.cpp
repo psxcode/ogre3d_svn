@@ -45,6 +45,7 @@ Torus Knot Software Ltd.
 #include "OgreCompositionTargetPass.h"
 #include "OgreCompositionPass.h"
 #include "OgreLodStrategyManager.h"
+#include "OgreDistanceLodStrategy.h"
 
 namespace Ogre{
 
@@ -436,7 +437,7 @@ namespace Ogre{
                 case ID_LOD_DISTANCES:
                     {
                         // Set strategy to distance strategy
-                        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy("Distance");
+                        LodStrategy *strategy = DistanceLodStrategyManager::getSingletonPtr();
                         mMaterial->setLodStrategy(strategy);
 
                         // Read in and square lod distances
