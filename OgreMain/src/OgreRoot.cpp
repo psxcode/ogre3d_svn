@@ -67,7 +67,6 @@ Torus Knot Software Ltd.
 #include "OgreRenderQueueInvocation.h"
 #include "OgrePlatformInformation.h"
 #include "OgreConvexBody.h"
-#include "OgreDistanceLodStrategy.h"
 	
 #if OGRE_NO_FREEIMAGE == 0
 #include "OgreFreeImageCodec.h"

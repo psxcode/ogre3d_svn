@@ -743,7 +743,7 @@ namespace Ogre {
 		iend = lodValues.end();
 		// First, clear and add single zero entry
 		mLodValues.clear();
-		mLodValues.push_back(0.0f);
+		mLodValues.push_back(mLodStrategy->getBaseValue());
 		for (i = lodValues.begin(); i != iend; ++i)
 		{
 			mLodValues.push_back(*i);
@@ -786,6 +786,9 @@ namespace Ogre {
     void Material::setLodStrategy(LodStrategy *lodStrategy)
     {
         mLodStrategy = lodStrategy;
+
+        assert(mLodValues.size());
+        mLodValues[0] = mLodStrategy->getBaseValue();
     }
     //---------------------------------------------------------------------
 }

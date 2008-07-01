@@ -6830,10 +6830,16 @@ protected:
         pass->setAmbient(Ogre::ColourValue::Green);
         pass->setDiffuse(Ogre::ColourValue::Green);
 
+        // Set material lod strategy
+        LodStrategy *materialLodStrategy = LodStrategyManager::getSingleton().getStrategy("PixelCount");
+        material->setLodStrategy(materialLodStrategy);
+
         // Create material lods
         Material::LodValueList lods;
-        lods.push_back(Math::Sqr(200));
+        //lods.push_back(Math::Sqr(200));
+        //lods.push_back(Math::Sqr(400));
         lods.push_back(Math::Sqr(400));
+        lods.push_back(Math::Sqr(200));
         material->setLodLevels(lods);
         entity->setMaterialName(material->getName());
 

@@ -26,8 +26,8 @@ the OGRE Unrestricted License provided you have obtained such a license from
 Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
-#ifndef __Distance_Lod_Strategy_H__
-#define __Distance_Lod_Strategy_H__
+#ifndef __Pixel_Count_Lod_Strategy_H__
+#define __Pixel_Count_Lod_Strategy_H__
 
 #include "OgrePrerequisites.h"
 
@@ -36,17 +36,27 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
     /**
-    Level-of-detail strategy based on distance from camera.
+    Level-of-detail strategy based on pixel count approximation from bounding sphere projection.
     */
-    class _OgreExport DistanceLodStrategy : public LodStrategy
+    class _OgreExport PixelCountLodStrategy : public LodStrategy
     {
     protected:
         virtual Real getValueImpl(const MovableObject *movableObject, const Camera *camera) const;
 
     public:
-        DistanceLodStrategy();
+        PixelCountLodStrategy();
+
+        virtual Real getBaseValue() const;
 
         virtual Real transformBias(Real factor) const;
+
+        virtual ushort getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const;
+
+        virtual ushort getIndex(Real value, const Material::LodValueList& materialLodValueList) const;
+
+        virtual void sort(Mesh::MeshLodUsageList& meshLodUsageList) const;
+
+        virtual bool isSorted(const Mesh::LodValueList& values) const;
 
     };
 

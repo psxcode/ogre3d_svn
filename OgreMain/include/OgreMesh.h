@@ -80,11 +80,11 @@ namespace Ogre {
     */
 
     struct MeshLodUsage;
+    class LodStrategy;
 
     class _OgreExport Mesh: public Resource
     {
         friend class SubMesh;
-        friend class LodStrategy;
         friend class MeshSerializerImpl;
         friend class MeshSerializerImpl_v1_4;
         friend class MeshSerializerImpl_v1_2;
@@ -92,6 +92,7 @@ namespace Ogre {
 
     public:
 		typedef std::vector<Real> LodValueList;
+        typedef std::vector<MeshLodUsage> MeshLodUsageList;
         /// Multimap of vertex bone assignments (orders by vertex index)
         typedef std::multimap<size_t, VertexBoneAssignment> VertexBoneAssignmentList;
         typedef MapIterator<VertexBoneAssignmentList> BoneAssignmentIterator;
@@ -149,7 +150,6 @@ namespace Ogre {
         const LodStrategy *mLodStrategy;
 		bool mIsLodManual;
 		ushort mNumLods;
-		typedef std::vector<MeshLodUsage> MeshLodUsageList;
 		MeshLodUsageList mMeshLodUsageList;
 
 		HardwareBuffer::Usage mVertexBufferUsage;

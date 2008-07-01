@@ -31,6 +31,7 @@ Torus Knot Software Ltd.
 #include "OgreLodStrategyManager.h"
 
 #include "OgreDistanceLodStrategy.h"
+#include "OgrePixelCountLodStrategy.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -48,6 +49,9 @@ namespace Ogre {
     {
         // Add default (distance) strategy
         addStrategy(new DistanceLodStrategy());
+
+        // Add new pixel-count strategy
+        addStrategy(new PixelCountLodStrategy());
     }
     //-----------------------------------------------------------------------
     LodStrategyManager::~LodStrategyManager()
