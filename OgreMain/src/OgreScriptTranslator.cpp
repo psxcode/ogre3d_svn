@@ -437,7 +437,7 @@ namespace Ogre{
                 case ID_LOD_DISTANCES:
                     {
                         // Set strategy to distance strategy
-                        LodStrategy *strategy = DistanceLodStrategyManager::getSingletonPtr();
+                        LodStrategy *strategy = DistanceLodStrategy::getSingletonPtr();
                         mMaterial->setLodStrategy(strategy);
 
                         // Read in and square lod distances

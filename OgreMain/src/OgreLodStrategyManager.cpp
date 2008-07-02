@@ -30,6 +30,7 @@ Torus Knot Software Ltd.
 #include "OgreStableHeaders.h"
 #include "OgreLodStrategyManager.h"
 
+#include "OgreException.h"
 #include "OgreDistanceLodStrategy.h"
 #include "OgrePixelCountLodStrategy.h"
 
@@ -48,10 +49,15 @@ namespace Ogre {
     LodStrategyManager::LodStrategyManager()
     {
         // Add default (distance) strategy
-        addStrategy(new DistanceLodStrategy());
+        LodStrategy *distanceStrategy = new DistanceLodStrategy();
+        addStrategy(distanceStrategy);
 
         // Add new pixel-count strategy
-        addStrategy(new PixelCountLodStrategy());
+        LodStrategy *pixelCountStrategy = new PixelCountLodStrategy();
+        addStrategy(pixelCountStrategy);
+
+        // Set the default strategy
+        setDefaultStrategy(distanceStrategy);
     }
     //-----------------------------------------------------------------------
     LodStrategyManager::~LodStrategyManager()
@@ -62,6 +68,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void LodStrategyManager::addStrategy(LodStrategy *strategy)
     {
+        // Check for invalid strategy name
+        if (strategy->getName() == "default")
+            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Lod strategy name must not be \"default\".", "LodStrategyManager::addStrategy");
+
         // Insert the strategy into the map with its name as the key
         mStrategies.insert(std::make_pair(strategy->getName(), strategy));
     }
@@ -100,6 +110,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     LodStrategy *LodStrategyManager::getStrategy(const String& name)
     {
+        // If name is "default", return the default strategy instead of performing a lookup
+        if (name == "default")
+            return getDefaultStrategy();
+
         // Find strategy with specified name
         StrategyMap::iterator it = mStrategies.find(name);
 
@@ -109,6 +123,22 @@ namespace Ogre {
 
         // Otherwise, return the strategy
         return it->second;
+    }
+    //-----------------------------------------------------------------------
+    void LodStrategyManager::setDefaultStrategy(LodStrategy *strategy)
+    {
+        mDefaultStrategy = strategy;
+    }
+    //-----------------------------------------------------------------------
+    void LodStrategyManager::setDefaultStrategy(const String& name)
+    {
+        // Lookup by name and set default strategy
+        setDefaultStrategy(getStrategy(name));
+    }
+    //-----------------------------------------------------------------------
+    LodStrategy *LodStrategyManager::getDefaultStrategy()
+    {
+        return mDefaultStrategy;
     }
     //-----------------------------------------------------------------------
     MapIterator<LodStrategyManager::StrategyMap> LodStrategyManager::getIterator()

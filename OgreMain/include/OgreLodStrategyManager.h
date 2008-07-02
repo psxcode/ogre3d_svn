@@ -46,6 +46,9 @@ namespace Ogre {
         /** Internal map of strategies. */
         StrategyMap mStrategies;
 
+        /** Default strategy. */
+        LodStrategy *mDefaultStrategy;
+
     public:
         /** Default constructor. */
         LodStrategyManager();
@@ -72,6 +75,15 @@ namespace Ogre {
 
         /** Get the strategy with the specified name. */
         LodStrategy *getStrategy(const String& name);
+
+        /** Set the default strategy. */
+        void setDefaultStrategy(LodStrategy *strategy);
+
+        /** Set the default strategy by name. */
+        void setDefaultStrategy(const String& name);
+
+        /** Get the current default strategy. */
+        LodStrategy *getDefaultStrategy();
 
         /** Get an iterator for all contained strategies. */
         MapIterator<StrategyMap> getIterator();
