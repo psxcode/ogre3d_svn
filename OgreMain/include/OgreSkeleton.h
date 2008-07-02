@@ -323,6 +323,18 @@ namespace Ogre {
 		*/
 		virtual void addLinkedSkeletonAnimationSource(const String& skelName, 
 			Real scale = 1.0f);
+
+
+		/*  westine added 
+		Once a skeleton has a motion graph script, its master entity(e.g. a character)
+		has its animation constructed in a motion graph
+		@note 
+		   A motion graph script is a Resource, like mesh and skeleton
+	    @param motiongraphName
+		The motion graph script file name to be loaded
+		*/
+		virtual void loadLinkedMotionGraphScript(const String& motiongraphName);
+
 		/// Remove all links to other skeletons for the purposes of sharing animation
 		virtual void removeAllLinkedSkeletonAnimationSources(void);
 		
@@ -416,6 +428,10 @@ namespace Ogre {
 		BoneSet mManualBones;
 		/// Manual bones dirty?
 		bool mManualBonesDirty;
+
+		/// westine added
+		/// Optional linked MotionGraph
+		String mMotionGraphScriptName;
 
 
         /// Storage of animations, lookup by name
