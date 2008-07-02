@@ -29,8 +29,14 @@ Bvh::~Bvh()
 	}
 }
 
-Bvh::Bvh(const std::string &filename):m_AnimName(filename),m_BoneNum(0),ChannelSum(0),ChannelBlockIndex(0)
+Bvh::Bvh(const std::string &filename):m_BoneNum(0),ChannelSum(0),ChannelBlockIndex(0)
 {
+
+	std::string::size_type idx = filename.find('.');
+	if(idx != std::string::npos)
+		m_AnimName = filename.substr(0,idx);
+	else
+		m_AnimName = filename;
 	std::ifstream ifs;
 	int ChannelSum;
 	ifs.open(filename.c_str(), std::ios_base::in);
