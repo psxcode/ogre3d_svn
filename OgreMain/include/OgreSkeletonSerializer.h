@@ -87,6 +87,8 @@ namespace Ogre {
         void writeKeyFrame(const Skeleton* pSkel, const TransformKeyFrame* key);
 		void writeSkeletonAnimationLink(const Skeleton* pSkel, 
 			const LinkedSkeletonAnimationSource& link);
+		//westine added motion graph script write
+		void writeMotionGraphScriptLink(const String& MotionGraphName);
 
         // Internal import methods
         void readBone(DataStreamPtr& stream, Skeleton* pSkel);
@@ -95,6 +97,7 @@ namespace Ogre {
         void readAnimationTrack(DataStreamPtr& stream, Animation* anim, Skeleton* pSkel);
         void readKeyFrame(DataStreamPtr& stream, NodeAnimationTrack* track, Skeleton* pSkel);
 		void readSkeletonAnimationLink(DataStreamPtr& stream, Skeleton* pSkel);
+		void readMotionGraphScriptLink(DataStreamPtr& stream, Skeleton* pSkel);
 
         size_t calcBoneSize(const Skeleton* pSkel, const Bone* pBone);
         size_t calcBoneSizeWithoutScale(const Skeleton* pSkel, const Bone* pBone);
@@ -105,6 +108,7 @@ namespace Ogre {
         size_t calcKeyFrameSizeWithoutScale(const Skeleton* pSkel, const TransformKeyFrame* pKey);
 		size_t calcSkeletonAnimationLinkSize(const Skeleton* pSkel, 
 			const LinkedSkeletonAnimationSource& link);
+		size_t calcMotionGraphScriptLinkSize(const String& MotionGraphName);
 
 
 
