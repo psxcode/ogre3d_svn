@@ -57,6 +57,8 @@ namespace Ogre {
     {	
 		LogManager::getSingleton().logMessage("XMLSkeletonSerializer: reading XML data from " + filename + "...");
 
+		mpSkel = pSkeleton; //westine added 
+
 		mXMLDoc = new TiXmlDocument(filename);
         mXMLDoc->LoadFile();
 
@@ -88,9 +90,16 @@ namespace Ogre {
 					{
 						readSkeletonAnimationLinks(pSkeleton, elem);
 					}
+					elem = rootElem->FirstChildElement("motiongraphscript");
+					if (elem)
+					{
+						readMotionGraphScript(pSkeleton,elem);
+					}
+					
 				}
 			}
 		}
+
 		LogManager::getSingleton().logMessage("XMLSkeletonSerializer: Finished. Running SkeletonSerializer..." );
     }
 	
@@ -643,6 +652,17 @@ namespace Ogre {
 		linkNode->SetAttribute("scale", StringConverter::toString(link.scale));
 
 	}
+	
+//---------------------------------------------------------------------
+	//   7/3/2008 dumin
+	void XMLSkeletonSerializer::writeMotionGraphScript(TiXmlElement* mglinkNode, const String& mgScriptName)
+	{
+		
+		TiXmlElement* mgNode = 
+			mglinkNode->InsertEndChild(TiXmlElement("motiongraphscript"))->ToElement();
+		mgNode->SetAttribute("name", mgScriptName);
+
+	}
 	//---------------------------------------------------------------------
 	void XMLSkeletonSerializer::readSkeletonAnimationLinks(Skeleton* skel, 
 		TiXmlElement* linksNode)
@@ -667,6 +687,16 @@ namespace Ogre {
 			skel->addLinkedSkeletonAnimationSource(skelName, scale);
 
 		}
+	}
+
+	void XMLSkeletonSerializer::readMotionGraphScript(Skeleton* skel, TiXmlElement* mgNode)
+	{
+
+		LogManager::getSingleton().logMessage("XMLSkeletonSerializer: Reading MotionGraph Script...");
+
+
+		skel->loadLinkedMotionGraphScript(mgNode->Attribute("name"));
+		
 	}
 }
 
