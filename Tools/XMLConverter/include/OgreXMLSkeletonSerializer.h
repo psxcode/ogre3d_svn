@@ -82,6 +82,7 @@ namespace Ogre {
         void writeKeyFrame(TiXmlElement* keysNode, const TransformKeyFrame* key);
 		void writeSkeletonAnimationLink(TiXmlElement* linksNode, 
 			const LinkedSkeletonAnimationSource& link);
+		void writeMotionGraphScript(TiXmlElement* mglinkNode, const String& mgScriptName);
 		
 		void readBones(Skeleton* skel, TiXmlElement* mBonesNode);
 		void readBones2(Skeleton* skel, TiXmlElement* mBonesNode);
@@ -89,6 +90,7 @@ namespace Ogre {
 		void readKeyFrames(NodeAnimationTrack* track, TiXmlElement* mKeyfNode);
 		void readAnimations(Skeleton* skel, TiXmlElement* mAnimNode) ;
 		void readSkeletonAnimationLinks(Skeleton* skel, TiXmlElement* linksNode);
+		void readMotionGraphScript(Skeleton* skel, TiXmlElement* mgNode);
 
     };
 
