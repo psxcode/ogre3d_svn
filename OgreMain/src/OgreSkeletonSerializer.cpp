@@ -102,6 +102,12 @@ namespace Ogre {
 			writeSkeletonAnimationLink(pSkeleton, link);
 		}
 
+		if( pSkeleton->hasMotionGraphScript() )
+		{
+			writeMotionGraphScriptLink(pSkeleton->getMotionGraphName());
+			LogManager::getSingleton().logMessage("Animation exported.");
+		}
+
         fclose(mpfFile);
 
     }
@@ -131,6 +137,9 @@ namespace Ogre {
 				break;
 			case SKELETON_ANIMATION_LINK:
 				readSkeletonAnimationLink(stream, pSkel);
+				break;
+			case MOTIONGRAPH_SCRIPT:
+				readMotionGraphScriptLink(stream,pSkel);
 				break;
             }
         }
@@ -541,6 +550,31 @@ namespace Ogre {
 		writeFloats(&(link.scale), 1);
 
 	}
+    //---------------------------------------------------------------------
+	void SkeletonSerializer::writeMotionGraphScriptLink(const String& MotionGraphName)
+	{
+		writeChunkHeader(MOTIONGRAPH_SCRIPT, calcMotionGraphScriptLinkSize(MotionGraphName));
+
+		writeString(MotionGraphName);
+	}
+
+	void SkeletonSerializer::readMotionGraphScriptLink(DataStreamPtr& stream, Skeleton* pSkel)
+	{
+		String motionGraphName = readString(stream);
+
+		pSkel->loadLinkedMotionGraphScript(motionGraphName);
+	}
+
+	//---------------------------------------------------------------------
+	size_t SkeletonSerializer::calcMotionGraphScriptLinkSize(const String& MotionGraphName)
+	{
+		size_t size = STREAM_OVERHEAD_SIZE;
+
+		size += MotionGraphName.length() + 1;
+
+		return size;
+	}
+	
     //---------------------------------------------------------------------
 	size_t SkeletonSerializer::calcSkeletonAnimationLinkSize(const Skeleton* pSkel, 
 		const LinkedSkeletonAnimationSource& link)
