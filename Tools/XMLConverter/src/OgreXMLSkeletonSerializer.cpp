@@ -412,6 +412,11 @@ namespace Ogre {
 			}
 		}
 
+		//write motion graph script link name
+		LogManager::getSingleton().logMessage("Exporting motion graph script links.");
+		writeMotionGraphScript(rootNode,pSkeleton->getMotionGraphName());
+		
+
         LogManager::getSingleton().logMessage("DOM populated, writing XML file..");
 
         // Write out to a file
