@@ -36,6 +36,7 @@ Torus Knot Software Ltd.
 #include "OgreVector3.h"
 #include "OgreIteratorWrappers.h"
 #include "OgreStringVector.h"
+#include "OgreMotionGraph.h"
 
 namespace Ogre {
 
@@ -333,7 +334,7 @@ namespace Ogre {
 	    @param motiongraphName
 		The motion graph script file name to be loaded
 		*/
-		virtual void loadLinkedMotionGraphScript(const String& motiongraphName);
+		virtual void loadLinkedMotionGraphScript(const String& motiongraphScriptName);
 
 		/// Remove all links to other skeletons for the purposes of sharing animation
 		virtual void removeAllLinkedSkeletonAnimationSources(void);
@@ -342,6 +343,7 @@ namespace Ogre {
 			LinkedSkeletonAnimSourceList;
 		typedef ConstVectorIterator<LinkedSkeletonAnimSourceList> 
 			LinkedSkeletonAnimSourceIterator;
+		
 		/// Get an iterator over the linked skeletons used as animation sources
 		virtual LinkedSkeletonAnimSourceIterator 
 			getLinkedSkeletonAnimationSourceIterator(void) const;
@@ -410,6 +412,10 @@ namespace Ogre {
         virtual void _buildMapBoneByName(const Skeleton* source,
             BoneHandleMap& boneHandleMap) const;
 
+		bool hasMotionGraphScript(void) const; 
+
+		const String& getMotionGraphName(void) const;
+
 	protected:
 		SkeletonAnimationBlendMode mBlendState;
         /// Storage of bones, indexed by bone handle
@@ -432,6 +438,9 @@ namespace Ogre {
 		/// westine added
 		/// Optional linked MotionGraph
 		String mMotionGraphScriptName;
+		/// Storage of motiongraphs, lookup by name
+		typedef std::map<String, MotionGraph*> MotionGraphMap;
+		MotionGraphMap mMotionGraphs;
 
 
         /// Storage of animations, lookup by name
