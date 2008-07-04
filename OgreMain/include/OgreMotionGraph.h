@@ -38,7 +38,7 @@ namespace Ogre {
 
 	/** A proxy class of Actor's behavior policy set .
 	@remarks
-	This class defines the interface an actor can access to determine how it Act(). 
+	This class defines the interface an actor can access to determine how it Act().
 
 	Actor acts as the AI tells, commonly  via controlling the state of Actor's m_Entity and m_SceneNode,
 	especially is to set AnimationState.
@@ -47,14 +47,16 @@ namespace Ogre {
 	It is an abstract class, you should subclass it to create your instance class.
 
 	It is designed to utilize the following features:
-	Motion graphs and variants        
+	Motion graphs and variants     
 	Motion interpolation and blending
 	Behavior-based graphs and search trees (similar to move trees)
-	Motion controllers learnt from existing data or based on physics 
+	Motion controllers learnt from existing data or based on physics
 	Finite State Machine based AI
 
 	*/
 
+	//class forward declaration
+	class MotionGraphScript;
 
 
 	class _OgreExport MotionGraph //: public AnimationStateSet
@@ -74,17 +76,29 @@ namespace Ogre {
 
 		/************************************************************************/
 		class Transition;
-		/* 
+		/*
 		Triggers are events that will cause a state transition.
+		Triggers are designed to work as interrupts, and the there so must be
+		a interrupt handling module.
+		Many events can create Trigger, and assign them to States, just like PC's devices
+		shot interrupts and these interrupts are sent to Interrupt Controller, the Controller
+		select the highest priority level interrupt, then CPU, in Ogre is the MotionGraph,
+		take action based on current state status.
 		*/
-		class Trigger 
+		enum TriggerType
+		{
+			ANIMATION_END,
+			DIRECTION_CONTROL
+		};
+		class Trigger
 		{
 		public:
-			Trigger();
+			Trigger(TriggerType type):mType(type){};
 			virtual ~Trigger();
-			typedef std::vector<Transition*> TransitionArray;
+
 		protected:
-			TransitionArray mTransitions;			
+			TriggerType mType;
+
 		};
 
 		class State //: public AnimationState
@@ -118,13 +132,31 @@ namespace Ogre {
 
 		};
 
-		MotionGraph();
+		MotionGraph(const String& mgName):mMotionGraphName(mgName){};
+
+
+		/** Construct a motion graph using a motion graph script
+		@remarks
+		There are a lot of methods to construct a motion graph, referencing to much literature
+		@par
+		Note that this method automatically generates a handle for the bone, which you
+		can retrieve using Bone::getHandle. If you wish the new Bone to have a specific
+		handle, use the alternate form of this method which takes a handle as a parameter,
+		although you should note the restrictions.
+		*/
+		bool Construct(const MotionGraphScript& mgScript);
 		~MotionGraph();
+		typedef std::map<int,State*> StateMap;
+		typedef std::vector<Transition*> TransitionArray;
+	protected:
+		StateMap mStates;
+		TransitionArray mTransitions;
+		String mMotionGraphName;
 
 
 	};
 
-	/** A motion graph script is somewhat a Finite State Machine 
+	/** A motion graph script is somewhat a Finite State Machine
 	It defines a semantic as following
 	States:
 	1,[default action, accepted input triggers,...]
@@ -139,36 +171,39 @@ namespace Ogre {
 	The States section is a list of States.
 	The Transitions section is a Finite State Machine Table
 	CurrentState  InputTrigger   Action    NextState
-	    1         'turnleft'    turn left     2
+	1         'turnleft'    turn left     2
 	@remarks
-	The first version of motion graph script is a native file that 
+	The first version of motion graph script is a native file that
 	read directly using standardized fstream, once it works, a Resource
 	version of motion graph script is to be implemented
 	@note
 	Now this script is only for motion graph construction usage.
 	More functionalities are to be added to AI script.
 	And the script now is loaded when its parent skeleton is loaded synchronously,
-    
+
 	The final goal of using script is to integrate a script language virtual machine
-	into Ogre, e.g. Python, then adding new AI scripts and modifying exsiting scripts 
+	into Ogre, e.g. Python, then adding new AI scripts and modifying exsiting scripts
 	don't need to rebuild the source code of Ogre or its applications
 	/************************************************************************/
 
 	class _OgreExport MotionGraphScript //: public Resource
 	{
 	public:
-		MotionGraphScript(){};
+		MotionGraphScript():mScriptName(""){};
 		virtual ~MotionGraphScript(){};
 		// this is an alpha version of script reader
-		bool Load(std::ifstream& ifMgScript);
+		bool Load(const String& MgScriptName);
+		bool IsLoaded() const { return (strcmp(mScriptName.c_str(),""))?false:true;}
 		typedef std::map<int,MotionGraph::State*> StateMap;
-		typedef std::vector<MotionGraph::Transition*> TransitionSet;
+		typedef std::vector<MotionGraph::Transition*> TransitionArray;
+		const StateMap& GetStates() const { return mStates; }
+		const TransitionArray& GetTransitions() const { return mTransitions; }
 	protected:
 		String mScriptName;
 		StateMap mStates;
-		TransitionSet mTransitions;
+		TransitionArray mTransitions;
 
-		
+
 
 	};
 
@@ -176,9 +211,9 @@ namespace Ogre {
 	{
 		MG_HEADER      =   0x1000,
 		MG_STATES      =   0x2000,
-			//////////////////////////////////////////////////////////////////////////
-			// repeated section of state
-			// 
+		//////////////////////////////////////////////////////////////////////////
+		// repeated section of state
+		//
 		MG_TRANSITIONS  =   0x3000
 	};
 
