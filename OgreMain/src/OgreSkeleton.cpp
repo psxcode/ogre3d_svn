@@ -39,6 +39,8 @@ Torus Knot Software Ltd.
 // Just for logging
 #include "OgreAnimationTrack.h"
 #include "OgreKeyFrame.h"
+#include "OgreMotionGraph.h"
+#include <utility>
 
 
 namespace Ogre {
@@ -718,6 +720,23 @@ namespace Ogre {
 		}
 
 	}
+
+	//---------------------------------------------------------------------
+	/*
+	First version 2008-07-02
+	Just directly load from a txt file, finally motion graph script will be 
+	a binary file, using Resource::Load to load
+	*/
+	void Skeleton::loadLinkedMotionGraphScript(const String& motiongraphScriptName)
+	{
+		mMotionGraphScriptName = motiongraphScriptName;  //now only one motiongraph script is provided to one skeleton
+		MotionGraphScript* mgSp = new MotionGraphScript;
+		mgSp->Load(motiongraphScriptName);
+		MotionGraph* pMg = new MotionGraph(motiongraphScriptName);
+		pMg->Construct(*mgSp);
+		mMotionGraphs.insert(std::make_pair(motiongraphScriptName,pMg));
+	}
+	
 	//---------------------------------------------------------------------
 	void Skeleton::removeAllLinkedSkeletonAnimationSources(void)
 	{
@@ -1023,6 +1042,18 @@ namespace Ogre {
                 boneHandleMap[handle] = i->second->getHandle();
         }
     }
+
+	//-----------------------------------------------------------------------
+	bool Skeleton::hasMotionGraphScript(void) const
+	{
+		return !(mMotionGraphScriptName.empty());
+	}
+
+	//---------------------------------------------------------------------
+	const String& Skeleton::getMotionGraphName(void) const
+	{
+		return mMotionGraphScriptName;
+	}
 
 }
 
