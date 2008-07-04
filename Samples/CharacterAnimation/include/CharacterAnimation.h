@@ -33,8 +33,8 @@ Finite State Machine based AI
 
 AnimationState* mAnimState;
 SceneNode* mSceneNode;
-const std::string modelname = "stickfigure";
-const std::string animationName = "jump";
+const std::string modelname = "character";
+const std::string animationName = "pushup.bvh";
 
 // Event handler to animate
 class CharacterAnimationFrameListener : public ExampleFrameListener
@@ -52,7 +52,7 @@ public:
 		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
 			return false;
 
-		mAnimState->addTime(evt.timeSinceLastFrame);
+		mAnimState->addTime(evt.timeSinceLastFrame*2);
 		return true;
 	}
 };
@@ -84,8 +84,8 @@ protected:
 		// The character will go through its motion graph
 		// We want to copy the initial keyframes of all bones, but alter the Spineroot
 		// to give it an offset of where the animation ends
-		SkeletonPtr skel = SkeletonManager::getSingleton().load(modelname+".skeleton",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	//	SkeletonPtr skel = SkeletonManager::getSingleton().load(modelname+".skeleton",
+	//		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 
 		Entity *ent;
@@ -93,11 +93,12 @@ protected:
 		// Add entity to the scene node
 		mSceneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		mSceneNode->attachObject(ent);
-
+		mSceneNode->translate(0,12,0);
 
 		mAnimState = ent->getAnimationState(animationName);
 		mAnimState->setEnabled(true);
 		mAnimState->setLoop(true); // manual loop since translation involved
+
 
 
 
