@@ -412,9 +412,21 @@ namespace Ogre {
         virtual void _buildMapBoneByName(const Skeleton* source,
             BoneHandleMap& boneHandleMap) const;
 
+
+		/** Check if this skeleton has a motion graph loaded.
+		*/
 		bool hasMotionGraphScript(void) const; 
 
+
+		/** Get the loaded motion graph's name.
+		*/
 		const String& getMotionGraphName(void) const;
+
+
+		/** Get the motion graph with the specified name.
+		*/
+		const MotionGraph* getMotionGraph(const String& MgName) const;
+
 
 	protected:
 		SkeletonAnimationBlendMode mBlendState;
