@@ -687,7 +687,7 @@ void AddAnimation(XmlOptions opts)
 			newSkel->optimiseAllAnimations();
 		}*/
 		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
-		anim = newSkel->createAnimation(opts.bvhfile,Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
+		anim = newSkel->createAnimation(bvh->GetAnimName(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
 		anim->setInterpolationMode(Animation::IM_LINEAR) ;
 		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
 
