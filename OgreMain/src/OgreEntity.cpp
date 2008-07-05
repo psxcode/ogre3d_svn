@@ -84,7 +84,8 @@ namespace Ogre {
 		  mInitialised(false),
 		  mLastParentXform(Matrix4::ZERO),
 		  mMeshStateCount(0),
-          mFullBoundingBox()
+          mFullBoundingBox(),
+		  mpMotionGraph(0)  //westine added
     {
     }
     //-----------------------------------------------------------------------
@@ -118,7 +119,8 @@ namespace Ogre {
 		mInitialised(false),
 		mLastParentXform(Matrix4::ZERO),
 		mMeshStateCount(0),
-        mFullBoundingBox()
+        mFullBoundingBox(),
+		mpMotionGraph(0)   //westine added
 	{
 		_initialise();
     }
@@ -1941,6 +1943,19 @@ namespace Ogre {
 	{
 		mMesh->_refreshAnimationState(mAnimationState);
 	}
+	//-----------------------------------------------------------------------
+	void Entity::ExecuteMotionGraph(const String& mgName)
+	{
+		 mpMotionGraph = getSkeleton()->getMotionGraph(mgName);
+
+	}
+	//-----------------------------------------------------------------------
+	void Entity::MotionGraphAdvanceTime(Real offset)
+	{
+
+	}
+
+
 	//-----------------------------------------------------------------------
 	uint32 Entity::getTypeFlags(void) const
 	{
