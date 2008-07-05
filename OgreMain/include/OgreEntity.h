@@ -93,6 +93,10 @@ namespace Ogre {
 		*/
 		MeshPtr mMesh;
 
+		/** The Motion Graph this entity is currently executing through.
+		*/
+		const MotionGraph* mpMotionGraph;
+
 		/** List of SubEntities (point to SubMeshes).
 		*/
 		typedef std::vector<SubEntity*> SubEntityList;
@@ -734,7 +738,17 @@ namespace Ogre {
 		void visitRenderables(Renderable::Visitor* visitor, 
 			bool debugRenderables = false);
 
-
+		// westine added 
+		/** Set the animation frame rate of the whole motion graph
+		*/
+		void MotionGraphAdvanceTime(Real offset);
+		/** An entity can execute many types of behavior,
+		for now only motion graph is provided, so let this be ExecuteMotionGraph().
+		Future version of Execute() will
+		have ExecuteType and ExecuteParams, which is designed for integrating external script
+		language e.g. Python the transit parameters.
+		*/
+		void ExecuteMotionGraph(const String& mgName);
 
 
 	};
