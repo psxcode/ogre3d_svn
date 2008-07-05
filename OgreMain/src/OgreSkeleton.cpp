@@ -736,6 +736,15 @@ namespace Ogre {
 		pMg->Construct(*mgSp);
 		mMotionGraphs.insert(std::make_pair(motiongraphScriptName,pMg));
 	}
+
+	const MotionGraph* Skeleton::getMotionGraph(const Ogre::String &MgName) const
+	{
+	     MotionGraphMap::const_iterator it = mMotionGraphs.find(MgName);
+		 if ( it != mMotionGraphs.end() )
+		 return   (it->second);
+		 else
+		 return 0;	
+	}
 	
 	//---------------------------------------------------------------------
 	void Skeleton::removeAllLinkedSkeletonAnimationSources(void)
