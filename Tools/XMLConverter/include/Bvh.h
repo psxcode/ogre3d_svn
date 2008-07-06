@@ -94,6 +94,7 @@ Lucas Westine
 		void  LoadBoneMap();
 		void LogBoneHierarchy();
 		bool IsBoneMapping() const { return m_bIsBoneMapping; }
+		const std::string& GetAnimName(void) const { return m_AnimName; }
 	protected:	
 		Bvh_Hierarchy m_Hierarchy;
 		int           m_FrameNum;
