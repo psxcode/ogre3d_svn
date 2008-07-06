@@ -688,6 +688,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreMotionGraph.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreMovableObject.cpp"
 				>
 			</File>
@@ -1502,6 +1506,10 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreMeshSerializerImpl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreMotionGraph.h"
 				>
 			</File>
 			<File
