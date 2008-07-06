@@ -87,14 +87,18 @@ namespace Ogre {
 		*/
 		enum TriggerType
 		{
+			NON_TRIGGER,
 			ANIMATION_END,
 			DIRECTION_CONTROL
 		};
+
+		static TriggerType TriggerNameToTriggerType(const String& triggertype);
+
 		class Trigger
 		{
 		public:
-			Trigger(TriggerType type):mType(type){};
-			virtual ~Trigger();
+			Trigger(TriggerType type = NON_TRIGGER):mType(type){};
+			virtual ~Trigger(){};
 
 		protected:
 			TriggerType mType;
@@ -106,9 +110,11 @@ namespace Ogre {
 		public:
 			State(int stateid, const String& statename = ""):mStateID(stateid),mStateName(statename){};
 			virtual ~State(){};
-			typedef std::deque<Trigger*> TriggerQueue;
+			typedef std::queue<Trigger*> TriggerQueue;
 			typedef std::map<float,Transition*> TransitionMap;
 			int GetStateID() const { return mStateID; }
+			void AddTrigger( Trigger* pTrigger);
+
 		protected:
 			String  mStateName;
 			int		mStateID;
@@ -125,13 +131,15 @@ namespace Ogre {
 			void AddFromState( State* pState) { mFromState = pState; }
 			void AddToState( State* pState ) { mToState = pState; }
 			void SetActionName( const String& actionName ) { mActionName = actionName; }
+			void SetTriggerType( const String& triggertype );
 		protected:
 			State* mFromState;
 			State* mToState;
 			String mActionName;
+			TriggerType mTriggerType;
 
 		};
-
+	
 		MotionGraph(const String& mgName):mMotionGraphName(mgName){};
 
 
@@ -145,6 +153,18 @@ namespace Ogre {
 		although you should note the restrictions.
 		*/
 		bool Construct(const MotionGraphScript& mgScript);
+		/** Motion Graph has its trigger lists, regardless where these triggers come from,
+		it is allowed to check the motion graph's trigger list to see whether some triggers 
+		must be processed.
+		*/
+		void CheckTrigger();
+		/** Tranist from current state to next state.
+		@remarks
+		some status maybe set, some triggers maybe fired.
+		*/
+		void Transit();
+
+
 		~MotionGraph();
 		typedef std::map<int,State*> StateMap;
 		typedef std::vector<Transition*> TransitionArray;
