@@ -184,10 +184,6 @@
 				RelativePath="..\include\CharacterAnimation.h"
 				>
 			</File>
-			<File
-				RelativePath="..\include\OgreMotionGraph.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
