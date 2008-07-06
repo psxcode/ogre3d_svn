@@ -38,7 +38,15 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 
+	MotionGraph::TriggerType MotionGraph::TriggerNameToTriggerType(const String& triggertype)
+	{
+		if ( !strcmp(triggertype.c_str(),"AnimationEnd"))
+		{
+			return ANIMATION_END;
+		}
 
+		return NON_TRIGGER;
+	}
 
 	bool MotionGraphScript::Load(const String& MgScriptName)
 	{
@@ -95,11 +103,16 @@ namespace Ogre {
 				int FromStateID,ToStateID;
 				std::vector<String>::iterator it = transitionParam.begin();
 				FromStateID = StringConverter::parseInt(*it++);
-				String TriggerType = *it++;
+				String triggername = *it++;
+				pTran->SetTriggerType(triggername);
 				pTran->SetActionName(*it++);
 				ToStateID = StringConverter::parseInt(*it++);
 
+				MotionGraph::State* pState = (*mStates.find(FromStateID)).second;
+				MotionGraph::TriggerType triggertype = MotionGraph::TriggerNameToTriggerType(triggername);
+				MotionGraph::Trigger* pTrigger = new MotionGraph::Trigger(triggertype);
 
+				pState->AddTrigger(pTrigger);
 				pTran->AddFromState((*mStates.find(FromStateID)).second);
 				pTran->AddToState((*mStates.find(ToStateID)).second);
 				mTransitions.push_back(pTran);
@@ -113,9 +126,17 @@ namespace Ogre {
 
 	}
 
+	void MotionGraph::Transition::SetTriggerType( const String& triggertype )
+	{
+		
+			mTriggerType = TriggerNameToTriggerType(triggertype);
 
+	}
 
-
+	void MotionGraph::State::AddTrigger(Trigger* pTrigger)
+	{
+		mTriggers.push(pTrigger);
+	}
 
 
 	bool MotionGraph::Construct(const MotionGraphScript& mgScript)
@@ -136,7 +157,7 @@ namespace Ogre {
 		for ( MotionGraphScript::TransitionArray::const_iterator it = mgScript.GetTransitions().begin();
 			it != mgScript.GetTransitions().end(); it++)
 		{
-
+			static_cast<MotionGraph::Transition*>(*it);
 			mTransitions.push_back(*it);
 
 		}
