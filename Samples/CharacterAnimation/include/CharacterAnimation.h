@@ -33,6 +33,7 @@ Finite State Machine based AI
 
 AnimationState* mAnimState;
 SceneNode* mSceneNode;
+Entity *ent;
 const std::string modelname = "character";
 const std::string animationName = "pushup.bvh";
 
@@ -52,7 +53,8 @@ public:
 		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
 			return false;
 
-		mAnimState->addTime(evt.timeSinceLastFrame*2);
+		ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame*2);
+		//mAnimState->addTime(evt.timeSinceLastFrame*2);
 		return true;
 	}
 };
@@ -88,16 +90,17 @@ protected:
 	//		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 
-		Entity *ent;
+		
 		ent = mSceneMgr->createEntity(modelname, modelname+".mesh");
 		// Add entity to the scene node
 		mSceneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		mSceneNode->attachObject(ent);
 		mSceneNode->translate(0,12,0);
+		ent->ExecuteMotionGraph("mg");
 
-		mAnimState = ent->getAnimationState(animationName);
-		mAnimState->setEnabled(true);
-		mAnimState->setLoop(true); // manual loop since translation involved
+	//	mAnimState = ent->getAnimationState(animationName);
+	//	mAnimState->setEnabled(true);
+	//	mAnimState->setLoop(true); // manual loop since translation involved
 
 
 
