@@ -115,6 +115,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="..\include;..\..\Common\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include"
 				RuntimeLibrary="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -131,6 +132,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="OgreMain.lib OIS.lib"
+				AdditionalLibraryDirectories="&quot;..\..\..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -159,6 +162,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Common\Bin\$(ConfigurationName)"
 			/>
 		</Configuration>
 	</Configurations>
