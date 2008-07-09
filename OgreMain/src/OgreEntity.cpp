@@ -1947,12 +1947,48 @@ namespace Ogre {
 	void Entity::ExecuteMotionGraph(const String& mgName)
 	{
 		 mpMotionGraph = getSkeleton()->getMotionGraph(mgName);
+		 //When a motion graph has been constructed, it already has its current state set
+		 if ( mpMotionGraph )
+		 {
+		 MotionGraph::State* pState = mpMotionGraph->GetCurrentState();
+		 String ActionName = pState->GetCurrentActionName();
+		 AnimationState* pAnimState = mAnimationState->getAnimationState(ActionName);
+		 pAnimState->setEnabled(true);
+		 pAnimState->setLoop(false);
+		 }
 
 	}
-	//-----------------------------------------------------------------------
-	void Entity::MotionGraphAdvanceTime(Real offset)
-	{
 
+
+
+	//-----------------------------------------------------------------------
+	bool Entity::AdvanceMotionGraphTime(Real offset)
+	{
+		String ActionName;
+		if ( !mpMotionGraph )
+		return false;
+		
+		MotionGraph::State* pState = mpMotionGraph->GetCurrentState();
+		if ( pState )
+		{
+			ActionName = pState->GetCurrentActionName();
+			AnimationState* pAnimState = getAnimationState(ActionName);
+			if ( pAnimState->hasEnded() )
+			{
+				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ANIMATION_END);
+				pState->AddTrigger(trigger);
+				/* do the animationState reset in the trigger processing procedure
+				*/
+			//	pAnimState->setEnabled(false);   
+			//	pAnimState->setLoop(false);
+			}
+			else
+			pAnimState->addTime(offset);
+			
+		}
+        
+		mpMotionGraph->ProcessTrigger(this);
+		return true;
 	}
 
 
