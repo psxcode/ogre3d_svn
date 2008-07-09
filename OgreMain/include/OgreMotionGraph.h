@@ -47,7 +47,7 @@ namespace Ogre {
 	It is an abstract class, you should subclass it to create your instance class.
 
 	It is designed to utilize the following features:
-	Motion graphs and variants     
+	Motion graphs and variants    
 	Motion interpolation and blending
 	Behavior-based graphs and search trees (similar to move trees)
 	Motion controllers learnt from existing data or based on physics
@@ -99,8 +99,6 @@ namespace Ogre {
 		public:
 			Trigger(TriggerType type = NON_TRIGGER):mType(type){};
 			virtual ~Trigger(){};
-
-		protected:
 			TriggerType mType;
 
 		};
@@ -114,9 +112,23 @@ namespace Ogre {
 			typedef std::map<float,Transition*> TransitionMap;
 			int GetStateID() const { return mStateID; }
 			void AddTrigger( Trigger* pTrigger);
+			void AddTransition( Transition* pTran );
+			/** Get the first trigger in the trigger queue
+			*/
+			Trigger* GetTrigger();
+			/** @Remove a trigger from the trigger queue
+			*/
+			void RemoveTrigger();
+			Transition* GetBestTransition();
+			typedef std::set<String> ActionSet;
+			String GetCurrentActionName() { return mCurrentActionName; }
+			void SetCurrentAction(const String& actionname) { mCurrentActionName = actionname; }
+
 
 		protected:
 			String  mStateName;
+			ActionSet mActions;
+			String  mCurrentActionName;
 			int		mStateID;
 			TriggerQueue mTriggers; // it is a priority queue
 			TransitionMap mTransitions; // always select transition with the maximum probability,
@@ -126,21 +138,27 @@ namespace Ogre {
 		class Transition
 		{
 		public:
-			Transition(){};
+			Transition():mProbability(1.){};
+			Transition(const Transition& rhs);
 			virtual ~Transition(){};
 			void AddFromState( State* pState) { mFromState = pState; }
 			void AddToState( State* pState ) { mToState = pState; }
 			void SetActionName( const String& actionName ) { mActionName = actionName; }
 			void SetTriggerType( const String& triggertype );
+			float GetProbability() const { return mProbability; }
+			State* GetToState() { return mToState; }
+			State* GetFromState() { return mFromState; }
 		protected:
 			State* mFromState;
 			State* mToState;
 			String mActionName;
 			TriggerType mTriggerType;
+			float  mProbability; //the transition probability to select it as the next tranistion of
+			// the state
 
 		};
-	
-		MotionGraph(const String& mgName):mMotionGraphName(mgName){};
+
+		MotionGraph(const String& mgName):mMotionGraphName(mgName),mCurrentState(0){};
 
 
 		/** Construct a motion graph using a motion graph script
@@ -154,15 +172,18 @@ namespace Ogre {
 		*/
 		bool Construct(const MotionGraphScript& mgScript);
 		/** Motion Graph has its trigger lists, regardless where these triggers come from,
-		it is allowed to check the motion graph's trigger list to see whether some triggers 
+		it is allowed to check the motion graph's trigger list to see whether some triggers
 		must be processed.
 		*/
-		void CheckTrigger();
-		/** Tranist from current state to next state.
+		void ProcessTrigger(const Entity* pEntity);
+		/** Tranist from the current state to the next state.
 		@remarks
-		some status maybe set, some triggers maybe fired.
+		some status variables are set, some triggers are fired.
 		*/
 		void Transit();
+
+		State* GetCurrentState() { return mCurrentState; }
+
 
 
 		~MotionGraph();
@@ -172,6 +193,8 @@ namespace Ogre {
 		StateMap mStates;
 		TransitionArray mTransitions;
 		String mMotionGraphName;
+		/// the state this motion graph is currently in
+		State*	mCurrentState;
 
 
 	};
@@ -210,10 +233,10 @@ namespace Ogre {
 	{
 	public:
 		MotionGraphScript():mScriptName(""){};
-		virtual ~MotionGraphScript(){};
+		virtual ~MotionGraphScript();
 		// this is an alpha version of script reader
 		bool Load(const String& MgScriptName);
-		bool IsLoaded() const { return (strcmp(mScriptName.c_str(),""))?false:true;}
+		bool IsLoaded() const;
 		typedef std::map<int,MotionGraph::State*> StateMap;
 		typedef std::vector<MotionGraph::Transition*> TransitionArray;
 		const StateMap& GetStates() const { return mStates; }
