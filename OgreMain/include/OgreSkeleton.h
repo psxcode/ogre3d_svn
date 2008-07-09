@@ -425,7 +425,7 @@ namespace Ogre {
 
 		/** Get the motion graph with the specified name.
 		*/
-		const MotionGraph* getMotionGraph(const String& MgName) const;
+		MotionGraph* getMotionGraph(const String& MgName);
 
 
 	protected:
