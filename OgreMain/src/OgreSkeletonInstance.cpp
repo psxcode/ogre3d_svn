@@ -243,6 +243,10 @@ namespace Ogre {
 		return mSkeleton->getGroup();
 	}
 
+	MotionGraph* SkeletonInstance::getMotionGraph(const Ogre::String &MgName)
+	{
+		return mSkeleton->getMotionGraph(MgName);
+	}
 
 }
 
