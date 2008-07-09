@@ -34,6 +34,7 @@ Torus Knot Software Ltd.
 #include <sstream>
 #include <utility>
 #include "OgreStringConverter.h"
+#include "OgreEntity.h"
 
 namespace Ogre {
 
@@ -46,6 +47,25 @@ namespace Ogre {
 		}
 
 		return NON_TRIGGER;
+	}
+
+	MotionGraphScript::~MotionGraphScript()
+	{
+		for ( StateMap::iterator it = mStates.begin(); it != mStates.end(); it++)
+		{
+			if ( it->second)
+			{
+				delete it->second;
+			}
+		}
+		for (TransitionArray::iterator it = mTransitions.begin(); it != mTransitions.end(); it++)
+		{
+			if ( *it )
+			{
+				delete *it;
+			}
+		}
+
 	}
 
 	bool MotionGraphScript::Load(const String& MgScriptName)
@@ -76,9 +96,15 @@ namespace Ogre {
 			ss >> stateCount;
 			for ( int i = 0; i < stateCount; i++)
 			{
+				int StateId;
 				std::getline(ifMgScript,line);
+				std::vector<String> stateParams = StringUtil::split(line,",\n");
+				std::vector<String>::iterator it = stateParams.begin();
+				StateId = StringConverter::parseInt(*it++);
+				String actionname = *it++;
 				//now just go through, there is nothing in States
-				MotionGraph::State* pState = new MotionGraph::State(i);
+				MotionGraph::State* pState = new MotionGraph::State(StateId);
+				pState->SetCurrentAction(actionname);
 
 				mStates.insert(std::make_pair<int,MotionGraph::State*>(pState->GetStateID(),pState));
 			}			
@@ -126,10 +152,32 @@ namespace Ogre {
 
 	}
 
+	MotionGraph::Trigger* MotionGraph::State::GetTrigger()
+	{
+		if ( !mTriggers.empty() )
+			return mTriggers.front();
+		else
+			return 0;
+	}
+
+	void MotionGraph::State::RemoveTrigger()
+	{
+		if ( !mTriggers.empty())
+			mTriggers.pop();
+	}
+
+
+	MotionGraph::Transition::Transition(const Ogre::MotionGraph::Transition &rhs):
+	mFromState(rhs.mFromState),mToState(rhs.mToState),mActionName(rhs.mActionName),
+		mTriggerType(rhs.mTriggerType),mProbability(rhs.mProbability)
+	{
+
+	}
+
 	void MotionGraph::Transition::SetTriggerType( const String& triggertype )
 	{
-		
-			mTriggerType = TriggerNameToTriggerType(triggertype);
+
+		mTriggerType = TriggerNameToTriggerType(triggertype);
 
 	}
 
@@ -138,6 +186,12 @@ namespace Ogre {
 		mTriggers.push(pTrigger);
 	}
 
+	void MotionGraph::State::AddTransition( Transition* pTran )
+	{
+
+		if ( pTran )
+			mTransitions.insert(std::make_pair(pTran->GetProbability(),pTran));
+	}
 
 	bool MotionGraph::Construct(const MotionGraphScript& mgScript)
 	{
@@ -149,18 +203,91 @@ namespace Ogre {
 			it != mgScript.GetStates().end(); it++)
 		{
 			State* pState = new State( it->first );
+			pState->SetCurrentAction(it->second->GetCurrentActionName());
 			mStates.insert(std::make_pair(pState->GetStateID(),pState));
 
 
 
 		}
+		mCurrentState = mStates.rbegin()->second;
 		for ( MotionGraphScript::TransitionArray::const_iterator it = mgScript.GetTransitions().begin();
 			it != mgScript.GetTransitions().end(); it++)
 		{
-			static_cast<MotionGraph::Transition*>(*it);
-			mTransitions.push_back(*it);
+			//copy constructor
+			Transition* pTran = new MotionGraph::Transition(*static_cast<MotionGraph::Transition*>(*it));
+			mTransitions.push_back(pTran);
+			// use new Transitions and new States
+			pTran->AddFromState(mStates.find(pTran->GetFromState()->GetStateID())->second);
+			pTran->AddToState(mStates.find(pTran->GetToState()->GetStateID())->second);
+			pTran->GetFromState()->AddTransition(pTran);
+
 
 		}
 		return true;
 	}
+
+	void MotionGraph::ProcessTrigger(const Entity* pEntity)
+	{
+		Trigger* trigger;
+		if ( mCurrentState )
+		{
+			trigger = mCurrentState->GetTrigger();
+			if ( trigger)
+			{
+				switch ( trigger->mType )
+				{
+				case NON_TRIGGER:
+					break;
+				case ANIMATION_END:
+					{
+						String ActionName = mCurrentState->GetCurrentActionName();
+						AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
+						pAnimState->setTimePosition(0.0);//restart from the beginning
+						pAnimState->setEnabled(false);
+						mCurrentState->RemoveTrigger();
+						Transit();
+						ActionName = mCurrentState->GetCurrentActionName();
+						pAnimState = pEntity->getAnimationState(ActionName);
+						pAnimState->setEnabled(true);
+						pAnimState->setLoop(false);
+						break;
+					}
+				case DIRECTION_CONTROL:
+					// Do motion interpolation in the same state
+					break;
+
+				}
+			}
+		}
+	}
+
+	MotionGraph::Transition* MotionGraph::State::GetBestTransition()
+	{
+		if ( mTransitions.empty() )
+		{
+			return 0;
+		}
+		else
+		{
+			return mTransitions.rbegin()->second;
+		}
+
+	}
+
+	void MotionGraph::Transit()
+	{
+		Transition* pTran =	mCurrentState->GetBestTransition();
+		if ( pTran )
+		{
+			mCurrentState = pTran->GetToState();
+		}
+
+
+	}
+
+	bool MotionGraphScript::IsLoaded() const
+	{
+		return (strcmp(mScriptName.c_str(),""))?true:false;
+	}
+
 }
