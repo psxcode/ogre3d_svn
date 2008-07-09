@@ -110,6 +110,8 @@ namespace Ogre {
 		ResourceHandle getHandle(void) const;
 		/// @copydoc Resource::getGroup
 		const String& getGroup(void);
+		/// @get  master skeleton's motion graph
+		MotionGraph* getMotionGraph(const String& MgName);
 
     protected:
         /// Pointer back to master Skeleton
