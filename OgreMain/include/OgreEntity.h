@@ -95,7 +95,7 @@ namespace Ogre {
 
 		/** The Motion Graph this entity is currently executing through.
 		*/
-		const MotionGraph* mpMotionGraph;
+		MotionGraph* mpMotionGraph;
 
 		/** List of SubEntities (point to SubMeshes).
 		*/
@@ -740,8 +740,11 @@ namespace Ogre {
 
 		// westine added 
 		/** Set the animation frame rate of the whole motion graph
+		// return value:
+		true: Motion Graph has been advanced successfully
+		false: there is no motion graph to be advanced
 		*/
-		void MotionGraphAdvanceTime(Real offset);
+		bool AdvanceMotionGraphTime(Real offset);
 		/** An entity can execute many types of behavior,
 		for now only motion graph is provided, so let this be ExecuteMotionGraph().
 		Future version of Execute() will
@@ -749,6 +752,8 @@ namespace Ogre {
 		language e.g. Python the transit parameters.
 		*/
 		void ExecuteMotionGraph(const String& mgName);
+
+
 
 
 	};
