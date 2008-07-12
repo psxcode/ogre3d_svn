@@ -1,7 +1,6 @@
 #include "ProceduralTools.h"
 
-#include <OgreManualObject.h>
-#include <OgreSceneManager.h>
+#include <Ogre.h>
 
 using namespace Ogre;
 
@@ -48,20 +47,42 @@ void UnSwizzle(uint index, uint sizeLog2[3], uint * pPos)
 }
 
 
-ManualObject* ProceduralTools::generateTetrahedra(SceneManager* sceneManager)
+MeshPtr ProceduralTools::generateTetrahedra()
 {
-	//FILE* logFile = fopen("TetrahedraOgre.log","w");
+	MeshPtr tetrahedraMesh = Ogre::MeshManager::getSingleton().createManual
+		("TetrahedraMesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
-	ManualObject* tetrahedra = sceneManager->createManualObject("Tetrahedra");
-
+	SubMesh* tetrahedraSubMesh = tetrahedraMesh->createSubMesh();
+	tetrahedraSubMesh->setMaterialName("Ogre/IsoSurf/TessellateTetrahedra");
+	
 	uint sizeLog2[3] = { X_SIZE_LOG2, Y_SIZE_LOG2, Z_SIZE_LOG2 };
 	uint nTotalBits = sizeLog2[0] + sizeLog2[1] + sizeLog2[2];
 	uint nPointsTotal = 1 << nTotalBits;
 
-	//fprintf(logFile,"Num Points : %d\n" ,nPointsTotal);
+	tetrahedraSubMesh->useSharedVertices = false;
+	tetrahedraSubMesh->vertexData = new VertexData;
+	tetrahedraSubMesh->indexData = new IndexData;
 
-	tetrahedra->begin("Ogre/IsoSurf/TessellateTetrahedra");
-	tetrahedra->estimateVertexCount(nPointsTotal);
+	tetrahedraSubMesh->vertexData->vertexDeclaration->addElement(0, 0, 
+		VET_FLOAT4, VES_POSITION);
+
+	HardwareVertexBufferSharedPtr vertexBuffer = HardwareBufferManager::getSingleton().createVertexBuffer(
+		tetrahedraSubMesh->vertexData->vertexDeclaration->getVertexSize(0), 
+		nPointsTotal, 
+		HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+
+	HardwareIndexBufferSharedPtr indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+		HardwareIndexBuffer::IT_32BIT, 
+		CELLS_COUNT * sizeof(uint) * 36, 
+		HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+	
+	tetrahedraSubMesh->vertexData->vertexBufferBinding->setBinding(0, vertexBuffer);
+	tetrahedraSubMesh->vertexData->vertexCount = nPointsTotal;
+	tetrahedraSubMesh->vertexData->vertexStart = 0;
+	
+	tetrahedraSubMesh->indexData->indexBuffer = indexBuffer;
+	
+	float* positions = static_cast<float*>(vertexBuffer->lock(HardwareBuffer::HBL_DISCARD));
 	
 	//Generate positions
 	for(uint i=0; i<nPointsTotal; i++) {
@@ -70,18 +91,21 @@ ManualObject* ProceduralTools::generateTetrahedra(SceneManager* sceneManager)
 		pos[1] = (i >> X_SIZE_LOG2) & ((1<<Y_SIZE_LOG2)-1);
 		pos[2] = (i >> (X_SIZE_LOG2+Y_SIZE_LOG2)) & ((1<<Z_SIZE_LOG2)-1);
 
-		Vector3 posVector;
-		posVector.x = (Real(pos[0]) / Real(1<<X_SIZE_LOG2))*2.0-1.0;
-		posVector.y = (Real(pos[1]) / Real(1<<Y_SIZE_LOG2))*2.0-1.0;
-		posVector.z = (Real(pos[2]) / Real(1<<Z_SIZE_LOG2))*2.0-1.0;
-		
-		//fprintf(logFile, "Point %d : %f %f %f\n", i, posVector[0], posVector[1], posVector[2]);
-		tetrahedra->position(posVector);
-	}
+		*positions++ = (float(pos[0]) / float(1<<X_SIZE_LOG2))*2.0-1.0;
+		*positions++ = (float(pos[1]) / float(1<<Y_SIZE_LOG2))*2.0-1.0;
+		*positions++ = (float(pos[2]) / float(1<<Z_SIZE_LOG2))*2.0-1.0;
+		*positions++ = 1.0f;
 
-	int quadNum = 0;
-	tetrahedra->estimateIndexCount(nPointsTotal * 6 * 4);
+		float* logPositions = positions - 4;
+		//fprintf(logFile, "Point %d : %f %f %f\n", i, logPositions[0], logPositions[1], logPositions[2]);
+	}
+	vertexBuffer->unlock();
+	
+	uint numTris = 0;
+
 	//Generate indices
+	uint32* indices = static_cast<uint32*>(indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+
 	for (uint i = 0; i<nPointsTotal; i++) {
 
 		uint pos[3];
@@ -95,83 +119,87 @@ ManualObject* ProceduralTools::generateTetrahedra(SceneManager* sceneManager)
 		if (pos[0] == (1 << sizeLog2[0]) - 1 || pos[1] == (1 << sizeLog2[1]) - 1 || pos[2] == (1 << sizeLog2[2]) - 1)
 			continue;	// skip extra cells
 
+		numTris += 12; //Got to this point, adding 12 indices
 
 		// NOTE: order of vertices matters! important for backface culling
 
 		// T0
-		uint32 indices[4];
-		indices[0] = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
-		indices[1] = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		indices[2] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
-		indices[3] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-		tetrahedra->quad(indices[0], indices[1], indices[2], indices[3]);
-//		fprintf(logFile, "Quad %d : %d, %d, %d, %d\n", quadNum++, indices[0], indices[1], indices[2], indices[3]);
-//#define QUAD_DEBUG_NUM -1
-//		assert(quadNum != QUAD_DEBUG_NUM);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
 		
-		// T1
-		indices[0] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-		indices[1] = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		indices[2] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
-		indices[3] = MAKE_INDEX(pos[0], pos[1] + 1, pos[2], sizeLog2);
-		tetrahedra->quad(indices[0], indices[1], indices[2], indices[3]);
-		//fprintf(logFile, "Quad %d : %d, %d, %d, %d\n", quadNum++, indices[0], indices[1], indices[2], indices[3]);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
 
-		//assert(quadNum != QUAD_DEBUG_NUM);
+		uint* indicesLog = indices-4;
+
+		// T1
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
+
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2], sizeLog2);
+
+		indicesLog = indices-3;
 
 		// T2
-		indices[0] = MAKE_INDEX(pos[0], pos[1] + 1, pos[2], sizeLog2);
-		indices[1] = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		indices[2] = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
-		indices[3] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-		tetrahedra->quad(indices[0], indices[1], indices[2], indices[3]);
-		//fprintf(logFile, "Quad %d : %d, %d, %d, %d\n", quadNum++, indices[0], indices[1], indices[2], indices[3]);
+		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
 
-		//assert(quadNum != QUAD_DEBUG_NUM);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
+
+		indicesLog = indices-3;
 
 		// T3
-		indices[0] = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		indices[1] = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
-		indices[2] = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
-		indices[3] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-		tetrahedra->quad(indices[0], indices[1], indices[2], indices[3]);
-		//fprintf(logFile, "Quad %d : %d, %d, %d, %d\n", quadNum++, indices[0], indices[1], indices[2], indices[3]);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
 
-		//assert(quadNum != QUAD_DEBUG_NUM);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
+
+		indicesLog = indices-3;
 
 		// T4
-		indices[0] = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
-		indices[1] = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		indices[2] = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
-		indices[3] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-		tetrahedra->quad(indices[0], indices[1], indices[2], indices[3]);
-		//fprintf(logFile, "Quad %d : %d, %d, %d, %d\n", quadNum++, indices[0], indices[1], indices[2], indices[3]);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
 
-		//assert(quadNum != QUAD_DEBUG_NUM);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
+
+		indicesLog = indices-3;
 
 		// T5
-		indices[0] = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		indices[1] = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
-		indices[2] = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
-		indices[3] = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-		tetrahedra->quad(indices[0], indices[1], indices[2], indices[3]);
-		//fprintf(logFile, "Quad %d : %d, %d, %d, %d\n", quadNum++, indices[0], indices[1], indices[2], indices[3]);
+		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
 
-		//assert(quadNum != QUAD_DEBUG_NUM);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
+		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
+
+		indicesLog = indices-3;
 	}
 	
-	tetrahedra->end();
+	indexBuffer->unlock();
 
-	//Set the shader params.
-	/*int sizeMaskArray[] = { (1<<X_SIZE_LOG2)-1, (1<<Y_SIZE_LOG2)-1, (1<<Z_SIZE_LOG2)-1 };
-	int sizeShiftArray[] = { 0, X_SIZE_LOG2, X_SIZE_LOG2+Y_SIZE_LOG2 };
-	Ogre::Pass* targetPass = tetrahedra->getSection(0)->getMaterial()->getTechnique(0)->getPass(0);
-	targetPass->getVertexProgramParameters()->setNamedConstant("SizeMask", sizeMaskArray, 3);
-	targetPass->getVertexProgramParameters()->setNamedConstant("SizeShift", sizeShiftArray, 3);
-	targetPass->getGeometryProgramParameters()->setNamedConstant("SizeMask", sizeMaskArray, 3);
-	targetPass->getGeometryProgramParameters()->setNamedConstant("SizeShift", sizeShiftArray, 3);*/
+	tetrahedraSubMesh->indexData->indexCount = numTris * 3;
+	tetrahedraSubMesh->indexData->indexStart = 0;
 
-	//fclose(logFile);
+	AxisAlignedBox meshBounds;
+	meshBounds.setMinimum(-1,-1,-1);
+	meshBounds.setMaximum(1,1,1);
+	tetrahedraMesh->_setBounds(meshBounds);
+	tetrahedraMesh->_setBoundingSphereRadius(2);
 
-	return tetrahedra;
+	return tetrahedraMesh;
 }

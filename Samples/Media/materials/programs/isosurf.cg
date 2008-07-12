@@ -58,7 +58,7 @@ SampleData SampleFieldVS(int index : VERTEXID, float4 pos : POSITION)
 	SampleData o;
 
 	float3 Pos;
-#if 1
+#if 0
 	// Generate sampling point position based on its index
 	Pos.x = float((index >> SizeShift.x) & SizeMask.x) / (SizeMask.x + 1);
 	Pos.y = float((index >> SizeShift.y) & SizeMask.y) / (SizeMask.y + 1);

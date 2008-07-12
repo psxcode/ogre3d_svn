@@ -25,6 +25,23 @@ Description: Demonstrates the use of the geometry shader to tessellate an
 
 #include "ProceduralTools.h"
 
+Entity* tetrahedra;
+
+class TetraHedraShaderListener : public FrameListener
+{
+	virtual bool frameStarted(const FrameEvent& evt) 
+	{ 
+		Real seconds = (Real)(Root::getSingleton().getTimer()->getMilliseconds()) / 1000.0;
+		Ogre::Pass* renderPass = tetrahedra->getSubEntity(0)->getMaterial()->getTechnique(0)->getPass(0);
+		if (renderPass->hasVertexProgram())
+		{
+			renderPass->getVertexProgramParameters()->setNamedConstant("Metaballs[1]", Ogre::Vector4(
+				0.1 + Ogre::Math::Sin(seconds)*0.5, Ogre::Math::Cos(seconds), 0.1, 0));
+		}
+		return true; 
+	}
+};
+
 class IsoSurfApplication : public ExampleApplication
 {
 public:
@@ -50,15 +67,24 @@ protected:
 		Ogre::LogManager::getSingleton().getDefaultLog()->stream() << 
 			"Num output vertices per geometry shader run : " << maxOutputVertices;
 
-		mCamera->setPosition(20, 0, 100);
+		
+		mCamera->setPosition(0, 0, -50);
         mCamera->lookAt(0,0,0);
-			
+		mCamera->setNearClipDistance(0.1);
+		mCamera->setFarClipDistance(100);
+
+		MeshPtr tetrahedraMesh = ProceduralTools::generateTetrahedra();
 		//Create tetrahedra and add it to the root scene node
-		ManualObject* tetraHedra = ProceduralTools::generateTetrahedra(mSceneMgr);
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(tetraHedra);
+		tetrahedra = mSceneMgr->createEntity("TetrahedraEntity", tetrahedraMesh->getName());
+		//tetraHedra->setDebugDisplayEnabled(true);
+		Ogre::SceneNode* parentNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		parentNode->attachObject(tetrahedra);
+		parentNode->setScale(10,10,10);
 
 		//Same setting as Nvidia demo
-		mWindow->getViewport(0)->setBackgroundColour(Ogre::ColourValue(0.2,0.2,0.2));
+		mWindow->getViewport(0)->setBackgroundColour(Ogre::ColourValue(0.4,0.4,0.4));
+
+		mRoot->addFrameListener(new TetraHedraShaderListener);
     }
 };
 
