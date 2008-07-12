@@ -30,6 +30,10 @@ Torus Knot Software Ltd.
 #include "OgreStableHeaders.h"
 #include "OgreDistanceLodStrategy.h"
 
+#include <limits>
+
+#include "OgreViewport.h"
+
 namespace Ogre {
     //-----------------------------------------------------------------------
     template<> DistanceLodStrategy* Singleton<DistanceLodStrategy>::ms_Singleton = 0;
@@ -44,6 +48,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     DistanceLodStrategy::DistanceLodStrategy()
         : LodStrategy("Distance")
+        , mReferenceViewEnabled(false)
+        , mReferenceViewValue(std::numeric_limits<Real>::quiet_NaN())
     { }
     //-----------------------------------------------------------------------
     Real DistanceLodStrategy::getValueImpl(const MovableObject *movableObject, const Ogre::Camera *camera) const
@@ -54,8 +60,32 @@ namespace Ogre {
         // it with d^2 - r^2, which is good enough for determining 
         // lod.
         Real squaredDepth = movableObject->getParentNode()->getSquaredViewDepth(camera) - Math::Sqr(movableObject->getBoundingRadius());
+
+        // Check if reference view needs to be taken into account
+        if (mReferenceViewEnabled)
+        {
+            // Reference view only applicable to perspective projection
+            assert(camera->getProjectionType() == PT_PERSPECTIVE && "Camera projection type must be perspective!");
+
+            // Get camera viewport
+            Viewport *viewport = camera->getViewport();
+
+            // Get viewport area
+            Real viewportArea = viewport->getActualWidth() * viewport->getActualHeight();
+
+            // Get projection matrix (this is done to avoid computation of tan(fov / 2))
+            const Matrix4& projectionMatrix = camera->getProjectionMatrix();
+
+            // Compute bias value (note that this is similar to the method used for PixelCountLodStrategy)
+            Real biasValue = viewportArea * projectionMatrix[0][0] * projectionMatrix[1][1];
+
+            // Scale squared depth appropriately
+            squaredDepth *= (mReferenceViewValue / biasValue);
+        }
+
         // Squared depth should never be below 0, so clamp
         squaredDepth = std::max(squaredDepth, Real(0));
+
         // Now adjust it by the camera bias and return the computed value
         return squaredDepth * camera->_getLodBiasInverse();
     }
@@ -64,6 +94,35 @@ namespace Ogre {
     {
         assert(factor > 0.0f && "Bias factor must be > 0!");
         return 1.0f / factor;
+    }
+    //---------------------------------------------------------------------
+    void DistanceLodStrategy::setReferenceView(Real viewportWidth, Real viewportHeight, Radian fovY)
+    {
+        // Determine x FOV based on aspect ratio
+        Radian fovX = fovY * (viewportWidth / viewportHeight);
+
+        // Determine viewport area
+        Real viewportArea = viewportHeight * viewportWidth;
+
+        // Compute reference view value based on viewport area and FOVs
+        mReferenceViewValue = viewportArea * Math::Tan(fovX * 0.5f) * Math::Tan(fovY * 0.5f);
+
+        // Enable use of reference view
+        mReferenceViewEnabled = true;
+    }
+    //---------------------------------------------------------------------
+    void DistanceLodStrategy::setReferenceViewEnabled(bool value)
+    {
+        // Ensure reference value has been set before being enabled
+        if (value)
+            assert(mReferenceViewValue != std::numeric_limits<Real>::quiet_NaN() && "Reference view must be set before being enabled!");
+
+        mReferenceViewEnabled = value;
+    }
+    //---------------------------------------------------------------------
+    bool DistanceLodStrategy::getReferenceViewEnabled() const
+    {
+        return mReferenceViewEnabled;
     }
 
 } // namespace

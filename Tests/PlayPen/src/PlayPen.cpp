@@ -41,6 +41,7 @@ Description: Somewhere to play in the sand...
 #include "AnimationBlender.h"
 #include "OgreErrorDialog.h"
 #include "OgreFontManager.h"
+#include "OgreDistanceLodStrategy.h"
 // Static plugins declaration section
 // Note that every entry in here adds an extra header / library dependency
 #ifdef OGRE_STATIC_LIB
@@ -6830,18 +6831,21 @@ protected:
         pass->setAmbient(Ogre::ColourValue::Green);
         pass->setDiffuse(Ogre::ColourValue::Green);
 
-        // Set material lod strategy
-        LodStrategy *materialLodStrategy = LodStrategyManager::getSingleton().getStrategy("PixelCount");
-        material->setLodStrategy(materialLodStrategy);
+        //// Set material lod strategy
+        //LodStrategy *materialLodStrategy = LodStrategyManager::getSingleton().getStrategy("PixelCount");
+        //material->setLodStrategy(materialLodStrategy);
 
         // Create material lods
         Material::LodValueList lods;
-        //lods.push_back(Math::Sqr(200));
-        //lods.push_back(Math::Sqr(400));
-        lods.push_back(Math::Sqr(400));
         lods.push_back(Math::Sqr(200));
+        lods.push_back(Math::Sqr(400));
+        //lods.push_back(Math::Sqr(400));
+        //lods.push_back(Math::Sqr(200));
         material->setLodLevels(lods);
         entity->setMaterialName(material->getName());
+
+        // Set distance lod strategy reference view
+        DistanceLodStrategy::getSingleton().setReferenceView(256, 256, Degree(60));
 
         // Add lod listener
         mSceneMgr->addLodListener(new MyLodListener(mSceneMgr));

@@ -50,6 +50,23 @@ namespace Ogre {
         /// @copydoc LodStrategy::transformBias
         virtual Real transformBias(Real factor) const;
 
+        /** Sets the reference view upon which the distances were based.
+            @note
+                This automatically enables use of the reference view.
+            @note
+                There is no corresponding get method for these values as
+                they are not saved, but used to compute a reference value.
+        */
+        void setReferenceView(Real viewportWidth, Real viewportHeight, Radian fovY);
+
+        /** Enables to disables use of the reference view.
+            @note Do not enable use of the reference view before setting it.
+        */
+        void setReferenceViewEnabled(bool value);
+
+        /** Determine if use of the reference view is enabled */
+        bool getReferenceViewEnabled() const;
+
         /** Override standard Singleton retrieval.
         @remarks
         Why do we do this? Well, it's because the Singleton
@@ -82,6 +99,10 @@ namespace Ogre {
         preventing link errors.
         */
         static DistanceLodStrategy* getSingletonPtr(void);
+
+    private:
+        bool mReferenceViewEnabled;
+        Real mReferenceViewValue;
 
     };
 
