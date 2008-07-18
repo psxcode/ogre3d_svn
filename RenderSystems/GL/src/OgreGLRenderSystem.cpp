@@ -349,7 +349,7 @@ namespace Ogre {
 				rsc->addShaderProfile("vp40");
 			}
 
-			//if (GLEW_NV_vertex_program4)
+			if (GLEW_NV_vertex_program4)
 			{
 				rsc->addShaderProfile("gp4vp");
 				rsc->addShaderProfile("gpu_vp");
@@ -2619,7 +2619,10 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 			primType = GL_POINTS;
 			break;
 		case RenderOperation::OT_LINE_LIST:
-			primType = GL_LINES;
+			//HACK Ogre GSoC Geometry shaders 
+			//GL_LINES_ADJACENCY_EXT instead of GL_LINES.
+			//TODO : Solve properly
+			primType = GL_LINES_ADJACENCY_EXT;
 			break;
 		case RenderOperation::OT_LINE_STRIP:
 			primType = GL_LINE_STRIP;
