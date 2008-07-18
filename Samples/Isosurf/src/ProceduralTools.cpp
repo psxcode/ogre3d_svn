@@ -74,7 +74,7 @@ MeshPtr ProceduralTools::generateTetrahedra()
 
 	HardwareIndexBufferSharedPtr indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
 		HardwareIndexBuffer::IT_32BIT, 
-		CELLS_COUNT * sizeof(uint) * 36, 
+		CELLS_COUNT * sizeof(uint) * 24, 
 		HardwareBuffer::HBU_STATIC_WRITE_ONLY);
 	
 	tetrahedraSubMesh->vertexData->vertexBufferBinding->setBinding(0, vertexBuffer);
