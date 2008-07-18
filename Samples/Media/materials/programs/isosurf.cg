@@ -1,3 +1,5 @@
+// Ogre port of Nvidia's IsoSurf.cg file
+// Modified code follows. See http://developer.download.nvidia.com/SDK/10/opengl/samples.html for original
 //
 // Cg port of Yury Uralsky's metaball FX shader
 //

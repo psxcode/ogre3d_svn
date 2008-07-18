@@ -53,6 +53,7 @@ MeshPtr ProceduralTools::generateTetrahedra()
 		("TetrahedraMesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 	SubMesh* tetrahedraSubMesh = tetrahedraMesh->createSubMesh();
+	tetrahedraSubMesh->operationType = RenderOperation::OT_LINE_LIST;
 	tetrahedraSubMesh->setMaterialName("Ogre/IsoSurf/TessellateTetrahedra");
 	
 	uint sizeLog2[3] = { X_SIZE_LOG2, Y_SIZE_LOG2, Z_SIZE_LOG2 };
@@ -97,11 +98,10 @@ MeshPtr ProceduralTools::generateTetrahedra()
 		*positions++ = 1.0f;
 
 		float* logPositions = positions - 4;
-		//fprintf(logFile, "Point %d : %f %f %f\n", i, logPositions[0], logPositions[1], logPositions[2]);
 	}
 	vertexBuffer->unlock();
 	
-	uint numTris = 0;
+	uint numIndices = 0;
 
 	//Generate indices
 	uint32* indices = static_cast<uint32*>(indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
@@ -119,7 +119,7 @@ MeshPtr ProceduralTools::generateTetrahedra()
 		if (pos[0] == (1 << sizeLog2[0]) - 1 || pos[1] == (1 << sizeLog2[1]) - 1 || pos[2] == (1 << sizeLog2[2]) - 1)
 			continue;	// skip extra cells
 
-		numTris += 12; //Got to this point, adding 12 indices
+		numIndices += 24; //Got to this point, adding 24 indices
 
 		// NOTE: order of vertices matters! important for backface culling
 
@@ -127,72 +127,42 @@ MeshPtr ProceduralTools::generateTetrahedra()
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
-		
-		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-
-		uint* indicesLog = indices-4;
 
 		// T1
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
-
-		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2], sizeLog2);
-
-		indicesLog = indices-3;
 
 		// T2
 		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
-
-		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-
-		indicesLog = indices-3;
 
 		// T3
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
-
-		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
-		*indices++ = MAKE_INDEX(pos[0], pos[1] + 1, pos[2] + 1, sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-
-		indicesLog = indices-3;
 
 		// T4
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2] + 1, sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
-
-		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
-		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-
-		indicesLog = indices-3;
 
 		// T5
 		*indices++ = MAKE_INDEX(pos[0], pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
-
-		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2], sizeLog2);
-		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1], pos[2] + 1, sizeLog2);
 		*indices++ = MAKE_INDEX(pos[0] + 1, pos[1] + 1, pos[2] + 1, sizeLog2);
-
-		indicesLog = indices-3;
 	}
 	
 	indexBuffer->unlock();
 
-	tetrahedraSubMesh->indexData->indexCount = numTris * 3;
+	tetrahedraSubMesh->indexData->indexCount = numIndices;
 	tetrahedraSubMesh->indexData->indexStart = 0;
 
 	AxisAlignedBox meshBounds;

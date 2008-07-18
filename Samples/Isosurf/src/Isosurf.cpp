@@ -35,12 +35,17 @@ class TetraHedraShaderListener : public FrameListener
 		Ogre::Pass* renderPass = tetrahedra->getSubEntity(0)->getMaterial()->getTechnique(0)->getPass(0);
 		if (renderPass->hasVertexProgram())
 		{
-			renderPass->getVertexProgramParameters()->setNamedConstant("Metaballs[1]", Ogre::Vector4(
-				0.1 + Ogre::Math::Sin(seconds)*0.5, Ogre::Math::Cos(seconds), 0.1, 0));
+			Ogre::Vector4 constParam = Ogre::Vector4(-0.5, 0.0, 0.0, 0.2);
+			renderPass->getVertexProgramParameters()->setNamedConstant("Metaballs[0]", constParam);
+
+			Ogre::Vector4 timeParam = Ogre::Vector4(
+				0.1 + Ogre::Math::Sin(seconds)*0.5, Ogre::Math::Cos(seconds)*0.5, 0.0, 0.1);
+			renderPass->getVertexProgramParameters()->setNamedConstant("Metaballs[1]", timeParam);
 		}
 		return true; 
 	}
 };
+
 
 class IsoSurfApplication : public ExampleApplication
 {
@@ -68,7 +73,7 @@ protected:
 			"Num output vertices per geometry shader run : " << maxOutputVertices;
 
 		
-		mCamera->setPosition(0, 0, -50);
+		mCamera->setPosition(0, 0, -4);
         mCamera->lookAt(0,0,0);
 		mCamera->setNearClipDistance(0.1);
 		mCamera->setFarClipDistance(100);
@@ -79,10 +84,7 @@ protected:
 		//tetraHedra->setDebugDisplayEnabled(true);
 		Ogre::SceneNode* parentNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		parentNode->attachObject(tetrahedra);
-		parentNode->setScale(10,10,10);
-
-		//Same setting as Nvidia demo
-		mWindow->getViewport(0)->setBackgroundColour(Ogre::ColourValue(0.4,0.4,0.4));
+		//parentNode->setScale(10,10,10);
 
 		mRoot->addFrameListener(new TetraHedraShaderListener);
     }
