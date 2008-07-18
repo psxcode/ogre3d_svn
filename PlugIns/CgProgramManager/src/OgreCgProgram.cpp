@@ -264,11 +264,7 @@ namespace Ogre {
 							"Problem parsing the following Cg Uniform: '"
 							+ paramName + "' in file " + mName);
 						// next uniform
-
-						//HACK GSoC Geometry shader : returning here.
-						//Get infinite loop when parsing IsoSurf.cg
-						return;
-
+						parameter = cgGetNextParameter(parameter);
 						continue;
 					}
 					if (isRegisterCombiner)
