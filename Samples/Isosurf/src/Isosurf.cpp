@@ -73,7 +73,7 @@ protected:
 			"Num output vertices per geometry shader run : " << maxOutputVertices;
 
 		
-		mCamera->setPosition(0, 0, -4);
+		mCamera->setPosition(0, 0, -40);
         mCamera->lookAt(0,0,0);
 		mCamera->setNearClipDistance(0.1);
 		mCamera->setFarClipDistance(100);
@@ -84,7 +84,7 @@ protected:
 		//tetraHedra->setDebugDisplayEnabled(true);
 		Ogre::SceneNode* parentNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		parentNode->attachObject(tetrahedra);
-		//parentNode->setScale(10,10,10);
+		parentNode->setScale(10,10,10);
 
 		mRoot->addFrameListener(new TetraHedraShaderListener);
     }
