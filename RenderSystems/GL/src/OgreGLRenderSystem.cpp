@@ -417,7 +417,7 @@ namespace Ogre {
 
 		// Check if geometry shaders are supported
 		if (GLEW_VERSION_2_0 &&
-			GLEW_NV_geometry_shader4)
+			GLEW_EXT_geometry_shader4)
 		{
 			rsc->setCapability(RSC_GEOMETRY_PROGRAM);
 			rsc->addShaderProfile("nvgp4");
