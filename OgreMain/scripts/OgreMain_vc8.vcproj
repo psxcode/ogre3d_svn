@@ -1729,6 +1729,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreRenderToBufferManager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreRenderToBufferObject.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreRenderWindow.h"
 				>
 			</File>
