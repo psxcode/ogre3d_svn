@@ -6762,13 +6762,13 @@ protected:
 
 	}
 
-    class MyLodListener
+    class TestLodListener
         : public LodListener
     {
         SceneManager *mSceneMgr;
 
     public:
-        MyLodListener(SceneManager *sceneMgr)
+        TestLodListener(SceneManager *sceneMgr)
             : mSceneMgr(sceneMgr)
         { }
 
@@ -6786,6 +6786,34 @@ protected:
                 double value = 0.2 * (1 + evt.newLodIndex);
                 mSceneMgr->setAmbientLight(ColourValue(value, value, value));
             }
+        }
+    };
+
+    class DebugLodStrategyListener
+        : public FrameListener
+    {
+        const Entity *mEntity;
+        const Camera *mCamera;
+
+    public:
+        DebugLodStrategyListener(const Entity *entity, const Camera *camera)
+            : mEntity(entity)
+            , mCamera(camera)
+        { }
+
+        virtual bool frameStarted(const FrameEvent& evt)
+        {
+            MeshPtr mesh = mEntity->getMesh();
+            const LodStrategy *strategy = mesh->getLodStrategy();
+            Real value = strategy->getValue(mEntity, mCamera);
+
+            TextAreaOverlayElement *debugTextArea = (TextAreaOverlayElement *)
+                OverlayManager::getSingleton().getOverlayElement("Ogre/DebugLodTextArea");
+            debugTextArea->setCaption(
+                "Strategy: " + strategy->getName() + "\n" +
+                "Value: " + Ogre::StringConverter::toString(value));
+
+            return FrameListener::frameStarted(evt);
         }
     };
 
@@ -6831,16 +6859,27 @@ protected:
         pass->setAmbient(Ogre::ColourValue::Green);
         pass->setDiffuse(Ogre::ColourValue::Green);
 
-        //// Set material lod strategy
-        //LodStrategy *materialLodStrategy = LodStrategyManager::getSingleton().getStrategy("PixelCount");
-        //material->setLodStrategy(materialLodStrategy);
-
-        // Create material lods
+        // Material lods set based on strategy
         Material::LodValueList lods;
-        lods.push_back(Math::Sqr(200));
-        lods.push_back(Math::Sqr(400));
-        //lods.push_back(Math::Sqr(400));
-        //lods.push_back(Math::Sqr(200));
+
+        // Toggle this to use pixel count strategy or default distance strategy
+        if (false)
+        {
+            // Set material lod strategy
+            LodStrategy *materialLodStrategy = LodStrategyManager::getSingleton().getStrategy("PixelCount");
+            material->setLodStrategy(materialLodStrategy);
+
+            // Create material lods
+            lods.push_back(Math::Sqr(400));
+            lods.push_back(Math::Sqr(200));
+        }
+        else
+        {
+            // Create material lods
+            lods.push_back(Math::Sqr(200));
+            lods.push_back(Math::Sqr(400));
+        }
+
         material->setLodLevels(lods);
         entity->setMaterialName(material->getName());
 
@@ -6848,7 +6887,27 @@ protected:
         DistanceLodStrategy::getSingleton().setReferenceView(256, 256, Degree(60));
 
         // Add lod listener
-        mSceneMgr->addLodListener(new MyLodListener(mSceneMgr));
+        mSceneMgr->addLodListener(new TestLodListener(mSceneMgr));
+
+        // Get debug overlay
+        Overlay* debugOverlay = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
+        // Create debug panel
+        OverlayContainer* debugPanel = (OverlayContainer*)
+            (OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugLodPanel"));
+        debugPanel->setPosition(0.025, 0.025);
+        debugPanel->setDimensions(0.5, 0.25);
+        debugOverlay->add2D(debugPanel);
+        // Create debug text area
+        TextAreaOverlayElement *debugTextArea = (TextAreaOverlayElement *)
+            (OverlayManager::getSingleton().createOverlayElement("TextArea", "Ogre/DebugLodTextArea"));
+        debugTextArea->setMetricsMode(GMM_RELATIVE);
+        debugTextArea->setPosition(0, 0);
+        debugTextArea->setFontName("BlueHighway");
+        debugTextArea->setDimensions(0.2, 0.5);
+        debugTextArea->setCharHeight(0.025);
+        debugPanel->addChild(debugTextArea);
+        // Add listener to update text
+        mRoot->addFrameListener(new DebugLodStrategyListener(entity, mCamera));
     }
 
 
