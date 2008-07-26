@@ -37,7 +37,7 @@ namespace Ogre {
     
 	typedef SharedPtr<RenderToVertexBufferObject> RenderToVertexBufferObjectSharedPtr;
 
-    class RenderToVertexBufferManager : public Singleton<RenderToVertexBufferManager>
+    class _OgreExport RenderToVertexBufferManager : public Singleton<RenderToVertexBufferManager>
     {
     public:
         /** Override standard Singleton retrieval.
