@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="ParticleGS"
-	ProjectGUID="{88671C74-F085-4C31-809F-A209AC7C101E}"
+	Name="Demo_ParticleGS"
+	ProjectGUID="{2A4FDAB7-A8FB-4B68-86EB-B60E9DA6ACF9}"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -203,19 +203,11 @@
 				RelativePath="..\src\ParticleGS.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\src\ProceduralTools.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
-			<File
-				RelativePath="..\src\ProceduralTools.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

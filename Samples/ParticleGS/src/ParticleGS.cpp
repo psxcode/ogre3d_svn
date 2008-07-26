@@ -23,30 +23,6 @@ Description: Demonstrates the use of the geometry shader to tessellate an
 
 #include "ExampleApplication.h"
 
-#include "ProceduralTools.h"
-
-Entity* tetrahedra;
-
-class TetraHedraShaderListener : public FrameListener
-{
-	virtual bool frameStarted(const FrameEvent& evt) 
-	{ 
-		Real seconds = (Real)(Root::getSingleton().getTimer()->getMilliseconds()) / 1000.0;
-		Ogre::Pass* renderPass = tetrahedra->getSubEntity(0)->getMaterial()->getTechnique(0)->getPass(0);
-		if (renderPass->hasVertexProgram())
-		{
-			Ogre::Vector4 constParam = Ogre::Vector4(-0.5, 0.0, 0.0, 0.2);
-			renderPass->getVertexProgramParameters()->setNamedConstant("Metaballs[0]", constParam);
-
-			Ogre::Vector4 timeParam = Ogre::Vector4(
-				0.1 + Ogre::Math::Sin(seconds)*0.5, Ogre::Math::Cos(seconds)*0.5, 0.0, 0.1);
-			renderPass->getVertexProgramParameters()->setNamedConstant("Metaballs[1]", timeParam);
-		}
-		return true; 
-	}
-};
-
-
 class IsoSurfApplication : public ExampleApplication
 {
 public:
@@ -71,22 +47,6 @@ protected:
 		int maxOutputVertices = caps->getGeometryProgramNumOutputVertices();
 		Ogre::LogManager::getSingleton().getDefaultLog()->stream() << 
 			"Num output vertices per geometry shader run : " << maxOutputVertices;
-
-		
-		mCamera->setPosition(0, 0, -40);
-        mCamera->lookAt(0,0,0);
-		mCamera->setNearClipDistance(0.1);
-		mCamera->setFarClipDistance(100);
-
-		MeshPtr tetrahedraMesh = ProceduralTools::generateTetrahedra();
-		//Create tetrahedra and add it to the root scene node
-		tetrahedra = mSceneMgr->createEntity("TetrahedraEntity", tetrahedraMesh->getName());
-		//tetraHedra->setDebugDisplayEnabled(true);
-		Ogre::SceneNode* parentNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		parentNode->attachObject(tetrahedra);
-		parentNode->setScale(10,10,10);
-
-		mRoot->addFrameListener(new TetraHedraShaderListener);
     }
 };
 
