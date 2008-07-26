@@ -100,14 +100,9 @@ namespace Ogre {
 		*/
 		virtual RenderToVertexBufferObject* createObjectImpl() = 0;
 	private:
-		/**
-			Register a render to vertex buffer object in the manager
-			@param newObject the newly constructed object.
-		*/
-		void _registerRenderToVertexBufferObject(RenderToVertexBufferObject* newObject);
-
 		//A list of all the render to vertex buffer objects
-		std::list<RenderToVertexBufferObject*> mR2vbObjects;
+		typedef std::set<RenderToVertexBufferObject*> RenderToVertexBufferObjectSet;
+		RenderToVertexBufferObjectSet mR2vbObjects;
     };
 }
 

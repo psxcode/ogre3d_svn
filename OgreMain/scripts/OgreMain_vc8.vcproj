@@ -900,6 +900,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreRenderToVertexBufferManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreRenderToVertexBufferObject.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreRenderWindow.cpp"
 				>
 			</File>
@@ -1729,11 +1737,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreRenderToBufferManager.h"
+				RelativePath="..\include\OgreRenderToVertexBufferManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreRenderToBufferObject.h"
+				RelativePath="..\include\OgreRenderToVertexBufferObject.h"
 				>
 			</File>
 			<File
