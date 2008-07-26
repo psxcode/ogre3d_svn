@@ -47,6 +47,12 @@ namespace Ogre {
         return Real(0);
     }
     //-----------------------------------------------------------------------
+    Real LodStrategy::transformUserValue(Real userValue) const
+    {
+        // No transformation by default
+        return userValue;
+    }
+    //-----------------------------------------------------------------------
     Real LodStrategy::getValue(const MovableObject *movableObject, const Camera *camera) const
     {
         // Just return implementation for now

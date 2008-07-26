@@ -867,9 +867,16 @@ namespace Ogre {
 	/** A way of recording the way each LODs is recorded this Mesh. */
 	struct MeshLodUsage
 	{
+        /** User-supplied values used to determine when th is lod applies.
+        @remarks
+            This is required in case the lod strategy changes.
+        */
+        Real userValue;
+
 		/** Value used by to determine when this lod applies.
 		@remarks
 			May be interpretted differently by different strategies.
+            Transformed from user-supplied values with LodStrategy::transformUserValue.
 		*/
 		Real value;
 		

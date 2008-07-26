@@ -50,6 +50,9 @@ namespace Ogre {
         /// @copydoc LodStrategy::transformBias
         virtual Real transformBias(Real factor) const;
 
+        /// @copydoc LodStrategy::transformUserValue
+        virtual Real transformUserValue(Real userValue) const;
+
         /** Sets the reference view upon which the distances were based.
             @note
                 This automatically enables use of the reference view.

@@ -6830,9 +6830,9 @@ protected:
         //MeshPtr mesh = meshManager->load("TestLod.mesh", "General");
         MeshPtr mesh = meshManager->load("knot.mesh", "General");
         Mesh::LodValueList distances;
-        distances.push_back(Math::Sqr(100));
-        distances.push_back(Math::Sqr(300));
-        distances.push_back(Math::Sqr(500));
+        distances.push_back(50);
+        distances.push_back(150);
+        distances.push_back(250);
         mesh->generateLodLevels(distances, Ogre::ProgressiveMesh::VRQ_PROPORTIONAL, 0.5);
 
         // Create entity
@@ -6863,21 +6863,21 @@ protected:
         Material::LodValueList lods;
 
         // Toggle this to use pixel count strategy or default distance strategy
-        if (false)
+        if (true)
         {
             // Set material lod strategy
             LodStrategy *materialLodStrategy = LodStrategyManager::getSingleton().getStrategy("PixelCount");
             material->setLodStrategy(materialLodStrategy);
 
             // Create material lods
-            lods.push_back(Math::Sqr(400));
-            lods.push_back(Math::Sqr(200));
+            lods.push_back(400000);
+            lods.push_back(100000);
         }
         else
         {
             // Create material lods
-            lods.push_back(Math::Sqr(200));
-            lods.push_back(Math::Sqr(400));
+            lods.push_back(100);
+            lods.push_back(200);
         }
 
         material->setLodLevels(lods);

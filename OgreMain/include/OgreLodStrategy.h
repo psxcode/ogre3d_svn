@@ -61,6 +61,13 @@ namespace Ogre {
         /** Transform lod bias so it only needs to be multiplied by the lod value. */
         virtual Real transformBias(Real factor) const = 0;
 
+        /** Transforum user supplied value to internal value.
+        @remarks
+            Do not throw exceptions for invalid values here, as the lod strategy
+            may be changed such that the values become valid.
+        */
+        virtual Real transformUserValue(Real userValue) const;
+
         /** Compute the lod value for a given movable object relative to a given camera. */
         Real getValue(const MovableObject *movableObject, const Camera *camera) const;
 

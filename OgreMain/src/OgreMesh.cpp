@@ -122,6 +122,7 @@ namespace Ogre {
 
 		// Init first (manual) lod
 		MeshLodUsage lod;
+        lod.userValue = std::numeric_limits<Real>::quiet_NaN(); // User value not used for base lod level
 		lod.value = mLodStrategy->getBaseValue();
         lod.edgeData = NULL;
         lod.manualMesh.setNull();
@@ -201,6 +202,13 @@ namespace Ogre {
 				buildEdgeList();
 			}
 		}
+
+        // The loading process accesses lod usages directly, so
+        // transformation of user values must occur after loading is complete.
+
+        // Transform user lod values (starting at index 1, no need to transform base value)
+        for (int i = 1; i < mMeshLodUsageList.size(); ++i)
+            mMeshLodUsageList[i].value = mLodStrategy->transformUserValue(mMeshLodUsageList[i].userValue);
 	}
 	//-----------------------------------------------------------------------
     void Mesh::loadImpl()
@@ -873,7 +881,8 @@ namespace Ogre {
         {
             // Record usage
             MeshLodUsage& lod = *++ilod;
-            lod.value = (*ivalue);
+            lod.userValue = (*ivalue);
+            lod.value = mLodStrategy->transformUserValue(lod.userValue);
             lod.edgeData = 0;
             lod.manualMesh.setNull();
         }
@@ -924,7 +933,8 @@ namespace Ogre {
 
 		mIsLodManual = true;
 		MeshLodUsage lod;
-		lod.value = lodValue;
+		lod.userValue = lodValue;
+        lod.value = mLodStrategy->transformUserValue(lod.userValue);
 		lod.manualName = meshName;
 		lod.manualMesh.setNull();
         lod.edgeData = 0;
@@ -1030,6 +1040,7 @@ namespace Ogre {
         mNumLods = 1;
 		// Init first (manual) lod
 		MeshLodUsage lod;
+        lod.userValue = std::numeric_limits<Real>::quiet_NaN();
 		lod.value = mLodStrategy->getBaseValue();
         lod.edgeData = 0;
         lod.manualMesh.setNull();
@@ -2094,6 +2105,11 @@ namespace Ogre {
 
         assert(mMeshLodUsageList.size());
         mMeshLodUsageList[0].value = mLodStrategy->getBaseValue();
+
+        // Re-transform user lod values (starting at index 1, no need to transform base value)
+        for (int i = 1; i < mMeshLodUsageList.size(); ++i)
+            mMeshLodUsageList[i].value = mLodStrategy->transformUserValue(mMeshLodUsageList[i].userValue);
+
     }
     //---------------------------------------------------------------------
 

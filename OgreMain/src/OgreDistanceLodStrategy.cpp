@@ -95,6 +95,12 @@ namespace Ogre {
         assert(factor > 0.0f && "Bias factor must be > 0!");
         return 1.0f / factor;
     }
+    //-----------------------------------------------------------------------
+    Real DistanceLodStrategy::transformUserValue(Real userValue) const
+    {
+        // Square user-supplied distance
+        return Math::Sqr(userValue);
+    }
     //---------------------------------------------------------------------
     void DistanceLodStrategy::setReferenceView(Real viewportWidth, Real viewportHeight, Radian fovY)
     {

@@ -108,6 +108,7 @@ namespace Ogre {
         }
 
 		// Also copy LOD information
+        mUserLodValues = rhs.mUserLodValues;
 		mLodValues = rhs.mLodValues;
         mLodStrategy = rhs.mLodStrategy;
         mCompilationRequired = rhs.mCompilationRequired;
@@ -743,10 +744,13 @@ namespace Ogre {
 		iend = lodValues.end();
 		// First, clear and add single zero entry
 		mLodValues.clear();
+        mUserLodValues.push_back(std::numeric_limits<Real>::quiet_NaN());
 		mLodValues.push_back(mLodStrategy->getBaseValue());
 		for (i = lodValues.begin(); i != iend; ++i)
 		{
-			mLodValues.push_back(*i);
+			mUserLodValues.push_back(*i);
+            if (mLodStrategy)
+                mLodValues.push_back(mLodStrategy->transformUserValue(*i));
 		}
 		
     }
@@ -789,6 +793,10 @@ namespace Ogre {
 
         assert(mLodValues.size());
         mLodValues[0] = mLodStrategy->getBaseValue();
+
+        // Re-transform all user lod values (starting at index 1, no need to transform base value)
+        for (int i = 1; i < mUserLodValues.size(); ++i)
+            mLodValues[i] = mLodStrategy->transformUserValue(mUserLodValues[i]);
     }
     //---------------------------------------------------------------------
 }

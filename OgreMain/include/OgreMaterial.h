@@ -109,6 +109,7 @@ namespace Ogre {
 		*/
         BestTechniquesBySchemeList mBestTechniquesBySchemeList;
 
+        LodValueList mUserLodValues;
         LodValueList mLodValues;
         const LodStrategy *mLodStrategy;
         bool mReceiveShadows;
