@@ -137,6 +137,8 @@ namespace Ogre {
 		VertexData* mVertexData;
 		unsigned int mMaxVertexCount;
     };
+
+	typedef SharedPtr<RenderToVertexBufferObject> RenderToVertexBufferObjectSharedPtr;
 }
 
 #endif

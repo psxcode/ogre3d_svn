@@ -35,8 +35,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
     
-	typedef SharedPtr<RenderToVertexBufferObject> RenderToVertexBufferObjectSharedPtr;
-
     class _OgreExport RenderToVertexBufferManager : public Singleton<RenderToVertexBufferManager>
     {
     public:

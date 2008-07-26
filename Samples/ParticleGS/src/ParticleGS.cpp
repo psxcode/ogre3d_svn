@@ -13,23 +13,23 @@ LGPL like the rest of the engine.
 */
 /*
 -----------------------------------------------------------------------------
-Filename:    IsoSurf.cpp
-Description: Demonstrates the use of the geometry shader to tessellate an 
-	isosurface using marching tetrahedrons. Partial implementation of cg 
-	Isosurf sample from NVIDIA's OpenGL SDK 10 : 
-	http://developer.download.nvidia.com/SDK/10/opengl/samples.html
+Filename:    ParticleGS.cpp
+Description: Demonstrates the use of the geometry shader and render to vertex
+	buffer to create a particle system that is entirely calculated on the GPU.
+	Partial implementation of ParticlesGS example from Microsoft's DirectX 10
+	SDK : http://msdn.microsoft.com/en-us/library/bb205329(VS.85).aspx
 -----------------------------------------------------------------------------
 */
 
 #include "ExampleApplication.h"
 
-class IsoSurfApplication : public ExampleApplication
+class ParticleGSApplication : public ExampleApplication
 {
 public:
-    IsoSurfApplication() { 
+    ParticleGSApplication() { 
     }
 
-    ~IsoSurfApplication() {  }
+    ~ParticleGSApplication() {  }
 protected:
 
     // Just override the mandatory create scene method
@@ -41,12 +41,14 @@ protected:
         {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support geometry programs, so cannot "
                 "run this demo. Sorry!", 
-                "IsoSurfApplication::createScene");
+                "ParticleGSApplication::createScene");
         }
-		
-		int maxOutputVertices = caps->getGeometryProgramNumOutputVertices();
-		Ogre::LogManager::getSingleton().getDefaultLog()->stream() << 
-			"Num output vertices per geometry shader run : " << maxOutputVertices;
+		if (!caps->hasCapability(RSC_HWRENDER_TO_VERTEX_BUFFER))
+        {
+			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support render to vertex buffer, "
+				"so cannot run this demo. Sorry!", 
+                "ParticleGSApplication::createScene");
+        }
     }
 };
 
@@ -68,7 +70,7 @@ int main(int argc, char **argv)
 #endif
 {
     // Create application object
-    IsoSurfApplication app;
+    ParticleGSApplication app;
 
     try {
         app.go();
