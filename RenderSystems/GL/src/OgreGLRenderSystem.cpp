@@ -99,6 +99,7 @@ namespace Ogre {
 	GLRenderSystem::GLRenderSystem()
 		: mDepthWrite(true), mStencilMask(0xFFFFFFFF), mHardwareBufferManager(0),
 		mGpuProgramManager(0),
+		mRenderToVertexBufferManager(0),
 		mGLSLProgramFactory(0),
 		mRTTManager(0)
 	{
@@ -436,6 +437,13 @@ namespace Ogre {
 			GLint maxOutputVertices;
 			glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT,&maxOutputVertices);
 			rsc->setGeometryProgramNumOutputVertices(maxOutputVertices);
+		}
+		
+		//Check if render to vertex buffer (transform feedback in OpenGL)
+		if (GLEW_VERSION_2_0 && 
+			GLEW_NV_transform_feedback)
+		{
+			rsc->setCapability(RSC_HWRENDER_TO_VERTEX_BUFFER);
 		}
 
 		// Check for texture compression
@@ -798,6 +806,11 @@ namespace Ogre {
 			caps->setNumMultiRenderTargets(1);
 		}
 
+		//Check for render to vertex buffer capabilities
+		if (caps->hasCapability(RSC_HWRENDER_TO_VERTEX_BUFFER))
+		{
+			mRenderToVertexBufferManager = new GLRenderToVertexBufferManager;
+		}
 
 		Log* defaultLog = LogManager::getSingleton().getDefaultLog();
 		if (defaultLog)
@@ -840,6 +853,9 @@ namespace Ogre {
 
 		delete mRTTManager;
 		mRTTManager = 0;
+
+		delete mRenderToVertexBufferManager;
+		mRenderToVertexBufferManager = 0;
 
 		// Delete extra threads contexts
 		for (GLContextList::iterator i = mBackgroundContextList.begin(); 

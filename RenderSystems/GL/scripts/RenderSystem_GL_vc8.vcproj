@@ -442,6 +442,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreGLRenderToVertexBufferObject.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreGLSupport.cpp"
 				>
 			</File>
@@ -792,6 +796,14 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreGLRenderTexture.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreGLRenderToVertexBufferManager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreGLRenderToVertexBufferObject.h"
 				>
 			</File>
 			<File
