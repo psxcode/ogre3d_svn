@@ -191,6 +191,9 @@ namespace Ogre {
 				+ StringConverter::toString(mVertexTextureUnitsShared, true));
 
 		}
+		pLog->logMessage(
+			" * Render to Vertex Buffer : "
+			+ StringConverter::toString(hasCapability(RSC_HWRENDER_TO_VERTEX_BUFFER), true));
 
 		if (mCategoryRelevant[CAPS_CATEGORY_GL])
 		{

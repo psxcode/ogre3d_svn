@@ -406,7 +406,7 @@ namespace Ogre
         addCapabilitiesMapping("vertex_format_ubyte4", RSC_VERTEX_FORMAT_UBYTE4);
         addCapabilitiesMapping("infinite_far_plane", RSC_INFINITE_FAR_PLANE);
         addCapabilitiesMapping("hwrender_to_texture", RSC_HWRENDER_TO_TEXTURE);
-        addCapabilitiesMapping("texture_float", RSC_TEXTURE_FLOAT);
+		addCapabilitiesMapping("texture_float", RSC_TEXTURE_FLOAT);
         addCapabilitiesMapping("non_power_of_2_textures", RSC_NON_POWER_OF_2_TEXTURES);
         addCapabilitiesMapping("texture_3d", RSC_TEXTURE_3D);
         addCapabilitiesMapping("point_sprites", RSC_POINT_SPRITES);
@@ -416,6 +416,7 @@ namespace Ogre
         addCapabilitiesMapping("texture_compression", RSC_TEXTURE_COMPRESSION);
         addCapabilitiesMapping("texture_compression_dxt", RSC_TEXTURE_COMPRESSION_DXT);
         addCapabilitiesMapping("texture_compression_vtc", RSC_TEXTURE_COMPRESSION_VTC);
+		addCapabilitiesMapping("hwrender_to_vertex_buffer", RSC_HWRENDER_TO_VERTEX_BUFFER);
         addCapabilitiesMapping("gl1_5_novbo", RSC_GL1_5_NOVBO);
         addCapabilitiesMapping("fbo", RSC_FBO);
         addCapabilitiesMapping("fbo_arb", RSC_FBO_ARB);
