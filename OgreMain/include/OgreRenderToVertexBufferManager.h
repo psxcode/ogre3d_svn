@@ -35,16 +35,10 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
     
-    /** Shared pointer implementation used to have the destruction callback the manager. */
-    class RenderToVertexBufferObjectSharedPtr : public SharedPtr<RenderToVertexBufferObject>
-    {
-        RenderToVertexBufferObjectSharedPtr() : SharedPtr<RenderToVertexBufferObject>() {}
-        virtual ~RenderToVertexBufferObjectSharedPtr();
-    };
+	typedef SharedPtr<RenderToVertexBufferObject> RenderToVertexBufferObjectSharedPtr;
 
     class RenderToVertexBufferManager : public Singleton<RenderToVertexBufferManager>
     {
-        friend class RenderToVertexBufferObjectSharedPtr;
     public:
         /** Override standard Singleton retrieval.
         @remarks
@@ -61,7 +55,7 @@ namespace Ogre {
         but the implementation stays in this single compilation unit,
         preventing link errors.
         */
-        static GpuProgramManager& getSingleton(void);
+        static RenderToVertexBufferManager& getSingleton(void);
         /** Override standard Singleton retrieval.
         @remarks
         Why do we do this? Well, it's because the Singleton
@@ -77,24 +71,43 @@ namespace Ogre {
         but the implementation stays in this single compilation unit,
         preventing link errors.
         */
-        static GpuProgramManager* getSingletonPtr(void);
+        static RenderToVertexBufferManager* getSingletonPtr(void);
+
+		/** D'tor */
+		virtual ~RenderToVertexBufferManager() {}
 
         /**
             Create a render to vertex buffer object.
         */
-        virtual RenderToVertexBufferObjectSharedPtr createRenderToVertexBufferObject() = 0;
+        virtual RenderToVertexBufferObjectSharedPtr createObject();
 
         /**
             Update all the RenderToVertexBufferObjects which have signed up to
             automatically update themselves.
         */
         void updateAutoUpdatedObjects();
-    protected:
-        /**
+   
+		/**
             Unregister a render to vertex buffer object from the manager.
             @param deadObject the object about to be destroyed
+			@note Do not call this method from outside RenderToVertexBufferObject
         */
-        virtual unregisterRenderToVertexBufferObject(RenderToVertexBufferObject* deadObject);
+        void _unregisterRenderToVertexBufferObject(RenderToVertexBufferObject* deadObject);
+	protected:
+		/**
+			RenderSystem-specific implementation of the object's creation
+			@return A rendersystem-specific implementation
+		*/
+		virtual RenderToVertexBufferObject* createObjectImpl() = 0;
+	private:
+		/**
+			Register a render to vertex buffer object in the manager
+			@param newObject the newly constructed object.
+		*/
+		void _registerRenderToVertexBufferObject(RenderToVertexBufferObject* newObject);
+
+		//A list of all the render to vertex buffer objects
+		std::list<RenderToVertexBufferObject*> mR2vbObjects;
     };
 }
 
