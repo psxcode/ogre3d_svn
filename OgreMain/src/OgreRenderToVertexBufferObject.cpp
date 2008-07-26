@@ -29,4 +29,41 @@ Torus Knot Software Ltd.
 
 #include "OgreStableHeaders.h"
 #include "OgreRenderToVertexBufferObject.h"
+#include "OgreMaterialManager.h"
 
+namespace Ogre {
+	//-----------------------------------------------------------------------
+	RenderToVertexBufferObject::RenderToVertexBufferObject() :
+		mAutoUpdates(true),
+		mResetsEveryUpdate(false),
+		mMaxVertexCount(1000),
+		mResetRequested(true)
+	{
+		mVertexData = new VertexData;
+	}
+	//-----------------------------------------------------------------------
+	RenderToVertexBufferObject::~RenderToVertexBufferObject()
+	{
+		delete mVertexData;
+	}
+	//-----------------------------------------------------------------------
+	VertexDeclaration* RenderToVertexBufferObject::getVertexDeclaration()
+	{
+		//TODO : Mark dirty?
+		return mVertexData->vertexDeclaration;
+	}
+	//-----------------------------------------------------------------------
+	void RenderToVertexBufferObject::setRenderToBufferMaterialName(const String& materialName)
+	{
+		mMaterial = MaterialManager::getSingleton().getByName(materialName);
+
+		if (mMaterial.isNull())
+			OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find material " + materialName,
+				"RenderToVertexBufferObject::setRenderToBufferMaterialName" );
+
+        /* Ensure that the new material was loaded (will not load again if
+           already loaded anyway)
+        */
+        mMaterial->load();
+	}
+}

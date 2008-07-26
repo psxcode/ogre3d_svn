@@ -46,7 +46,10 @@ namespace Ogre {
     class RenderToVertexBufferObject
     {    
     public:
-        virtual ~RenderToVertexBufferObject() {}
+		/** C'tor */
+		RenderToVertexBufferObject();
+		/** D'tor */
+        virtual ~RenderToVertexBufferObject();
 
         /**
             Get the vertex declaration that the pass will output.
@@ -59,32 +62,32 @@ namespace Ogre {
         /**
             Get the maximum number of vertices that the buffer will hold
         */
-        unsigned int getMaxVertexCount() const;
+		unsigned int getMaxVertexCount() const { return mMaxVertexCount; }
         
         /**
             Set the maximum number of vertices that the buffer will hold
         */
-        void setMaxVertexCount(unsigned int maxVertexCount);
+		void setMaxVertexCount(unsigned int maxVertexCount) { mMaxVertexCount = maxVertexCount; }
 
         /**
             Does this object update its buffer every frame?
         */
-        bool getAutoUpdates() const;
+		bool getAutoUpdates() const { return mAutoUpdates; }
 
         /**
             Set wether this object updates its buffer every frame.
         */
-        void setAutoUpdates(bool autoUpdates);
+		void setAutoUpdates(bool autoUpdates) { mAutoUpdates = autoUpdates; }
 
         /**
             Set wether this object resets its buffers each time it updates.
         */
-        void setResetsEveryUpdate(bool resetsEveryUpdate);
+		void setResetsEveryUpdate(bool resetsEveryUpdate) { mResetsEveryUpdate = resetsEveryUpdate; }
 
         /**
             Does this object reset its buffer each time it updates?
         */
-        bool getResetsEveryUpdate();
+		bool getResetsEveryUpdate() const { return mResetsEveryUpdate; }
 
         /**
             Get the render operation for this buffer 
@@ -94,31 +97,31 @@ namespace Ogre {
         /**
             Update the contents of this vertex buffer by rendering
         */
-        virtual void update();
+        virtual void update() = 0;
 
         /**
             Reset the vertex buffer to the initial state. In the next update,
             the source renderable will be used as input.
         */
-        virtual void reset();
+		virtual void reset() { mResetRequested = true; }
         
         /**
             Set the source renderable of this object. During the first (and 
             perhaps later) update of this object, this object's data will be
             used as input)
         */
-        void setSourceRenderable(Renderable* source);
+		void setSourceRenderable(Renderable* source) { mSourceRenderable = source; }
 
         /**
             Get the source renderable of this object
         */
-        const Renderable* getSourceRenderable() const;
+		const Renderable* getSourceRenderable() const { return mSourceRenderable; }
 
         /**
             Get the material which is used to render the geometry into the
             vertex buffer.
         */
-        const MaterialPtr& getRenderToBufferMaterial();
+		const MaterialPtr& getRenderToBufferMaterial() { return mMaterial; }
 
         /**
             Set the material name which is used to render the geometry into
@@ -127,9 +130,12 @@ namespace Ogre {
         void setRenderToBufferMaterialName(const String& materialName);
     protected:
         bool mAutoUpdates;
-        bool mResetsEveryFrame;
+        bool mResetsEveryUpdate;
+		bool mResetRequested;
         MaterialPtr mMaterial;
         Renderable* mSourceRenderable;
+		VertexData* mVertexData;
+		unsigned int mMaxVertexCount;
     };
 }
 
