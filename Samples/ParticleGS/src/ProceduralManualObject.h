@@ -16,23 +16,38 @@ LGPL like the rest of the engine.
 #define __PROCEDURAL_MANUAL_OBJECT_H__
 
 #include <OgreManualObject.h>
+#include <OgreSimpleRenderable.h>
 #include <OgreRenderToVertexBufferObject.h>
 
 namespace Ogre
 {
-	class ProceduralManualObject : public ManualObject
+	class ProceduralManualObject : public SimpleRenderable
 	{
 	public:
-		ProceduralManualObject(const String& name);
-		virtual ~ProceduralManualObject();
+		ProceduralManualObject() {}
+		virtual ~ProceduralManualObject() {}
 
-		void setRenderToVertexBufferObject(RenderToVertexBufferObjectSharedPtr r2vbObject);
-		const RenderToVertexBufferObjectSharedPtr& getRenderToVertexBufferObject();
+		void setRenderToVertexBufferObject(RenderToVertexBufferObjectSharedPtr r2vbObject)
+			{ mR2vbObject = r2vbObject; }
+		const RenderToVertexBufferObjectSharedPtr& getRenderToVertexBufferObject()
+			{ return mR2vbObject; }
+		
+		void setManualObject(ManualObject* manualObject);
+		ManualObject* getManualObject() const { return mManualObject; }
 
-		/** @copydoc ManualObject::_updateRenderQueue. */
+		/** @copydoc SimpleRenderable::_updateRenderQueue. */
 		void _updateRenderQueue(RenderQueue* queue);
-		/** @copydoc ManualObject::getMovableType. */
+		/** @copydoc SimpleRenderable::getMovableType. */
 		const String& getMovableType(void) const;
+
+		//Delegate to the manual object
+		Real getBoundingRadius(void) const 
+			{ return mManualObject->getBoundingRadius(); }
+		Real getSquaredViewDepth(const Ogre::Camera* cam) const 
+			{ return mManualObject->getSection(0)->getSquaredViewDepth(cam); }
+	protected:
+		ManualObject* mManualObject;
+		RenderToVertexBufferObjectSharedPtr mR2vbObject;
 	};
 
 	class ProceduralManualObjectFactory : public MovableObjectFactory

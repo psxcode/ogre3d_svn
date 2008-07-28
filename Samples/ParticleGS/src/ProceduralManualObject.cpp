@@ -20,7 +20,20 @@ namespace Ogre
 	{
 		return ProceduralManualObjectFactory::FACTORY_TYPE_NAME;
 	}
-
+	//-----------------------------------------------------------------------------
+	void ProceduralManualObject::_updateRenderQueue(RenderQueue* queue)
+	{
+		mR2vbObject->update();
+	}
+	//-----------------------------------------------------------------------------
+	void ProceduralManualObject::setManualObject(Ogre::ManualObject *manualObject)
+	{
+		mManualObject = manualObject;
+		if (!mR2vbObject.isNull())
+		{
+			mR2vbObject->setSourceRenderable(manualObject->getSection(0));
+		}
+	}
 	//-----------------------------------------------------------------------------
 	String ProceduralManualObjectFactory::FACTORY_TYPE_NAME = "ProceduralManualObject";
 	//-----------------------------------------------------------------------------
@@ -32,7 +45,7 @@ namespace Ogre
 	MovableObject* ProceduralManualObjectFactory::createInstanceImpl(
 		const String& name, const NameValuePairList* params)
 	{
-		return new ProceduralManualObject(name);
+		return new ProceduralManualObject();
 	}
 	//-----------------------------------------------------------------------------
 	void ProceduralManualObjectFactory::destroyInstance( MovableObject* obj)
