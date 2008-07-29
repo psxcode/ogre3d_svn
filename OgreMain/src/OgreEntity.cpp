@@ -1950,6 +1950,9 @@ namespace Ogre {
 		 //When a motion graph has been constructed, it already has its current state set
 		 if ( mpMotionGraph )
 		 {
+			 //do motiongraph search algorithm preparation
+			 //includes calculating velocity and acceleration
+			 mpMotionGraph->CalcKinematics(this); 
 		 MotionGraph::State* pState = mpMotionGraph->GetCurrentState();
 		 String ActionName = pState->GetCurrentActionName();
 		 AnimationState* pAnimState = mAnimationState->getAnimationState(ActionName);
@@ -1987,6 +1990,7 @@ namespace Ogre {
 			
 		}
         
+
 		mpMotionGraph->ProcessTrigger(this);
 		return true;
 	}
