@@ -164,11 +164,8 @@ namespace Ogre {
 		/** Construct a motion graph using a motion graph script
 		@remarks
 		There are a lot of methods to construct a motion graph, referencing to much literature
-		@par
-		Note that this method automatically generates a handle for the bone, which you
-		can retrieve using Bone::getHandle. If you wish the new Bone to have a specific
-		handle, use the alternate form of this method which takes a handle as a parameter,
-		although you should note the restrictions.
+		@param
+		mgscript is a script describing the schema of how a motion graph is to be constructed
 		*/
 		bool Construct(const MotionGraphScript& mgScript);
 		/** Motion Graph has its trigger lists, regardless where these triggers come from,
@@ -176,11 +173,21 @@ namespace Ogre {
 		must be processed.
 		*/
 		void ProcessTrigger(const Entity* pEntity);
+
+		/** Calculate the kinematics attributes of the entity this motion graph is bound to
+		@remarks
+		Now only using velocity and acceleration to assist in blending algorithm
+		@param
+		pEntity is the Entity owning all the animations this motion graph is used
+		*/
+		void CalcKinematics(const Entity* pEntity); 
+
+
 		/** Tranist from the current state to the next state.
 		@remarks
 		some status variables are set, some triggers are fired.
 		*/
-		void Transit();
+		void Transit(const Entity* entity);
 
 		State* GetCurrentState() { return mCurrentState; }
 
@@ -189,9 +196,18 @@ namespace Ogre {
 		~MotionGraph();
 		typedef std::map<int,State*> StateMap;
 		typedef std::vector<Transition*> TransitionArray;
+		struct KinematicElem
+		{
+			Ogre::Vector3 translation;
+			Ogre::Quaternion orientation;
+			Ogre::Vector3 velocity;
+			Ogre::Vector3 acceleration;
+		};
+		typedef std::map< std::string, std::map<float, KinematicElem*> > Kinematic; 
 	protected:
 		StateMap mStates;
 		TransitionArray mTransitions;
+		Kinematic mKinematicData;
 		String mMotionGraphName;
 		/// the state this motion graph is currently in
 		State*	mCurrentState;
