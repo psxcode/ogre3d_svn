@@ -89,7 +89,8 @@ namespace Ogre {
 		{
 			NON_TRIGGER,
 			ANIMATION_END,
-			DIRECTION_CONTROL
+			DIRECTION_CONTROL,
+			SPEED_CHANGE
 		};
 
 		static TriggerType TriggerNameToTriggerType(const String& triggertype);
@@ -118,7 +119,7 @@ namespace Ogre {
 			Trigger* GetTrigger();
 			/** @Remove a trigger from the trigger queue
 			*/
-			void RemoveTrigger();
+			void RemoveTopTrigger();
 			Transition* GetBestTransition();
 			typedef std::set<String> ActionSet;
 			String GetCurrentActionName() { return mCurrentActionName; }
@@ -198,16 +199,29 @@ namespace Ogre {
 		typedef std::vector<Transition*> TransitionArray;
 		struct KinematicElem
 		{
-			Ogre::Vector3 translation;
+			Ogre::Vector3 HipTranslation;
+			Ogre::Vector3 LeftFootTranslation;
+			Ogre::Vector3 RightFootTranslation;
 			Ogre::Quaternion orientation;
-			Ogre::Vector3 velocity;
-			Ogre::Vector3 acceleration;
+			Ogre::Vector3 velocity;       //this velocity is temporarily used for calculating any joint's velocity
+			Ogre::Vector3 acceleration;   //this acceleration is temporarily used for any joint to 
+			// determine the acceleration zero-crossings 
+		};
+		struct MotionAnnotation
+		{
+			bool bLeftFootContact;
+			bool bRightFootContact;
 		};
 		typedef std::map< std::string, std::map<float, KinematicElem*> > Kinematic; 
+		typedef std::map< std::string, std::vector<MotionAnnotation*> > Annotations;
+	protected:
+		void CalcAnimationTrackKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap);
+
 	protected:
 		StateMap mStates;
 		TransitionArray mTransitions;
 		Kinematic mKinematicData;
+		Annotations mAnnotationData;
 		String mMotionGraphName;
 		/// the state this motion graph is currently in
 		State*	mCurrentState;
