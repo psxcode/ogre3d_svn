@@ -636,7 +636,15 @@ void AddBatchAnimations(XmlOptions opts)
 		newSkel->optimiseAllAnimations();
 		}*/
 		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
-		anim = newSkel->createAnimation(bvh->GetAnimName(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
+		if ( newSkel->hasAnimation( bvh->GetAnimName() ) )
+		{
+			delete bvh;
+			continue;
+		}
+		else
+		{
+			anim = newSkel->createAnimation(bvh->GetAnimName(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
+		}
 		anim->setInterpolationMode(Animation::IM_LINEAR) ;
 		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
 
@@ -660,7 +668,7 @@ void AddBatchAnimations(XmlOptions opts)
 //westine  add bvh mocap animation into .skeleton.xml
 void AddAnimation(XmlOptions opts)
 {
-	Animation * anim ;
+	Animation * anim = 0;
 	String response;
 	TiXmlDocument* doc = new TiXmlDocument(opts.source);
 	// Some double-parsing here but never mind
@@ -687,18 +695,21 @@ void AddAnimation(XmlOptions opts)
 			newSkel->optimiseAllAnimations();
 		}*/
 		//skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
-		anim = newSkel->createAnimation(bvh->GetAnimName(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
-		anim->setInterpolationMode(Animation::IM_LINEAR) ;
-		anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
+		if ( false == newSkel->hasAnimation(bvh->GetAnimName()))
+		{	
+			anim = newSkel->createAnimation(bvh->GetAnimName(),Ogre::Real(bvh->FrameDuration()*bvh->FrameNum())/2);
+			anim->setInterpolationMode(Animation::IM_LINEAR) ;
+			anim->setRotationInterpolationMode(Animation::RIM_LINEAR);
 
-		AddAnimationTrack(anim,newSkel,bvh);
-	
+			AddAnimationTrack(anim,newSkel,bvh);
 
-		elem = rootElem->FirstChildElement("animations");
-		xmlSkeletonSerializer->addAnimation(elem,anim);
-		delete bvh;
-		xmlSkeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
-		delete doc;
+
+			elem = rootElem->FirstChildElement("animations");
+			xmlSkeletonSerializer->addAnimation(elem,anim);
+			delete bvh;
+			xmlSkeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
+			delete doc;
+		}
 	}
 	else
 	{
