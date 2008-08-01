@@ -233,14 +233,15 @@ namespace Ogre {
 	//---------------------------------------------------------------------
 	void XMLSkeletonSerializer::readAnimations(Skeleton* skel, TiXmlElement* mAnimNode) {
 		
-		Animation * anim ;
-		NodeAnimationTrack * track ;
+		Animation * anim = 0;
+		NodeAnimationTrack * track = 0;
 		LogManager::getSingleton().logMessage("XMLSkeletonSerializer: Reading Animations data...");
 
 		for (TiXmlElement* animElem = mAnimNode->FirstChildElement("animation"); animElem != 0; animElem = animElem->NextSiblingElement())
         {
             String name = animElem->Attribute("name");
 			Real length = StringConverter::parseReal(animElem->Attribute("length"));
+		
 			anim = skel->createAnimation(name,length);
 			anim->setInterpolationMode(Animation::IM_LINEAR) ;
 
