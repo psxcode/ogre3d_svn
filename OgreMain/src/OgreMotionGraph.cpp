@@ -34,7 +34,10 @@ Torus Knot Software Ltd.
 #include <sstream>
 #include <utility>
 #include "OgreStringConverter.h"
+#include "OgreSkeletonInstance.h"
 #include "OgreEntity.h"
+#include "OgreAnimation.h"
+#include "OgreBone.h"
 
 namespace Ogre {
 
@@ -44,6 +47,9 @@ namespace Ogre {
 		if ( !strcmp(triggertype.c_str(),"AnimationEnd"))
 		{
 			return ANIMATION_END;
+		}else if ( !strcmp(triggertype.c_str(),"DirectionControl"))
+		{
+			return DIRECTION_CONTROL;
 		}
 
 		return NON_TRIGGER;
@@ -65,6 +71,7 @@ namespace Ogre {
 				delete *it;
 			}
 		}
+
 
 	}
 
@@ -160,7 +167,7 @@ namespace Ogre {
 			return 0;
 	}
 
-	void MotionGraph::State::RemoveTrigger()
+	void MotionGraph::State::RemoveTopTrigger()
 	{
 		if ( !mTriggers.empty())
 			mTriggers.pop();
@@ -226,6 +233,252 @@ namespace Ogre {
 		return true;
 	}
 
+	MotionGraph::~MotionGraph()
+	{
+		for ( Kinematic::iterator it = mKinematicData.begin(); it != mKinematicData.end(); it++)
+		{
+			for( std::map<float, KinematicElem*>::iterator iter = it->second.begin(); iter != it->second.end(); iter++ )
+			{	
+				if ( 0 != iter->second)
+				{
+					delete iter->second;
+				}
+			}
+		}
+		for ( Annotations::iterator it = mAnnotationData.begin(); it != mAnnotationData.end(); it++)
+		{
+			for ( std::vector<MotionAnnotation*>::iterator iter = it->second.begin(); iter != it->second.end(); iter++)
+			{
+				if ( 0 != *iter)
+				{
+					delete *iter;
+				}
+			}
+		}
+	}
+
+	void MotionGraph::CalcKinematics(const Entity* pEntity)
+	{
+		std::ofstream kinefile;
+		kinefile.open("acceleration",std::ios::out);
+		if ( !kinefile.is_open())
+		{
+			exit(1);
+		}
+		else
+			;
+
+		AnimationStateSet* animations = pEntity->getAllAnimationStates();
+		AnimationStateIterator it = animations->getAnimationStateIterator();
+		while (it.hasMoreElements())
+		{
+			AnimationState* animstate= it.getNext();
+			Animation* anim = pEntity->getSkeleton()->getAnimation(animstate->getAnimationName());
+			Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
+			std::map<float, KinematicElem*> Kinemap;
+			KinematicElem* pkinematic = 0;
+			bool bMapReserve = false;
+
+
+
+			while (trackIter.hasMoreElements())
+			{
+				NodeAnimationTrack* track = trackIter.getNext();
+				Node* boneNode = track->getAssociatedNode();
+
+
+				//preserve Kinemap data
+				if( false == bMapReserve )
+				{
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+					{
+						pkinematic = new KinematicElem;
+						Kinemap.insert(std::make_pair(i,pkinematic));
+					}
+					bMapReserve = true;
+				}
+
+
+				Bone* bone = pEntity->getSkeleton()->getBone(track->getHandle());
+				//do calculation for this animation track
+
+
+				TransformKeyFrame* CurrentKf = 0;
+
+
+				if (bone->getName() == "hip")
+				{
+
+					//calculate velocity first
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+					{
+						pkinematic = Kinemap[i];
+						CurrentKf = track->getNodeKeyFrame(i);
+						TransformKeyFrame* NextKf = 0;
+						TransformKeyFrame* ThirdKf = 0;
+						if ( i < track->getNumKeyFrames() - 1 )
+						{
+							NextKf = track->getNodeKeyFrame(i+1);
+							Ogre::Real t1 = NextKf->getTime() - CurrentKf->getTime();
+							assert( t1 > 0.00001f );
+							pkinematic->velocity = (NextKf->getTranslate() - CurrentKf->getTranslate())/t1;
+
+						}
+						else
+						{
+							pkinematic->velocity = Kinemap[i-1]->velocity;
+						}
+
+						pkinematic->HipTranslation = CurrentKf->getTranslate();
+						pkinematic->orientation = CurrentKf->getRotation();
+
+						/*	if ( i < track->getNumKeyFrames() - 2 )
+						{
+						NextKf = track->getNodeKeyFrame(i+1);
+						ThirdKf = track->getNodeKeyFrame(i+2);
+						Ogre::Real t1 = NextKf->getTime() - CurrentKf->getTime();
+						Ogre::Real t2 = ThirdKf->getTime() - NextKf->getTime();
+						assert( t1 > 0.00001f );
+						assert( t2 > 0.00001f );
+						pkinematic->velocity = (NextKf->getTranslate() - CurrentKf->getTranslate())/t1;
+
+						}
+						else
+						{
+						pkinematic->velocity = Kinemap[i-1]->velocity;
+						}*/
+
+
+
+
+
+					}
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
+					{
+
+						pkinematic = Kinemap[i];
+						if ( i < track->getNumKeyFrames() - 1 )
+						{
+
+							Ogre::Real t1 = track->getNodeKeyFrame(i+1)->getTime() - track->getNodeKeyFrame(i)->getTime();
+							assert( t1 > 0.00001f );
+							pkinematic->acceleration = (Kinemap[i+1]->velocity - pkinematic->velocity)/t1;
+
+						}
+						else
+						{
+							pkinematic->acceleration = Kinemap[i-1]->acceleration;
+						}
+
+					}
+
+				}//end for "hip"
+				if (bone->getName() == "lfoot")
+				{
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+					{
+						pkinematic = Kinemap[i];
+						CurrentKf = track->getNodeKeyFrame(i);
+						boneNode->translate(CurrentKf->getTranslate());
+						pkinematic->LeftFootTranslation = boneNode->getPosition();
+					}
+					//calculate velocity first
+
+
+					CalcAnimationTrackKinematic(track,Kinemap);
+
+
+					//add annotation for leftfoot contact
+
+				}//end for lfoot
+				if ( bone->getName() == "rfoot")
+				{
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+					{
+						pkinematic = Kinemap[i];
+						CurrentKf = track->getNodeKeyFrame(i);
+						boneNode->translate(CurrentKf->getTranslate());
+						pkinematic->RightFootTranslation = boneNode->getPosition();
+					}
+					//calculate velocity first
+					CalcAnimationTrackKinematic(track,Kinemap);
+
+
+					//add rightfoot contact annotation
+
+				}//end for rightfoot
+				if ( bone->getName() == "lfoot")
+				{
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
+					{
+						if ( 0 == i)
+						{
+							kinefile<<anim->getName()<<std::endl;
+							kinefile<<track->getNumKeyFrames()<<std::endl;
+						}
+
+
+						kinefile<<Kinemap[i]->LeftFootTranslation.y<<std::endl;
+
+						if ( i == track->getNumKeyFrames() - 1)
+						{
+							kinefile<<"\n"<<std::endl;
+						}
+
+					}
+				}
+				mKinematicData.insert(std::make_pair(animstate->getAnimationName(),Kinemap));
+			}
+		}
+
+	}
+
+	void MotionGraph::CalcAnimationTrackKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap)
+	{
+		//calculate velocity first
+		KinematicElem* pkinematic = 0;
+		TransformKeyFrame* CurrentKf = 0;
+		TransformKeyFrame* NextKf = 0;
+		TransformKeyFrame* ThirdKf = 0;
+		for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+		{
+			pkinematic = Kinemap[i];
+			CurrentKf = track->getNodeKeyFrame(i);
+
+			if ( i < track->getNumKeyFrames() - 1 )
+			{
+				NextKf = track->getNodeKeyFrame(i+1);
+				Ogre::Real t1 = NextKf->getTime() - CurrentKf->getTime();
+				assert( t1 > 0.00001f );
+				pkinematic->velocity = (NextKf->getTranslate() - CurrentKf->getTranslate())/t1;
+
+			}
+			else
+			{
+				pkinematic->velocity = Kinemap[i-1]->velocity;
+			}
+		}
+		for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
+		{
+
+			pkinematic = Kinemap[i];
+			if ( i < track->getNumKeyFrames() - 1 )
+			{
+
+				Ogre::Real t1 = track->getNodeKeyFrame(i+1)->getTime() - track->getNodeKeyFrame(i)->getTime();
+				assert( t1 > 0.00001f );
+				pkinematic->acceleration = (Kinemap[i+1]->velocity - pkinematic->velocity)/t1;
+
+			}
+			else
+			{
+				pkinematic->acceleration = Kinemap[i-1]->acceleration;
+			}
+
+		}
+
+	}
+
 	void MotionGraph::ProcessTrigger(const Entity* pEntity)
 	{
 		Trigger* trigger;
@@ -244,8 +497,8 @@ namespace Ogre {
 						AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
 						pAnimState->setTimePosition(0.0);//restart from the beginning
 						pAnimState->setEnabled(false);
-						mCurrentState->RemoveTrigger();
-						Transit();
+						mCurrentState->RemoveTopTrigger();
+						Transit(pEntity);
 						ActionName = mCurrentState->GetCurrentActionName();
 						pAnimState = pEntity->getAnimationState(ActionName);
 						pAnimState->setEnabled(true);
@@ -253,7 +506,25 @@ namespace Ogre {
 						break;
 					}
 				case DIRECTION_CONTROL:
-					// Do motion interpolation in the same state
+					{	//DIRECTION_CONTROL will cause characters transit from
+						// current state to the next state based on current speed and sth else like height
+						String ActionName = mCurrentState->GetCurrentActionName();
+						AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
+						pAnimState->setTimePosition(0.0);//restart from the beginning,although cyclic motion
+						// is not needed to do so
+						pAnimState->setEnabled(false);
+						mCurrentState->RemoveTopTrigger();
+
+						Transit(pEntity);
+						ActionName = mCurrentState->GetCurrentActionName();
+						pAnimState = pEntity->getAnimationState(ActionName);
+						pAnimState->setEnabled(true);
+						pAnimState->setLoop(false);
+
+						// Do motion interpolation
+						break;
+					}
+				case SPEED_CHANGE:
 					break;
 
 				}
@@ -274,15 +545,52 @@ namespace Ogre {
 
 	}
 
-	void MotionGraph::Transit()
+	void MotionGraph::Transit(const Entity* entity)
 	{
 		Transition* pTran =	mCurrentState->GetBestTransition();
 		if ( pTran )
 		{
 			mCurrentState = pTran->GetToState();
 		}
+		// insert the blending animation clip
+		/*
+		Animation* anim = skel->getAnimation(animationName);
+		Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
+		while (trackIter.hasMoreElements())
+		{
+		NodeAnimationTrack* track = trackIter.getNext();
+
+		TransformKeyFrame oldKf(0, 0);
+		track->getInterpolatedKeyFrame(mAnimChop, &oldKf);
+
+		// Drop all keyframes after the chop
+		while (track->getKeyFrame(track->getNumKeyFrames()-1)->getTime() >= mAnimChop - mAnimChopBlend)
+		track->removeKeyFrame(track->getNumKeyFrames()-1);
+
+		TransformKeyFrame* newKf = track->createNodeKeyFrame(mAnimChop);
+		TransformKeyFrame* startKf = track->getNodeKeyFrame(0);
+
+		Bone* bone = skel->getBone(track->getHandle());
+		if (bone->getName() == "Spineroot")
+		{
+		mSneakStartOffset = startKf->getTranslate() + bone->getInitialPosition();
+		mSneakEndOffset = oldKf.getTranslate() + bone->getInitialPosition();
+		mSneakStartOffset.y = mSneakEndOffset.y;
+		// Adjust spine root relative to new location
+		newKf->setRotation(oldKf.getRotation());
+		newKf->setTranslate(oldKf.getTranslate());
+		newKf->setScale(oldKf.getScale());
 
 
+		}
+		else
+		{
+		newKf->setRotation(startKf->getRotation());
+		newKf->setTranslate(startKf->getTranslate());
+		newKf->setScale(startKf->getScale());
+		}
+		}
+		*/
 	}
 
 	bool MotionGraphScript::IsLoaded() const
