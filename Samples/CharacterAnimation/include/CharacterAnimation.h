@@ -52,8 +52,10 @@ public:
 	{
 		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
 			return false;
-
-		ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame*2);
+		if ( IsAnimated() )
+			ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame*2);
+		else
+			;
 		//mAnimState->addTime(evt.timeSinceLastFrame*2);
 		return true;
 	}
@@ -86,21 +88,22 @@ protected:
 		// The character will go through its motion graph
 		// We want to copy the initial keyframes of all bones, but alter the Spineroot
 		// to give it an offset of where the animation ends
-	//	SkeletonPtr skel = SkeletonManager::getSingleton().load(modelname+".skeleton",
-	//		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		//	SkeletonPtr skel = SkeletonManager::getSingleton().load(modelname+".skeleton",
+		//		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 
-		
+
 		ent = mSceneMgr->createEntity(modelname, modelname+".mesh");
 		// Add entity to the scene node
 		mSceneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		mSceneNode->attachObject(ent);
 		mSceneNode->translate(0,12,0);
+
 		ent->ExecuteMotionGraph("mg");
 
-	//	mAnimState = ent->getAnimationState(animationName);
-	//	mAnimState->setEnabled(true);
-	//	mAnimState->setLoop(true); // manual loop since translation involved
+		//	mAnimState = ent->getAnimationState(animationName);
+		//	mAnimState->setEnabled(true);
+		//	mAnimState->setLoop(true); // manual loop since translation involved
 
 
 
@@ -125,6 +128,7 @@ protected:
 
 		// Position the camera
 		mCamera->setPosition(100,20,0);
+		mCamera->setNearClipDistance(.01);
 		mCamera->lookAt(0,10,0);
 
 		// Report whether hardware skinning is enabled or not
