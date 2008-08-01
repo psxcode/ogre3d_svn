@@ -1,0 +1,35 @@
+geometry_program Ogre/ParticleGS/TessellateTetrahedraGS cg
+{
+	source SwizzleGP.cg
+	entry_point gs_swizzle
+	profiles gp4gp gpu_gp
+}
+
+//The material used to generate the particle system geometry
+material Ogre/ParticleGS/Generate
+{
+	technique
+	{
+		pass
+		{
+			geometry_shader_ref Ogre/ParticleGS/TessellateTetrahedraGS
+			{
+				
+			}
+		}
+	}
+}
+
+//The material used to display the generated particle system geometry
+material Ogre/ParticleGS/Display
+{
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			//Do nothing. Display as is
+		}
+	}
+}
+
