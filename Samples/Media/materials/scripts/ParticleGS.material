@@ -12,7 +12,9 @@ material Ogre/ParticleGS/Generate
 	{
 		pass
 		{
-			geometry_shader_ref Ogre/ParticleGS/GenerateGS
+			cull_hardware none
+		
+			geometry_program_ref Ogre/ParticleGS/GenerateGS
 			{
 				
 			}

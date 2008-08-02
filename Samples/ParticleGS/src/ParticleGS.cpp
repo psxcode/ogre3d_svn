@@ -48,8 +48,8 @@ protected:
 
 		//Generate the geometry that will seed the particle system
 		ManualObject* particleSystemSeed = mSceneMgr->createManualObject("ParticleSeed");
-		particleSystemSeed->begin("");
-		particleSystemSeed->position(-10,-10,0);
+		particleSystemSeed->begin("Ogre/ParticleGS/Display");
+		particleSystemSeed->position(-10,-10,1);
 		particleSystemSeed->position(-10,10,1);
 		particleSystemSeed->position(10,10,1);
 		particleSystemSeed->position(10,-10,1);
@@ -66,7 +66,7 @@ protected:
 		VertexDeclaration* vertexDecl = r2vbObject->getVertexDeclaration();
 		size_t offset = 0;
 		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_POSITION).getSize();
-		offset += vertexDecl->addElement(0, offset, VET_COLOUR, VES_DIFFUSE).getSize();
+		//offset += vertexDecl->addElement(0, offset, VET_COLOUR, VES_DIFFUSE).getSize();
 
 		
 		//Bind the two together
@@ -105,9 +105,10 @@ protected:
 		ProceduralManualObject* particleSystem = createProceduralParticleSystem();
 
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem);
-
+		//mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem->getManualObject());
+		
 		mCamera->setPosition(0,0,-20);
-		mCamera->lookAt(0,1,0);
+		mCamera->lookAt(0,1,1);
     }
 };
 

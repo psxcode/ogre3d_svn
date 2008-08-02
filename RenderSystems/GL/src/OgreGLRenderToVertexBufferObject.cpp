@@ -158,8 +158,12 @@ namespace Ogre {
 
 		checkGLError();
 
+		RenderSystem* targetRenderSystem = Root::getSingleton().getRenderSystem();
 		//Draw the object
-		Root::getSingleton().getRenderSystem()->_render(renderOp);
+		targetRenderSystem->_setWorldMatrix(Matrix4::IDENTITY);
+		targetRenderSystem->_setViewMatrix(Matrix4::IDENTITY);
+		targetRenderSystem->_setProjectionMatrix(Matrix4::IDENTITY);
+		targetRenderSystem->_render(renderOp);
 		
 		checkGLError();
 
@@ -172,6 +176,10 @@ namespace Ogre {
 		GLuint primitivesWritten;
 		glGetQueryObjectuiv(mPrimitivesDrawnQuery, GL_QUERY_RESULT, &primitivesWritten);
 		mVertexData->vertexCount = primitivesWritten * getVertexCountPerPrimitive(mOperationType);
+
+		//void* buffData = mVertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY);
+		//float* buffFloat = static_cast<float*>(buffData);
+		//mVertexBuffer->unlock();
 
 		checkGLError();
 	}
@@ -192,7 +200,7 @@ namespace Ogre {
 	void GLRenderToVertexBufferObject::bindVerticesOutput()
 	{
 		// specify which attributes to store
-		GLint attribs[] = { GL_POSITION, 4, 0 };
+		GLint attribs[] = { GL_POSITION, 3, 0 };
 		glTransformFeedbackAttribsNV(1, attribs, GL_SEPARATE_ATTRIBS_NV);
 		//TODO : Implement real
 	}
