@@ -54,17 +54,4 @@ namespace Ogre {
 		assert(mR2vbObjects.find(deadObject) != mR2vbObjects.end());
 		mR2vbObjects.erase(deadObject);
 	}
-	//-----------------------------------------------------------------------
-	void RenderToVertexBufferManager::updateAutoUpdatedObjects()
-	{
-		RenderToVertexBufferObjectSet::iterator it;
-		for (it = mR2vbObjects.begin(); it != mR2vbObjects.end(); it++)
-		{
-			RenderToVertexBufferObject* r2vbObject = *it;
-			if (r2vbObject->getAutoUpdates())
-			{
-				r2vbObject->update();
-			}
-		}
-	}
 };

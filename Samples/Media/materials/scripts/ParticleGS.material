@@ -1,4 +1,4 @@
-geometry_program Ogre/ParticleGS/TessellateTetrahedraGS cg
+geometry_program Ogre/ParticleGS/GenerateGS cg
 {
 	source SwizzleGP.cg
 	entry_point gs_swizzle
@@ -12,7 +12,7 @@ material Ogre/ParticleGS/Generate
 	{
 		pass
 		{
-			geometry_shader_ref Ogre/ParticleGS/TessellateTetrahedraGS
+			geometry_shader_ref Ogre/ParticleGS/GenerateGS
 			{
 				
 			}

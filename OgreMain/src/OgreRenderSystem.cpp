@@ -65,6 +65,7 @@ namespace Ogre {
         , mCurrentPassIterationCount(0)
 		, mDerivedDepthBias(false)
         , mVertexProgramBound(false)
+		, mGeometryProgramBound(false)
         , mFragmentProgramBound(false)
 		, mClipPlanesDirty(true)
 		, mRealCapabilities(0)
@@ -139,6 +140,7 @@ namespace Ogre {
         //   their own initialise() implementations.
         
         mVertexProgramBound = false;
+		mGeometryProgramBound = false;
         mFragmentProgramBound = false;
 
         return 0;

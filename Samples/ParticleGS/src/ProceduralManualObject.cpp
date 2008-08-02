@@ -23,7 +23,7 @@ namespace Ogre
 	//-----------------------------------------------------------------------------
 	void ProceduralManualObject::_updateRenderQueue(RenderQueue* queue)
 	{
-		mR2vbObject->update();
+		//mR2vbObject->update(mP);
 	}
 	//-----------------------------------------------------------------------------
 	void ProceduralManualObject::setManualObject(Ogre::ManualObject *manualObject)

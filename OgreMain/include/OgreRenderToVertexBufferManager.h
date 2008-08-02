@@ -78,12 +78,6 @@ namespace Ogre {
             Create a render to vertex buffer object.
         */
         virtual RenderToVertexBufferObjectSharedPtr createObject();
-
-        /**
-            Update all the RenderToVertexBufferObjects which have signed up to
-            automatically update themselves.
-        */
-        void updateAutoUpdatedObjects();
    
 		/**
             Unregister a render to vertex buffer object from the manager.

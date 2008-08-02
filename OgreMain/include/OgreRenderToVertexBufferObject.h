@@ -70,14 +70,14 @@ namespace Ogre {
 		void setMaxVertexCount(unsigned int maxVertexCount) { mMaxVertexCount = maxVertexCount; }
 
         /**
-            Does this object update its buffer every frame?
+            What type of primitives does this object generate?
         */
-		bool getAutoUpdates() const { return mAutoUpdates; }
+		RenderOperation::OperationType getOperationType() const { return mOperationType; }
 
         /**
-            Set wether this object updates its buffer every frame.
+            Set the type of primitives that this object generates
         */
-		void setAutoUpdates(bool autoUpdates) { mAutoUpdates = autoUpdates; }
+		void setOperationType(RenderOperation::OperationType operationType) { mOperationType = operationType; }
 
         /**
             Set wether this object resets its buffers each time it updates.
@@ -97,7 +97,7 @@ namespace Ogre {
         /**
             Update the contents of this vertex buffer by rendering
         */
-        virtual void update() = 0;
+        virtual void update(SceneManager* sceneMgr) = 0;
 
         /**
             Reset the vertex buffer to the initial state. In the next update,
@@ -129,7 +129,7 @@ namespace Ogre {
         */
         void setRenderToBufferMaterialName(const String& materialName);
     protected:
-        bool mAutoUpdates;
+        RenderOperation::OperationType mOperationType;
         bool mResetsEveryUpdate;
 		bool mResetRequested;
         MaterialPtr mMaterial;

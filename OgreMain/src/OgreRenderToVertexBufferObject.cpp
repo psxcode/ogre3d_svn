@@ -34,7 +34,7 @@ Torus Knot Software Ltd.
 namespace Ogre {
 	//-----------------------------------------------------------------------
 	RenderToVertexBufferObject::RenderToVertexBufferObject() :
-		mAutoUpdates(true),
+		mOperationType(RenderOperation::OT_TRIANGLE_LIST),
 		mResetsEveryUpdate(false),
 		mMaxVertexCount(1000),
 		mResetRequested(true)

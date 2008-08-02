@@ -30,6 +30,7 @@ Torus Knot Software Ltd.
 #define __GLRenderToVertexBufferObject_H__
 
 #include "OgreRenderToVertexBufferObject.h"
+#include "OgreGLPrerequisites.h"
 
 namespace Ogre {
     /**
@@ -57,7 +58,12 @@ namespace Ogre {
         /**
             Update the contents of this vertex buffer by rendering
         */
-        virtual void update();
+        virtual void update(SceneManager* sceneMgr);
+	protected:
+		void reallocateBuffer();
+		void bindVerticesOutput();
+		HardwareVertexBufferSharedPtr mVertexBuffer;
+		GLuint mPrimitivesDrawnQuery;
     };
 }
 

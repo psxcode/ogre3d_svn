@@ -28,13 +28,65 @@ Torus Knot Software Ltd.
 */
 
 #include "OgreGLRenderToVertexBufferObject.h"
+#include "OgreHardwareBufferManager.h"
+#include "OgreGLHardwareVertexBuffer.h"
+#include "OgreRenderable.h"
+#include "OgreSceneManager.h"
+#include "OgreRoot.h"
+#include "OgreRenderSystem.h"
 
 namespace Ogre {
+//-----------------------------------------------------------------------------
+	static GLint renderOperationTypeToGLGeometryPrimitiveType(RenderOperation::OperationType operationType)
+	{
+		switch (operationType)
+		{
+		case RenderOperation::OT_POINT_LIST:
+			return GL_POINTS;
+		case RenderOperation::OT_LINE_LIST:
+			return GL_LINES;
+		case RenderOperation::OT_LINE_STRIP:
+			return GL_LINE_STRIP;
+		default:
+		case RenderOperation::OT_TRIANGLE_LIST:
+			return GL_TRIANGLES;
+		case RenderOperation::OT_TRIANGLE_STRIP:
+			return GL_TRIANGLE_STRIP;
+		case RenderOperation::OT_TRIANGLE_FAN:
+			return GL_TRIANGLE_FAN;
+		}
+	}
+//-----------------------------------------------------------------------------
+	void checkGLError()
+	{
+		String msg;
+		bool foundError = false;
 
+		// get all the GL errors
+		GLenum glErr = glGetError();
+		while (glErr != GL_NO_ERROR)
+        {
+			const char* glerrStr = (const char*)gluErrorString(glErr);
+			if (glerrStr)
+			{
+				msg += String(glerrStr);
+			}
+			glErr = glGetError();
+			foundError = true;	
+        }
+
+		if (foundError)
+		{
+			bool debug = true;
+		}
+	}
 //-----------------------------------------------------------------------------
 	GLRenderToVertexBufferObject::GLRenderToVertexBufferObject()
 	{
-		//TODO : Implement
+		mVertexBuffer.setNull();
+
+		 // create query objects
+		glGenQueries(1, &mPrimitivesDrawnQuery);
 	}
 //-----------------------------------------------------------------------------
 	GLRenderToVertexBufferObject::~GLRenderToVertexBufferObject()
@@ -47,8 +99,77 @@ namespace Ogre {
 		//TODO : Implement
 	}
 //-----------------------------------------------------------------------------
-	void GLRenderToVertexBufferObject::update()
+//-----------------------------------------------------------------------------
+	void GLRenderToVertexBufferObject::update(SceneManager* sceneMgr)
 	{
-		//TODO : Implement
+		size_t bufSize = mVertexData->vertexDeclaration->getVertexSize(0) * mMaxVertexCount;
+		if (mVertexBuffer.isNull() || mVertexBuffer->getSizeInBytes() != bufSize)
+		{
+			reallocateBuffer();
+			mResetRequested = true;
+		}
+		
+		RenderOperation renderOp;
+		mSourceRenderable->getRenderOperation(renderOp);
+		bindVerticesOutput();
+
+		//Single pass only for now
+		sceneMgr->_setPass(mMaterial->getBestTechnique()->getPass(0));
+
+		checkGLError();
+
+		GLHardwareVertexBuffer* vertexBuffer = static_cast<GLHardwareVertexBuffer*>(mVertexBuffer.getPointer());
+		GLuint bufferId = vertexBuffer->getGLBufferId();
+
+		checkGLError();
+
+		//Bind the target buffer
+		glBindBufferOffsetNV(GL_TRANSFORM_FEEDBACK_BUFFER_NV, 0, bufferId, 0);
+
+		glBeginTransformFeedbackNV(renderOperationTypeToGLGeometryPrimitiveType(mOperationType));
+		glEnable(GL_RASTERIZER_DISCARD_NV);    // disable rasterization
+
+		checkGLError();
+
+		
+
+		glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN_NV, mPrimitivesDrawnQuery);
+
+		checkGLError();
+
+		//Draw the object
+		Root::getSingleton().getRenderSystem()->_render(renderOp);
+		
+		checkGLError();
+
+		//Finish the query
+		glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN_NV);
+		glDisable(GL_RASTERIZER_DISCARD_NV);
+		glEndTransformFeedbackNV();
+
+		//read back query results
+		GLuint primitivesWritten;
+		glGetQueryObjectuiv(mPrimitivesDrawnQuery, GL_QUERY_RESULT, &primitivesWritten);
+		mVertexData->vertexCount = primitivesWritten; //* verticesPerPrimitive
+
+		checkGLError();
+	}
+//-----------------------------------------------------------------------------
+	void GLRenderToVertexBufferObject::reallocateBuffer()
+	{
+		if (!mVertexBuffer.isNull())
+		{
+			mVertexBuffer.setNull();
+		}		
+		mVertexBuffer = HardwareBufferManager::getSingleton().createVertexBuffer(
+			mVertexData->vertexDeclaration->getVertexSize(0), mMaxVertexCount, HardwareBuffer::HBU_DYNAMIC);
+	}
+//-----------------------------------------------------------------------------
+	void GLRenderToVertexBufferObject::bindVerticesOutput()
+	{
+		// specify which attributes to store
+		GLint attribs[] = { GL_POSITION, 4, 0 };
+		glTransformFeedbackAttribsNV(1, attribs, GL_SEPARATE_ATTRIBS_NV);
+		//TODO : Implement real
 	}
 }

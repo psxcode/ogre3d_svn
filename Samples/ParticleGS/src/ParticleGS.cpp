@@ -22,6 +22,8 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 */
 
 #include "ExampleApplication.h"
+#include "ProceduralManualObject.h"
+#include "OgreRenderToVertexBufferManager.h"
 
 class ParticleGSApplication : public ExampleApplication
 {
@@ -31,6 +33,44 @@ public:
 
     ~ParticleGSApplication() {  }
 protected:
+
+	ProceduralManualObject* createProceduralParticleSystem()
+	{
+		ProceduralManualObject* particleSystem = static_cast<ProceduralManualObject*>
+			(mSceneMgr->createMovableObject("ParticleGSEntity", ProceduralManualObjectFactory::FACTORY_TYPE_NAME));
+		particleSystem->setMaterial("Ogre/ParticleGS/Display");
+
+		//Generate the geometry that will seed the particle system
+		ManualObject* particleSystemSeed = mSceneMgr->createManualObject("ParticleSeed");
+		particleSystemSeed->begin("");
+		particleSystemSeed->position(10,10,1);
+		particleSystemSeed->position(10,20,1);
+		particleSystemSeed->position(20,20,1);
+		particleSystemSeed->position(20,10,1);
+		particleSystemSeed->quad(0,1,2,3);
+		particleSystemSeed->end();
+		
+		//Generate the RenderToBufferObject
+		RenderToVertexBufferObjectSharedPtr r2vbObject = 
+			RenderToVertexBufferManager::getSingleton().createObject();
+		//r2vbObject->setRenderToBufferMaterialName("Ogre/ParticleGS/Generate");
+		r2vbObject->setRenderToBufferMaterialName("Ogre/ParticleGS/Generate");
+		r2vbObject->setOperationType(RenderOperation::OT_TRIANGLE_LIST);
+		r2vbObject->setMaxVertexCount(1000);
+		r2vbObject->setResetsEveryUpdate(false);
+		VertexDeclaration* vertexDecl = r2vbObject->getVertexDeclaration();
+		size_t offset = 0;
+		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_POSITION).getSize();
+		offset += vertexDecl->addElement(0, offset, VET_COLOUR, VES_DIFFUSE).getSize();
+
+
+		//Bond the two together
+		particleSystem->setRenderToVertexBufferObject(r2vbObject);
+		particleSystem->setManualObject(particleSystemSeed);
+
+		r2vbObject->update(mSceneMgr);
+		return particleSystem;
+	}
 
     // Just override the mandatory create scene method
     void createScene(void)
@@ -49,6 +89,15 @@ protected:
 				"so cannot run this demo. Sorry!", 
                 "ParticleGSApplication::createScene");
         }
+
+		Root::getSingleton().addMovableObjectFactory(new ProceduralManualObjectFactory);
+
+		ProceduralManualObject* particleSystem = createProceduralParticleSystem();
+
+		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem);
+
+		mCamera->setPosition(0,0,-20);
+		mCamera->lookAt(0,0,0);
     }
 };
 
