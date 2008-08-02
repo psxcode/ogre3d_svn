@@ -23,12 +23,19 @@ namespace Ogre
 	//-----------------------------------------------------------------------------
 	void ProceduralManualObject::_updateRenderQueue(RenderQueue* queue)
 	{
-		//mR2vbObject->update(mP);
+		mR2vbObject->update(m_pParentSceneManager);
+		queue->addRenderable(this);
+	}
+	//-----------------------------------------------------------------------------
+	void ProceduralManualObject::getRenderOperation(RenderOperation& op)
+	{
+		mR2vbObject->getRenderOperation(op);
 	}
 	//-----------------------------------------------------------------------------
 	void ProceduralManualObject::setManualObject(Ogre::ManualObject *manualObject)
 	{
 		mManualObject = manualObject;
+		m_pParentSceneManager = manualObject->_getManager();
 		if (!mR2vbObject.isNull())
 		{
 			mR2vbObject->setSourceRenderable(manualObject->getSection(0));

@@ -34,6 +34,12 @@ public:
     ~ParticleGSApplication() {  }
 protected:
 
+	virtual void chooseSceneManager(void)
+    {
+        // Create the SceneManager, in this case a generic one
+        mSceneMgr = mRoot->createSceneManager("DefaultSceneManager", "ExampleSMInstance");
+    }
+
 	ProceduralManualObject* createProceduralParticleSystem()
 	{
 		ProceduralManualObject* particleSystem = static_cast<ProceduralManualObject*>
@@ -43,17 +49,16 @@ protected:
 		//Generate the geometry that will seed the particle system
 		ManualObject* particleSystemSeed = mSceneMgr->createManualObject("ParticleSeed");
 		particleSystemSeed->begin("");
+		particleSystemSeed->position(-10,-10,0);
+		particleSystemSeed->position(-10,10,1);
 		particleSystemSeed->position(10,10,1);
-		particleSystemSeed->position(10,20,1);
-		particleSystemSeed->position(20,20,1);
-		particleSystemSeed->position(20,10,1);
+		particleSystemSeed->position(10,-10,1);
 		particleSystemSeed->quad(0,1,2,3);
 		particleSystemSeed->end();
 		
 		//Generate the RenderToBufferObject
 		RenderToVertexBufferObjectSharedPtr r2vbObject = 
 			RenderToVertexBufferManager::getSingleton().createObject();
-		//r2vbObject->setRenderToBufferMaterialName("Ogre/ParticleGS/Generate");
 		r2vbObject->setRenderToBufferMaterialName("Ogre/ParticleGS/Generate");
 		r2vbObject->setOperationType(RenderOperation::OT_TRIANGLE_LIST);
 		r2vbObject->setMaxVertexCount(1000);
@@ -63,12 +68,17 @@ protected:
 		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_POSITION).getSize();
 		offset += vertexDecl->addElement(0, offset, VET_COLOUR, VES_DIFFUSE).getSize();
 
-
-		//Bond the two together
+		
+		//Bind the two together
 		particleSystem->setRenderToVertexBufferObject(r2vbObject);
 		particleSystem->setManualObject(particleSystemSeed);
 
-		r2vbObject->update(mSceneMgr);
+		//Set bounds
+		AxisAlignedBox aabb;
+		aabb.setMinimum(-100,-100,-100);
+		aabb.setMaximum(100,100,100);
+		particleSystem->setBoundingBox(aabb);
+		
 		return particleSystem;
 	}
 
@@ -97,7 +107,7 @@ protected:
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem);
 
 		mCamera->setPosition(0,0,-20);
-		mCamera->lookAt(0,0,0);
+		mCamera->lookAt(0,1,0);
     }
 };
 

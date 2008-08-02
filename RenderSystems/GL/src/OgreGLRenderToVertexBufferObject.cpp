@@ -57,6 +57,24 @@ namespace Ogre {
 		}
 	}
 //-----------------------------------------------------------------------------
+	static GLint getVertexCountPerPrimitive(RenderOperation::OperationType operationType)
+	{
+		//Not fully correct, but does the job
+		switch (operationType)
+		{
+		case RenderOperation::OT_POINT_LIST:
+			return 1;
+		case RenderOperation::OT_LINE_LIST:
+		case RenderOperation::OT_LINE_STRIP:
+			return 2;
+		default:
+		case RenderOperation::OT_TRIANGLE_LIST:
+		case RenderOperation::OT_TRIANGLE_STRIP:
+		case RenderOperation::OT_TRIANGLE_FAN:
+			return 3;
+		}
+	}
+//-----------------------------------------------------------------------------
 	void checkGLError()
 	{
 		String msg;
@@ -91,12 +109,15 @@ namespace Ogre {
 //-----------------------------------------------------------------------------
 	GLRenderToVertexBufferObject::~GLRenderToVertexBufferObject()
 	{
+		glDeleteQueries(1, &mPrimitivesDrawnQuery);
 		//TODO : Implement
 	}
 //-----------------------------------------------------------------------------
 	void GLRenderToVertexBufferObject::getRenderOperation(RenderOperation& op)
 	{
-		//TODO : Implement
+		op.operationType = mOperationType;
+		op.useIndexes = false;
+		op.vertexData = mVertexData;
 	}
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -113,9 +134,6 @@ namespace Ogre {
 		mSourceRenderable->getRenderOperation(renderOp);
 		bindVerticesOutput();
 
-		//Single pass only for now
-		sceneMgr->_setPass(mMaterial->getBestTechnique()->getPass(0));
-
 		checkGLError();
 
 		GLHardwareVertexBuffer* vertexBuffer = static_cast<GLHardwareVertexBuffer*>(mVertexBuffer.getPointer());
@@ -131,7 +149,10 @@ namespace Ogre {
 
 		checkGLError();
 
+		//Single pass only for now
+		sceneMgr->_setPass(mMaterial->getBestTechnique()->getPass(0));
 		
+		checkGLError();
 
 		glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN_NV, mPrimitivesDrawnQuery);
 
@@ -150,7 +171,7 @@ namespace Ogre {
 		//read back query results
 		GLuint primitivesWritten;
 		glGetQueryObjectuiv(mPrimitivesDrawnQuery, GL_QUERY_RESULT, &primitivesWritten);
-		mVertexData->vertexCount = primitivesWritten; //* verticesPerPrimitive
+		mVertexData->vertexCount = primitivesWritten * getVertexCountPerPrimitive(mOperationType);
 
 		checkGLError();
 	}
@@ -163,6 +184,9 @@ namespace Ogre {
 		}		
 		mVertexBuffer = HardwareBufferManager::getSingleton().createVertexBuffer(
 			mVertexData->vertexDeclaration->getVertexSize(0), mMaxVertexCount, HardwareBuffer::HBU_DYNAMIC);
+		
+		mVertexData->vertexBufferBinding->unsetAllBindings();
+		mVertexData->vertexBufferBinding->setBinding(0, mVertexBuffer);
 	}
 //-----------------------------------------------------------------------------
 	void GLRenderToVertexBufferObject::bindVerticesOutput()

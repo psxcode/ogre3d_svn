@@ -39,6 +39,8 @@ namespace Ogre
 		void _updateRenderQueue(RenderQueue* queue);
 		/** @copydoc SimpleRenderable::getMovableType. */
 		const String& getMovableType(void) const;
+		/** @copydoc SimpleRenderable::getRenderOperation. */
+		void getRenderOperation(RenderOperation& op);
 
 		//Delegate to the manual object
 		Real getBoundingRadius(void) const 
