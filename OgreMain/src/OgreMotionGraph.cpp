@@ -372,24 +372,7 @@ namespace Ogre {
 
 
 					}
-					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
-					{
-
-						pkinematic = Kinemap[i];
-						if ( i < track->getNumKeyFrames() - 1 )
-						{
-
-							Ogre::Real t1 = track->getNodeKeyFrame(i+1)->getTime() - track->getNodeKeyFrame(i)->getTime();
-							assert( t1 > 0.00001f );
-							pkinematic->acceleration = (Kinemap[i+1]->velocity - pkinematic->velocity)/t1;
-
-						}
-						else
-						{
-							pkinematic->acceleration = Kinemap[i-1]->acceleration;
-						}
-
-					}
+				
 
 				}//end for "hip"
 				if (bone->getName() == "lfoot")
@@ -397,24 +380,8 @@ namespace Ogre {
 					
 					//calculate velocity first
 
-					CalcAnimationTrackKinematic(track,Kinemap);
+					CalcBoneNodeKinematic(track,Kinemap,bone);
 
-
-					//add annotation for leftfoot contact
-
-				}//end for lfoot
-				if ( bone->getName() == "rfoot")
-				{
-					
-					//calculate velocity first
-					CalcAnimationTrackKinematic(track,Kinemap);
-
-
-					//add rightfoot contact annotation
-
-				}//end for rightfoot
-				if ( bone->getName() == "lfoot")
-				{
 					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
 					{
 						if ( 0 == i)
@@ -424,7 +391,7 @@ namespace Ogre {
 						}
 
 
-						kinefile<<Kinemap[i]->LeftFootTranslation.y<<std::endl;
+						kinefile<<Kinemap[i]->acceleration<<std::endl;
 
 						if ( i == track->getNumKeyFrames() - 1)
 						{
@@ -432,6 +399,24 @@ namespace Ogre {
 						}
 
 					}
+
+
+					//add annotation for leftfoot contact
+
+				}//end for lfoot
+				if ( bone->getName() == "rfoot")
+				{
+					
+					//calculate velocity first
+					CalcBoneNodeKinematic(track,Kinemap,bone);
+
+
+					//add rightfoot contact annotation
+
+				}//end for rightfoot
+				if ( bone->getName() == "lfoot")
+				{
+					
 				}
 				mKinematicData.insert(std::make_pair(animstate->getAnimationName(),Kinemap));
 			}
@@ -439,7 +424,7 @@ namespace Ogre {
 
 	}
 
-	void MotionGraph::CalcAnimationTrackKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap)
+	void MotionGraph::CalcBoneNodeKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap, const Bone* bone)
 	{
 		//calculate velocity first
 		KinematicElem* pkinematic = 0;
@@ -456,7 +441,13 @@ namespace Ogre {
 				NextKf = track->getNodeKeyFrame(i+1);
 				Ogre::Real t1 = NextKf->getTime() - CurrentKf->getTime();
 				assert( t1 > 0.00001f );
-				pkinematic->velocity = (NextKf->getTranslate() - CurrentKf->getTranslate())/t1;
+				if ( bone->getName() == "lfoot")
+				{
+					pkinematic->velocity = (Kinemap[i+1]->LeftFootTranslation - Kinemap[i]->LeftFootTranslation)/t1;
+				}else if( bone->getName() == "rfoot")
+				{
+					pkinematic->velocity = (Kinemap[i+1]->RightFootTranslation - Kinemap[i]->RightFootTranslation)/t1;
+				}
 
 			}
 			else
@@ -464,6 +455,7 @@ namespace Ogre {
 				pkinematic->velocity = Kinemap[i-1]->velocity;
 			}
 		}
+		//calculate the acceleration of bone node, the acceleration only care about the trend of velocities' magnitude
 		for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
 		{
 
@@ -473,7 +465,7 @@ namespace Ogre {
 
 				Ogre::Real t1 = track->getNodeKeyFrame(i+1)->getTime() - track->getNodeKeyFrame(i)->getTime();
 				assert( t1 > 0.00001f );
-				pkinematic->acceleration = (Kinemap[i+1]->velocity - pkinematic->velocity)/t1;
+				pkinematic->acceleration = (Kinemap[i+1]->velocity.length() - pkinematic->velocity.length())/t1;
 
 			}
 			else
