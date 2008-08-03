@@ -1070,6 +1070,13 @@ namespace Ogre {
             *mFrameBonesLastUpdated  = currentFrameNumber;
         }
     }
+	//-----------------------------------------------------------------------
+	void Entity::CalcBoneNodePositions(void)
+	{
+		mSkeletonInstance->setAnimationState(*mAnimationState);
+		mSkeletonInstance->_getBoneMatrices(mBoneMatrices);
+	}
+
     //-----------------------------------------------------------------------
     void Entity::setDisplaySkeleton(bool display)
     {
