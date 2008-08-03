@@ -181,7 +181,7 @@ namespace Ogre {
 		@param
 		pEntity is the Entity owning all the animations this motion graph is used
 		*/
-		void CalcKinematics(const Entity* pEntity); 
+		void CalcKinematics(Entity* pEntity); 
 
 
 		/** Tranist from the current state to the next state.
