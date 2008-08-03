@@ -257,7 +257,7 @@ namespace Ogre {
 		}
 	}
 
-	void MotionGraph::CalcKinematics(const Entity* pEntity)
+	void MotionGraph::CalcKinematics(Entity* pEntity)
 	{
 		std::ofstream kinefile;
 		kinefile.open("acceleration",std::ios::out);
@@ -278,8 +278,8 @@ namespace Ogre {
 			std::map<float, KinematicElem*> Kinemap;
 			KinematicElem* pkinematic = 0;
 			bool bMapReserve = false;
-
-
+			Bone* bone = 0;
+			
 
 			while (trackIter.hasMoreElements())
 			{
@@ -296,10 +296,32 @@ namespace Ogre {
 						Kinemap.insert(std::make_pair(i,pkinematic));
 					}
 					bMapReserve = true;
+
+					//calculate bone node's global position
+					animstate->setEnabled(true);
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+					{
+						Matrix4 m;
+						animstate->setTimePosition(track->getNodeKeyFrame(i)->getTime());
+						pEntity->CalcBoneNodePositions();
+						pkinematic = Kinemap[i];
+						boneNode = anim->getNodeTrack(pEntity->getSkeleton()->getBone("lfoot")->getHandle())->getAssociatedNode();
+						bone = pEntity->getSkeleton()->getBone("lfoot");
+						
+						
+						pkinematic->LeftFootTranslation = bone->_getFullTransform().getTrans();
+
+						boneNode = anim->getNodeTrack(pEntity->getSkeleton()->getBone("rfoot")->getHandle())->getAssociatedNode();
+						bone = pEntity->getSkeleton()->getBone("rfoot");
+						
+						pkinematic->RightFootTranslation = bone->_getFullTransform().getTrans();
+					}
+					animstate->setEnabled(false);
+					
 				}
 
 
-				Bone* bone = pEntity->getSkeleton()->getBone(track->getHandle());
+				bone = pEntity->getSkeleton()->getBone(track->getHandle());
 				//do calculation for this animation track
 
 
@@ -349,9 +371,6 @@ namespace Ogre {
 						}*/
 
 
-
-
-
 					}
 					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
 					{
@@ -375,15 +394,8 @@ namespace Ogre {
 				}//end for "hip"
 				if (bone->getName() == "lfoot")
 				{
-					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
-					{
-						pkinematic = Kinemap[i];
-						CurrentKf = track->getNodeKeyFrame(i);
-						boneNode->translate(CurrentKf->getTranslate());
-						pkinematic->LeftFootTranslation = boneNode->getPosition();
-					}
+					
 					//calculate velocity first
-
 
 					CalcAnimationTrackKinematic(track,Kinemap);
 
@@ -393,13 +405,7 @@ namespace Ogre {
 				}//end for lfoot
 				if ( bone->getName() == "rfoot")
 				{
-					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
-					{
-						pkinematic = Kinemap[i];
-						CurrentKf = track->getNodeKeyFrame(i);
-						boneNode->translate(CurrentKf->getTranslate());
-						pkinematic->RightFootTranslation = boneNode->getPosition();
-					}
+					
 					//calculate velocity first
 					CalcAnimationTrackKinematic(track,Kinemap);
 
