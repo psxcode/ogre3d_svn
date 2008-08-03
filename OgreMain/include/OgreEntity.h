@@ -319,6 +319,12 @@ namespace Ogre {
 		*/
 		SubEntity* getSubEntity( const String& name ) const;
 
+		/**Calculate bone node's global position with animationstate set
+		@remarks - this method is just a Facade of cacheBoneMatrices()
+		*/
+		void CalcBoneNodePositions(void);
+		
+
 		/** Retrieves the number of SubEntity objects making up this entity.
 		*/
 		unsigned int getNumSubEntities(void) const;
