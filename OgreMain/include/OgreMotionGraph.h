@@ -204,8 +204,8 @@ namespace Ogre {
 			Ogre::Vector3 RightFootTranslation;
 			Ogre::Quaternion orientation;
 			Ogre::Vector3 velocity;       //this velocity is temporarily used for calculating any joint's velocity
-			Ogre::Vector3 acceleration;   //this acceleration is temporarily used for any joint to 
-			// determine the acceleration zero-crossings 
+			Ogre::Real acceleration;   //this acceleration is temporarily used for any joint to 
+			// determine the acceleration zero-crossings, it only cares about magnitude of velocity
 		};
 		struct MotionAnnotation
 		{
@@ -215,7 +215,7 @@ namespace Ogre {
 		typedef std::map< std::string, std::map<float, KinematicElem*> > Kinematic; 
 		typedef std::map< std::string, std::vector<MotionAnnotation*> > Annotations;
 	protected:
-		void CalcAnimationTrackKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap);
+		void CalcBoneNodeKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap, const Bone* bone);
 
 	protected:
 		StateMap mStates;
