@@ -204,7 +204,7 @@ namespace Ogre {
 			Ogre::Vector3 RightFootTranslation;
 			Ogre::Quaternion orientation;
 			Ogre::Vector3 velocity;       //this velocity is temporarily used for calculating any joint's velocity
-			Ogre::Real acceleration;   //this acceleration is temporarily used for any joint to 
+			Ogre::Vector3 acceleration;   //this acceleration is temporarily used for any joint to 
 			// determine the acceleration zero-crossings, it only cares about magnitude of velocity
 		};
 		struct MotionAnnotation
