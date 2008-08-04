@@ -1,4 +1,4 @@
-OgreXMLConverter.exe -addanimation rush.bvh jaiqua.skeleton.xml rush.skeleton.xml 
-OgreXMLConverter.exe  rush.skeleton.xml
+OgreXMLConverter.exe -addbatchanim bvhlist.txt character.skeleton.xml character1.skeleton.xml 
+OgreXMLConverter.exe  character1.skeleton.xml
 
-copy /Y  rush.skeleton G:\OgreAnimation\Samples\Media\models\jaiqua.skeleton
+copy /Y  character1.skeleton G:\OgreAnimation\Samples\Media\models\character.skeleton
