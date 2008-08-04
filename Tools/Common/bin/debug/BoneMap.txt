@@ -1,38 +1,38 @@
-bvh_bone id = 0 name = hip                 skeleton_bone id = 33 name = Spineroot
-bvh_bone id = 1 name = lhipjoint           skeleton_bone id = -1 name = 
-bvh_bone id = 2 name = lfemur              skeleton_bone id = 16 name = Lthign
-bvh_bone id = 3 name = ltibia              skeleton_bone id = 17 name = Lshin
-bvh_bone id = 4 name = lfoot               skeleton_bone id = 18 name = lfoot
-bvh_bone id = 5 name = ltoes               skeleton_bone id = 20 name = Ltoe
+bvh_bone id = 0 name = hip                 skeleton_bone id = 0 name = hip
+bvh_bone id = 1 name = lhipjoint           skeleton_bone id = 1 name = lhipjoint
+bvh_bone id = 2 name = lfemur              skeleton_bone id = 2 name = lfemur
+bvh_bone id = 3 name = ltibia              skeleton_bone id = 3 name = ltibia
+bvh_bone id = 4 name = lfoot               skeleton_bone id = 4 name = lfoot
+bvh_bone id = 5 name = ltoes               skeleton_bone id = 5 name = ltoes
 bvh_bone id = 6 name = ltoes_End           skeleton_bone id = -1 name =
-bvh_bone id = 7 name = rhipjoint           skeleton_bone id = -1 name = 
-bvh_bone id = 8 name = rfemur              skeleton_bone id = 14 name = Rthigh
-bvh_bone id = 9 name = rtibia              skeleton_bone id = 15 name = Rshin
-bvh_bone id = 10 name = rfoot              skeleton_bone id = 19 name = Rfoot
-bvh_bone id = 11 name = rtoes              skeleton_bone id = 21 name = Rtoe
+bvh_bone id = 7 name = rhipjoint           skeleton_bone id = 6 name = rhipjoint
+bvh_bone id = 8 name = rfemur              skeleton_bone id = 7 name = rfemur
+bvh_bone id = 9 name = rtibia              skeleton_bone id = 8 name = rtibia
+bvh_bone id = 10 name = rfoot              skeleton_bone id = 9 name = rfoot
+bvh_bone id = 11 name = rtoes              skeleton_bone id = 10 name = rtoes
 bvh_bone id = 12 name = rtoes_End          skeleton_bone id = -1 name =
-bvh_bone id = 13 name = lowerback          skeleton_bone id = 13 name = Spine01
-bvh_bone id = 14 name = upperback          skeleton_bone id = 12 name = Spine02
-bvh_bone id = 15 name = thorax             skeleton_bone id = 11 name = Spine03
-bvh_bone id = 16 name = lowerneck          skeleton_bone id = 34 name = neckroot
-bvh_bone id = 17 name = upperneck          skeleton_bone id = 1 name = neck
-bvh_bone id = 18 name = head               skeleton_bone id = 0 name = head
-bvh_bone id = 19 name = head_End           skeleton_bone id = -1 name =
-bvh_bone id = 20 name = lclavicle          skeleton_bone id = -1 name = 
-bvh_bone id = 21 name = lhumerus           skeleton_bone id = 26 name = Lshoulderroot
-bvh_bone id = 22 name = lradius            skeleton_bone id = 23 name = Larmroot
-bvh_bone id = 23 name = lwrist             skeleton_bone id = 9 name = Lforearm
-bvh_bone id = 24 name = lhand              skeleton_bone id = 25 name = Lhandroot
-bvh_bone id = 25 name = lfingers           skeleton_bone id = 22 name = Lfingers
+bvh_bone id = 13 name = lowerback          skeleton_bone id = 11 name = lowerback
+bvh_bone id = 14 name = upperback          skeleton_bone id = 12 name = upperback
+bvh_bone id = 15 name = thorax             skeleton_bone id = 13 name = thorax
+bvh_bone id = 16 name = lowerneck          skeleton_bone id = 14 name = lowerneck
+bvh_bone id = 17 name = upperneck          skeleton_bone id = 15 name = upperneck
+bvh_bone id = 18 name = head               skeleton_bone id = 16 name = head
+bvh_bone id = 19 name = head_End           skeleton_bone id = -1 name = 
+bvh_bone id = 20 name = lclavicle          skeleton_bone id = 17 name = lclavicle 
+bvh_bone id = 21 name = lhumerus           skeleton_bone id = 18 name = lhumerus
+bvh_bone id = 22 name = lradius            skeleton_bone id = 19 name = lradius
+bvh_bone id = 23 name = lwrist             skeleton_bone id = 20 name = lwrist
+bvh_bone id = 24 name = lhand              skeleton_bone id = 21 name = lhand
+bvh_bone id = 25 name = lfingers           skeleton_bone id = 22 name = lfingers
 bvh_bone id = 26 name = lfingers_End       skeleton_bone id = -1 name =
-bvh_bone id = 27 name = lthumb             skeleton_bone id = -1 name =
+bvh_bone id = 27 name = lthumb             skeleton_bone id = 23 name = lthumb
 bvh_bone id = 28 name = lthumb_End         skeleton_bone id = -1 name =
-bvh_bone id = 29 name = rclavicle          skeleton_bone id = -1 name = 
-bvh_bone id = 30 name = rhumerus           skeleton_bone id = 31 name = Rshoulderroot
-bvh_bone id = 31 name = rradius            skeleton_bone id = 28 name = Rarmroot
-bvh_bone id = 32 name = rwrist             skeleton_bone id = 3 name = Rforearm
-bvh_bone id = 33 name = rhand              skeleton_bone id = 4 name = Rhand
-bvh_bone id = 34 name = rfingers           skeleton_bone id = 5 name = Rfingers
+bvh_bone id = 29 name = rclavicle          skeleton_bone id = 24 name = rclavicle 
+bvh_bone id = 30 name = rhumerus           skeleton_bone id = 25 name = rhumerus
+bvh_bone id = 31 name = rradius            skeleton_bone id = 26 name = rradius
+bvh_bone id = 32 name = rwrist             skeleton_bone id = 27 name = rwrist
+bvh_bone id = 33 name = rhand              skeleton_bone id = 28 name = rhand
+bvh_bone id = 34 name = rfingers           skeleton_bone id = 29 name = rfingers
 bvh_bone id = 35 name = rfingers_End       skeleton_bone id = -1 name =
-bvh_bone id = 36 name = rthumb             skeleton_bone id = -1 name =
+bvh_bone id = 36 name = rthumb             skeleton_bone id = 30 name = rthumb
 bvh_bone id = 37 name = rthumb_End         skeleton_bone id = -1 name =
