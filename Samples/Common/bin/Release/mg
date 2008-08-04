@@ -1,8 +1,10 @@
-States: 3
+States: 4
 0,jump
 1,walk
 2,rush
-Transitions: 3
+3,wonder
+Transitions: 4
 0,'AnimationEnd',walk,1
 1,'AnimationEnd',rush,2
-2,'AnimationEnd',jump,0
+2,'AnimationEnd',jump,3
+3,'AnimationEnd',wonder,0
