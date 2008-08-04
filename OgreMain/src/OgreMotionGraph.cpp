@@ -259,14 +259,32 @@ namespace Ogre {
 
 	void MotionGraph::CalcKinematics(Entity* pEntity)
 	{
-		std::ofstream kinefile;
-		kinefile.open("acceleration",std::ios::out);
-		if ( !kinefile.is_open())
+		std::ofstream PositionFile;
+		std::ofstream VelocityFile;
+		std::ofstream AccelerationFile;
+		PositionFile.open("position",std::ios::out);
+		if ( !PositionFile.is_open())
 		{
 			exit(1);
 		}
 		else
 			;
+		VelocityFile.open("velocity",std::ios::out);
+		if ( !VelocityFile.is_open())
+		{
+			exit(1);
+		}
+		else
+			;
+		AccelerationFile.open("acceleration",std::ios::out);
+		if ( !AccelerationFile.is_open())
+		{
+			exit(1);
+		}
+		else
+			;
+
+
 
 		AnimationStateSet* animations = pEntity->getAllAnimationStates();
 		AnimationStateIterator it = animations->getAnimationStateIterator();
@@ -276,7 +294,9 @@ namespace Ogre {
 			Animation* anim = pEntity->getSkeleton()->getAnimation(animstate->getAnimationName());
 			Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
 			std::map<float, KinematicElem*> Kinemap;
+			std::vector<MotionAnnotation*> AnnotationList;
 			KinematicElem* pkinematic = 0;
+			MotionAnnotation* pAnnotation = 0;
 			bool bMapReserve = false;
 			Bone* bone = 0;
 			
@@ -294,6 +314,11 @@ namespace Ogre {
 					{
 						pkinematic = new KinematicElem;
 						Kinemap.insert(std::make_pair(i,pkinematic));
+						pAnnotation = new MotionAnnotation;
+						pAnnotation->bLeftFootContact = false;
+						pAnnotation->bRightFootContact = false;
+						AnnotationList.push_back(pAnnotation);
+
 					}
 					bMapReserve = true;
 
@@ -381,21 +406,147 @@ namespace Ogre {
 					//calculate velocity first
 
 					CalcBoneNodeKinematic(track,Kinemap,bone);
+					
+					//annotate the motion clip
+					Ogre::Real MinVertical = 100;
+					unsigned short MinIndex = -1;
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++)
+					{
+						if( MinVertical > Kinemap[i]->LeftFootTranslation.y)
+						{
+							MinVertical = Kinemap[i]->LeftFootTranslation.y;
+							MinIndex = i;
+						}
+					}
+					Ogre::Real VerticalThreshold = 0.05;
+
+					
+					if ( animstate->getAnimationName() == "wonder" )//this animation needs to be treated specially because of its
+						// lowest vertical changed so drastically
+					{
+						MinVertical = 100;
+						bool bInTrough = false;
+						bool bStartInTrough = false;
+						Ogre::Real ThresholdLine = -10.; //this is gotten by observation of the graph
+						if (Kinemap[0]->LeftFootTranslation.y > ThresholdLine)
+						{
+							bInTrough = false;
+						}
+						else
+						{
+							bStartInTrough = true;
+							bInTrough = true;
+						}
+						unsigned short leftbound = -1;
+						unsigned short rightbound = -1;
+						for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++)
+						{
+							
+							if ( Kinemap[i]->LeftFootTranslation.y > ThresholdLine)
+							{
+								if ( bInTrough == false)
+								{
+									AnnotationList[i]->bLeftFootContact = false;
+									continue;
+								}
+								else
+								{
+									bInTrough = false;
+									if ( bStartInTrough == true )
+									{
+										bStartInTrough = false;
+										continue;
+									}
+									else
+									rightbound = i;
+								}
+							}
+							else
+							{
+								if ( bInTrough == false )
+								{
+									bInTrough = true;
+									leftbound = i;
+									if( MinVertical > Kinemap[i]->LeftFootTranslation.y)
+									{
+										MinVertical = Kinemap[i]->LeftFootTranslation.y;
+										MinIndex = i;
+									}
+								}
+								else
+								{
+									if ( bStartInTrough == true )
+									{
+										//If the trough is not wholly evaluated, discard the part which maybe contain
+										// the ture min point or not
+										AnnotationList[i]->bLeftFootContact = false;
+									}
+									else
+									{
+										if( MinVertical > Kinemap[i]->LeftFootTranslation.y)
+										{
+											MinVertical = Kinemap[i]->LeftFootTranslation.y;
+											MinIndex = i;
+										}
+									}
+								}
+								continue;
+
+							}
+							for ( unsigned short j = leftbound; j <= rightbound; j++)
+							{
+								if ( abs(Kinemap[j]->LeftFootTranslation.y - MinVertical) < VerticalThreshold )
+								{
+									AnnotationList[j]->bLeftFootContact = true;
+								}
+								else
+								{
+									AnnotationList[j]->bLeftFootContact = false;
+								}
+							}
+							MinVertical = 100;
+						}
+					}
+					else
+					{
+						for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++)
+						{
+							if ( abs(Kinemap[i]->LeftFootTranslation.y - MinVertical) < VerticalThreshold )
+							{
+								AnnotationList[i]->bLeftFootContact = true;
+							}
+							else
+							{
+								AnnotationList[i]->bLeftFootContact = false;
+							}
+						}
+					}
+					
+					
+
 
 					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
 					{
 						if ( 0 == i)
 						{
-							kinefile<<anim->getName()<<std::endl;
-							kinefile<<track->getNumKeyFrames()<<std::endl;
+							PositionFile<<anim->getName()<<std::endl;
+							PositionFile<<track->getNumKeyFrames()<<std::endl;
+							VelocityFile<<anim->getName()<<std::endl;
+							VelocityFile<<track->getNumKeyFrames()<<std::endl;
+							AccelerationFile<<anim->getName()<<std::endl;
+							AccelerationFile<<track->getNumKeyFrames()<<std::endl;
+							
 						}
 
-
-						kinefile<<Kinemap[i]->acceleration<<std::endl;
-
+						PositionFile<<Kinemap[i]->LeftFootTranslation.y<<std::endl;
+						VelocityFile<<Kinemap[i]->velocity.y<<std::endl;
+						AccelerationFile<<AnnotationList[i]->bLeftFootContact<<std::endl;
+						
 						if ( i == track->getNumKeyFrames() - 1)
 						{
-							kinefile<<"\n"<<std::endl;
+							PositionFile<<"\n"<<std::endl;
+							VelocityFile<<"\n"<<std::endl;
+							AccelerationFile<<"\n"<<std::endl;
 						}
 
 					}
@@ -409,16 +560,127 @@ namespace Ogre {
 					
 					//calculate velocity first
 					CalcBoneNodeKinematic(track,Kinemap,bone);
+					//annotate the motion clip
+					Ogre::Real MinVertical = 100;
+					unsigned short MinIndex = -1;
+					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++)
+					{
+						if( MinVertical > Kinemap[i]->RightFootTranslation.y)
+						{
+							MinVertical = Kinemap[i]->RightFootTranslation.y;
+							MinIndex = i;
+						}
+					}
+					Ogre::Real VerticalThreshold = 0.05;
 
+					
+
+					if ( animstate->getAnimationName() == "wonder" )//this animation needs to be treated specially because of its
+						// lowest vertical changed so drastically
+					{
+						MinVertical = 100;
+						bool bInTrough = false;
+						bool bStartInTrough = false;
+						Ogre::Real ThresholdLine = -10.; //this is gotten by observation of the graph
+						if (Kinemap[0]->RightFootTranslation.y > ThresholdLine)
+						{
+							bInTrough = false;
+						}
+						else
+						{
+							bStartInTrough = true;
+							bInTrough = true;
+						}
+						unsigned short leftbound = -1;
+						unsigned short rightbound = -1;
+						for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++)
+						{
+
+							if ( Kinemap[i]->RightFootTranslation.y > ThresholdLine)
+							{
+								if ( bInTrough == false)
+								{
+									AnnotationList[i]->bRightFootContact = false;
+									continue;
+								}
+								else
+								{
+									bInTrough = false;
+									if ( bStartInTrough == true )
+									{
+										bStartInTrough = false;
+										continue;
+									}
+									else
+										rightbound = i;
+								}
+							}
+							else
+							{
+								if ( bInTrough == false )
+								{
+									bInTrough = true;
+									leftbound = i;
+									if( MinVertical > Kinemap[i]->RightFootTranslation.y)
+									{
+										MinVertical = Kinemap[i]->RightFootTranslation.y;
+										MinIndex = i;
+									}
+								}
+								else
+								{
+									if ( bStartInTrough == true )
+									{
+										//If the trough is not wholly evaluated, discard the part which maybe contain
+										// the ture min point or not
+										AnnotationList[i]->bRightFootContact = false;
+									}
+									else
+									{
+										if( MinVertical > Kinemap[i]->RightFootTranslation.y)
+										{
+											MinVertical = Kinemap[i]->RightFootTranslation.y;
+											MinIndex = i;
+										}
+									}
+								}
+								continue;
+
+							}
+							for ( unsigned short j = leftbound; j <= rightbound; j++)
+							{
+								if ( abs(Kinemap[j]->RightFootTranslation.y - MinVertical) < VerticalThreshold )
+								{
+									AnnotationList[j]->bRightFootContact = true;
+								}
+								else
+								{
+									AnnotationList[j]->bRightFootContact = false;
+								}
+							}
+							MinVertical = 100;
+						}
+					}
+					else
+					{
+						for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++)
+						{
+							if ( abs(Kinemap[i]->RightFootTranslation.y - MinVertical) < VerticalThreshold )
+							{
+								AnnotationList[i]->bRightFootContact = true;
+							}
+							else
+							{
+								AnnotationList[i]->bRightFootContact = false;
+							}
+						}
+					}
 
 					//add rightfoot contact annotation
 
 				}//end for rightfoot
-				if ( bone->getName() == "lfoot")
-				{
-					
-				}
 				mKinematicData.insert(std::make_pair(animstate->getAnimationName(),Kinemap));
+				mAnnotationData.insert(std::make_pair(animstate->getAnimationName(),AnnotationList));
 			}
 		}
 
@@ -436,11 +698,14 @@ namespace Ogre {
 			pkinematic = Kinemap[i];
 			CurrentKf = track->getNodeKeyFrame(i);
 
-			if ( i < track->getNumKeyFrames() - 1 )
+			if ( i < track->getNumKeyFrames() - 2 )
 			{
 				NextKf = track->getNodeKeyFrame(i+1);
 				Ogre::Real t1 = NextKf->getTime() - CurrentKf->getTime();
 				assert( t1 > 0.00001f );
+				ThirdKf = track->getNodeKeyFrame(i+2);
+				Ogre::Real t2 = ThirdKf->getTime() - NextKf->getTime();
+				assert( t2 > 0.00001f );
 				if ( bone->getName() == "lfoot")
 				{
 					pkinematic->velocity = (Kinemap[i+1]->LeftFootTranslation - Kinemap[i]->LeftFootTranslation)/t1;
@@ -465,7 +730,7 @@ namespace Ogre {
 
 				Ogre::Real t1 = track->getNodeKeyFrame(i+1)->getTime() - track->getNodeKeyFrame(i)->getTime();
 				assert( t1 > 0.00001f );
-				pkinematic->acceleration = (Kinemap[i+1]->velocity.length() - pkinematic->velocity.length())/t1;
+				pkinematic->acceleration = (Kinemap[i+1]->velocity - pkinematic->velocity)/t1;
 
 			}
 			else
