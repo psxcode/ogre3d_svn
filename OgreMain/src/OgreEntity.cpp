@@ -1983,6 +1983,7 @@ namespace Ogre {
 		{
 			ActionName = pState->GetCurrentActionName();
 			AnimationState* pAnimState = getAnimationState(ActionName);
+			
 			if ( pAnimState->hasEnded() )
 			{
 				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ANIMATION_END);
@@ -1993,7 +1994,13 @@ namespace Ogre {
 			//	pAnimState->setLoop(false);
 			}
 			else
-			pAnimState->addTime(offset);
+			{
+				Ogre::Vector3 CurrentRootTranslation = getParentSceneNode()->getPosition();
+				getParentSceneNode()->setPosition(0,0,0);//set root to original point
+				pAnimState->addTime(offset);
+				getParentSceneNode()->setPosition(getParentSceneNode()->getPosition()+CurrentRootTranslation);
+			}
+			
 			
 		}
         
