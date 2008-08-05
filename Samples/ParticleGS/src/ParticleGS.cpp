@@ -50,9 +50,13 @@ protected:
 		ManualObject* particleSystemSeed = mSceneMgr->createManualObject("ParticleSeed");
 		particleSystemSeed->begin("Ogre/ParticleGS/Display");
 		particleSystemSeed->position(-10,-10,1);
+		particleSystemSeed->colour(Ogre::ColourValue::Red);
 		particleSystemSeed->position(-10,10,1);
+		particleSystemSeed->colour(Ogre::ColourValue::Red);
 		particleSystemSeed->position(10,10,1);
+		particleSystemSeed->colour(Ogre::ColourValue::Red);
 		particleSystemSeed->position(10,-10,1);
+		particleSystemSeed->colour(Ogre::ColourValue::Red);
 		particleSystemSeed->quad(0,1,2,3);
 		particleSystemSeed->end();
 		
@@ -62,11 +66,11 @@ protected:
 		r2vbObject->setRenderToBufferMaterialName("Ogre/ParticleGS/Generate");
 		r2vbObject->setOperationType(RenderOperation::OT_TRIANGLE_LIST);
 		r2vbObject->setMaxVertexCount(1000);
-		r2vbObject->setResetsEveryUpdate(false);
+		r2vbObject->setResetsEveryUpdate(true);
 		VertexDeclaration* vertexDecl = r2vbObject->getVertexDeclaration();
 		size_t offset = 0;
 		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_POSITION).getSize();
-		//offset += vertexDecl->addElement(0, offset, VET_COLOUR, VES_DIFFUSE).getSize();
+		offset += vertexDecl->addElement(0, offset, VET_FLOAT4, VES_DIFFUSE).getSize();
 
 		
 		//Bind the two together
@@ -106,7 +110,6 @@ protected:
 
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem);
 		//mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem->getManualObject());
-		
 		mCamera->setPosition(0,0,-20);
 		mCamera->lookAt(0,1,1);
     }
