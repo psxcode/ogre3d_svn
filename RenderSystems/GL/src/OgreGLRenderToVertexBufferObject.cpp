@@ -101,9 +101,10 @@ namespace Ogre {
 		}
 	}
 //-----------------------------------------------------------------------------
-	GLRenderToVertexBufferObject::GLRenderToVertexBufferObject()
+	GLRenderToVertexBufferObject::GLRenderToVertexBufferObject() : mFrontBufferIndex(-1)
 	{
-		mVertexBuffer.setNull();
+		mVertexBuffers[0].setNull();
+		mVertexBuffers[1].setNull();
 
 		 // create query objects
 		glGenQueries(1, &mPrimitivesDrawnQuery);
@@ -126,9 +127,9 @@ namespace Ogre {
 	void GLRenderToVertexBufferObject::update(SceneManager* sceneMgr)
 	{
 		size_t bufSize = mVertexData->vertexDeclaration->getVertexSize(0) * mMaxVertexCount;
-		if (mVertexBuffer.isNull() || mVertexBuffer->getSizeInBytes() != bufSize)
+		if (mVertexBuffers[0].isNull() || mVertexBuffers[0]->getSizeInBytes() != bufSize)
 		{
-			reallocateBuffer();
+			//Buffers don't match. Need to reallocate.
 			mResetRequested = true;
 		}
 		
@@ -141,12 +142,30 @@ namespace Ogre {
 		bindVerticesOutput(r2vbPass);
 
 		RenderOperation renderOp;
-		mSourceRenderable->getRenderOperation(renderOp);
-		
+		size_t targetBufferIndex;
+		if (mResetRequested || mResetsEveryUpdate)
+		{
+			//Use source data to render to first buffer
+			mSourceRenderable->getRenderOperation(renderOp);
+			targetBufferIndex = 0;
+		}
+		else
+		{
+			//Use current front buffer to render to back buffer
+			this->getRenderOperation(renderOp);
+			targetBufferIndex = 1 - mFrontBufferIndex;
+		}
+
+		if (mVertexBuffers[targetBufferIndex].isNull() || 
+			mVertexBuffers[targetBufferIndex]->getSizeInBytes() != bufSize)
+		{
+			reallocateBuffer(targetBufferIndex);
+		}
+
 
 		checkGLError();
 
-		GLHardwareVertexBuffer* vertexBuffer = static_cast<GLHardwareVertexBuffer*>(mVertexBuffer.getPointer());
+		GLHardwareVertexBuffer* vertexBuffer = static_cast<GLHardwareVertexBuffer*>(mVertexBuffers[targetBufferIndex].getPointer());
 		GLuint bufferId = vertexBuffer->getGLBufferId();
 
 		checkGLError();
@@ -188,23 +207,34 @@ namespace Ogre {
 		mVertexData->vertexCount = primitivesWritten * getVertexCountPerPrimitive(mOperationType);
 
 		//void* buffData = mVertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY);
-		//float* buffFloat = static_cast<float*>(buffData);
+		//struct FourFloats { float data[7]; /*unsigned char color[4];*/ };
+		//FourFloats* buffFloat = static_cast<FourFloats*>(buffData);
 		//mVertexBuffer->unlock();
 
 		checkGLError();
+
+		//Switch the vertex binding if neccesary
+		if (targetBufferIndex != mFrontBufferIndex)
+		{
+			mVertexData->vertexBufferBinding->unsetAllBindings();
+			mVertexData->vertexBufferBinding->setBinding(0, mVertexBuffers[targetBufferIndex]);
+			mFrontBufferIndex = targetBufferIndex;
+		}
+
+		//Clear the reset flag
+		mResetRequested = false;
 	}
 //-----------------------------------------------------------------------------
-	void GLRenderToVertexBufferObject::reallocateBuffer()
+	void GLRenderToVertexBufferObject::reallocateBuffer(size_t index)
 	{
-		if (!mVertexBuffer.isNull())
+		assert(index == 0 || index == 1);
+		if (!mVertexBuffers[index].isNull())
 		{
-			mVertexBuffer.setNull();
-		}		
-		mVertexBuffer = HardwareBufferManager::getSingleton().createVertexBuffer(
-			mVertexData->vertexDeclaration->getVertexSize(0), mMaxVertexCount, HardwareBuffer::HBU_DYNAMIC);
+			mVertexBuffers[index].setNull();
+		}
 		
-		mVertexData->vertexBufferBinding->unsetAllBindings();
-		mVertexData->vertexBufferBinding->setBinding(0, mVertexBuffer);
+		mVertexBuffers[index] = HardwareBufferManager::getSingleton().createVertexBuffer(
+			mVertexData->vertexDeclaration->getVertexSize(0), mMaxVertexCount, HardwareBuffer::HBU_DYNAMIC);
 	}
 //-----------------------------------------------------------------------------
 	String GLRenderToVertexBufferObject::getSemanticVaryingName(VertexElementSemantic semantic, unsigned short index)
@@ -244,6 +274,18 @@ namespace Ogre {
 				"Unsupported vertex element sematic in render to vertex buffer", 
 				"OgreGLRenderToVertexBufferObject::getGLSemanticType");
 			
+		}
+	}
+//-----------------------------------------------------------------------------
+	GLint getNumberOfComponents(VertexElementType elementType)
+	{
+		switch (elementType) {
+			default:
+				return VertexElement::getTypeCount(elementType);
+			case VET_COLOUR:
+			case VET_COLOUR_ABGR:
+			case VET_COLOUR_ARGB:
+				return 4;
 		}
 	}
 //-----------------------------------------------------------------------------
@@ -294,7 +336,7 @@ namespace Ogre {
 				//Type
 				attribs.push_back(getGLSemanticType(element->getSemantic()));
 				//Number of components
-				attribs.push_back(VertexElement::getTypeCount(element->getType()));
+				attribs.push_back(getNumberOfComponents(element->getType()));
 				//Index
 				attribs.push_back(element->getIndex());
 			}
