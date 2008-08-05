@@ -134,7 +134,10 @@ namespace Ogre {
 		
 		//Single pass only for now
 		Ogre::Pass* r2vbPass = mMaterial->getBestTechnique()->getPass(0);
+		//Set pass before binding buffers to activate the GPU programs
 		sceneMgr->_setPass(r2vbPass);
+		checkGLError();
+
 		bindVerticesOutput(r2vbPass);
 
 		RenderOperation renderOp;
@@ -151,13 +154,14 @@ namespace Ogre {
 		//Bind the target buffer
 		glBindBufferOffsetNV(GL_TRANSFORM_FEEDBACK_BUFFER_NV, 0, bufferId, 0);
 
+		checkGLError();
+
 		glBeginTransformFeedbackNV(renderOperationTypeToGLGeometryPrimitiveType(mOperationType));
-		glEnable(GL_RASTERIZER_DISCARD_NV);    // disable rasterization
 
 		checkGLError();
 
-		
-		
+		glEnable(GL_RASTERIZER_DISCARD_NV);    // disable rasterization
+
 		checkGLError();
 
 		glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN_NV, mPrimitivesDrawnQuery);
@@ -278,7 +282,7 @@ namespace Ogre {
 				GLint location = glGetVaryingLocationNV(linkProgramId, varyingName.c_str());
 				locations.push_back(location);
 			}
-			glTransformFeedbackVaryingsNV(linkProgramId, locations.size(), &locations[0], GL_SEPARATE_ATTRIBS_NV);
+			glTransformFeedbackVaryingsNV(linkProgramId, locations.size(), &locations[0], GL_INTERLEAVED_ATTRIBS_NV);
 		}
 		else
 		{
@@ -295,7 +299,9 @@ namespace Ogre {
 				attribs.push_back(element->getIndex());
 			}
 			
-			glTransformFeedbackAttribsNV(declaration->getElementCount(), &attribs[0] ,GL_SEPARATE_ATTRIBS_NV);
+			glTransformFeedbackAttribsNV(declaration->getElementCount(), &attribs[0] ,GL_INTERLEAVED_ATTRIBS_NV);
 		}
+
+		checkGLError();
 	}
 }
