@@ -61,7 +61,9 @@ namespace Ogre {
         virtual void update(SceneManager* sceneMgr);
 	protected:
 		void reallocateBuffer();
-		void bindVerticesOutput();
+		void bindVerticesOutput(Pass* pass);
+		GLint getGLSemanticType(VertexElementSemantic semantic);
+		String getSemanticVaryingName(VertexElementSemantic semantic, unsigned short index);
 		HardwareVertexBufferSharedPtr mVertexBuffer;
 		GLuint mPrimitivesDrawnQuery;
     };

@@ -34,6 +34,8 @@ Torus Knot Software Ltd.
 #include "OgreSceneManager.h"
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
+#include "OgreGLSLLinkProgramManager.h"
+#include "OgreStringConverter.h"
 
 namespace Ogre {
 //-----------------------------------------------------------------------------
@@ -130,9 +132,14 @@ namespace Ogre {
 			mResetRequested = true;
 		}
 		
+		//Single pass only for now
+		Ogre::Pass* r2vbPass = mMaterial->getBestTechnique()->getPass(0);
+		sceneMgr->_setPass(r2vbPass);
+		bindVerticesOutput(r2vbPass);
+
 		RenderOperation renderOp;
 		mSourceRenderable->getRenderOperation(renderOp);
-		bindVerticesOutput();
+		
 
 		checkGLError();
 
@@ -149,8 +156,7 @@ namespace Ogre {
 
 		checkGLError();
 
-		//Single pass only for now
-		sceneMgr->_setPass(mMaterial->getBestTechnique()->getPass(0));
+		
 		
 		checkGLError();
 
@@ -197,11 +203,99 @@ namespace Ogre {
 		mVertexData->vertexBufferBinding->setBinding(0, mVertexBuffer);
 	}
 //-----------------------------------------------------------------------------
-	void GLRenderToVertexBufferObject::bindVerticesOutput()
+	String GLRenderToVertexBufferObject::getSemanticVaryingName(VertexElementSemantic semantic, unsigned short index)
 	{
-		// specify which attributes to store
-		GLint attribs[] = { GL_POSITION, 3, 0 };
-		glTransformFeedbackAttribsNV(1, attribs, GL_SEPARATE_ATTRIBS_NV);
-		//TODO : Implement real
+		String result;
+		switch (semantic)
+		{
+		case VES_POSITION:
+			result = "gl_Position";
+		case VES_TEXTURE_COORDINATES:
+			result = String("gl_TexCoord[") + StringConverter::toString(index) + "]";
+		case VES_DIFFUSE:
+			result = "gl_Color";
+		//TODO : Implement more
+		default:
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+				"Unsupported vertex element sematic in render to vertex buffer", 
+				"OgreGLRenderToVertexBufferObject::getSemanticVaryingName");
+		}
+
+		return result;
+	}
+//-----------------------------------------------------------------------------
+	GLint GLRenderToVertexBufferObject::getGLSemanticType(VertexElementSemantic semantic)
+	{
+		switch (semantic)
+		{
+		case VES_POSITION:
+			return GL_POSITION;
+		case VES_TEXTURE_COORDINATES:
+			return GL_TEXTURE_COORD_NV;
+		case VES_DIFFUSE:
+			return GL_PRIMARY_COLOR;
+		//TODO : Implement more
+		default:
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+				"Unsupported vertex element sematic in render to vertex buffer", 
+				"OgreGLRenderToVertexBufferObject::getGLSemanticType");
+			
+		}
+	}
+//-----------------------------------------------------------------------------
+	void GLRenderToVertexBufferObject::bindVerticesOutput(Pass* pass)
+	{
+		VertexDeclaration* declaration = mVertexData->vertexDeclaration;
+		bool useVaryingAttributes = false;
+		
+		//Check if we are FixedFunc/ASM shaders (Static attributes) or GLSL (Varying attributes)
+		//We assume that there isn't a mix of GLSL and ASM as this is illegal
+		GpuProgram* sampleProgram = 0;
+		if (pass->hasVertexProgram())
+		{
+			sampleProgram = pass->getVertexProgram().getPointer();
+		}
+		else if (pass->hasGeometryProgram())
+		{
+			sampleProgram = pass->getGeometryProgram().getPointer();
+		}
+		if ((sampleProgram != 0) && (sampleProgram->getLanguage() == "glsl"))
+		{
+			useVaryingAttributes = true;
+		}
+
+		if (useVaryingAttributes)
+		{
+			//Have GLSL shaders, using varying attributes
+			GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
+			GLhandleARB linkProgramId = linkProgram->getGLHandle();
+			
+			std::vector<GLint> locations;
+			for (unsigned short e=0; e < declaration->getElementCount(); e++)
+			{
+				const VertexElement* element =declaration->getElement(e);
+				String varyingName = getSemanticVaryingName(element->getSemantic(), element->getIndex());
+				GLint location = glGetVaryingLocationNV(linkProgramId, varyingName.c_str());
+				locations.push_back(location);
+			}
+			glTransformFeedbackVaryingsNV(linkProgramId, locations.size(), &locations[0], GL_SEPARATE_ATTRIBS_NV);
+		}
+		else
+		{
+			//Either fixed function or assembly (CG = assembly) shaders
+			std::vector<GLint> attribs;
+			for (unsigned short e=0; e < declaration->getElementCount(); e++)
+			{
+				const VertexElement* element = declaration->getElement(e);
+				//Type
+				attribs.push_back(getGLSemanticType(element->getSemantic()));
+				//Number of components
+				attribs.push_back(VertexElement::getTypeCount(element->getType()));
+				//Index
+				attribs.push_back(element->getIndex());
+			}
+			
+			glTransformFeedbackAttribsNV(declaration->getElementCount(), &attribs[0] ,GL_SEPARATE_ATTRIBS_NV);
+		}
 	}
 }
