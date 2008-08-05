@@ -30,6 +30,7 @@ material Ogre/ParticleGS/Display
 		pass
 		{
 			cull_hardware none
+			ambient vertexcolour
 			//Do nothing. Display as is
 		}
 	}
