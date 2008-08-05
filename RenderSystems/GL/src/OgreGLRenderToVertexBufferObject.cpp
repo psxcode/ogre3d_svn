@@ -277,18 +277,6 @@ namespace Ogre {
 		}
 	}
 //-----------------------------------------------------------------------------
-	GLint getNumberOfComponents(VertexElementType elementType)
-	{
-		switch (elementType) {
-			default:
-				return VertexElement::getTypeCount(elementType);
-			case VET_COLOUR:
-			case VET_COLOUR_ABGR:
-			case VET_COLOUR_ARGB:
-				return 4;
-		}
-	}
-//-----------------------------------------------------------------------------
 	void GLRenderToVertexBufferObject::bindVerticesOutput(Pass* pass)
 	{
 		VertexDeclaration* declaration = mVertexData->vertexDeclaration;
@@ -336,7 +324,7 @@ namespace Ogre {
 				//Type
 				attribs.push_back(getGLSemanticType(element->getSemantic()));
 				//Number of components
-				attribs.push_back(getNumberOfComponents(element->getType()));
+				attribs.push_back(VertexElement::getTypeCount(element->getType()));
 				//Index
 				attribs.push_back(element->getIndex());
 			}
