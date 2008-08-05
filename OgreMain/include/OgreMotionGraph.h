@@ -183,6 +183,19 @@ namespace Ogre {
 		*/
 		void CalcKinematics(Entity* pEntity); 
 
+		/** Convert root animation track's translation from global to relative coordinate,
+		the start frame's translation is set to zero, the following ones have offset calculated,
+		so precede motion and the successive motion can stitch together
+		@remarks
+		only x,z coordinate is concerned, vertical value is also used new coming motion's to 
+		avoid accumulated vertical artifact. So jerk will sometimes be seen, if transition blending
+		is improved, this is sure to be improved
+		@param
+		pEntity is the Entity owning all the animations this motion graph is used
+		*/
+		void AlignAnimations(Entity* pEntity); 
+
+
 
 		/** Tranist from the current state to the next state.
 		@remarks
