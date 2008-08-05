@@ -257,6 +257,54 @@ namespace Ogre {
 		}
 	}
 
+	void MotionGraph::AlignAnimations(Entity* pEntity)
+	{
+		AnimationStateSet* animations = pEntity->getAllAnimationStates();
+		AnimationStateIterator it = animations->getAnimationStateIterator();
+		while (it.hasMoreElements())
+		{
+
+			AnimationState* animstate= it.getNext();
+			Animation* anim = pEntity->getSkeleton()->getAnimation(animstate->getAnimationName());
+			Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
+			TransformKeyFrame* CurrentKf = 0;
+			TransformKeyFrame* PreKf = 0;
+
+			while (trackIter.hasMoreElements())
+			{
+				NodeAnimationTrack* track = trackIter.getNext();
+				Node* boneNode = track->getAssociatedNode();
+				for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+				{
+					
+					CurrentKf = track->getNodeKeyFrame(i);
+
+					Ogre::Vector3 TranslationOffset;
+					if ( 0 == i)
+					{
+						
+						TranslationOffset.x = 0;
+						TranslationOffset.y = CurrentKf->getTranslate().y;
+						TranslationOffset.z = 0;
+
+					}
+					else
+					{
+						PreKf = track->getNodeKeyFrame(i-1);
+						TranslationOffset.x = CurrentKf->getTranslate().x - PreKf->getTranslate().x;
+						TranslationOffset.y = CurrentKf->getTranslate().y;
+						TranslationOffset.z = CurrentKf->getTranslate().z - PreKf->getTranslate().z;
+						
+					}
+					CurrentKf->setTranslate(TranslationOffset);
+				}
+
+			}
+
+		}
+
+	}
+
 	void MotionGraph::CalcKinematics(Entity* pEntity)
 	{
 		std::ofstream PositionFile;
@@ -681,8 +729,8 @@ namespace Ogre {
 				}//end for rightfoot
 				mKinematicData.insert(std::make_pair(animstate->getAnimationName(),Kinemap));
 				mAnnotationData.insert(std::make_pair(animstate->getAnimationName(),AnnotationList));
-			}
-		}
+			}//end "for" animation track
+		}//end "while" animations
 
 	}
 
