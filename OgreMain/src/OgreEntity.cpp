@@ -1960,6 +1960,7 @@ namespace Ogre {
 			 //do motiongraph search algorithm preparation
 			 //includes calculating velocity and acceleration
 			 mpMotionGraph->CalcKinematics(this); 
+			 mpMotionGraph->AlignAnimations(this);
 		 MotionGraph::State* pState = mpMotionGraph->GetCurrentState();
 		 String ActionName = pState->GetCurrentActionName();
 		 AnimationState* pAnimState = mAnimationState->getAnimationState(ActionName);
@@ -1995,10 +1996,12 @@ namespace Ogre {
 			}
 			else
 			{
-				Ogre::Vector3 CurrentRootTranslation = getParentSceneNode()->getPosition();
-				getParentSceneNode()->setPosition(0,0,0);//set root to original point
+				//Ogre::Vector3 CurrentRootTranslation = getSkeleton()->getRootBone()->getPosition();
+				
+				//getParentSceneNode()->setPosition(0,0,0);//set root to original point
 				pAnimState->addTime(offset);
-				getParentSceneNode()->setPosition(getParentSceneNode()->getPosition()+CurrentRootTranslation);
+				//getParentSceneNode()->setPosition(getParentSceneNode()->getPosition()+CurrentRootTranslation);
+				//getParentSceneNode()->translate(CurrentRootTranslation);
 			}
 			
 			
