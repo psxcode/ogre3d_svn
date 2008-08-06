@@ -216,7 +216,7 @@ namespace Ogre {
 
 
 		}
-		mCurrentState = mStates.rbegin()->second;
+		mCurrentState = mStates.begin()->second;
 		for ( MotionGraphScript::TransitionArray::const_iterator it = mgScript.GetTransitions().begin();
 			it != mgScript.GetTransitions().end(); it++)
 		{
@@ -274,29 +274,39 @@ namespace Ogre {
 			{
 				NodeAnimationTrack* track = trackIter.getNext();
 				Node* boneNode = track->getAssociatedNode();
-				for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++ )
+				if (boneNode->getName() == "hip")
 				{
-					
-					CurrentKf = track->getNodeKeyFrame(i);
 
-					Ogre::Vector3 TranslationOffset;
-					if ( 0 == i)
-					{
-						
-						TranslationOffset.x = 0;
-						TranslationOffset.y = CurrentKf->getTranslate().y;
-						TranslationOffset.z = 0;
 
-					}
-					else
+					for ( int i = track->getNumKeyFrames() - 1; i >= 0; i-- )
 					{
-						PreKf = track->getNodeKeyFrame(i-1);
-						TranslationOffset.x = CurrentKf->getTranslate().x - PreKf->getTranslate().x;
-						TranslationOffset.y = CurrentKf->getTranslate().y;
-						TranslationOffset.z = CurrentKf->getTranslate().z - PreKf->getTranslate().z;
-						
+
+						CurrentKf = track->getNodeKeyFrame(i);
+						//set the keyframe to be UsedRelative Coordinate
+						// thus Interpolated Keyframe will take the "hip" boneNode's current
+						// translation into account, so the global position of the Entity
+						// will be in relative coordinate system
+						CurrentKf->SetRelativeCoordinate(true);
+
+						Ogre::Vector3 TranslationOffset;
+						if ( 0 == i)
+						{
+
+							TranslationOffset.x = 0;
+							TranslationOffset.y = CurrentKf->getTranslate().y;
+							TranslationOffset.z = 0;
+
+						}
+						else
+						{
+							PreKf = track->getNodeKeyFrame(i-1);
+							TranslationOffset.x = CurrentKf->getTranslate().x - PreKf->getTranslate().x;
+							TranslationOffset.y = CurrentKf->getTranslate().y;
+							TranslationOffset.z = CurrentKf->getTranslate().z - PreKf->getTranslate().z;
+
+						}
+						CurrentKf->setTranslate(TranslationOffset);
 					}
-					CurrentKf->setTranslate(TranslationOffset);
 				}
 
 			}
