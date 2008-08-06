@@ -383,7 +383,7 @@ namespace Ogre {
 			if (mListener->getInterpolatedKeyFrame(this, timeIndex, kf))
 				return;
 		}
-
+		
 		TransformKeyFrame* kret = static_cast<TransformKeyFrame*>(kf);
 
         // Keyframe pointers
@@ -427,8 +427,21 @@ namespace Ogre {
                 }
 
                 // Translation
-                base = k1->getTranslate();
-                kret->setTranslate( base + ((k2->getTranslate() - base) * t) );
+				//Check if this interpolated keyframe is in relative coordinate animation track
+				// no 
+				if ( true == k1->IsRelativeCoordinate() && true == k2->IsRelativeCoordinate() )
+				{
+					Ogre::Vector3 CurrentNodeTranslation = getAssociatedNode()->_getFullTransform().getTrans();
+					base = k1->getTranslate();
+					base.x = 0;
+					base.z = 0;
+					kret->setTranslate(base + ((k2->getTranslate() - base) * t) + CurrentNodeTranslation);
+				}
+				else
+				{
+					base = k1->getTranslate();
+					kret->setTranslate( base + ((k2->getTranslate() - base) * t) );
+				}
 
                 // Scale
                 base = k1->getScale();
@@ -484,6 +497,7 @@ namespace Ogre {
 			return;
 
         TransformKeyFrame kf(0, timeIndex.getTimePos());
+		
 		getInterpolatedKeyFrame(timeIndex, &kf);
 
 		// add to existing. Weights are not relative, but treated as absolute multipliers for the animation
