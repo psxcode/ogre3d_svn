@@ -69,7 +69,7 @@ namespace Ogre
     //---------------------------------------------------------------------
 	TransformKeyFrame::TransformKeyFrame(const AnimationTrack* parent, Real time)
 		:KeyFrame(parent, time), mTranslate(Vector3::ZERO), 
-		mScale(Vector3::UNIT_SCALE), mRotate(Quaternion::IDENTITY) 
+		mScale(Vector3::UNIT_SCALE), mRotate(Quaternion::IDENTITY),mUseRelativeCoordinate(false) 
 	{
 	}
 	//---------------------------------------------------------------------
