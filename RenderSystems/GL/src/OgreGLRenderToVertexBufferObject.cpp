@@ -247,6 +247,8 @@ namespace Ogre {
 			return String("gl_TexCoord[") + StringConverter::toString(index) + "]";
 		case VES_DIFFUSE:
 			return "gl_FrontColor";
+		case VES_SPECULAR:
+			return "gl_FrontSecondaryColor";
 		//TODO : Implement more
 		default:
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
@@ -265,6 +267,8 @@ namespace Ogre {
 			return GL_TEXTURE_COORD_NV;
 		case VES_DIFFUSE:
 			return GL_PRIMARY_COLOR;
+		case VES_SPECULAR:
+			return GL_SECONDARY_COLOR_NV;
 		//TODO : Implement more
 		default:
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
