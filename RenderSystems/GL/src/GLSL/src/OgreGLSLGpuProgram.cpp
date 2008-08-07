@@ -116,6 +116,10 @@ namespace Ogre {
 		{
 			GLSLLinkProgramManager::getSingleton().setActiveVertexShader( NULL );
 		}
+		else if (mType == GPT_GEOMETRY_PROGRAM)
+		{
+			GLSLLinkProgramManager::getSingleton().setActiveGeometryShader( NULL );
+		}
 		else // its a fragment shader
 		{
 			GLSLLinkProgramManager::getSingleton().setActiveFragmentShader( NULL );

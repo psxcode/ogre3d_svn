@@ -3126,6 +3126,8 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 		// cached the GPU programs using state.
 		if (mCurrentVertexProgram)
 			mCurrentVertexProgram->unbindProgram();
+		if (mCurrentGeometryProgram)
+			mCurrentGeometryProgram->unbindProgram();
 		if (mCurrentFragmentProgram)
 			mCurrentFragmentProgram->unbindProgram();
 
@@ -3144,6 +3146,8 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 		// Rebind GPU programs to new context
 		if (mCurrentVertexProgram)
 			mCurrentVertexProgram->bindProgram();
+		if (mCurrentGeometryProgram)
+			mCurrentGeometryProgram->bindProgram();
 		if (mCurrentFragmentProgram)
 			mCurrentFragmentProgram->bindProgram();
 
