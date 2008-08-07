@@ -239,23 +239,20 @@ namespace Ogre {
 //-----------------------------------------------------------------------------
 	String GLRenderToVertexBufferObject::getSemanticVaryingName(VertexElementSemantic semantic, unsigned short index)
 	{
-		String result;
 		switch (semantic)
 		{
 		case VES_POSITION:
-			result = "gl_Position";
+			return "gl_Position";
 		case VES_TEXTURE_COORDINATES:
-			result = String("gl_TexCoord[") + StringConverter::toString(index) + "]";
+			return String("gl_TexCoord[") + StringConverter::toString(index) + "]";
 		case VES_DIFFUSE:
-			result = "gl_Color";
+			return "gl_FrontColor";
 		//TODO : Implement more
 		default:
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Unsupported vertex element sematic in render to vertex buffer", 
 				"OgreGLRenderToVertexBufferObject::getSemanticVaryingName");
 		}
-
-		return result;
 	}
 //-----------------------------------------------------------------------------
 	GLint GLRenderToVertexBufferObject::getGLSemanticType(VertexElementSemantic semantic)
@@ -310,6 +307,13 @@ namespace Ogre {
 				const VertexElement* element =declaration->getElement(e);
 				String varyingName = getSemanticVaryingName(element->getSemantic(), element->getIndex());
 				GLint location = glGetVaryingLocationNV(linkProgramId, varyingName.c_str());
+				if (location < 0)
+				{
+					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+						"GLSL link program does not output " + varyingName + 
+						" so it cannot fill the requested vertex buffer", 
+						"OgreGLRenderToVertexBufferObject::bindVerticesOutput");
+				}
 				locations.push_back(location);
 			}
 			glTransformFeedbackVaryingsNV(linkProgramId, locations.size(), &locations[0], GL_INTERLEAVED_ATTRIBS_NV);
