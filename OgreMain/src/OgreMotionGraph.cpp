@@ -200,7 +200,29 @@ namespace Ogre {
 			mTransitions.insert(std::make_pair(pTran->GetProbability(),pTran));
 	}
 
-	bool MotionGraph::Construct(const MotionGraphScript& mgScript)
+	void MotionGraph::State::ProcessAnimationEnded(const Entity* pEntity)
+	{
+
+		String ActionName = this->GetCurrentActionName();
+		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
+		assert(pAnimState);
+		pAnimState->setTimePosition(0.0);//restart from the beginning
+		pAnimState->setEnabled(false);
+		this->RemoveTopTrigger();
+	}
+
+	void MotionGraph::State::EnableAnimation(const Ogre::Entity *pEntity)
+	{
+		String ActionName = this->GetCurrentActionName();
+		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
+		assert(pAnimState);
+		pAnimState->setEnabled(true);
+		pAnimState->setLoop(false);
+
+	}
+
+
+	bool MotionGraph::ConstructFromScript(const MotionGraphScript& mgScript)
 	{
 
 		if ( !mgScript.IsLoaded() )
@@ -232,6 +254,21 @@ namespace Ogre {
 		}
 		return true;
 	}
+
+	bool MotionGraph::ConstructDirectionalSubGraph(const Entity& entity)
+	{
+		AnimationState* animState = entity.getAnimationState("wonder");
+		if ( animState )
+		{
+			return true;
+
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 
 	MotionGraph::~MotionGraph()
 	{
@@ -305,7 +342,7 @@ namespace Ogre {
 							TranslationOffset.z = CurrentKf->getTranslate().z - PreKf->getTranslate().z;
 
 						}
-						CurrentKf->setTranslate(TranslationOffset);
+						//CurrentKf->setTranslate(TranslationOffset);
 					}
 				}
 
@@ -800,6 +837,7 @@ namespace Ogre {
 
 	}
 
+
 	void MotionGraph::ProcessTrigger(const Entity* pEntity)
 	{
 		Trigger* trigger;
@@ -814,16 +852,10 @@ namespace Ogre {
 					break;
 				case ANIMATION_END:
 					{
-						String ActionName = mCurrentState->GetCurrentActionName();
-						AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
-						pAnimState->setTimePosition(0.0);//restart from the beginning
-						pAnimState->setEnabled(false);
-						mCurrentState->RemoveTopTrigger();
+						
+						mCurrentState->ProcessAnimationEnded(pEntity);
 						Transit(pEntity);
-						ActionName = mCurrentState->GetCurrentActionName();
-						pAnimState = pEntity->getAnimationState(ActionName);
-						pAnimState->setEnabled(true);
-						pAnimState->setLoop(false);
+						mCurrentState->EnableAnimation(pEntity);
 						break;
 					}
 				case DIRECTION_CONTROL:
@@ -866,13 +898,66 @@ namespace Ogre {
 
 	}
 
+	void MotionGraph::State::StitchMotion(const Entity* pEntity, const Ogre::Vector3 &StartFrameTranslation, const Ogre::Quaternion &StartFrameOrientation)
+	{
+
+
+		mStartFrameTranslation = StartFrameTranslation;
+		//calculate how angle in radian the start frame needs to rotate
+		String ActionName = this->GetCurrentActionName();
+		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
+		Animation* anim = pEntity->getSkeleton()->getAnimation(pAnimState->getAnimationName());
+		NodeAnimationTrack* track = anim->getNodeTrack(pEntity->getSkeleton()->getBone("hip")->getHandle());
+		TransformKeyFrame* CurrentKf = 0;
+		TransformKeyFrame* PreKf = 0;
+		for ( int i = track->getNumKeyFrames() - 1; i >= 0; i-- )
+		{
+
+			CurrentKf = track->getNodeKeyFrame(i);
+			//set the keyframe to be UsedRelative Coordinate
+			// thus Interpolated Keyframe will take the "hip" boneNode's current
+			// translation into account, so the global position of the Entity
+			// will be in relative coordinate system
+			CurrentKf->SetRelativeCoordinate(true);
+
+			Ogre::Vector3 TranslationOffset;
+			if ( 0 == i)
+			{
+
+				TranslationOffset.x = 0;
+				TranslationOffset.y = CurrentKf->getTranslate().y;
+				TranslationOffset.z = 0;
+
+			}
+			else
+			{
+				PreKf = track->getNodeKeyFrame(i-1);
+				TranslationOffset.x = CurrentKf->getTranslate().x - PreKf->getTranslate().x;
+				TranslationOffset.y = CurrentKf->getTranslate().y;
+				TranslationOffset.z = CurrentKf->getTranslate().z - PreKf->getTranslate().z;
+
+			}
+			//CurrentKf->setTranslate(TranslationOffset);
+		}
+
+		pAnimState->setLoop(false);
+        
+		mStartFrameRotation = StartFrameOrientation;
+	}
+
 	void MotionGraph::Transit(const Entity* entity)
 	{
+		Ogre::Vector3 translation = entity->getSkeleton()->getRootBone()->getPosition();
+		Ogre::Quaternion orientation = entity->getSkeleton()->getRootBone()->getInitialOrientation();
+
 		Transition* pTran =	mCurrentState->GetBestTransition();
 		if ( pTran )
 		{
-			mCurrentState = pTran->GetToState();
+			mCurrentState = pTran->GetToState();//mCurrentState will have the StartTimeIndex and EndTimeIndex of
+			// an animation
 		}
+		mCurrentState->StitchMotion(entity,translation,orientation);
+		
 		// insert the blending animation clip
 		/*
 		Animation* anim = skel->getAnimation(animationName);
