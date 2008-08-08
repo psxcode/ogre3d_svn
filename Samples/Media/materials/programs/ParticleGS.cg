@@ -243,7 +243,7 @@ ColoredFirework DisplayParticles_VS
     else if( inType == PT_EMBER3 )
     {
         output.color = float4(1,0.1,0.1,1);
-        output.color *= (input.Timer / P_EMBER3LIFE );
+        output.color *= (inTimer / P_EMBER3LIFE );
     }
     
     return output;
@@ -271,7 +271,7 @@ void DisplayParticles_GS( AttribArray<float4> Pos : POSITION,
         position = mul( position, (float3x3)inverseView ) + Pos[0].xyz;
         float4 outPos = mul( float4(position,1.0), worldViewProj );
         
-        emitVertex(outPos : POSITION, Color[0] : COLOR0, g_texcoord[i] : TEXCOORD0);
+        emitVertex(outPos : POSITION, Color[0] : COLOR0, g_texcoords[i] : TEXCOORD0);
     }
     restartStrip();
 }
