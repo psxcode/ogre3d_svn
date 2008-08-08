@@ -24,6 +24,7 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 #include "ExampleApplication.h"
 #include "ProceduralManualObject.h"
 #include "OgreRenderToVertexBufferManager.h"
+#include "RandomTools.h"
 
 class ParticleGSApplication : public ExampleApplication
 {
@@ -48,30 +49,33 @@ protected:
 
 		//Generate the geometry that will seed the particle system
 		ManualObject* particleSystemSeed = mSceneMgr->createManualObject("ParticleSeed");
-		particleSystemSeed->begin("Ogre/ParticleGS/Display");
-		particleSystemSeed->position(-10,-10,1);
-		particleSystemSeed->colour(Ogre::ColourValue::Red);
-		particleSystemSeed->position(-10,10,1);
-		particleSystemSeed->colour(Ogre::ColourValue::Red);
-		particleSystemSeed->position(10,10,1);
-		particleSystemSeed->colour(Ogre::ColourValue::Red);
-		particleSystemSeed->position(10,-10,1);
-		particleSystemSeed->colour(Ogre::ColourValue::Red);
-		particleSystemSeed->quad(0,1,2,3);
+		//This needs to be the initial launcher particle
+		particleSystemSeed->begin("Ogre/ParticleGS/Display", RenderOperation::OT_POINT_LIST);
+		particleSystemSeed->position(0,0,0); //Position
+		particleSystemSeed->textureCoord(0); //Timer
+		particleSystemSeed->textureCoord(0); //Type
+		particleSystemSeed->textureCoord(0,0,0); //Velocity
 		particleSystemSeed->end();
-		
 		//Generate the RenderToBufferObject
 		RenderToVertexBufferObjectSharedPtr r2vbObject = 
 			RenderToVertexBufferManager::getSingleton().createObject();
 		r2vbObject->setRenderToBufferMaterialName("Ogre/ParticleGS/Generate");
-		r2vbObject->setOperationType(RenderOperation::OT_TRIANGLE_LIST);
+		
+		//Apply the random texture
+		TexturePtr randomTexture = RandomTools::generateRandomVelocityTexture();
+		r2vbObject->getRenderToBufferMaterial()->getTechnique(0)->getPass(0)->
+			getTextureUnitState("RandomTexture")->setTextureName(
+			randomTexture->getName(), randomTexture->getTextureType());
+
+		r2vbObject->setOperationType(RenderOperation::OT_POINT_LIST);
 		r2vbObject->setMaxVertexCount(1000);
 		r2vbObject->setResetsEveryUpdate(true);
 		VertexDeclaration* vertexDecl = r2vbObject->getVertexDeclaration();
 		size_t offset = 0;
-		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_POSITION).getSize();
-		offset += vertexDecl->addElement(0, offset, VET_FLOAT4, VES_DIFFUSE).getSize();
-
+		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_POSITION).getSize(); //Position
+		offset += vertexDecl->addElement(0, offset, VET_FLOAT1, VES_TEXTURE_COORDINATES, 0).getSize(); //Timer
+		offset += vertexDecl->addElement(0, offset, VET_FLOAT1, VES_TEXTURE_COORDINATES, 1).getSize(); //Type
+		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_TEXTURE_COORDINATES, 2).getSize(); //Velocity
 		
 		//Bind the two together
 		particleSystem->setRenderToVertexBufferObject(r2vbObject);

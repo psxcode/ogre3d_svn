@@ -207,6 +207,10 @@
 				RelativePath="..\src\ProceduralManualObject.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\src\RandomTools.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -214,6 +218,10 @@
 			>
 			<File
 				RelativePath="..\src\ProceduralManualObject.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\RandomTools.h"
 				>
 			</File>
 		</Filter>
