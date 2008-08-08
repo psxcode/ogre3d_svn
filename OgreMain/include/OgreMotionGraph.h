@@ -107,13 +107,20 @@ namespace Ogre {
 		class State //: public AnimationState
 		{
 		public:
-			State(int stateid, const String& statename = ""):mStateID(stateid),mStateName(statename){};
+			State(int stateid, const String& statename = ""):mStateID(stateid),mStateName(statename),
+				mStartFrameTranslation(Ogre::Vector3::ZERO),mStartFrameRotation(Ogre::Quaternion::ZERO){};
 			virtual ~State(){};
 			typedef std::queue<Trigger*> TriggerQueue;
 			typedef std::map<float,Transition*> TransitionMap;
 			int GetStateID() const { return mStateID; }
 			void AddTrigger( Trigger* pTrigger);
 			void AddTransition( Transition* pTran );
+			/** When an animation arrives its end, call this 
+			*/
+			void ProcessAnimationEnded(const Entity* pEntity);
+			/** When new State is transited to, its animation is enabled by call this
+			*/
+			void EnableAnimation(const Entity* pEntity); 
 			/** Get the first trigger in the trigger queue
 			*/
 			Trigger* GetTrigger();
@@ -124,6 +131,8 @@ namespace Ogre {
 			typedef std::set<String> ActionSet;
 			String GetCurrentActionName() { return mCurrentActionName; }
 			void SetCurrentAction(const String& actionname) { mCurrentActionName = actionname; }
+			void StitchMotion(const Entity* pEntity, const Ogre::Vector3& StartFrameTranslation,const Ogre::Quaternion& StartFrameOrientation );
+		
 
 
 		protected:
@@ -131,9 +140,30 @@ namespace Ogre {
 			ActionSet mActions;
 			String  mCurrentActionName;
 			int		mStateID;
+			/** Every State starts from a TimePos in an Animation and ends at another TimePos in the same animation 
+			@remarks
+			mStartTimePos and mEndTimePos are determined by transition's 
+			*/
+			Ogre::Real mStartTimePos;
+			Ogre::Real mEndTimePos;
+
 			TriggerQueue mTriggers; // it is a priority queue
 			TransitionMap mTransitions; // always select transition with the maximum probability,
 			// the probability is refreshed every time the a trigger is fired
+			/**  The first frame of this Motion Graph State should be aligned to the latest translation
+			@remarks
+			the following frames' global translations are calculated with
+			(K' translation - 1st' translation)*mStartFrameRotation + mStartFrameTranslation 
+			*/
+			Ogre::Vector3 mStartFrameTranslation;
+			/** The first frame of this Motion Graph State should be rotated to match the character face 
+			direction
+			@remarks
+			this variable's value is the radian angle how this State's first frame needs to rotate to the latest 
+			character's face direction
+			*/
+			Ogre::Quaternion mStartFrameRotation;
+
 		};
 
 		class Transition
@@ -168,7 +198,19 @@ namespace Ogre {
 		@param
 		mgscript is a script describing the schema of how a motion graph is to be constructed
 		*/
-		bool Construct(const MotionGraphScript& mgScript);
+		bool ConstructFromScript(const MotionGraphScript& mgScript);
+
+		/** Construct a subgraph that can give directional control interactively 
+		this capability is achieved by adding a motion asset including a lot of locomotion with
+		frequent turns 
+		@remarks 
+		this step is processed after motion graph has constructed from a motion graph script already,
+		and then the specified "wonder" motion will be checked whether DirectionalSubGraph can be constructed
+		this step also requires CalcKinematics is done already, as directional information needs kinematics
+		and foot contact specification
+		*/
+		bool ConstructDirectionalSubGraph(const Entity& entity);
+
 		/** Motion Graph has its trigger lists, regardless where these triggers come from,
 		it is allowed to check the motion graph's trigger list to see whether some triggers
 		must be processed.
