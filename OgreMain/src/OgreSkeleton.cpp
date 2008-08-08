@@ -733,7 +733,7 @@ namespace Ogre {
 		MotionGraphScript* mgSp = new MotionGraphScript;
 		mgSp->Load(motiongraphScriptName);
 		MotionGraph* pMg = new MotionGraph(motiongraphScriptName);
-		pMg->Construct(*mgSp);
+		pMg->ConstructFromScript(*mgSp);
 		mMotionGraphs.insert(std::make_pair(motiongraphScriptName,pMg));
 		delete mgSp;
 	}
