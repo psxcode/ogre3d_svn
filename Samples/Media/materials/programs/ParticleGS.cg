@@ -12,11 +12,11 @@
 #define P_EMBER3LIFE 2.0
 
 //These two were originally shader params, but they caused runtime errors
-#define NUM_EMBER_1S 10
-#define NUM_EMBER_2S 8
+#define NUM_EMBER_1S 30
+#define NUM_EMBER_2S 15
 #define NUM_EMBER_3S 10
 //This one was originally a variant, but this also causes runtime errors
-//#define MAX_EMBER_2S 8.0
+//#define MAX_EMBER_2S 15.0
 
 //
 // Generic particle motion handler
@@ -56,11 +56,12 @@ void GSLauncherHandler( float3 Pos, float3 Vel, float Timer, float Type,
     if(Timer <= 0)
     {
         float3 vRandom = normalize( RandomDir( Type, globalTime, randomTex) );
-        vRandom.y = abs(vRandom.y); //Only want to shoot up
+		//Give it more of an up bias
+        vRandom = normalize(vRandom + float3(0,2.5,0)); 
 		
 		//time to emit a new SHELL
         float3 outputPos = Pos + Vel*elapsedTime;
-        float3 outputVel = Vel + vRandom*8.0;
+        float3 outputVel = Vel + vRandom*35.0;
         float  outputTimer = P_SHELLLIFE + vRandom.y*0.5;
         float outputType = PT_SHELL;
         emitVertex(outputPos : POSITION, outputVel : TEXCOORD2, outputTimer : TEXCOORD0, outputType : TEXCOORD1);

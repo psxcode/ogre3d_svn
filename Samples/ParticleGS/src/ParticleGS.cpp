@@ -27,7 +27,7 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 #include "RandomTools.h"
 
 //#define LOG_GENERATED_BUFFER
-Vector3 GRAVITY_VECTOR = Vector3(0, -2, 0);
+Vector3 GRAVITY_VECTOR = Vector3(0, -9.8, 0);
 Real demoTime = 0;
 ProceduralManualObject* particleSystem;
 
@@ -178,8 +178,8 @@ protected:
 
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem);
 		//mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem->getManualObject());
-		mCamera->setPosition(0,0,-20);
-		mCamera->lookAt(0,0,0);
+		mCamera->setPosition(0,35,-100);
+		mCamera->lookAt(0,35,0);
     }
 };
 
