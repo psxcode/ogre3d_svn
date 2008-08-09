@@ -26,6 +26,8 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 #include "OgreRenderToVertexBufferManager.h"
 #include "RandomTools.h"
 
+Vector3 GRAVITY_VECTOR = Vector3(0, -9.8, 0);
+Real demoTime = 0;
 ProceduralManualObject* particleSystem;
 
 struct FireworkParticle 
@@ -45,6 +47,10 @@ class ParticleGSListener : public FrameListener
 			getRenderToVertexBufferObject()->getRenderToBufferMaterial()->
 			getTechnique(0)->getPass(0)->getGeometryProgramParameters();
 		geomParams->setNamedConstant("elapsedTime", evt.timeSinceLastFrame);
+		demoTime += evt.timeSinceLastFrame;
+		geomParams->setNamedConstant("globalTime", demoTime);
+		geomParams->setNamedConstant("frameGravity", GRAVITY_VECTOR * evt.timeSinceLastFrame);
+		
 		return true; 
 	}
 
@@ -105,10 +111,10 @@ protected:
 		ManualObject* particleSystemSeed = mSceneMgr->createManualObject("ParticleSeed");
 		//This needs to be the initial launcher particle
 		particleSystemSeed->begin("Ogre/ParticleGS/Display", RenderOperation::OT_POINT_LIST);
-		particleSystemSeed->position(0,1,2); //Position
-		particleSystemSeed->textureCoord(3); //Timer
-		particleSystemSeed->textureCoord(4); //Type
-		particleSystemSeed->textureCoord(5,6,7); //Velocity
+		particleSystemSeed->position(0,0,0); //Position
+		particleSystemSeed->textureCoord(1); //Timer
+		particleSystemSeed->textureCoord(0); //Type
+		particleSystemSeed->textureCoord(0,0,0); //Velocity
 		particleSystemSeed->end();
 
 		//Check that the data looks correct in hardware
