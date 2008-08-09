@@ -11,6 +11,13 @@
 #define P_EMBER2LIFE 1.5
 #define P_EMBER3LIFE 2.0
 
+//These two were originally shader params, but they caused runtime errors
+#define NUM_EMBER_1S 10
+#define NUM_EMBER_2S 8
+#define NUM_EMBER_3S 10
+//This one was originally a variant, but this also causes runtime errors
+//#define MAX_EMBER_2S 8.0
+
 //
 // Generic particle motion handler
 //
@@ -72,13 +79,11 @@ void GSLauncherHandler( float3 Pos, float3 Vel, float Timer, float Type,
 
 //
 // Shell type particle handler
-//
+//	
 void GSShellHandler( float3 Pos, float3 Vel, float Timer, float Type,
 					float elapsedTime, 
 					float globalTime, 
 					sampler1D randomTex,
-					float numEmber1s,
-					float maxEmber2s,
 					float3 frameGravity)
 {
     if(Timer <= 0)
@@ -91,20 +96,22 @@ void GSShellHandler( float3 Pos, float3 Vel, float Timer, float Type,
         float3 vRandom = float3(0,0,0);
         
         //time to emit a series of new Ember1s  
-        for(int i=0; i<numEmber1s; i++)
+        for(int i=0; i<NUM_EMBER_1S; i++)
         {
-            vRandom = normalize( RandomDir( Type + i, globalTime, randomTex ) );
+            vRandom = normalize( RandomDir( Type+i, globalTime, randomTex ) );
             outputPos = Pos + Vel*elapsedTime;
             outputVel = Vel + vRandom*15.0;
             outputTimer = P_EMBER1LIFE;
             outputType = PT_EMBER1;
-            emitVertex(outputPos : POSITION, outputVel : TEXCOORD2, outputTimer : TEXCOORD0, outputType : TEXCOORD1);
+            emitVertex(outputPos : POSITION, outputTimer : TEXCOORD0, outputType : TEXCOORD1, outputVel : TEXCOORD2);
         }
         
         //find out how many Ember2s to emit
-        for(int i=0; i<abs(vRandom.x)*maxEmber2s; i++)
+		//Not doing this because it causes a runtime error
+		//int numEmber2s = abs(vRandom.x)*MAX_EMBER_2S;
+        for(int i=0; i<NUM_EMBER_2S; i++)
         {
-            vRandom = normalize( RandomDir( Type + i, globalTime, randomTex) );
+            vRandom = normalize( RandomDir( Type, globalTime, randomTex) );
             outputPos = Pos + Vel*elapsedTime;
             outputVel = Vel + vRandom*10.0;
             outputTimer = P_EMBER2LIFE + 0.4*vRandom.x;
@@ -149,7 +156,7 @@ void GSEmber2Handler( float3 Pos, float3 Vel, float Timer, float Type,
 		float outputType;
     
         //time to emit a series of new Ember3s  
-        for(int i=0; i<10; i++)
+        for(int i=0; i<NUM_EMBER_3S; i++)
         {
             outputPos = Pos + Vel*elapsedTime;
             outputVel = Vel + normalize( RandomDir( Type + i, globalTime, randomTex ) )*10.0;
@@ -174,7 +181,7 @@ struct FireworkData
 
 //The vertex shader that prepares the fireworks for display
 FireworkData GenerateParticles_VS(
-    in float4 		inPos : POSITION,	
+    in float3 		inPos : POSITION,	
 	in float 		inTimer : TEXCOORD0,
 	in float 		inType : TEXCOORD1,
 	in float3 		inVelocity : TEXCOORD2
@@ -201,26 +208,22 @@ void GenerateParticles_GS(
 	uniform float3 frameGravity,
 	uniform float globalTime,
 	uniform float elapsedTime,
-	uniform float secondsPerFirework,
-	uniform float numEmber1s,
-	uniform float maxEmber2s
+	uniform float secondsPerFirework
 	)
 {
 	if( Type[0] == PT_LAUNCHER )
         GSLauncherHandler( Pos[0], Vel[0], Timer[0], Type[0], 
 							elapsedTime, globalTime, randomTex, secondsPerFirework);
-	else
-		GSGenericHandler( Pos[0], Vel[0], Timer[0], Type[0], elapsedTime, frameGravity);
-	//else if ( Type[0] == PT_SHELL )
-    //    GSShellHandler( Pos[0], Vel[0], Timer[0], Type[0], 
-	//						elapsedTime, globalTime, randomTex, numEmber1s, maxEmber2s, frameGravity);
-    //else if ( Type[0] == PT_EMBER1 ||
-    //          Type[0] == PT_EMBER3 )
-    //   GSEmber1Handler( Pos[0], Vel[0], Timer[0], Type[0], 
-	//						elapsedTime, frameGravity);
-    //else if( Type[0] == PT_EMBER2 )
-    //    GSEmber2Handler( Pos[0], Vel[0], Timer[0], Type[0], 
-	//						elapsedTime, globalTime, randomTex, frameGravity);
+	else if ( Type[0] == PT_SHELL )
+        GSShellHandler( Pos[0], Vel[0], Timer[0], Type[0], 
+							elapsedTime, globalTime, randomTex, frameGravity);
+	else if ( Type[0] == PT_EMBER1 ||
+              Type[0] == PT_EMBER3 )
+       GSEmber1Handler( Pos[0], Vel[0], Timer[0], Type[0], 
+							elapsedTime, frameGravity);
+    else if( Type[0] == PT_EMBER2 )
+        GSEmber2Handler( Pos[0], Vel[0], Timer[0], Type[0], 
+							elapsedTime, globalTime, randomTex, frameGravity);
 }
 
 struct ColoredFirework
@@ -233,7 +236,7 @@ struct ColoredFirework
 //The vertex shader that prepares the fireworks for display
 ColoredFirework DisplayParticles_VS
 (
-    in float4 		inPos : POSITION,
+    in float3 		inPos : POSITION,
 	in float3 		inVelocity : TEXCOORD2,
 	in float 		inTimer : TEXCOORD0,
 	in float inType : TEXCOORD1,
