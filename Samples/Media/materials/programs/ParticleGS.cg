@@ -19,10 +19,13 @@ void GSGenericHandler( float3 Pos, float3 Vel, float Timer, float Type,
 						float elapsedTime, 
 						float3 frameGravity)
 {
-    Pos.xyz += Vel * elapsedTime;
+    Pos += Vel * elapsedTime;
     Vel += frameGravity;
     Timer -= elapsedTime;
-    emitVertex( Pos : POSITION, Vel : TEXCOORD2, Timer : TEXCOORD0, Type : TEXCOORD1);
+	if (Pos.y > -100)
+	{
+		emitVertex( Pos : POSITION, Vel : TEXCOORD2, Timer : TEXCOORD0, Type : TEXCOORD1);
+	}
 }
 
 //
@@ -46,7 +49,8 @@ void GSLauncherHandler( float3 Pos, float3 Vel, float Timer, float Type,
     if(Timer <= 0)
     {
         float3 vRandom = normalize( RandomDir( Type, globalTime, randomTex) );
-        
+        vRandom.y = abs(vRandom.y); //Only want to shoot up
+		
 		//time to emit a new SHELL
         float3 outputPos = Pos + Vel*elapsedTime;
         float3 outputVel = Vel + vRandom*8.0;
@@ -160,6 +164,30 @@ void GSEmber2Handler( float3 Pos, float3 Vel, float Timer, float Type,
     }
 }
 
+struct FireworkData
+{
+	float3 	Pos 	: POSITION;
+	float 	Timer 	: TEXCOORD0;
+    float 	Type 	: TEXCOORD1;
+	float3	Velocity : TEXCOORD2;
+};
+
+//The vertex shader that prepares the fireworks for display
+FireworkData GenerateParticles_VS(
+    in float4 		inPos : POSITION,	
+	in float 		inTimer : TEXCOORD0,
+	in float 		inType : TEXCOORD1,
+	in float3 		inVelocity : TEXCOORD2
+	)
+{
+	FireworkData output;
+	output.Pos = inPos;
+	output.Timer = inTimer;
+	output.Type = inType;
+	output.Velocity = inVelocity;
+	
+	return output;
+}
 
 POINT
 POINT_OUT
@@ -178,10 +206,11 @@ void GenerateParticles_GS(
 	uniform float maxEmber2s
 	)
 {
-	emitVertex( Pos[0], Timer[0] - elapsedTime : TEXCOORD0, Type[0] : TEXCOORD1, Vel[0] : TEXCOORD2);
-	//if( Type[0] == PT_LAUNCHER )
-    //    GSLauncherHandler( Pos[0], Vel[0], Timer[0], Type[0], 
-	//						elapsedTime, globalTime, randomTex, secondsPerFirework);
+	if( Type[0] == PT_LAUNCHER )
+        GSLauncherHandler( Pos[0], Vel[0], Timer[0], Type[0], 
+							elapsedTime, globalTime, randomTex, secondsPerFirework);
+	else
+		GSGenericHandler( Pos[0], Vel[0], Timer[0], Type[0], elapsedTime, frameGravity);
 	//else if ( Type[0] == PT_SHELL )
     //    GSShellHandler( Pos[0], Vel[0], Timer[0], Type[0], 
 	//						elapsedTime, globalTime, randomTex, numEmber1s, maxEmber2s, frameGravity);
