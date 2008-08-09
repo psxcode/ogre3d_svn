@@ -227,6 +227,8 @@ namespace Ogre {
 			mFrontBufferIndex = targetBufferIndex;
 		}
 
+		glDisable(GL_RASTERIZER_DISCARD_NV);    // enable rasterization
+
 		//Clear the reset flag
 		mResetRequested = false;
 	}
