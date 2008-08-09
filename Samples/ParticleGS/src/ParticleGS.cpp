@@ -180,6 +180,25 @@ protected:
 		//mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem->getManualObject());
 		mCamera->setPosition(0,35,-100);
 		mCamera->lookAt(0,35,0);
+
+		//Add an ogre head to the scene
+		SceneNode* ogreHeadSN = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		Entity *ogreHead = mSceneMgr->createEntity("head", "ogrehead.mesh");        
+		ogreHeadSN->scale(0.1,0.1,0.1);
+		ogreHeadSN->yaw(Degree(180));
+		ogreHeadSN->attachObject(ogreHead);
+
+		//Add a plane to the scene
+		Plane plane;
+		plane.normal = Vector3::UNIT_Y;
+		plane.d = 100;
+		MeshManager::getSingleton().createPlane("Myplane",
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
+			1500,1500,20,20,true,1,60,60,Vector3::UNIT_Z);
+		Entity* pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
+		pPlaneEnt->setMaterialName("Examples/Rockwall");
+		pPlaneEnt->setCastShadows(false);
+		mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(0,95,0))->attachObject(pPlaneEnt);
     }
 };
 
