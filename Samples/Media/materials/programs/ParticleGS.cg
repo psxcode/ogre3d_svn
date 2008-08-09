@@ -165,9 +165,9 @@ POINT
 POINT_OUT
 void GenerateParticles_GS(
 	AttribArray<float3> Pos : POSITION,
-	AttribArray<float3> Vel : TEXCOORD2,
 	AttribArray<float> Timer : TEXCOORD0,
 	AttribArray<float> Type : TEXCOORD1,
+	AttribArray<float3> Vel : TEXCOORD2,
 	
 	uniform sampler1D randomTex : TEXUNIT0,
 	uniform float3 frameGravity,
@@ -178,10 +178,11 @@ void GenerateParticles_GS(
 	uniform float maxEmber2s
 	)
 {
-	if( Type[0] == PT_LAUNCHER )
-        GSLauncherHandler( Pos[0], Vel[0], Timer[0]-elapsedTime, Type[0], 
-							elapsedTime, globalTime, randomTex, secondsPerFirework );
-    //else if ( Type[0] == PT_SHELL )
+	emitVertex( Pos[0], Timer[0] - elapsedTime : TEXCOORD0, Type[0] : TEXCOORD1, Vel[0] : TEXCOORD2);
+	//if( Type[0] == PT_LAUNCHER )
+    //    GSLauncherHandler( Pos[0], Vel[0], Timer[0], Type[0], 
+	//						elapsedTime, globalTime, randomTex, secondsPerFirework);
+	//else if ( Type[0] == PT_SHELL )
     //    GSShellHandler( Pos[0], Vel[0], Timer[0], Type[0], 
 	//						elapsedTime, globalTime, randomTex, numEmber1s, maxEmber2s, frameGravity);
     //else if ( Type[0] == PT_EMBER1 ||

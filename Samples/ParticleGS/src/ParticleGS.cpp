@@ -28,6 +28,14 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 
 ProceduralManualObject* particleSystem;
 
+struct FireworkParticle 
+{
+	float pos[3];
+	float timer;
+	float type;
+	float vel[3];
+};
+
 class ParticleGSListener : public FrameListener
 {
 	bool frameStarted(const FrameEvent& evt) 
@@ -42,24 +50,16 @@ class ParticleGSListener : public FrameListener
 
 	bool frameEnded(const FrameEvent& evt) 
 	{ 
-		LogManager::getSingleton().getDefaultLog()->stream() << 
-			"Particle system for frame " <<	Root::getSingleton().getNextFrameNumber();
 		//This function is used for debug purposes - we want to examine
 		//the generated vertex buffer's contents
 		//It will only work if the vertex buffer usage is dynamic (see R2VB implementation)
+		LogManager::getSingleton().getDefaultLog()->stream() << 
+			"Particle system for frame " <<	Root::getSingleton().getNextFrameNumber();
 		RenderOperation renderOp;
 		particleSystem->getRenderToVertexBufferObject()->getRenderOperation(renderOp);
-		const Ogre::HardwareVertexBufferSharedPtr& vertexBuffer = 
+		const HardwareVertexBufferSharedPtr& vertexBuffer = 
 			renderOp.vertexData->vertexBufferBinding->getBuffer(0);
 		
-		struct FireworkParticle 
-		{
-			float pos[3];
-			float timer;
-			float type;
-			float vel[3];
-		};
-
 		assert(vertexBuffer->getVertexSize() == sizeof(FireworkParticle));
 		FireworkParticle* particles = static_cast<FireworkParticle*>
 			(vertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY));
@@ -105,11 +105,19 @@ protected:
 		ManualObject* particleSystemSeed = mSceneMgr->createManualObject("ParticleSeed");
 		//This needs to be the initial launcher particle
 		particleSystemSeed->begin("Ogre/ParticleGS/Display", RenderOperation::OT_POINT_LIST);
-		particleSystemSeed->position(0,0,0); //Position
-		particleSystemSeed->textureCoord(30); //Timer
-		particleSystemSeed->textureCoord(0); //Type
-		particleSystemSeed->textureCoord(0,0,0); //Velocity
+		particleSystemSeed->position(0,1,2); //Position
+		particleSystemSeed->textureCoord(3); //Timer
+		particleSystemSeed->textureCoord(4); //Type
+		particleSystemSeed->textureCoord(5,6,7); //Velocity
 		particleSystemSeed->end();
+
+		//Check that the data looks correct in hardware
+		RenderOperation* renderOp = particleSystemSeed->getSection(0)->getRenderOperation();
+		const HardwareVertexBufferSharedPtr& vertexBuffer = renderOp->vertexData->vertexBufferBinding->getBuffer(0);
+		FireworkParticle* particles = static_cast<FireworkParticle*>
+			(vertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY));
+		vertexBuffer->unlock();
+
 		//Generate the RenderToBufferObject
 		RenderToVertexBufferObjectSharedPtr r2vbObject = 
 			RenderToVertexBufferManager::getSingleton().createObject();
