@@ -192,6 +192,17 @@ namespace Ogre {
 		targetRenderSystem->_setWorldMatrix(Matrix4::IDENTITY);
 		targetRenderSystem->_setViewMatrix(Matrix4::IDENTITY);
 		targetRenderSystem->_setProjectionMatrix(Matrix4::IDENTITY);
+		if (r2vbPass->hasVertexProgram())
+		{
+			targetRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
+				r2vbPass->getVertexProgramParameters());
+		}
+		if (r2vbPass->hasGeometryProgram())
+		{
+			targetRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
+				r2vbPass->getGeometryProgramParameters());
+		}
+		checkGLError();
 		targetRenderSystem->_render(renderOp);
 		
 		checkGLError();
@@ -205,11 +216,6 @@ namespace Ogre {
 		GLuint primitivesWritten;
 		glGetQueryObjectuiv(mPrimitivesDrawnQuery, GL_QUERY_RESULT, &primitivesWritten);
 		mVertexData->vertexCount = primitivesWritten * getVertexCountPerPrimitive(mOperationType);
-
-		//void* buffData = mVertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY);
-		//struct FourFloats { float data[7]; /*unsigned char color[4];*/ };
-		//FourFloats* buffFloat = static_cast<FourFloats*>(buffData);
-		//mVertexBuffer->unlock();
 
 		checkGLError();
 
