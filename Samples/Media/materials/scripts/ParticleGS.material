@@ -50,7 +50,7 @@ material Ogre/ParticleGS/Generate
 				param_named frameGravity float3 0 -0.1 0
 				param_named globalTime float 0.0
 				param_named elapsedTime float 0.1
-				param_named secondsPerFirework float 0.5
+				param_named secondsPerFirework float 0.3
 			}
 			
 			//This texture unit will be filled at runtime
