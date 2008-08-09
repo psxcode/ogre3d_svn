@@ -26,6 +26,55 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 #include "OgreRenderToVertexBufferManager.h"
 #include "RandomTools.h"
 
+ProceduralManualObject* particleSystem;
+
+class ParticleGSListener : public FrameListener
+{
+	bool frameStarted(const FrameEvent& evt) 
+	{ 
+		//Set shader parameters
+		return true; 
+	}
+
+	bool frameEnded(const FrameEvent& evt) 
+	{ 
+		LogManager::getSingleton().getDefaultLog()->stream() << 
+			"Particle system for frame " <<	Root::getSingleton().getNextFrameNumber();
+		//This function is used for debug purposes - we want to examine
+		//the generated vertex buffer's contents
+		//It will only work if the vertex buffer usage is dynamic (see R2VB implementation)
+		RenderOperation renderOp;
+		particleSystem->getRenderToVertexBufferObject()->getRenderOperation(renderOp);
+		const Ogre::HardwareVertexBufferSharedPtr& vertexBuffer = 
+			renderOp.vertexData->vertexBufferBinding->getBuffer(0);
+		
+		struct FireworkParticle 
+		{
+			float pos[3];
+			float timer;
+			float type;
+			float vel[3];
+		};
+
+		assert(vertexBuffer->getVertexSize() == sizeof(FireworkParticle));
+		FireworkParticle* particles = static_cast<FireworkParticle*>
+			(vertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY));
+		
+		for (size_t i=0; i<vertexBuffer->getNumVertices(); i++)
+		{
+			FireworkParticle& p = particles[i];
+			LogManager::getSingleton().getDefaultLog()->stream() <<
+				"FireworkParticle " << i+1 << " : " <<
+				"Position : " << p.pos[0] << " " << p.pos[1] << " " << p.pos[2] << " , " <<
+				"Timer : " << p.timer << " , " <<
+				"Type : " << p.type << " , " <<
+				"Velocity : " << p.vel[0] << " " << p.vel[1] << " " << p.vel[2];
+		}
+
+		return true; 
+	}
+};
+
 class ParticleGSApplication : public ExampleApplication
 {
 public:
@@ -43,7 +92,7 @@ protected:
 
 	ProceduralManualObject* createProceduralParticleSystem()
 	{
-		ProceduralManualObject* particleSystem = static_cast<ProceduralManualObject*>
+		particleSystem = static_cast<ProceduralManualObject*>
 			(mSceneMgr->createMovableObject("ParticleGSEntity", ProceduralManualObjectFactory::FACTORY_TYPE_NAME));
 		particleSystem->setMaterial("Ogre/ParticleGS/Display");
 

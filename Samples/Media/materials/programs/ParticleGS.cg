@@ -15,7 +15,7 @@
 // Generic particle motion handler
 //
 
-void GSGenericHandler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
+void GSGenericHandler( float3 Pos, float3 Vel, float Timer, float Type,
 						float elapsedTime, 
 						float3 frameGravity)
 {
@@ -37,7 +37,7 @@ float3 RandomDir(float fOffset, float globalTime, sampler1D randomTex)
 //
 // Launcher type particle handler
 //
-void GSLauncherHandler( float3 Pos, float3 Vel, float Timer, unsigned int Type, 
+void GSLauncherHandler( float3 Pos, float3 Vel, float Timer, float Type, 
 						float elapsedTime, 
 						float globalTime, 
 						sampler1D randomTex,
@@ -51,7 +51,7 @@ void GSLauncherHandler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
         float3 outputPos = Pos + Vel*elapsedTime;
         float3 outputVel = Vel + vRandom*8.0;
         float  outputTimer = P_SHELLLIFE + vRandom.y*0.5;
-        unsigned int outputType = PT_SHELL;
+        float outputType = PT_SHELL;
         emitVertex(outputPos : POSITION, outputVel : TEXCOORD2, outputTimer : TEXCOORD0, outputType : TEXCOORD1);
         
         //reset our timer
@@ -69,11 +69,11 @@ void GSLauncherHandler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
 //
 // Shell type particle handler
 //
-void GSShellHandler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
+void GSShellHandler( float3 Pos, float3 Vel, float Timer, float Type,
 					float elapsedTime, 
 					float globalTime, 
 					sampler1D randomTex,
-					int numEmber1s,
+					float numEmber1s,
 					float maxEmber2s,
 					float3 frameGravity)
 {
@@ -82,7 +82,7 @@ void GSShellHandler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
         float3 outputPos;
 		float3 outputVel;
 		float outputTimer;
-		unsigned int outputType;
+		float outputType;
 		
         float3 vRandom = float3(0,0,0);
         
@@ -118,7 +118,7 @@ void GSShellHandler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
 //
 // Ember1 and Ember3 type particle handler
 //
-void GSEmber1Handler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
+void GSEmber1Handler( float3 Pos, float3 Vel, float Timer, float Type,
 						float elapsedTime, 
 						float3 frameGravity)
 {
@@ -131,7 +131,7 @@ void GSEmber1Handler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
 //
 // Ember2 type particle handler
 //
-void GSEmber2Handler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
+void GSEmber2Handler( float3 Pos, float3 Vel, float Timer, float Type,
 						float elapsedTime, 
 						float globalTime, 
 						sampler1D randomTex,
@@ -142,7 +142,7 @@ void GSEmber2Handler( float3 Pos, float3 Vel, float Timer, unsigned int Type,
 		float3 outputPos;
 		float3 outputVel;
 		float outputTimer;
-		unsigned int outputType;
+		float outputType;
     
         //time to emit a series of new Ember3s  
         for(int i=0; i<10; i++)
@@ -167,14 +167,14 @@ void GenerateParticles_GS(
 	AttribArray<float3> Pos : POSITION,
 	AttribArray<float3> Vel : TEXCOORD2,
 	AttribArray<float> Timer : TEXCOORD0,
-	AttribArray<unsigned int> Type : TEXCOORD1,
+	AttribArray<float> Type : TEXCOORD1,
 	
 	uniform sampler1D randomTex : TEXUNIT0,
 	uniform float3 frameGravity,
 	uniform float globalTime,
 	uniform float elapsedTime,
 	uniform float secondsPerFirework,
-	uniform int numEmber1s,
+	uniform float numEmber1s,
 	uniform float maxEmber2s
 	)
 {
@@ -206,7 +206,7 @@ ColoredFirework DisplayParticles_VS
     in float4 		inPos : POSITION,
 	in float3 		inVelocity : TEXCOORD2,
 	in float 		inTimer : TEXCOORD0,
-	in unsigned int inType : TEXCOORD1,
+	in float inType : TEXCOORD1,
 
     uniform float4x4 worldViewProj
 )

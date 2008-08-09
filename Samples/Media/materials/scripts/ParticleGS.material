@@ -20,7 +20,7 @@ material Ogre/ParticleGS/Generate
 				param_named globalTime float 1
 				param_named elapsedTime float 0.01
 				param_named secondsPerFirework float 5.0
-				param_named numEmber1s int 10
+				param_named numEmber1s float 10
 				param_named maxEmber2s float 20
 			}
 			
