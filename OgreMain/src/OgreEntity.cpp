@@ -1961,6 +1961,7 @@ namespace Ogre {
 			 //includes calculating velocity and acceleration
 			 mpMotionGraph->CalcKinematics(this); 
 			 mpMotionGraph->AlignAnimations(this);
+			 mpMotionGraph->ConstructDirectionalSubGraph(*this);
 		 MotionGraph::State* pState = mpMotionGraph->GetCurrentState();
 		 String ActionName = pState->GetCurrentActionName();
 		 AnimationState* pAnimState = mAnimationState->getAnimationState(ActionName);
