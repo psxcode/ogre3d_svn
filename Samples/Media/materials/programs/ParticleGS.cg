@@ -237,11 +237,12 @@ struct ColoredFirework
 ColoredFirework DisplayParticles_VS
 (
     in float3 		inPos : POSITION,
-	in float3 		inVelocity : TEXCOORD2,
 	in float 		inTimer : TEXCOORD0,
-	in float inType : TEXCOORD1,
+	in float 		inType : TEXCOORD1,
+	in float3 		inVelocity : TEXCOORD2
+	
 
-    uniform float4x4 worldViewProj
+    //uniform float4x4 worldViewProj
 )
 {
 	ColoredFirework output;
@@ -285,24 +286,26 @@ ColoredFirework DisplayParticles_VS
 //The geometry shader that prepares the fireworks for display
 POINT 
 TRIANGLE_OUT 
-void DisplayParticles_GS( AttribArray<float4> Pos : POSITION,
+void DisplayParticles_GS( AttribArray<float3> Pos : POSITION,
 							AttribArray<float4> Color : COLOR,
 							AttribArray<float> Radius : TEXCOORD0,
 							
 							uniform float4x4 inverseView,
 							uniform float4x4 worldViewProj)
 {
-	float3 g_positions[4] = { float3( -1, 1, 0 ), float3( 1, 1, 0 ), float3( -1, -1, 0 ), float3( 1, -1, 0 ) };
+	//float3 g_positions[4] = { float3( -1, 1, 0 ), float3( 1, 1, 0 ), float3( -1, -1, 0 ), float3( 1, -1, 0 ) };
+	float3 g_positions[4] = { float3( -1, 1, 0 ), float3( -1, -1, 0 ), float3( 1, 1, 0 ), float3( 1, -1, 0 ) };
     float2 g_texcoords[4] = { float2(0,1), float2(1,1), float2(0,0), float2(1,0) };
+	
 	
 	//
     // Emit two new triangles
     //
     for(int i=0; i<4; i++)
     {
-		float3 position = g_positions[i]*Radius[0];
-        position = mul( position, (float3x3)inverseView ) + Pos[0].xyz;
-        float4 outPos = mul( float4(position,1.0), worldViewProj );
+		float3 position = -g_positions[i]*Radius[0];
+        position = mul( (float3x3)inverseView, position ) + Pos[0];
+        float4 outPos = mul( worldViewProj, float4(position,1.0) );
         
         emitVertex(outPos : POSITION, Color[0] : COLOR0, g_texcoords[i] : TEXCOORD0);
     }
@@ -310,10 +313,11 @@ void DisplayParticles_GS( AttribArray<float4> Pos : POSITION,
 }
 
 //The pixels shaders that colors the fireworks
-float4 DisplayParticles_PS(	float4 inPos : POSITION,
-							float2 iTexCoord : TEXCOORD0,
+float4 DisplayParticles_PS(	float2 iTexCoord : TEXCOORD0,
 							float4 iColor : COLOR0,
-							uniform sampler2D diffuseTex : TEXUNIT0) : COLOR
+							uniform sampler diffuseTex : register(s0)) : COLOR
 {
 	return tex2D(diffuseTex, iTexCoord) * iColor;
+	//return float4(iTexCoord.x, iTexCoord.y, 0, 1) + iColor * 0.01;
+	//return float4(iTexCoord.xy, 0, 1) * 0.3 + tex2D(diffuseTex, iTexCoord) * 0.7 + iColor * 0.01;
 }

@@ -1,3 +1,10 @@
+vertex_program Ogre/ParticleGS/GenerateVS cg
+{
+	source ParticleGS.cg
+	entry_point GenerateParticles_VS
+	profiles vs_1_1 arbvp1
+}
+
 geometry_program Ogre/ParticleGS/GenerateGS cg
 {
 	source ParticleGS.cg
@@ -5,11 +12,25 @@ geometry_program Ogre/ParticleGS/GenerateGS cg
 	profiles gp4gp gpu_gp
 }
 
-vertex_program Ogre/ParticleGS/GenerateVS cg
+vertex_program Ogre/ParticleGS/DisplayVS cg
 {
 	source ParticleGS.cg
-	entry_point GenerateParticles_VS
+	entry_point DisplayParticles_VS
 	profiles vs_1_1 arbvp1
+}
+
+geometry_program Ogre/ParticleGS/DisplayGS cg
+{
+	source ParticleGS.cg
+	entry_point DisplayParticles_GS
+	profiles gp4gp gpu_gp
+}
+
+fragment_program Ogre/ParticleGS/DisplayPS cg
+{
+	source ParticleGS.cg
+	entry_point DisplayParticles_PS
+	profiles ps_1_1 arbfp1
 }
 
 //The material used to generate the particle system geometry
@@ -19,8 +40,6 @@ material Ogre/ParticleGS/Generate
 	{
 		pass
 		{
-			cull_hardware none
-
 			vertex_program_ref Ogre/ParticleGS/GenerateVS
 			{
 				
@@ -51,9 +70,29 @@ material Ogre/ParticleGS/Display
 	{
 		pass
 		{
-			cull_hardware none
-			ambient vertexcolour
-			//Do nothing. Display as is
+			vertex_program_ref Ogre/ParticleGS/DisplayVS
+			{
+				
+			}
+			
+			geometry_program_ref Ogre/ParticleGS/DisplayGS
+			{
+				param_named_auto inverseView inverse_view_matrix
+				param_named_auto worldViewProj worldviewproj_matrix
+			}
+			
+			fragment_program_ref Ogre/ParticleGS/DisplayPS
+			{
+				
+			}
+			
+			texture_unit
+			{
+				tex_coord_set 0
+				texture particle.dds
+			}
+			
+			scene_blend alpha_blend
 		}
 	}
 }
