@@ -26,10 +26,12 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 #include "OgreRenderToVertexBufferManager.h"
 #include "RandomTools.h"
 
-Vector3 GRAVITY_VECTOR = Vector3(0, -9.8, 0);
+//#define LOG_GENERATED_BUFFER
+Vector3 GRAVITY_VECTOR = Vector3(0, -2, 0);
 Real demoTime = 0;
 ProceduralManualObject* particleSystem;
 
+#ifdef LOG_GENERATED_BUFFER
 struct FireworkParticle 
 {
 	float pos[3];
@@ -37,6 +39,7 @@ struct FireworkParticle
 	float type;
 	float vel[3];
 };
+#endif
 
 class ParticleGSListener : public FrameListener
 {
@@ -56,9 +59,8 @@ class ParticleGSListener : public FrameListener
 
 	bool frameEnded(const FrameEvent& evt) 
 	{ 
-		//This function is used for debug purposes - we want to examine
-		//the generated vertex buffer's contents
-		//It will only work if the vertex buffer usage is dynamic (see R2VB implementation)
+#ifdef LOG_GENERATED_BUFFER
+		//This will only work if the vertex buffer usage is dynamic (see R2VB implementation)
 		LogManager::getSingleton().getDefaultLog()->stream() << 
 			"Particle system for frame " <<	Root::getSingleton().getNextFrameNumber();
 		RenderOperation renderOp;
@@ -82,6 +84,7 @@ class ParticleGSListener : public FrameListener
 		}
 		
 		vertexBuffer->unlock();
+#endif
 		return true; 
 	}
 };
@@ -116,13 +119,6 @@ protected:
 		particleSystemSeed->textureCoord(0); //Type
 		particleSystemSeed->textureCoord(0,0,0); //Velocity
 		particleSystemSeed->end();
-
-		//Check that the data looks correct in hardware
-		RenderOperation* renderOp = particleSystemSeed->getSection(0)->getRenderOperation();
-		const HardwareVertexBufferSharedPtr& vertexBuffer = renderOp->vertexData->vertexBufferBinding->getBuffer(0);
-		FireworkParticle* particles = static_cast<FireworkParticle*>
-			(vertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY));
-		vertexBuffer->unlock();
 
 		//Generate the RenderToBufferObject
 		RenderToVertexBufferObjectSharedPtr r2vbObject = 
@@ -183,7 +179,7 @@ protected:
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem);
 		//mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem->getManualObject());
 		mCamera->setPosition(0,0,-20);
-		mCamera->lookAt(0,1,1);
+		mCamera->lookAt(0,0,0);
     }
 };
 
