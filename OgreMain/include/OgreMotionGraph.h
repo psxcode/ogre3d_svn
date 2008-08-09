@@ -266,9 +266,19 @@ namespace Ogre {
 		{
 			bool bLeftFootContact;
 			bool bRightFootContact;
+
 		};
 		typedef std::map< std::string, std::map<float, KinematicElem*> > Kinematic; 
 		typedef std::map< std::string, std::vector<MotionAnnotation*> > Annotations;
+		/**  The key element is the orientation of a foot after one step has been just taken
+			 the range of key value is 0 to 2*PI
+			 the value element is the time pos of an animation at which a foot will step at a position
+			 rotating this value of radian from the character's face direction
+			 @remakes
+			 the direction table is based totally on one animation, its is assumed to be the animation named
+			 "wonder" for script usage.
+		*/
+		typedef std::map< Ogre::Real, unsigned short > DirectionLookupTable;
 	protected:
 		void CalcBoneNodeKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap, const Bone* bone);
 
@@ -280,6 +290,8 @@ namespace Ogre {
 		String mMotionGraphName;
 		/// the state this motion graph is currently in
 		State*	mCurrentState;
+		DirectionLookupTable LFDirectTable;
+		DirectionLookupTable RFDirectTable;
 
 
 	};
