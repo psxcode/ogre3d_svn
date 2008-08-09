@@ -394,13 +394,14 @@ namespace Ogre {
 			MotionAnnotation* pAnnotation = 0;
 			bool bMapReserve = false;
 			Bone* bone = 0;
+			int trackNum = 0;
 			
 
 			while (trackIter.hasMoreElements())
 			{
 				NodeAnimationTrack* track = trackIter.getNext();
 				Node* boneNode = track->getAssociatedNode();
-
+				trackNum = track->getNumKeyFrames();
 
 				//preserve Kinemap data
 				if( false == bMapReserve )
@@ -617,36 +618,6 @@ namespace Ogre {
 						}
 					}
 					
-					
-
-
-					for ( unsigned short i = 0; i < track->getNumKeyFrames(); i++  )
-					{
-						if ( 0 == i)
-						{
-							PositionFile<<anim->getName()<<std::endl;
-							PositionFile<<track->getNumKeyFrames()<<std::endl;
-							VelocityFile<<anim->getName()<<std::endl;
-							VelocityFile<<track->getNumKeyFrames()<<std::endl;
-							AccelerationFile<<anim->getName()<<std::endl;
-							AccelerationFile<<track->getNumKeyFrames()<<std::endl;
-							
-						}
-
-						PositionFile<<Kinemap[i]->LeftFootTranslation.y<<std::endl;
-						VelocityFile<<Kinemap[i]->velocity.y<<std::endl;
-						AccelerationFile<<AnnotationList[i]->bLeftFootContact<<std::endl;
-						
-						if ( i == track->getNumKeyFrames() - 1)
-						{
-							PositionFile<<"\n"<<std::endl;
-							VelocityFile<<"\n"<<std::endl;
-							AccelerationFile<<"\n"<<std::endl;
-						}
-
-					}
-
-
 					//add annotation for leftfoot contact
 
 				}//end for lfoot
@@ -676,7 +647,7 @@ namespace Ogre {
 						MinVertical = 100;
 						bool bInTrough = false;
 						bool bStartInTrough = false;
-						Ogre::Real ThresholdLine = -10.; //this is gotten by observation of the graph
+						Ogre::Real ThresholdLine = -11.; //this is gotten by observation of the graph
 						if (Kinemap[0]->RightFootTranslation.y > ThresholdLine)
 						{
 							bInTrough = false;
@@ -774,9 +745,39 @@ namespace Ogre {
 					//add rightfoot contact annotation
 
 				}//end for rightfoot
+
+
+				
+				
 				mKinematicData.insert(std::make_pair(animstate->getAnimationName(),Kinemap));
 				mAnnotationData.insert(std::make_pair(animstate->getAnimationName(),AnnotationList));
 			}//end "for" animation track
+
+			for ( unsigned short i = 0; i < trackNum; i++  )
+			{
+				if ( 0 == i)
+				{
+					PositionFile<<anim->getName()<<std::endl;
+					PositionFile<<trackNum<<std::endl;
+					VelocityFile<<anim->getName()<<std::endl;
+					VelocityFile<<trackNum<<std::endl;
+					AccelerationFile<<anim->getName()<<std::endl;
+					AccelerationFile<<trackNum<<std::endl;
+
+				}
+
+				PositionFile<<Kinemap[i]->RightFootTranslation.y<<std::endl;
+				VelocityFile<<AnnotationList[i]->bLeftFootContact<<std::endl;
+				AccelerationFile<<AnnotationList[i]->bRightFootContact<<std::endl;
+
+				if ( i == trackNum - 1)
+				{
+					PositionFile<<"\n"<<std::endl;
+					VelocityFile<<"\n"<<std::endl;
+					AccelerationFile<<"\n"<<std::endl;
+				}
+
+			}
 		}//end "while" animations
 
 	}
