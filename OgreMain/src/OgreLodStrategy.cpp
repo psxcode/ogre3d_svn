@@ -55,8 +55,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Real LodStrategy::getValue(const MovableObject *movableObject, const Camera *camera) const
     {
-        // Just return implementation for now
-        return getValueImpl(movableObject, camera);
+        // Just return implementation with lod camera
+        return getValueImpl(movableObject, camera->getLodCamera());
     }
     //-----------------------------------------------------------------------
     ushort LodStrategy::getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const

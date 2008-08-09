@@ -868,7 +868,7 @@ namespace Ogre {
         mCamera = cam;
 
         // Cache squared view depth for use by GeometryBucket
-        mSquaredViewDepth = mParentNode->getSquaredViewDepth(cam);
+        mSquaredViewDepth = mParentNode->getSquaredViewDepth(cam->getLodCamera());
 
         // No lod strategy set yet, skip (this indicates that there are no submeshes)
         if (mLodStrategy == 0)
