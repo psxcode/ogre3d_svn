@@ -33,6 +33,10 @@ class ParticleGSListener : public FrameListener
 	bool frameStarted(const FrameEvent& evt) 
 	{ 
 		//Set shader parameters
+		GpuProgramParametersSharedPtr geomParams = particleSystem->
+			getRenderToVertexBufferObject()->getRenderToBufferMaterial()->
+			getTechnique(0)->getPass(0)->getGeometryProgramParameters();
+		geomParams->setNamedConstant("elapsedTime", evt.timeSinceLastFrame);
 		return true; 
 	}
 
@@ -60,7 +64,7 @@ class ParticleGSListener : public FrameListener
 		FireworkParticle* particles = static_cast<FireworkParticle*>
 			(vertexBuffer->lock(HardwareBuffer::HBL_READ_ONLY));
 		
-		for (size_t i=0; i<vertexBuffer->getNumVertices(); i++)
+		for (size_t i=0; i<renderOp.vertexData->vertexCount; i++)
 		{
 			FireworkParticle& p = particles[i];
 			LogManager::getSingleton().getDefaultLog()->stream() <<
@@ -70,7 +74,8 @@ class ParticleGSListener : public FrameListener
 				"Type : " << p.type << " , " <<
 				"Velocity : " << p.vel[0] << " " << p.vel[1] << " " << p.vel[2];
 		}
-
+		
+		vertexBuffer->unlock();
 		return true; 
 	}
 };
@@ -101,7 +106,7 @@ protected:
 		//This needs to be the initial launcher particle
 		particleSystemSeed->begin("Ogre/ParticleGS/Display", RenderOperation::OT_POINT_LIST);
 		particleSystemSeed->position(0,0,0); //Position
-		particleSystemSeed->textureCoord(0); //Timer
+		particleSystemSeed->textureCoord(30); //Timer
 		particleSystemSeed->textureCoord(0); //Type
 		particleSystemSeed->textureCoord(0,0,0); //Velocity
 		particleSystemSeed->end();
@@ -117,8 +122,8 @@ protected:
 			randomTexture->getName(), randomTexture->getTextureType());
 
 		r2vbObject->setOperationType(RenderOperation::OT_POINT_LIST);
-		r2vbObject->setMaxVertexCount(1000);
-		r2vbObject->setResetsEveryUpdate(true);
+		r2vbObject->setMaxVertexCount(16000);
+		r2vbObject->setResetsEveryUpdate(false);
 		VertexDeclaration* vertexDecl = r2vbObject->getVertexDeclaration();
 		size_t offset = 0;
 		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_POSITION).getSize(); //Position
@@ -158,7 +163,7 @@ protected:
         }
 
 		Root::getSingleton().addMovableObjectFactory(new ProceduralManualObjectFactory);
-
+		mRoot->addFrameListener(new ParticleGSListener);
 		ProceduralManualObject* particleSystem = createProceduralParticleSystem();
 
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem);
