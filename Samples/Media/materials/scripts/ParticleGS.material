@@ -70,6 +70,8 @@ material Ogre/ParticleGS/Display
 	{
 		pass
 		{
+			depth_write off
+			
 			vertex_program_ref Ogre/ParticleGS/DisplayVS
 			{
 				
