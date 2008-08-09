@@ -179,18 +179,18 @@ void GenerateParticles_GS(
 	)
 {
 	if( Type[0] == PT_LAUNCHER )
-        GSLauncherHandler( Pos[0], Vel[0], Timer[0], Type[0], 
+        GSLauncherHandler( Pos[0], Vel[0], Timer[0]-elapsedTime, Type[0], 
 							elapsedTime, globalTime, randomTex, secondsPerFirework );
-    else if ( Type[0] == PT_SHELL )
-        GSShellHandler( Pos[0], Vel[0], Timer[0], Type[0], 
-							elapsedTime, globalTime, randomTex, numEmber1s, maxEmber2s, frameGravity);
-    else if ( Type[0] == PT_EMBER1 ||
-              Type[0] == PT_EMBER3 )
-        GSEmber1Handler( Pos[0], Vel[0], Timer[0], Type[0], 
-							elapsedTime, frameGravity);
-    else if( Type[0] == PT_EMBER2 )
-        GSEmber2Handler( Pos[0], Vel[0], Timer[0], Type[0], 
-							elapsedTime, globalTime, randomTex, frameGravity);
+    //else if ( Type[0] == PT_SHELL )
+    //    GSShellHandler( Pos[0], Vel[0], Timer[0], Type[0], 
+	//						elapsedTime, globalTime, randomTex, numEmber1s, maxEmber2s, frameGravity);
+    //else if ( Type[0] == PT_EMBER1 ||
+    //          Type[0] == PT_EMBER3 )
+    //   GSEmber1Handler( Pos[0], Vel[0], Timer[0], Type[0], 
+	//						elapsedTime, frameGravity);
+    //else if( Type[0] == PT_EMBER2 )
+    //    GSEmber2Handler( Pos[0], Vel[0], Timer[0], Type[0], 
+	//						elapsedTime, globalTime, randomTex, frameGravity);
 }
 
 struct ColoredFirework
