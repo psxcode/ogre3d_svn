@@ -1437,6 +1437,12 @@ namespace Ogre {
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
+		class _OgreExport CmdAdjacency : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
 		// Command object for setting / getting parameters
 		static CmdType msTypeCmd;
 		static CmdSyntax msSyntaxCmd;
@@ -1445,7 +1451,7 @@ namespace Ogre {
 		static CmdPose msPoseCmd;
 		static CmdVTF msVTFCmd;
 		static CmdManualNamedConstsFile msManNamedConstsFileCmd;
-		
+		static CmdAdjacency msAdjacencyCmd;
 		/// The type of the program
 		GpuProgramType mType;
 		/// The name of the file to load source from (may be blank)
@@ -1464,12 +1470,8 @@ namespace Ogre {
 		ushort mPoseAnimation;
 		/// Does this (vertex) program require support for vertex texture fetch?
 		bool mVertexTextureFetch;
-		/// The input operation type for this (geometry) program
-		RenderOperation::OperationType mInputOperationType;
-		/// The output operation type for this (geometry) program
-		RenderOperation::OperationType mOutputOperationType;
-		/// The maximum amount of vertices that this (geometry) program can output
-		int mMaxOutputVertices;
+		/// Does this (geometry) program require adjacency information?
+		bool mNeedsAdjacencyInfo;
 		/// The default parameters for use with this object
 		GpuProgramParametersSharedPtr mDefaultParams;
 		/// Does this program want light states passed through fixed pipeline
@@ -1624,34 +1626,15 @@ namespace Ogre {
 		*/
 		virtual bool isVertexTextureFetchRequired(void) const { return mVertexTextureFetch; }
 
-		/** Returns the operation type that this geometry program expects to
-			receive as input
+		/** Sets whether this geometry program requires adjacency information
+			from the input primitives.
 		*/
-		virtual RenderOperation::OperationType getInputOperationType(void) const 
-		{ return mInputOperationType; }
-		/** Returns the operation type that this geometry program will emit
+		virtual void setAdjacencyInfoRequired(bool r) { mNeedsAdjacencyInfo = r; }
+		/** Returns whether this geometry program requires adjacency information 
+			from the input primitives.
 		*/
-		virtual RenderOperation::OperationType getOutputOperationType(void) const 
-		{ return mOutputOperationType; }
-		/** Returns the maximum number of vertices that this geometry program can
-			output in a single run
-		*/
-		virtual int getMaxOutputVertices(void) const { return mMaxOutputVertices; }
-
-		/** Sets the operation type that this geometry program expects to receive
-		*/
-		virtual void setInputOperationType(RenderOperation::OperationType operationType) 
-		{ mInputOperationType = operationType; }
-		/** Set the operation type that this geometry program will emit
-		*/
-		virtual void setOutputOperationType(RenderOperation::OperationType operationType) 
-		{ mOutputOperationType = operationType; }
-		/** Set the maximum number of vertices that a single run of this geometry program
-			can emit.
-		*/
-		virtual void setMaxOutputVertices(int maxOutputVertices) 
-		{ mMaxOutputVertices = maxOutputVertices; }
-
+		virtual bool isAdjacencyInfoRequired(void) const { return mNeedsAdjacencyInfo; }
+		
 		/** Get a reference to the default parameters which are to be used for all
 			uses of this program.
 		@remarks

@@ -86,6 +86,34 @@ namespace Ogre {
         /// Overridden from GpuProgram
         const String& getLanguage(void) const;
 
+		/** Returns the operation type that this geometry program expects to
+			receive as input
+		*/
+		virtual RenderOperation::OperationType getInputOperationType(void) const 
+		{ return mInputOperationType; }
+		/** Returns the operation type that this geometry program will emit
+		*/
+		virtual RenderOperation::OperationType getOutputOperationType(void) const 
+		{ return mOutputOperationType; }
+		/** Returns the maximum number of vertices that this geometry program can
+			output in a single run
+		*/
+		virtual int getMaxOutputVertices(void) const { return mMaxOutputVertices; }
+
+		/** Sets the operation type that this geometry program expects to receive
+		*/
+		virtual void setInputOperationType(RenderOperation::OperationType operationType) 
+		{ mInputOperationType = operationType; }
+		/** Set the operation type that this geometry program will emit
+		*/
+		virtual void setOutputOperationType(RenderOperation::OperationType operationType) 
+		{ mOutputOperationType = operationType; }
+		/** Set the maximum number of vertices that a single run of this geometry program
+			can emit.
+		*/
+		virtual void setMaxOutputVertices(int maxOutputVertices) 
+		{ mMaxOutputVertices = maxOutputVertices; }
+
 		/// Command object for setting macro defines
 		class CmdPreprocessorDefines : public ParamCommand
 		{
@@ -147,6 +175,12 @@ namespace Ogre {
 		GLhandleARB mGLHandle;
 		/// flag indicating if shader object successfully compiled
 		GLint mCompiled;
+		/// The input operation type for this (geometry) program
+		RenderOperation::OperationType mInputOperationType;
+		/// The output operation type for this (geometry) program
+		RenderOperation::OperationType mOutputOperationType;
+		/// The maximum amount of vertices that this (geometry) program can output
+		int mMaxOutputVertices;
 		/// attached Shader names
 		String mAttachedShaderNames;
 		/// Preprocessor options

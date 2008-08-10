@@ -252,7 +252,9 @@ namespace Ogre {
     GLSLProgram::GLSLProgram(ResourceManager* creator, 
         const String& name, ResourceHandle handle,
         const String& group, bool isManual, ManualResourceLoader* loader)
-        : HighLevelGpuProgram(creator, name, handle, group, isManual, loader)
+        : HighLevelGpuProgram(creator, name, handle, group, isManual, loader),
+            mInputOperationType(RenderOperation::OT_TRIANGLE_LIST),
+            mOutputOperationType(RenderOperation::OT_TRIANGLE_LIST), mMaxOutputVertices(3)
     {
 		// add parameter command "attach" to the material serializer dictionary
         if (createParamDictionary("GLSLProgram"))
@@ -457,34 +459,34 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
     String GLSLProgram::CmdInputOperationType::doGet(const void* target) const
     {
-        const GpuProgram* t = static_cast<const GpuProgram*>(target);
+        const GLSLProgram* t = static_cast<const GLSLProgram*>(target);
 		return operationTypeToString(t->getInputOperationType());
     }
     void GLSLProgram::CmdInputOperationType::doSet(void* target, const String& val)
     {
-        GpuProgram* t = static_cast<GpuProgram*>(target);
+        GLSLProgram* t = static_cast<GLSLProgram*>(target);
 		t->setInputOperationType(parseOperationType(val));
     }
 	//-----------------------------------------------------------------------
 	String GLSLProgram::CmdOutputOperationType::doGet(const void* target) const
     {
-        const GpuProgram* t = static_cast<const GpuProgram*>(target);
+        const GLSLProgram* t = static_cast<const GLSLProgram*>(target);
 		return operationTypeToString(t->getOutputOperationType());
     }
     void GLSLProgram::CmdOutputOperationType::doSet(void* target, const String& val)
     {
-        GpuProgram* t = static_cast<GpuProgram*>(target);
+        GLSLProgram* t = static_cast<GLSLProgram*>(target);
 		t->setOutputOperationType(parseOperationType(val));
     }
 	//-----------------------------------------------------------------------
 	String GLSLProgram::CmdMaxOutputVertices::doGet(const void* target) const
 	{
-		const GpuProgram* t = static_cast<const GpuProgram*>(target);
+		const GLSLProgram* t = static_cast<const GLSLProgram*>(target);
 		return StringConverter::toString(t->getMaxOutputVertices());
 	}
 	void GLSLProgram::CmdMaxOutputVertices::doSet(void* target, const String& val)
 	{
-		GpuProgram* t = static_cast<GpuProgram*>(target);
+		GLSLProgram* t = static_cast<GLSLProgram*>(target);
 		t->setMaxOutputVertices(StringConverter::parseInt(val));
 	}
 

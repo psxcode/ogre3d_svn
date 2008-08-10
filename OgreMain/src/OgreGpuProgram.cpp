@@ -50,6 +50,7 @@ namespace Ogre
 	GpuProgram::CmdPose GpuProgram::msPoseCmd;
 	GpuProgram::CmdVTF GpuProgram::msVTFCmd;
 	GpuProgram::CmdManualNamedConstsFile GpuProgram::msManNamedConstsFileCmd;
+	GpuProgram::CmdAdjacency GpuProgram::msAdjacencyCmd;
 	
 
 
@@ -241,8 +242,7 @@ namespace Ogre
         :Resource(creator, name, handle, group, isManual, loader),
         mType(GPT_VERTEX_PROGRAM), mLoadFromFile(true), mSkeletalAnimation(false),
         mVertexTextureFetch(false), mPassSurfaceAndLightStates(false), mCompileError(false), 
-		mLoadedManualNamedConstants(false), mInputOperationType(RenderOperation::OT_TRIANGLE_LIST),
-		mOutputOperationType(RenderOperation::OT_TRIANGLE_LIST), mMaxOutputVertices(3)
+		mLoadedManualNamedConstants(false), mNeedsAdjacencyInfo(false)
     {
     }
     //-----------------------------------------------------------------------------
@@ -452,6 +452,10 @@ namespace Ogre
 			ParameterDef("manual_named_constants", 
 			"File containing named parameter mappings for low-level programs.", PT_BOOL), 
 			&msManNamedConstsFileCmd);
+		dict->addParameter(
+			ParameterDef("uses_adjacency_information",
+			"Whether this geometry program requires adjacency information from the input primitives.", PT_BOOL),
+			&msAdjacencyCmd);
     }
 
     //-----------------------------------------------------------------------
@@ -2161,6 +2165,17 @@ namespace Ogre
 	{
 		GpuProgram* t = static_cast<GpuProgram*>(target);
 		t->setManualNamedConstantsFile(val);
+	}
+    //-----------------------------------------------------------------------
+	String GpuProgram::CmdAdjacency::doGet(const void* target) const
+	{
+		const GpuProgram* t = static_cast<const GpuProgram*>(target);
+		return StringConverter::toString(t->isAdjacencyInfoRequired());
+	}
+	void GpuProgram::CmdAdjacency::doSet(void* target, const String& val)
+	{
+		GpuProgram* t = static_cast<GpuProgram*>(target);
+		t->setAdjacencyInfoRequired(StringConverter::parseBool(val));
 	}
     //-----------------------------------------------------------------------
     GpuProgramPtr& GpuProgramPtr::operator=(const HighLevelGpuProgramPtr& r)
