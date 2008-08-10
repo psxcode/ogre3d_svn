@@ -2638,26 +2638,25 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 
 		// Find the correct type to render
 		GLint primType;
+		//Use adjacency if there is a geometry program and it requested adjacency info
+		bool useAdjacency = (mGeometryProgramBound && mCurrentGeometryProgram->isAdjacencyInfoRequired());
 		switch (op.operationType)
 		{
 		case RenderOperation::OT_POINT_LIST:
 			primType = GL_POINTS;
 			break;
 		case RenderOperation::OT_LINE_LIST:
-			//HACK Ogre GSoC Geometry shaders 
-			//GL_LINES_ADJACENCY_EXT instead of GL_LINES.
-			//TODO : Solve properly
-			primType = GL_LINES_ADJACENCY_EXT;
+			primType = useAdjacency ? GL_LINES_ADJACENCY_EXT : GL_LINES;
 			break;
 		case RenderOperation::OT_LINE_STRIP:
-			primType = GL_LINE_STRIP;
+			primType = useAdjacency ? GL_LINE_STRIP_ADJACENCY_EXT : GL_LINE_STRIP;
 			break;
 		default:
 		case RenderOperation::OT_TRIANGLE_LIST:
-			primType = GL_TRIANGLES;
+			primType = useAdjacency ? GL_TRIANGLES_ADJACENCY_EXT : GL_TRIANGLES;
 			break;
 		case RenderOperation::OT_TRIANGLE_STRIP:
-			primType = GL_TRIANGLE_STRIP;
+			primType = useAdjacency ? GL_TRIANGLE_STRIP_ADJACENCY_EXT : GL_TRIANGLE_STRIP;
 			break;
 		case RenderOperation::OT_TRIANGLE_FAN:
 			primType = GL_TRIANGLE_FAN;
