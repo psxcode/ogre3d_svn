@@ -242,7 +242,14 @@ namespace Ogre {
 		}
 		
 		mVertexBuffers[index] = HardwareBufferManager::getSingleton().createVertexBuffer(
-			mVertexData->vertexDeclaration->getVertexSize(0), mMaxVertexCount, HardwareBuffer::HBU_DYNAMIC);
+			mVertexData->vertexDeclaration->getVertexSize(0), mMaxVertexCount, 
+#if OGRE_DEBUG_MODE
+			//Allow to read the contents of the buffer in debug mode
+			HardwareBuffer::HBU_DYNAMIC
+#else
+			HardwareBuffer::HBU_STATIC_WRITE_ONLY
+#endif
+			);
 	}
 //-----------------------------------------------------------------------------
 	String GLRenderToVertexBufferObject::getSemanticVaryingName(VertexElementSemantic semantic, unsigned short index)
