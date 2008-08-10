@@ -3,6 +3,7 @@ geometry_program Ogre/IsoSurf/TessellateTetrahedraGS cg
 	source isosurf.cg
 	entry_point TessellateTetrahedraGS
 	profiles gp4gp gpu_gp
+	uses_adjacency_information true
 	
 	default_params
 	{
