@@ -258,8 +258,55 @@ namespace Ogre {
 	bool MotionGraph::ConstructDirectionalSubGraph(const Entity& entity)
 	{
 		AnimationState* animState = entity.getAnimationState("wonder");
+		Animation* anim = 0;
 		if ( animState )
 		{
+			anim = entity.getSkeleton()->getAnimation("wonder");
+			SkeletonInstance* skelInstance = entity.getSkeleton();
+			NodeAnimationTrack* lfoottrack = anim->getNodeTrack(skelInstance->getBone("lfoot")->getHandle());
+			NodeAnimationTrack* rfoottrack = anim->getNodeTrack(skelInstance->getBone("rfoot")->getHandle());
+			NodeAnimationTrack* hiptrack = anim->getNodeTrack(skelInstance->getBone("hip")->getHandle());
+
+			for ( FootStandList::iterator it = mLFStandPoints.begin(); it != mLFStandPoints.end(); it++)
+			{
+				//current moment hip 
+				TransformKeyFrame* hipkf = static_cast<TransformKeyFrame*>(hiptrack->getKeyFrame(*it));
+				//next left foot stand point
+				if ( it+1 == mLFStandPoints.end())
+				{
+					break;
+				}
+				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(lfoottrack->getKeyFrame(*(it+1)));
+				Quaternion faceorientation = hipkf->getRotation();
+				Ogre::Vector3 facedirection = faceorientation.zAxis();
+				Ogre::Vector3 footdirection = nextlfky->getTranslate() - hipkf->getTranslate();
+				footdirection.y = 0.;
+				Ogre::Radian StepDirectionAngle = facedirection.angleBetween(footdirection); 
+				mLFDirectTable.insert(std::make_pair(StepDirectionAngle.valueRadians(),*it));
+
+
+			}
+			for ( FootStandList::iterator it = mRFStandPoints.begin(); it != mRFStandPoints.end(); it++)
+			{
+				//current moment hip 
+				TransformKeyFrame* hipkf = static_cast<TransformKeyFrame*>(hiptrack->getKeyFrame(*it));
+				//next left foot stand point
+				if ( it+1 == mRFStandPoints.end())
+				{
+					break;
+				}
+				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(rfoottrack->getKeyFrame(*(it+1)));
+				Quaternion faceorientation = hipkf->getRotation();
+				Ogre::Vector3 facedirection = faceorientation.zAxis();
+				Ogre::Vector3 footdirection = nextlfky->getTranslate() - hipkf->getTranslate();
+				footdirection.y = 0.;
+				Ogre::Radian StepDirectionAngle = facedirection.angleBetween(footdirection); 
+				mRFDirectTable.insert(std::make_pair(StepDirectionAngle.valueRadians(),*it));
+
+
+			}
+
+
 			return true;
 
 		}
@@ -589,6 +636,7 @@ namespace Ogre {
 								continue;
 
 							}
+							mLFStandPoints.push_back(i);//now we set the lowest point to be the stand point
 							for ( unsigned short j = leftbound; j <= rightbound; j++)
 							{
 								if ( abs(Kinemap[j]->LeftFootTranslation.y - MinVertical) < VerticalThreshold )
@@ -713,6 +761,7 @@ namespace Ogre {
 								continue;
 
 							}
+							mRFStandPoints.push_back(i);//now we set the lowest point to be the stand point
 							for ( unsigned short j = leftbound; j <= rightbound; j++)
 							{
 								if ( abs(Kinemap[j]->RightFootTranslation.y - MinVertical) < VerticalThreshold )
