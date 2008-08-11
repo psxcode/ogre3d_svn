@@ -279,6 +279,7 @@ namespace Ogre {
 			 "wonder" for script usage.
 		*/
 		typedef std::map< Ogre::Real, unsigned short > DirectionLookupTable;
+		typedef std::vector< unsigned short > FootStandList;
 	protected:
 		void CalcBoneNodeKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap, const Bone* bone);
 
@@ -290,8 +291,10 @@ namespace Ogre {
 		String mMotionGraphName;
 		/// the state this motion graph is currently in
 		State*	mCurrentState;
-		DirectionLookupTable LFDirectTable;
-		DirectionLookupTable RFDirectTable;
+		DirectionLookupTable mLFDirectTable;
+		DirectionLookupTable mRFDirectTable;
+		FootStandList mLFStandPoints;
+		FootStandList mRFStandPoints;
 
 
 	};
