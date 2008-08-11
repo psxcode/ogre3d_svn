@@ -27,7 +27,7 @@ Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
-#include "OgreGLRenderToVertexBufferObject.h"
+#include "OgreGLRenderToVertexBuffer.h"
 #include "OgreHardwareBufferManager.h"
 #include "OgreGLHardwareVertexBuffer.h"
 #include "OgreRenderable.h"
@@ -101,7 +101,7 @@ namespace Ogre {
 		}
 	}
 //-----------------------------------------------------------------------------
-	GLRenderToVertexBufferObject::GLRenderToVertexBufferObject() : mFrontBufferIndex(-1)
+	GLRenderToVertexBuffer::GLRenderToVertexBuffer() : mFrontBufferIndex(-1)
 	{
 		mVertexBuffers[0].setNull();
 		mVertexBuffers[1].setNull();
@@ -110,13 +110,13 @@ namespace Ogre {
 		glGenQueries(1, &mPrimitivesDrawnQuery);
 	}
 //-----------------------------------------------------------------------------
-	GLRenderToVertexBufferObject::~GLRenderToVertexBufferObject()
+	GLRenderToVertexBuffer::~GLRenderToVertexBuffer()
 	{
 		glDeleteQueries(1, &mPrimitivesDrawnQuery);
 		//TODO : Implement
 	}
 //-----------------------------------------------------------------------------
-	void GLRenderToVertexBufferObject::getRenderOperation(RenderOperation& op)
+	void GLRenderToVertexBuffer::getRenderOperation(RenderOperation& op)
 	{
 		op.operationType = mOperationType;
 		op.useIndexes = false;
@@ -124,7 +124,7 @@ namespace Ogre {
 	}
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-	void GLRenderToVertexBufferObject::update(SceneManager* sceneMgr)
+	void GLRenderToVertexBuffer::update(SceneManager* sceneMgr)
 	{
 		size_t bufSize = mVertexData->vertexDeclaration->getVertexSize(0) * mMaxVertexCount;
 		if (mVertexBuffers[0].isNull() || mVertexBuffers[0]->getSizeInBytes() != bufSize)
@@ -233,7 +233,7 @@ namespace Ogre {
 		mResetRequested = false;
 	}
 //-----------------------------------------------------------------------------
-	void GLRenderToVertexBufferObject::reallocateBuffer(size_t index)
+	void GLRenderToVertexBuffer::reallocateBuffer(size_t index)
 	{
 		assert(index == 0 || index == 1);
 		if (!mVertexBuffers[index].isNull())
@@ -252,7 +252,7 @@ namespace Ogre {
 			);
 	}
 //-----------------------------------------------------------------------------
-	String GLRenderToVertexBufferObject::getSemanticVaryingName(VertexElementSemantic semantic, unsigned short index)
+	String GLRenderToVertexBuffer::getSemanticVaryingName(VertexElementSemantic semantic, unsigned short index)
 	{
 		switch (semantic)
 		{
@@ -268,11 +268,11 @@ namespace Ogre {
 		default:
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Unsupported vertex element sematic in render to vertex buffer", 
-				"OgreGLRenderToVertexBufferObject::getSemanticVaryingName");
+				"OgreGLRenderToVertexBuffer::getSemanticVaryingName");
 		}
 	}
 //-----------------------------------------------------------------------------
-	GLint GLRenderToVertexBufferObject::getGLSemanticType(VertexElementSemantic semantic)
+	GLint GLRenderToVertexBuffer::getGLSemanticType(VertexElementSemantic semantic)
 	{
 		switch (semantic)
 		{
@@ -288,12 +288,12 @@ namespace Ogre {
 		default:
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Unsupported vertex element sematic in render to vertex buffer", 
-				"OgreGLRenderToVertexBufferObject::getGLSemanticType");
+				"OgreGLRenderToVertexBuffer::getGLSemanticType");
 			
 		}
 	}
 //-----------------------------------------------------------------------------
-	void GLRenderToVertexBufferObject::bindVerticesOutput(Pass* pass)
+	void GLRenderToVertexBuffer::bindVerticesOutput(Pass* pass)
 	{
 		VertexDeclaration* declaration = mVertexData->vertexDeclaration;
 		bool useVaryingAttributes = false;
@@ -331,7 +331,7 @@ namespace Ogre {
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 						"GLSL link program does not output " + varyingName + 
 						" so it cannot fill the requested vertex buffer", 
-						"OgreGLRenderToVertexBufferObject::bindVerticesOutput");
+						"OgreGLRenderToVertexBuffer::bindVerticesOutput");
 				}
 				locations.push_back(location);
 			}

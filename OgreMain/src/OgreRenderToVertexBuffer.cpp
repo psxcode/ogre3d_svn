@@ -28,30 +28,42 @@ Torus Knot Software Ltd.
 */
 
 #include "OgreStableHeaders.h"
-#include "OgreRenderToVertexBufferManager.h"
+#include "OgreRenderToVertexBuffer.h"
+#include "OgreMaterialManager.h"
 
 namespace Ogre {
-    //-----------------------------------------------------------------------
-    template<> RenderToVertexBufferManager* Singleton<RenderToVertexBufferManager>::ms_Singleton = 0;
-    RenderToVertexBufferManager* RenderToVertexBufferManager::getSingletonPtr(void)
-    {
-        return ms_Singleton;
-    }
-    RenderToVertexBufferManager& RenderToVertexBufferManager::getSingleton(void)
-    {  
-        assert( ms_Singleton );  return ( *ms_Singleton );  
-    }
 	//-----------------------------------------------------------------------
-	RenderToVertexBufferObjectSharedPtr RenderToVertexBufferManager::createObject()
+	RenderToVertexBuffer::RenderToVertexBuffer() :
+		mOperationType(RenderOperation::OT_TRIANGLE_LIST),
+		mResetsEveryUpdate(false),
+		mMaxVertexCount(1000),
+		mResetRequested(true)
 	{
-		RenderToVertexBufferObject* objectImpl = createObjectImpl();
-		mR2vbObjects.insert(objectImpl);
-		return RenderToVertexBufferObjectSharedPtr(objectImpl);
+		mVertexData = new VertexData;
 	}
 	//-----------------------------------------------------------------------
-	void RenderToVertexBufferManager::_unregisterRenderToVertexBufferObject(RenderToVertexBufferObject* deadObject)
+	RenderToVertexBuffer::~RenderToVertexBuffer()
 	{
-		assert(mR2vbObjects.find(deadObject) != mR2vbObjects.end());
-		mR2vbObjects.erase(deadObject);
+		delete mVertexData;
 	}
-};
+	//-----------------------------------------------------------------------
+	VertexDeclaration* RenderToVertexBuffer::getVertexDeclaration()
+	{
+		//TODO : Mark dirty?
+		return mVertexData->vertexDeclaration;
+	}
+	//-----------------------------------------------------------------------
+	void RenderToVertexBuffer::setRenderToBufferMaterialName(const String& materialName)
+	{
+		mMaterial = MaterialManager::getSingleton().getByName(materialName);
+
+		if (mMaterial.isNull())
+			OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find material " + materialName,
+				"RenderToVertexBuffer::setRenderToBufferMaterialName" );
+
+        /* Ensure that the new material was loaded (will not load again if
+           already loaded anyway)
+        */
+        mMaterial->load();
+	}
+}

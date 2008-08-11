@@ -26,10 +26,10 @@ the OGRE Unrestricted License provided you have obtained such a license from
 Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
-#ifndef __GLRenderToVertexBufferObject_H__
-#define __GLRenderToVertexBufferObject_H__
+#ifndef __GLRenderToVertexBuffer_H__
+#define __GLRenderToVertexBuffer_H__
 
-#include "OgreRenderToVertexBufferObject.h"
+#include "OgreRenderToVertexBuffer.h"
 #include "OgreGLPrerequisites.h"
 
 namespace Ogre {
@@ -42,13 +42,13 @@ namespace Ogre {
         that run on previous results of those shaders, creating stateful 
         shaders.
     */
-	class _OgrePrivate GLRenderToVertexBufferObject : public RenderToVertexBufferObject
+	class _OgrePrivate GLRenderToVertexBuffer : public RenderToVertexBuffer
     {    
     public:
 		/** C'tor */
-		GLRenderToVertexBufferObject();
+		GLRenderToVertexBuffer();
 		/** D'tor */
-        virtual ~GLRenderToVertexBufferObject();
+        virtual ~GLRenderToVertexBuffer();
 
         /**
             Get the render operation for this buffer 

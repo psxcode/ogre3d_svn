@@ -17,7 +17,7 @@ LGPL like the rest of the engine.
 
 #include <OgreManualObject.h>
 #include <OgreSimpleRenderable.h>
-#include <OgreRenderToVertexBufferObject.h>
+#include <OgreRenderToVertexBuffer.h>
 
 namespace Ogre
 {
@@ -27,9 +27,9 @@ namespace Ogre
 		ProceduralManualObject() {}
 		virtual ~ProceduralManualObject() {}
 
-		void setRenderToVertexBufferObject(RenderToVertexBufferObjectSharedPtr r2vbObject)
+		void setRenderToVertexBuffer(RenderToVertexBufferSharedPtr r2vbObject)
 			{ mR2vbObject = r2vbObject; }
-		const RenderToVertexBufferObjectSharedPtr& getRenderToVertexBufferObject()
+		const RenderToVertexBufferSharedPtr& getRenderToVertexBuffer()
 			{ return mR2vbObject; }
 		
 		void setManualObject(ManualObject* manualObject);
@@ -49,7 +49,7 @@ namespace Ogre
 			{ return mManualObject->getSection(0)->getSquaredViewDepth(cam); }
 	protected:
 		ManualObject* mManualObject;
-		RenderToVertexBufferObjectSharedPtr mR2vbObject;
+		RenderToVertexBufferSharedPtr mR2vbObject;
 	};
 
 	class ProceduralManualObjectFactory : public MovableObjectFactory

@@ -99,7 +99,6 @@ namespace Ogre {
 	GLRenderSystem::GLRenderSystem()
 		: mDepthWrite(true), mStencilMask(0xFFFFFFFF), mHardwareBufferManager(0),
 		mGpuProgramManager(0),
-		mRenderToVertexBufferManager(0),
 		mGLSLProgramFactory(0),
 		mRTTManager(0)
 	{
@@ -814,13 +813,7 @@ namespace Ogre {
 			// Downgrade number of simultaneous targets
 			caps->setNumMultiRenderTargets(1);
 		}
-
-		//Check for render to vertex buffer capabilities
-		if (caps->hasCapability(RSC_HWRENDER_TO_VERTEX_BUFFER))
-		{
-			mRenderToVertexBufferManager = new GLRenderToVertexBufferManager;
-		}
-
+		
 		Log* defaultLog = LogManager::getSingleton().getDefaultLog();
 		if (defaultLog)
 		{
@@ -862,9 +855,6 @@ namespace Ogre {
 
 		delete mRTTManager;
 		mRTTManager = 0;
-
-		delete mRenderToVertexBufferManager;
-		mRenderToVertexBufferManager = 0;
 
 		// Delete extra threads contexts
 		for (GLContextList::iterator i = mBackgroundContextList.begin(); 

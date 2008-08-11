@@ -442,7 +442,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLRenderToVertexBufferObject.cpp"
+				RelativePath="..\src\OgreGLRenderToVertexBuffer.cpp"
 				>
 			</File>
 			<File
@@ -799,11 +799,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLRenderToVertexBufferManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreGLRenderToVertexBufferObject.h"
+				RelativePath="..\include\OgreGLRenderToVertexBuffer.h"
 				>
 			</File>
 			<File

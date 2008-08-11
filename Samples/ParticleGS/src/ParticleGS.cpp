@@ -23,7 +23,7 @@ Description: Demonstrates the use of the geometry shader and render to vertex
 
 #include "ExampleApplication.h"
 #include "ProceduralManualObject.h"
-#include "OgreRenderToVertexBufferManager.h"
+#include "OgreRenderToVertexBuffer.h"
 #include "RandomTools.h"
 
 //#define LOG_GENERATED_BUFFER
@@ -47,7 +47,7 @@ class ParticleGSListener : public FrameListener
 	{ 
 		//Set shader parameters
 		GpuProgramParametersSharedPtr geomParams = particleSystem->
-			getRenderToVertexBufferObject()->getRenderToBufferMaterial()->
+			getRenderToVertexBuffer()->getRenderToBufferMaterial()->
 			getTechnique(0)->getPass(0)->getGeometryProgramParameters();
 		geomParams->setNamedConstant("elapsedTime", evt.timeSinceLastFrame);
 		demoTime += evt.timeSinceLastFrame;
@@ -64,7 +64,7 @@ class ParticleGSListener : public FrameListener
 		LogManager::getSingleton().getDefaultLog()->stream() << 
 			"Particle system for frame " <<	Root::getSingleton().getNextFrameNumber();
 		RenderOperation renderOp;
-		particleSystem->getRenderToVertexBufferObject()->getRenderOperation(renderOp);
+		particleSystem->getRenderToVertexBuffer()->getRenderOperation(renderOp);
 		const HardwareVertexBufferSharedPtr& vertexBuffer = 
 			renderOp.vertexData->vertexBufferBinding->getBuffer(0);
 		
@@ -121,8 +121,8 @@ protected:
 		particleSystemSeed->end();
 
 		//Generate the RenderToBufferObject
-		RenderToVertexBufferObjectSharedPtr r2vbObject = 
-			RenderToVertexBufferManager::getSingleton().createObject();
+		RenderToVertexBufferSharedPtr r2vbObject = 
+			HardwareBufferManager::getSingleton().createRenderToVertexBuffer();
 		r2vbObject->setRenderToBufferMaterialName("Ogre/ParticleGS/Generate");
 		
 		//Apply the random texture
@@ -142,7 +142,7 @@ protected:
 		offset += vertexDecl->addElement(0, offset, VET_FLOAT3, VES_TEXTURE_COORDINATES, 2).getSize(); //Velocity
 		
 		//Bind the two together
-		particleSystem->setRenderToVertexBufferObject(r2vbObject);
+		particleSystem->setRenderToVertexBuffer(r2vbObject);
 		particleSystem->setManualObject(particleSystemSeed);
 
 		//Set bounds
@@ -180,14 +180,15 @@ protected:
 		//mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(particleSystem->getManualObject());
 		mCamera->setPosition(0,35,-100);
 		mCamera->lookAt(0,35,0);
-
+		
+		/*
 		//Add an ogre head to the scene
 		SceneNode* ogreHeadSN = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		Entity *ogreHead = mSceneMgr->createEntity("head", "ogrehead.mesh");        
 		ogreHeadSN->scale(0.1,0.1,0.1);
 		ogreHeadSN->yaw(Degree(180));
 		ogreHeadSN->attachObject(ogreHead);
-
+		
 		//Add a plane to the scene
 		Plane plane;
 		plane.normal = Vector3::UNIT_Y;
@@ -199,6 +200,7 @@ protected:
 		pPlaneEnt->setMaterialName("Examples/Rockwall");
 		pPlaneEnt->setCastShadows(false);
 		mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(0,95,0))->attachObject(pPlaneEnt);
+		*/
     }
 };
 
