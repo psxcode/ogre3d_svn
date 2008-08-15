@@ -39,7 +39,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 //-----------------------------------------------------------------------------
-	static GLint renderOperationTypeToGLGeometryPrimitiveType(RenderOperation::OperationType operationType)
+	static GLint getR2VBPrimitiveType(RenderOperation::OperationType operationType)
 	{
 		switch (operationType)
 		{
@@ -47,37 +47,33 @@ namespace Ogre {
 			return GL_POINTS;
 		case RenderOperation::OT_LINE_LIST:
 			return GL_LINES;
-		case RenderOperation::OT_LINE_STRIP:
-			return GL_LINE_STRIP;
-		default:
 		case RenderOperation::OT_TRIANGLE_LIST:
 			return GL_TRIANGLES;
-		case RenderOperation::OT_TRIANGLE_STRIP:
-			return GL_TRIANGLE_STRIP;
-		case RenderOperation::OT_TRIANGLE_FAN:
-			return GL_TRIANGLE_FAN;
+		default:
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "GL RenderToVertexBuffer"
+				"can only output point lists, line lists, or triangle lists",
+				"OgreGLRenderToVertexBuffer::getR2VBPrimitiveType");
 		}
 	}
 //-----------------------------------------------------------------------------
 	static GLint getVertexCountPerPrimitive(RenderOperation::OperationType operationType)
 	{
-		//Not fully correct, but does the job
+		//We can only get points, lines or triangles since they are the only
+		//legal R2VB output primitive types
 		switch (operationType)
 		{
 		case RenderOperation::OT_POINT_LIST:
 			return 1;
 		case RenderOperation::OT_LINE_LIST:
-		case RenderOperation::OT_LINE_STRIP:
 			return 2;
 		default:
 		case RenderOperation::OT_TRIANGLE_LIST:
-		case RenderOperation::OT_TRIANGLE_STRIP:
-		case RenderOperation::OT_TRIANGLE_FAN:
 			return 3;
 		}
 	}
 //-----------------------------------------------------------------------------
-	void checkGLError()
+	void checkGLError(bool logError, bool throwException, 
+		const Ogre::String& sectionName = StringUtil::BLANK)
 	{
 		String msg;
 		bool foundError = false;
@@ -95,9 +91,18 @@ namespace Ogre {
 			foundError = true;	
         }
 
-		if (foundError)
+		if (foundError && (logError || throwException))
 		{
-			bool debug = true;
+			String fullErrorMessage = "GL Error : " + msg + " in " + sectionName;
+			if (logError)
+			{
+				LogManager::getSingleton().getDefaultLog()->logMessage(fullErrorMessage);
+			}
+			if (throwException)
+			{
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+					fullErrorMessage, "OgreGLRenderToVertexBuffer");
+			}
 		}
 	}
 //-----------------------------------------------------------------------------
@@ -113,7 +118,6 @@ namespace Ogre {
 	GLRenderToVertexBuffer::~GLRenderToVertexBuffer()
 	{
 		glDeleteQueries(1, &mPrimitivesDrawnQuery);
-		//TODO : Implement
 	}
 //-----------------------------------------------------------------------------
 	void GLRenderToVertexBuffer::getRenderOperation(RenderOperation& op)
@@ -126,6 +130,8 @@ namespace Ogre {
 //-----------------------------------------------------------------------------
 	void GLRenderToVertexBuffer::update(SceneManager* sceneMgr)
 	{
+		checkGLError(true, false, "start of GLRenderToVertexBuffer::update");
+
 		size_t bufSize = mVertexData->vertexDeclaration->getVertexSize(0) * mMaxVertexCount;
 		if (mVertexBuffers[0].isNull() || mVertexBuffers[0]->getSizeInBytes() != bufSize)
 		{
@@ -137,7 +143,10 @@ namespace Ogre {
 		Ogre::Pass* r2vbPass = mMaterial->getBestTechnique()->getPass(0);
 		//Set pass before binding buffers to activate the GPU programs
 		sceneMgr->_setPass(r2vbPass);
-		checkGLError();
+		
+		//TODO : We get a GL error after setPass (related to glTexEnvi), but 
+		//everything works fine. Understand why and solve.
+		checkGLError(false, false);
 
 		bindVerticesOutput(r2vbPass);
 
@@ -162,30 +171,17 @@ namespace Ogre {
 			reallocateBuffer(targetBufferIndex);
 		}
 
-
-		checkGLError();
-
 		GLHardwareVertexBuffer* vertexBuffer = static_cast<GLHardwareVertexBuffer*>(mVertexBuffers[targetBufferIndex].getPointer());
 		GLuint bufferId = vertexBuffer->getGLBufferId();
-
-		checkGLError();
 
 		//Bind the target buffer
 		glBindBufferOffsetNV(GL_TRANSFORM_FEEDBACK_BUFFER_NV, 0, bufferId, 0);
 
-		checkGLError();
-
-		glBeginTransformFeedbackNV(renderOperationTypeToGLGeometryPrimitiveType(mOperationType));
-
-		checkGLError();
+		glBeginTransformFeedbackNV(getR2VBPrimitiveType(mOperationType));
 
 		glEnable(GL_RASTERIZER_DISCARD_NV);    // disable rasterization
 
-		checkGLError();
-
 		glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN_NV, mPrimitivesDrawnQuery);
-
-		checkGLError();
 
 		RenderSystem* targetRenderSystem = Root::getSingleton().getRenderSystem();
 		//Draw the object
@@ -202,11 +198,8 @@ namespace Ogre {
 			targetRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
 				r2vbPass->getGeometryProgramParameters());
 		}
-		checkGLError();
 		targetRenderSystem->_render(renderOp);
 		
-		checkGLError();
-
 		//Finish the query
 		glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN_NV);
 		glDisable(GL_RASTERIZER_DISCARD_NV);
@@ -217,7 +210,7 @@ namespace Ogre {
 		glGetQueryObjectuiv(mPrimitivesDrawnQuery, GL_QUERY_RESULT, &primitivesWritten);
 		mVertexData->vertexCount = primitivesWritten * getVertexCountPerPrimitive(mOperationType);
 
-		checkGLError();
+		checkGLError(true, true, "GLRenderToVertexBuffer::update");
 
 		//Switch the vertex binding if neccesary
 		if (targetBufferIndex != mFrontBufferIndex)
@@ -264,7 +257,7 @@ namespace Ogre {
 			return "gl_FrontColor";
 		case VES_SPECULAR:
 			return "gl_FrontSecondaryColor";
-		//TODO : Implement more
+		//TODO : Implement more?
 		default:
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Unsupported vertex element sematic in render to vertex buffer", 
@@ -284,7 +277,7 @@ namespace Ogre {
 			return GL_PRIMARY_COLOR;
 		case VES_SPECULAR:
 			return GL_SECONDARY_COLOR_NV;
-		//TODO : Implement more
+		//TODO : Implement more?
 		default:
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Unsupported vertex element sematic in render to vertex buffer", 
@@ -335,7 +328,9 @@ namespace Ogre {
 				}
 				locations.push_back(location);
 			}
-			glTransformFeedbackVaryingsNV(linkProgramId, locations.size(), &locations[0], GL_INTERLEAVED_ATTRIBS_NV);
+			glTransformFeedbackVaryingsNV(
+				linkProgramId, static_cast<GLsizei>(locations.size()), 
+				&locations[0], GL_INTERLEAVED_ATTRIBS_NV);
 		}
 		else
 		{
@@ -352,9 +347,11 @@ namespace Ogre {
 				attribs.push_back(element->getIndex());
 			}
 			
-			glTransformFeedbackAttribsNV(declaration->getElementCount(), &attribs[0] ,GL_INTERLEAVED_ATTRIBS_NV);
+			glTransformFeedbackAttribsNV(
+				static_cast<GLuint>(declaration->getElementCount()), 
+				&attribs[0], GL_INTERLEAVED_ATTRIBS_NV);
 		}
 
-		checkGLError();
+		checkGLError(true, true, "GLRenderToVertexBuffer::bindVerticesOutput");
 	}
 }
