@@ -646,6 +646,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Demo_CharacterAnimation", "
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{80DECC17-BDDD-4412-8CF8-F7C1C17A7436} = {80DECC17-BDDD-4412-8CF8-F7C1C17A7436}
+		{A6830BB5-9993-4F6D-8D4E-930F36A1B88F} = {A6830BB5-9993-4F6D-8D4E-930F36A1B88F}
+		{35AFBABB-DF05-43DE-91A7-BB828A874015} = {35AFBABB-DF05-43DE-91A7-BB828A874015}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -987,4 +992,3 @@ Global
 		DPBuild = 5
 	EndGlobalSection
 EndGlobal
-
