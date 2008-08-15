@@ -194,6 +194,9 @@ namespace Ogre {
         /// The scale to use as a base for keyframe animation
         Vector3 mInitialScale;
 
+
+		
+
         /// Cached derived transform as a 4x4 matrix
         mutable Matrix4 mCachedTransform;
         mutable bool mCachedTransformOutOfDate;
@@ -203,6 +206,18 @@ namespace Ogre {
 
 		typedef std::vector<Node*> QueuedUpdates;
 		static QueuedUpdates msQueuedUpdates;
+
+		/** If relative coordinate is used, keyframe's mTranslate will not only determined by NodeAnimationTrack
+		but NodeAnimationTrack's associated node's current translation and this keyframe's offset translation
+		If relative coordinate is not used, this keyframe's mTranslate is interpolated by its NodeAnimatoinTrack
+		*/
+		bool mUseRelativeCoordinate;
+
+		/// The position in relative coordinate system's start frame
+		Vector3 mAlignPosition;
+
+		/// The orientation in relative coordinate system's start frame
+		Quaternion mAlignOrientation;
 
 
     public:
@@ -278,6 +293,8 @@ namespace Ogre {
         /** Sets the position of the node relative to it's parent.
         */
         virtual void setPosition(const Vector3& pos);
+
+		
 
         /** Sets the position of the node relative to it's parent.
         */
@@ -703,6 +720,27 @@ namespace Ogre {
         /** @copydoc Renderable::getLights */
         const LightList& getLights(void) const;
 
+		/** set this node's start frame position in relative coordinate system
+		*/
+		virtual void setAlignPosition( const Vector3& pos);
+
+		/** get this node's start frame position in relative coordinate system
+		*/
+		virtual const Vector3 & getAlignPosition(void) const;
+
+		/** set this node's start frame orientation in relative coordinate system
+		*/
+		virtual void setAlignOrientation( const Quaternion& q);
+
+		/** get this node's start frame orientation in relative coordinate system
+		*/
+		virtual const Quaternion & getAlignOrientation(void) const;
+
+		/** If a node is set to be using relativeCoordinate system, all AnimationTrack applied 
+		to it should align keyframes to its StartFrame orientation and translation*/
+		void SetRelativeCoordinate( bool isRelative ) { mUseRelativeCoordinate = isRelative; }
+		bool IsRelativeCoordinate(void) const { return mUseRelativeCoordinate; }
+		
 
 
     };
