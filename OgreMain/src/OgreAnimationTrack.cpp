@@ -497,8 +497,30 @@ namespace Ogre {
 			return;
 
         TransformKeyFrame kf(0, timeIndex.getTimePos());
-		
+
 		getInterpolatedKeyFrame(timeIndex, &kf);
+
+		//align interpolated keyframe to current motion clip's start frame
+		// the following procedure is executed when relative coordinate system
+		// is used in this motion segmentation
+		if ( node->IsRelativeCoordinate() == true)
+		{
+			Vector3 offsetTranslation = kf.getTranslate() - node->getRelativeStartPosition();
+			// just align translation in X-Z plane
+			offsetTranslation.y = 0.;
+			// rotate offsettranslation to the correct facedirection 
+			offsetTranslation = node->getAlignOrientation()*offsetTranslation;
+
+			Vector3 currentTranslation = kf.getTranslate();
+			offsetTranslation.x += node->getLatestGlobalPosition().x;
+			offsetTranslation.z += node->getLatestGlobalPosition().z;
+			currentTranslation.x = offsetTranslation.x;
+			currentTranslation.z = offsetTranslation.z;
+
+			kf.setTranslate(currentTranslation);
+			kf.setRotation(kf.getRotation()*node->getAlignOrientation());
+		}
+			
 
 		// add to existing. Weights are not relative, but treated as absolute multipliers for the animation
         Vector3 translate = kf.getTranslate() * weight * scl;
