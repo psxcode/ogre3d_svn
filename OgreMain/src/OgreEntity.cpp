@@ -1986,10 +1986,6 @@ namespace Ogre {
 			ActionName = pState->GetCurrentActionName();
 			AnimationState* pAnimState = getAnimationState(ActionName);
 
-
-			
-			
-			
 			if ( CtrlInfo.speed == MotionGraph::LOCOSPEED_IDLE )
 			{
 				if ( pState->GetCurrentActionName() != "idle" )
@@ -1997,6 +1993,11 @@ namespace Ogre {
 					MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ACTION_IDLE);
 					pState->AddTrigger(trigger);
 				}
+			//	else //current state is "idle", and will keep in "idle"
+			//	{
+			//		pAnimState->addTime(offset);
+
+			//	}
 			}else if ( CtrlInfo.direct != MotionGraph::LOCODIRECTION_CENTER )
 			{
 				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::DIRECTION_CONTROL);
@@ -2005,11 +2006,27 @@ namespace Ogre {
 				pState->AddTrigger(trigger);
 			}
 
-//one foot step has been completed
-			if ( pAnimState->getTimePosition() > pState->GetEndTimePosition() )
+			//one foot step has been completed
+			// only "wonder" state can be set to IsActive
+			if ( pState->IsActive() )
 			{
-				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ANIMATION_END);
-				pState->AddTrigger(trigger);
+				if (pAnimState->getTimePosition() > pState->GetEndTimePosition())
+				{
+					//check if there are triggers of type DIRECTION_CONTROL
+					// if so there is no need to switch from "wonder" to "idle"
+					// directly prepare new foot step in "wonder" state
+
+					if ( pState->HasLocomtionTrigger())
+					{
+						;//processTrigger will take over next foot prepare work
+					}
+					else
+						//Because there is no new locomotion command, it is "idle" time
+					{
+						MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ACTION_IDLE);
+						pState->AddTrigger(trigger);
+					}	
+				}
 			}
 
 			if ( pAnimState->hasEnded() )
