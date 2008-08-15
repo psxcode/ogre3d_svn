@@ -89,6 +89,11 @@ namespace Ogre {
         // Now adjust it by the camera bias and return the computed value
         return squaredDepth * camera->_getLodBiasInverse();
     }
+    //-----------------------------------------------------------------------
+    Real DistanceLodStrategy::getBaseValue() const
+    {
+        return Real(0);
+    }
     //---------------------------------------------------------------------
     Real DistanceLodStrategy::transformBias(Real factor) const
     {
@@ -100,6 +105,30 @@ namespace Ogre {
     {
         // Square user-supplied distance
         return Math::Sqr(userValue);
+    }
+    //-----------------------------------------------------------------------
+    ushort DistanceLodStrategy::getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const
+    {
+        // Get index assuming ascending values
+        return getIndexAscending(value, meshLodUsageList);
+    }
+    //-----------------------------------------------------------------------
+    ushort DistanceLodStrategy::getIndex(Real value, const Material::LodValueList& materialLodValueList) const
+    {
+        // Get index assuming ascending values
+        return getIndexAscending(value, materialLodValueList);
+    }
+    //---------------------------------------------------------------------
+    bool DistanceLodStrategy::isSorted(const Mesh::LodValueList& values) const
+    {
+        // Determine if sorted ascending
+        return isSortedAscending(values);
+    }
+        //---------------------------------------------------------------------
+    void DistanceLodStrategy::sort(Mesh::MeshLodUsageList& meshLodUsageList) const
+    {
+        // Sort ascending
+        return sortAscending(meshLodUsageList);
     }
     //---------------------------------------------------------------------
     void DistanceLodStrategy::setReferenceView(Real viewportWidth, Real viewportHeight, Radian fovY)

@@ -42,11 +42,6 @@ namespace Ogre {
     LodStrategy::~LodStrategy()
     { }
     //-----------------------------------------------------------------------
-    Real LodStrategy::getBaseValue() const
-    {
-        return Real(0);
-    }
-    //-----------------------------------------------------------------------
     Real LodStrategy::transformUserValue(Real userValue) const
     {
         // No transformation by default
@@ -59,39 +54,9 @@ namespace Ogre {
         return getValueImpl(movableObject, camera->getLodCamera());
     }
     //-----------------------------------------------------------------------
-    ushort LodStrategy::getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const
-    {
-        // Get index assuming ascending values
-        return getIndexAscending(value, meshLodUsageList);
-    }
-    //-----------------------------------------------------------------------
-    ushort LodStrategy::getIndex(Real value, const Material::LodValueList& materialLodValueList) const
-    {
-        // Get index assuming ascending values
-        return getIndexAscending(value, materialLodValueList);
-    }
-    ////-----------------------------------------------------------------------
-    //ushort LodStrategy::getIndex(Real value, const Mesh::LodValueList& meshLodValueList) const
-    //{
-    //    // Get index assuming ascending values
-    //    return getIndexAscending(value, meshLodValueList);
-    //}
-    //-----------------------------------------------------------------------
     void LodStrategy::assertSorted(const Mesh::LodValueList &values) const
     {
         assert(isSorted(values) && "The lod values must be sorted");
-    }
-    //---------------------------------------------------------------------
-    bool LodStrategy::isSorted(const Mesh::LodValueList& values) const
-    {
-        // Determine if sorted ascending
-        return isSortedAscending(values);
-    }
-        //---------------------------------------------------------------------
-    void LodStrategy::sort(Mesh::MeshLodUsageList& meshLodUsageList) const
-    {
-        // Sort ascending
-        return sortAscending(meshLodUsageList);
     }
     //---------------------------------------------------------------------
     bool LodStrategy::isSortedAscending(const Mesh::LodValueList& values)
@@ -221,39 +186,5 @@ namespace Ogre {
         // If we fall all the way through, use the highest value
         return static_cast<ushort>(materialLodValueList.size() - 1);
     }
-    ////---------------------------------------------------------------------
-    //ushort LodStrategy::getIndexAscending(Real value, const Mesh::LodValueList& meshLodValueList)
-    //{
-    //    Mesh::LodValueList::const_iterator i, iend;
-    //    iend = meshLodValueList.end();
-    //    unsigned short index = 0;
-    //    for (i = meshLodValueList.begin(); i != iend; ++i, ++index)
-    //    {
-    //        if (*i > value)
-    //        {
-    //            return index - 1;
-    //        }
-    //    }
-
-    //    // If we fall all the way through, use the highest value
-    //    return static_cast<ushort>(meshLodValueList.size() - 1);
-    //}
-    ////---------------------------------------------------------------------
-    //ushort LodStrategy::getIndexDescending(Real value, const Mesh::LodValueList& meshLodValueList)
-    //{
-    //    Mesh::LodValueList::const_iterator i, iend;
-    //    iend = meshLodValueList.end();
-    //    unsigned short index = 0;
-    //    for (i = meshLodValueList.begin(); i != iend; ++i, ++index)
-    //    {
-    //        if (*i < value)
-    //        {
-    //            return index - 1;
-    //        }
-    //    }
-
-    //    // If we fall all the way through, use the highest value
-    //    return static_cast<ushort>(meshLodValueList.size() - 1);
-    //}
 
 } // namespace

@@ -47,23 +47,38 @@ namespace Ogre {
         /** Default constructor. */
         DistanceLodStrategy();
 
+        /// @copydoc LodStrategy::getBaseValue
+        virtual Real getBaseValue() const;
+
         /// @copydoc LodStrategy::transformBias
         virtual Real transformBias(Real factor) const;
 
         /// @copydoc LodStrategy::transformUserValue
         virtual Real transformUserValue(Real userValue) const;
 
+        /// @copydoc LodStrategy::getIndex
+        virtual ushort getIndex(Real value, const Mesh::MeshLodUsageList& meshLodUsageList) const;
+
+        /// @copydoc LodStrategy::getIndex
+        virtual ushort getIndex(Real value, const Material::LodValueList& materialLodValueList) const;
+
+        /// @copydoc LodStrategy::sort
+        virtual void sort(Mesh::MeshLodUsageList& meshLodUsageList) const;
+
+        /// @copydoc LodStrategy::isSorted
+        virtual bool isSorted(const Mesh::LodValueList& values) const;
+
         /** Sets the reference view upon which the distances were based.
-            @note
-                This automatically enables use of the reference view.
-            @note
-                There is no corresponding get method for these values as
-                they are not saved, but used to compute a reference value.
+        @note
+            This automatically enables use of the reference view.
+        @note
+            There is no corresponding get method for these values as
+            they are not saved, but used to compute a reference value.
         */
         void setReferenceView(Real viewportWidth, Real viewportHeight, Radian fovY);
 
         /** Enables to disables use of the reference view.
-            @note Do not enable use of the reference view before setting it.
+        @note Do not enable use of the reference view before setting it.
         */
         void setReferenceViewEnabled(bool value);
 
