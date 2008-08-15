@@ -173,18 +173,19 @@ namespace Ogre {
 		class State //: public AnimationState
 		{
 		public:
-			State(int stateid,MotionGraph* pMg,const String& statename = ""):mStateID(stateid),mStateName(statename),
-				mStartFrameTranslation(Ogre::Vector3::ZERO),mStartFrameRotation(Ogre::Quaternion::ZERO),
-			mOwnerMotionGraph(pMg){};
+			static const Ogre::Real UnrealTimePos;
+			static const int UnrealFrameIndex;
+			State(int stateid,MotionGraph* pMg,const String& statename = "");
+			  
 			// for motion graph script state constructor
-			State(int stateid,const String& statename = ""):mStateID(stateid),mStateName(statename),
-				mStartFrameTranslation(Ogre::Vector3::ZERO),mStartFrameRotation(Ogre::Quaternion::ZERO),
-				mOwnerMotionGraph(0){};
+			State(int stateid,const String& statename = "");
+
 			virtual ~State(){};
 			typedef std::queue<Trigger*> TriggerQueue;
 			typedef std::map<float,Transition*> TransitionMap;
 			int GetStateID(void) const { return mStateID; }
 			void AddTrigger( Trigger* pTrigger);
+			bool HasLocomtionTrigger(void) const;
 			void AddTransition( Transition* pTran );
 			/** When an animation arrives its end, call this 
 			*/
@@ -192,6 +193,11 @@ namespace Ogre {
 			/** When new State is transited to, its animation is enabled by call this
 			*/
 			void EnableAnimation(const Entity* pEntity); 
+
+			bool IsActive(void) const 
+			{
+				return mIsActive;
+			}
 
 			/** When a new footstep is ready to carry, its animation state is set
 			@remarks
@@ -206,6 +212,11 @@ namespace Ogre {
 			/** @Remove a trigger from the trigger queue
 			*/
 			void RemoveTopTrigger(void);
+
+			/** @Remove a trigger from the trigger queue
+			*/
+			void RemoveAllTriggers(void);
+
 			Transition* GetBestTransition(void);
 
 			typedef std::set<String> ActionSet;
@@ -214,24 +225,34 @@ namespace Ogre {
 			{
 				return mCurrentAction.direction;
 			}
-			void SetCurrentAction(const String& actionname) { mCurrentAction.actionName = actionname; }
-			void StitchMotion(const Entity* pEntity, const Ogre::Vector3& StartFrameTranslation,const Ogre::Quaternion& StartFrameOrientation );
+
+			//When Action is locomotion, each time interactively change direction,
+			//set current action direction
+			void SetCurrentActionDirection(LocomotionDirection direction)
+			{
+				mCurrentAction.direction = direction;
+			}
+
+			void SetCurrentAction( const String& actionname ) { mCurrentAction.actionName = actionname; }
+			void StitchMotion( const Entity* pEntity );
 			/// Gets the time position in original motion for this state
 			Ogre::Real GetEndTimePosition(void) const;
 
 			/** Set state's end time pos in its associated animation 
 			if end time pos has been reached,a trigger of type "
 			*/
-			void SetEndTimePos(Ogre::Real timepos) 
+			void SetEndTimePos(Ogre::Real timepos, int frameindex) 
 			{
 				mEndTimePos = timepos;
+				mEndFrameIndex = frameindex;
 			}
 
 			/** Set state's start time pos in its associated animation 
 			*/
-			void SetStartTimePos(Ogre::Real timepos)
+			void SetStartTimePos(Ogre::Real timepos, int frameindex)
 			{
 				mStartTimePos = timepos;
+				mStartFrameIndex = frameindex;
 			}
 
 			Ogre::Real GetStartTimePos(void) const
@@ -239,9 +260,19 @@ namespace Ogre {
 				return mStartTimePos;
 			}
 
+			int GetStartFrameIndex(void) const
+			{
+				return mStartFrameIndex;
+			}
+
 			Ogre::Real GetEndTimePos(void) const
 			{
 				return mEndTimePos;
+			}
+
+			int GetEndFrameIndex(void) const
+			{
+				return mEndFrameIndex;
 			}
 
 			struct Action
@@ -261,25 +292,29 @@ namespace Ogre {
 			mStartTimePos and mEndTimePos are determined by transition's 
 			*/
 			Ogre::Real mStartTimePos;
+			/** this makes the same mean as mStartTimePos, but use animation frame index instead 
+			of real time value in second
+			*/
+			int mStartFrameIndex;
 			Ogre::Real mEndTimePos;
+			/** this makes the same mean as mEndTimePos, but use animation frame index instead 
+			of real time value in second
+			*/
+			int mEndFrameIndex;
 
 			TriggerQueue mTriggers; // it is a priority queue
-			TransitionMap mTransitions; // always select transition with the maximum probability,
+			// always select transition with the maximum probability,
 			// the probability is refreshed every time the a trigger is fired
-			/**  The first frame of this Motion Graph State should be aligned to the latest translation
-			@remarks
-			the following frames' global translations are calculated with
-			(K' translation - 1st' translation)*mStartFrameRotation + mStartFrameTranslation 
+			TransitionMap mTransitions;
+
+			/** the owner motion graph of this State
 			*/
-			Ogre::Vector3 mStartFrameTranslation;
-			/** The first frame of this Motion Graph State should be rotated to match the character face 
-			direction
-			@remarks
-			this variable's value is the radian angle how this State's first frame needs to rotate to the latest 
-			character's face direction
-			*/
-			Ogre::Quaternion mStartFrameRotation;
 			MotionGraph* mOwnerMotionGraph;
+
+			/** When this state is in use, set IsActive to be true
+			ProcessAnimationEnded and EnableAnimation change this flag
+			*/
+			bool mIsActive;
 
 		};
 
