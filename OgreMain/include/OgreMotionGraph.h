@@ -61,7 +61,65 @@ namespace Ogre {
 
 	class _OgreExport MotionGraph //: public AnimationStateSet
 	{
+
+		friend class State;
+		friend class Transition;
 	public:
+//some common data structures used between motion graph and other program modules
+		
+
+		enum LocomotionSpeed
+		{
+			LOCOSPEED_IDLE = 0,
+			LOCOSPEED_WALK,
+			LOCOSPEED_RUN
+		};
+		enum LocomotionDirection
+		{
+			LOCODIRECTION_NON = -1,
+			LOCODIRECTION_CENTER = 0,
+			LOCODIRECTION_FORWARD, 
+			LOCODIRECTION_BACKWARD, 
+			LOCODIRECTION_LEFT,
+			LOCODIRECTION_RIGHT
+		};
+		enum ActionType
+		{
+			ACTIONTYPE_LOCOMOTION = 0,
+			ACTIONTYPE_JUMP,
+			ACTIONTYPE_DANCE
+		};
+
+		//there maybe various of foot configuration
+		// such as 
+		// left foot stand or both feet stand
+		// flight phase
+		// left foot behind right foot  .etc
+		enum FootType
+		{
+			FOOTTYPE_LF_STAND,
+			FOOTTYPE_RF_STAND,
+			FOOTTYPE_BOTHF_STAND,
+			FOOTTYPE_FLIGHT
+		};
+
+		//control command package to transfer interactive control
+		// commands to motion graph 
+		struct InteractiveControlInfo
+		{
+			ActionType type;
+			LocomotionSpeed speed;
+			LocomotionDirection direct;
+			InteractiveControlInfo():type(ACTIONTYPE_LOCOMOTION),speed(LOCOSPEED_IDLE),
+			direct(LOCODIRECTION_CENTER){}
+		};
+
+		struct FootStepDirection
+		{
+			Ogre::Real rad;
+			FootType foottype;
+		};
+
 		/** A State is a character action unit, it keeps steady until some trigger pulses.
 		p.s. Trigger will be another class not created at this level of character animation.
 		@remarks
@@ -90,7 +148,8 @@ namespace Ogre {
 			NON_TRIGGER,
 			ANIMATION_END,
 			DIRECTION_CONTROL,
-			SPEED_CHANGE
+			SPEED_CHANGE,
+			ACTION_IDLE
 		};
 
 		static TriggerType TriggerNameToTriggerType(const String& triggertype);
@@ -99,20 +158,32 @@ namespace Ogre {
 		{
 		public:
 			Trigger(TriggerType type = NON_TRIGGER):mType(type){};
+			Trigger(const Trigger& trigger):mType(trigger.mType)
+			{
+				CtrlInfo.direct = trigger.CtrlInfo.direct;
+				CtrlInfo.speed = trigger.CtrlInfo.speed;
+				CtrlInfo.type = trigger.CtrlInfo.type;
+			}
 			virtual ~Trigger(){};
 			TriggerType mType;
+			InteractiveControlInfo CtrlInfo;
 
 		};
 
 		class State //: public AnimationState
 		{
 		public:
-			State(int stateid, const String& statename = ""):mStateID(stateid),mStateName(statename),
-				mStartFrameTranslation(Ogre::Vector3::ZERO),mStartFrameRotation(Ogre::Quaternion::ZERO){};
+			State(int stateid,MotionGraph* pMg,const String& statename = ""):mStateID(stateid),mStateName(statename),
+				mStartFrameTranslation(Ogre::Vector3::ZERO),mStartFrameRotation(Ogre::Quaternion::ZERO),
+			mOwnerMotionGraph(pMg){};
+			// for motion graph script state constructor
+			State(int stateid,const String& statename = ""):mStateID(stateid),mStateName(statename),
+				mStartFrameTranslation(Ogre::Vector3::ZERO),mStartFrameRotation(Ogre::Quaternion::ZERO),
+				mOwnerMotionGraph(0){};
 			virtual ~State(){};
 			typedef std::queue<Trigger*> TriggerQueue;
 			typedef std::map<float,Transition*> TransitionMap;
-			int GetStateID() const { return mStateID; }
+			int GetStateID(void) const { return mStateID; }
 			void AddTrigger( Trigger* pTrigger);
 			void AddTransition( Transition* pTran );
 			/** When an animation arrives its end, call this 
@@ -121,24 +192,69 @@ namespace Ogre {
 			/** When new State is transited to, its animation is enabled by call this
 			*/
 			void EnableAnimation(const Entity* pEntity); 
+
+			/** When a new footstep is ready to carry, its animation state is set
+			@remarks
+			footindex is the frame index in animation track,
+			when animation state is set, footindex must be converted to time value in Ogre::Real
+			*/
+			void SetOneFootStep(const Entity* pEntity,unsigned short footindex,const FootStepDirection& footdirect); 
+
 			/** Get the first trigger in the trigger queue
 			*/
-			Trigger* GetTrigger();
+			Trigger* GetTrigger(void);
 			/** @Remove a trigger from the trigger queue
 			*/
-			void RemoveTopTrigger();
-			Transition* GetBestTransition();
+			void RemoveTopTrigger(void);
+			Transition* GetBestTransition(void);
+
 			typedef std::set<String> ActionSet;
-			String GetCurrentActionName() { return mCurrentActionName; }
-			void SetCurrentAction(const String& actionname) { mCurrentActionName = actionname; }
+			String GetCurrentActionName(void) const { return mCurrentAction.actionName; }
+			LocomotionDirection GetCurrentActionDirection(void) const
+			{
+				return mCurrentAction.direction;
+			}
+			void SetCurrentAction(const String& actionname) { mCurrentAction.actionName = actionname; }
 			void StitchMotion(const Entity* pEntity, const Ogre::Vector3& StartFrameTranslation,const Ogre::Quaternion& StartFrameOrientation );
-		
+			/// Gets the time position in original motion for this state
+			Ogre::Real GetEndTimePosition(void) const;
 
+			/** Set state's end time pos in its associated animation 
+			if end time pos has been reached,a trigger of type "
+			*/
+			void SetEndTimePos(Ogre::Real timepos) 
+			{
+				mEndTimePos = timepos;
+			}
 
+			/** Set state's start time pos in its associated animation 
+			*/
+			void SetStartTimePos(Ogre::Real timepos)
+			{
+				mStartTimePos = timepos;
+			}
+
+			Ogre::Real GetStartTimePos(void) const
+			{
+				return mStartTimePos;
+			}
+
+			Ogre::Real GetEndTimePos(void) const
+			{
+				return mEndTimePos;
+			}
+
+			struct Action
+			{
+				String actionName;
+				LocomotionDirection direction;
+				Action(void):actionName(""),direction(LOCODIRECTION_NON){}
+			};
+			
 		protected:
 			String  mStateName;
 			ActionSet mActions;
-			String  mCurrentActionName;
+			Action  mCurrentAction;
 			int		mStateID;
 			/** Every State starts from a TimePos in an Animation and ends at another TimePos in the same animation 
 			@remarks
@@ -163,6 +279,7 @@ namespace Ogre {
 			character's face direction
 			*/
 			Ogre::Quaternion mStartFrameRotation;
+			MotionGraph* mOwnerMotionGraph;
 
 		};
 
@@ -237,16 +354,28 @@ namespace Ogre {
 		*/
 		void AlignAnimations(Entity* pEntity); 
 
+		/** Transit from the current state to the specified state.
+		@params stateName is the name of the state to be transited to
+		@remarks
+		if no matching name state exists, current state will loop
+		*/
+		bool TransitToState(const String& stateName);
 
-
-		/** Tranist from the current state to the next state.
+		/** Transit from the current state to the next state.
 		@remarks
 		some status variables are set, some triggers are fired.
 		*/
 		void Transit(const Entity* entity);
 
-		State* GetCurrentState() { return mCurrentState; }
+		State* GetCurrentState(void) { return mCurrentState; }
 
+		/** Look for the best matching step to take.
+		@remarks
+		The lookuping process if based on the current feet configuration 
+		and current direction and speed
+		
+		*/
+		int LookForFootStep(const FootStepDirection& footdirect) const;
 
 
 		~MotionGraph();
@@ -279,7 +408,7 @@ namespace Ogre {
 			 "wonder" for script usage.
 		*/
 		typedef std::map< Ogre::Real, unsigned short > DirectionLookupTable;
-		typedef std::vector< unsigned short > FootStandList;
+		typedef std::set< unsigned short > FootStandList;
 	protected:
 		void CalcBoneNodeKinematic(const NodeAnimationTrack* track,std::map<float, KinematicElem*>& Kinemap, const Bone* bone);
 
@@ -295,6 +424,8 @@ namespace Ogre {
 		DirectionLookupTable mRFDirectTable;
 		FootStandList mLFStandPoints;
 		FootStandList mRFStandPoints;
+
+		static const int FOUND_NON;
 
 
 	};
@@ -359,6 +490,7 @@ namespace Ogre {
 		//
 		MG_TRANSITIONS  =   0x3000
 	};
+
 
 }
 
