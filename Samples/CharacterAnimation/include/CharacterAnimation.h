@@ -85,17 +85,17 @@ public:
 		
 
 		using namespace OIS;
-		if ( mKeyboard->isKeyDown(KC_1) )
+		if ( mKeyboard->isKeyDown(KC_1) && mTimeUntilNextToggle <= 0)
 			mLocomotionSpeed = MotionGraph::LOCOSPEED_WALK;
-		else if ( mKeyboard->isKeyDown(KC_2) )
+		else if ( mKeyboard->isKeyDown(KC_2) && mTimeUntilNextToggle <= 0)
 			mLocomotionSpeed = MotionGraph::LOCOSPEED_RUN;
-		else if ( mKeyboard->isKeyDown(KC_Y) )
+		else if ( mKeyboard->isKeyDown(KC_Y) && mTimeUntilNextToggle <= 0)
 			mLocomotionDirection = MotionGraph::LOCODIRECTION_FORWARD;
-		else if ( mKeyboard->isKeyDown(KC_B) )
+		else if ( mKeyboard->isKeyDown(KC_B) && mTimeUntilNextToggle <= 0)
 			mLocomotionDirection = MotionGraph::LOCODIRECTION_BACKWARD;
-		else if ( mKeyboard->isKeyDown(KC_G))
+		else if ( mKeyboard->isKeyDown(KC_G) && mTimeUntilNextToggle <= 0)
 			mLocomotionDirection = MotionGraph::LOCODIRECTION_LEFT;
-		else if ( mKeyboard->isKeyDown(KC_J))
+		else if ( mKeyboard->isKeyDown(KC_J) && mTimeUntilNextToggle <= 0)
 			mLocomotionDirection = MotionGraph::LOCODIRECTION_RIGHT;
 		else
 			mLocomotionDirection = MotionGraph::LOCODIRECTION_CENTER;
