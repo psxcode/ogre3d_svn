@@ -106,20 +106,19 @@ namespace Ogre {
 
 		// no active link program so find one or make a new one
 		// is there an active key?
-		GLuint activeKey = 0;
+		uint64 activeKey = 0;
 
 		if (mActiveVertexGpuProgram)
 		{
-			activeKey = mActiveVertexGpuProgram->getProgramID() << 16;
+			activeKey = static_cast<uint64>(mActiveVertexGpuProgram->getProgramID()) << 32;
 		}
 		if (mActiveGeometryGpuProgram)
 		{
-			//TODO : Are 32 bits enough when we have 3 program types?
-			activeKey += mActiveGeometryGpuProgram->getProgramID() << 8;
+			activeKey += static_cast<uint64>(mActiveGeometryGpuProgram->getProgramID()) << 16;
 		}
 		if (mActiveFragmentGpuProgram)
 		{
-			activeKey += mActiveFragmentGpuProgram->getProgramID();
+			activeKey += static_cast<uint64>(mActiveFragmentGpuProgram->getProgramID());
 		}
 
 		// only return a link program object if a vertex, geometry or fragment program exist

@@ -37,6 +37,13 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
+// define uint64 type
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC
+typedef unsigned __int64 uint64;
+#else
+typedef unsigned long long uint64;
+#endif
+
 	/** Ogre assumes that there are seperate vertex and fragment programs to deal with but
 		GLSL has one program object that represents the active vertex and fragment shader objects
 		during a rendering state.  GLSL Vertex and fragment 
@@ -54,7 +61,7 @@ namespace Ogre {
 
 	private:
 	
-		typedef HashMap<GLuint, GLSLLinkProgram*> LinkProgramMap;
+		typedef HashMap<uint64, GLSLLinkProgram*> LinkProgramMap;
 		typedef LinkProgramMap::iterator LinkProgramIterator;
 
 		/// container holding previously created program objects 
