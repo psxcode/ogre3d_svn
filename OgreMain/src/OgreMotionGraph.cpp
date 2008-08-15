@@ -38,9 +38,12 @@ Torus Knot Software Ltd.
 #include "OgreEntity.h"
 #include "OgreAnimation.h"
 #include "OgreBone.h"
+#include <math.h>
 
 namespace Ogre {
 
+
+	const int MotionGraph::FOUND_NON = -1;
 
 	MotionGraph::TriggerType MotionGraph::TriggerNameToTriggerType(const String& triggertype)
 	{
@@ -159,7 +162,7 @@ namespace Ogre {
 
 	}
 
-	MotionGraph::Trigger* MotionGraph::State::GetTrigger()
+	MotionGraph::Trigger* MotionGraph::State::GetTrigger(void)
 	{
 		if ( !mTriggers.empty() )
 			return mTriggers.front();
@@ -167,10 +170,14 @@ namespace Ogre {
 			return 0;
 	}
 
-	void MotionGraph::State::RemoveTopTrigger()
+	void MotionGraph::State::RemoveTopTrigger(void)
 	{
 		if ( !mTriggers.empty())
+		{
+			Trigger* trigger = mTriggers.front();
 			mTriggers.pop();
+			delete trigger; //truly remove the trigger
+		}
 	}
 
 
@@ -206,7 +213,8 @@ namespace Ogre {
 		String ActionName = this->GetCurrentActionName();
 		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
 		assert(pAnimState);
-		pAnimState->setTimePosition(0.0);//restart from the beginning
+		pAnimState->setTimePosition(0.0);//restart from the beginning,although cyclic motion
+		// is not needed to do so
 		pAnimState->setEnabled(false);
 		this->RemoveTopTrigger();
 	}
@@ -218,7 +226,69 @@ namespace Ogre {
 		assert(pAnimState);
 		pAnimState->setEnabled(true);
 		pAnimState->setLoop(false);
+	}
 
+	void MotionGraph::State::SetOneFootStep(const Entity* pEntity,unsigned short footindex,
+		const FootStepDirection& footdirect)
+	{
+
+		
+		String ActionName = this->GetCurrentActionName();
+		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
+		assert(pAnimState);
+
+		//convert footindex from unsigned short frame index to Ogre::Real time pos
+		Animation* anim = pEntity->getSkeleton()->getAnimation("wonder");
+		NodeAnimationTrack* foottrack = anim->getNodeTrack(pEntity->getSkeleton()->getBone("lfoot")->getHandle());
+		Ogre::Real timepos = footindex/foottrack->getNumKeyFrames();
+		assert( timePos <= pAnimState->getLength() && timepos >= 0);
+
+		pAnimState->setTimePosition(timepos);
+		pAnimState->setEnabled(true);
+		pAnimState->setLoop(false);
+
+		this->SetStartTimePos(timepos);
+
+		//now look for the next same foot step start time pos 
+		// in fact, left and right foot steps by turns
+		// by observing the statistic of gait, human beings seldom use the same foot
+		// to step twice one after another, so it's surely safe to set the foot stand position
+		// of the other foot to be the OneFootStep EndFrame
+		Ogre::Real endtimepos;
+		FootStandList::iterator it;
+		switch (footdirect.foottype)
+		{
+		case MotionGraph::FOOTTYPE_LF_STAND:
+			{
+				it = upper_bound(mOwnerMotionGraph->mRFStandPoints.begin(),
+					mOwnerMotionGraph->mRFStandPoints.end(),footindex);
+				if ( it != mOwnerMotionGraph->mRFStandPoints.end() )
+				{
+					endtimepos = (*it)/foottrack->getNumKeyFrames();
+					
+				}
+				break;
+			}
+		case MotionGraph::FOOTTYPE_RF_STAND:
+			{
+				it = upper_bound(mOwnerMotionGraph->mLFStandPoints.begin(),
+					mOwnerMotionGraph->mLFStandPoints.end(),footindex);
+				if ( it != mOwnerMotionGraph->mLFStandPoints.end() )
+				{
+					endtimepos = (*it)/foottrack->getNumKeyFrames();
+					
+				}
+				break;
+			}
+		default:
+			break;
+		}
+		assert( endtimePos <= pAnimState->getLength() && endtimepos >= 0);
+		this->SetEndTimePos(endtimepos);
+		
+
+
+		
 	}
 
 
@@ -231,7 +301,7 @@ namespace Ogre {
 		for ( MotionGraphScript::StateMap::const_iterator it = mgScript.GetStates().begin();
 			it != mgScript.GetStates().end(); it++)
 		{
-			State* pState = new State( it->first );
+			State* pState = new State( it->first, this );
 			pState->SetCurrentAction(it->second->GetCurrentActionName());
 			mStates.insert(std::make_pair(pState->GetStateID(),pState));
 
@@ -272,11 +342,13 @@ namespace Ogre {
 				//current moment hip 
 				TransformKeyFrame* hipkf = static_cast<TransformKeyFrame*>(hiptrack->getKeyFrame(*it));
 				//next left foot stand point
-				if ( it+1 == mLFStandPoints.end())
+				FootStandList::iterator nextit = it;
+				nextit++;
+				if ( nextit == mLFStandPoints.end())
 				{
 					break;
 				}
-				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(lfoottrack->getKeyFrame(*(it+1)));
+				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(lfoottrack->getKeyFrame(*(nextit)));
 				Quaternion faceorientation = hipkf->getRotation();
 				Ogre::Vector3 facedirection = faceorientation.zAxis();
 				Ogre::Vector3 footdirection = nextlfky->getTranslate() - hipkf->getTranslate();
@@ -290,12 +362,14 @@ namespace Ogre {
 			{
 				//current moment hip 
 				TransformKeyFrame* hipkf = static_cast<TransformKeyFrame*>(hiptrack->getKeyFrame(*it));
-				//next left foot stand point
-				if ( it+1 == mRFStandPoints.end())
+				//next right foot stand point
+				FootStandList::iterator nextit = it;
+				nextit++;
+				if ( nextit == mRFStandPoints.end())
 				{
 					break;
 				}
-				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(rfoottrack->getKeyFrame(*(it+1)));
+				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(rfoottrack->getKeyFrame(*(nextit)));
 				Quaternion faceorientation = hipkf->getRotation();
 				Ogre::Vector3 facedirection = faceorientation.zAxis();
 				Ogre::Vector3 footdirection = nextlfky->getTranslate() - hipkf->getTranslate();
@@ -370,7 +444,7 @@ namespace Ogre {
 						// thus Interpolated Keyframe will take the "hip" boneNode's current
 						// translation into account, so the global position of the Entity
 						// will be in relative coordinate system
-						CurrentKf->SetRelativeCoordinate(true);
+						//CurrentKf->SetRelativeCoordinate(true);
 
 						Ogre::Vector3 TranslationOffset;
 						if ( 0 == i)
@@ -636,7 +710,7 @@ namespace Ogre {
 								continue;
 
 							}
-							mLFStandPoints.push_back(i);//now we set the lowest point to be the stand point
+							mLFStandPoints.insert(i);//now we set the lowest point to be the stand point
 							for ( unsigned short j = leftbound; j <= rightbound; j++)
 							{
 								if ( abs(Kinemap[j]->LeftFootTranslation.y - MinVertical) < VerticalThreshold )
@@ -761,7 +835,7 @@ namespace Ogre {
 								continue;
 
 							}
-							mRFStandPoints.push_back(i);//now we set the lowest point to be the stand point
+							mRFStandPoints.insert(i);//now we set the lowest point to be the stand point
 							for ( unsigned short j = leftbound; j <= rightbound; j++)
 							{
 								if ( abs(Kinemap[j]->RightFootTranslation.y - MinVertical) < VerticalThreshold )
@@ -887,13 +961,21 @@ namespace Ogre {
 
 	}
 
+	Ogre::Real MotionGraph::State::GetEndTimePosition(void) const
+	{ 
+		return mEndTimePos; 
+	}
+
 
 	void MotionGraph::ProcessTrigger(const Entity* pEntity)
 	{
-		Trigger* trigger;
+		Trigger* trigger = 0;
 		if ( mCurrentState )
 		{
-			trigger = mCurrentState->GetTrigger();
+			if (mCurrentState->GetTrigger())
+			{
+				trigger = new Trigger(*mCurrentState->GetTrigger());
+			}
 			if ( trigger)
 			{
 				switch ( trigger->mType )
@@ -911,28 +993,102 @@ namespace Ogre {
 				case DIRECTION_CONTROL:
 					{	//DIRECTION_CONTROL will cause characters transit from
 						// current state to the next state based on current speed and sth else like height
-						String ActionName = mCurrentState->GetCurrentActionName();
-						AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
-						pAnimState->setTimePosition(0.0);//restart from the beginning,although cyclic motion
-						// is not needed to do so
-						pAnimState->setEnabled(false);
-						mCurrentState->RemoveTopTrigger();
 
-						Transit(pEntity);
-						ActionName = mCurrentState->GetCurrentActionName();
-						pAnimState = pEntity->getAnimationState(ActionName);
-						pAnimState->setEnabled(true);
-						pAnimState->setLoop(false);
+						//first check if current state is "wonder",
+						//if it is "wonder", check further if current action's direction
+						// is the same as the trigger's, if so skip this trigger this time,
+						if ( mCurrentState->GetCurrentActionName() == "wonder" )
+						{
+							if( mCurrentState->GetCurrentActionDirection() == trigger->CtrlInfo.direct )
+							{
+								mCurrentState->RemoveTopTrigger();
+							}
+							else
+								//keep this different direction trigger then when the current step
+								//has been completed, new direction foot step can be taken immediately 
+							{
+								;
+							}
+						}
+						else
+						//transit current state to "wonder" state, because LOCOMOTION
+						//motion is in "wonder"
+						{
+							mCurrentState->ProcessAnimationEnded(pEntity);
+							TransitToState("wonder");
+
+							//then the most important part of interactive locomotion control
+							//select matching directional motion clips in "wonder" 
+							FootStepDirection footdirect;
+							switch (trigger->CtrlInfo.direct)
+							{
+							case LOCODIRECTION_FORWARD:
+								{
+									footdirect.foottype = FOOTTYPE_LF_STAND;
+									footdirect.rad = 0;
+									break;
+								}
+							case LOCODIRECTION_BACKWARD:
+								{
+									footdirect.foottype = FOOTTYPE_RF_STAND;
+									footdirect.rad = Math::PI;
+									break;
+								}
+							case LOCODIRECTION_LEFT:
+								{
+									footdirect.foottype = FOOTTYPE_LF_STAND;
+									footdirect.rad = Math::PI/2;
+									break;
+								}
+							case LOCODIRECTION_RIGHT:
+								{
+									footdirect.foottype = FOOTTYPE_LF_STAND;
+									footdirect.rad = Math::PI*1.5;
+									break;
+								}
+							}
+							//prepare the next foot step
+							int footindex = LookForFootStep(footdirect);
+							if ( FOUND_NON != footindex )
+							{
+								mCurrentState->SetOneFootStep(pEntity,footindex,footdirect);
+							}
+
+							mCurrentState->EnableAnimation(pEntity);
+						}
+
+						//ActionName = mCurrentState->GetCurrentActionName();
+						//pAnimState = pEntity->getAnimationState(ActionName);
+						//pAnimState->setEnabled(true);
+						//pAnimState->setLoop(false);
 
 						// Do motion interpolation
 						break;
 					}
 				case SPEED_CHANGE:
 					break;
+				case ACTION_IDLE://if current state is idle, do nothing,
+					// otherwise change current state to idle regardless which action type current
+					//state is
+					{
 
+						if ( mCurrentState->GetCurrentActionName() != "idle")
+						{
+							mCurrentState->ProcessAnimationEnded(pEntity);
+							TransitToState("idle");
+							mCurrentState->EnableAnimation(pEntity);
+						}
+						else
+							;
+						break;
+					}
 				}
-			}
-		}
+
+
+				delete trigger;
+			}// trigger
+			
+		}//mCurrentState
 	}
 
 	MotionGraph::Transition* MotionGraph::State::GetBestTransition()
@@ -957,6 +1113,14 @@ namespace Ogre {
 		String ActionName = this->GetCurrentActionName();
 		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
 		Animation* anim = pEntity->getSkeleton()->getAnimation(pAnimState->getAnimationName());
+		Bone* bonenode = pEntity->getSkeleton()->getBone("hip");
+
+		//set the "hip" bonenode to be UsedRelative Coordinate system
+		// thus Interpolated Keyframe will take the "hip" boneNode's current
+		// translation and orientation into account, so the global position of the Entity
+		// will be in relative coordinate system
+		bonenode->SetRelativeCoordinate(true);
+
 		NodeAnimationTrack* track = anim->getNodeTrack(pEntity->getSkeleton()->getBone("hip")->getHandle());
 		TransformKeyFrame* CurrentKf = 0;
 		TransformKeyFrame* PreKf = 0;
@@ -964,11 +1128,8 @@ namespace Ogre {
 		{
 
 			CurrentKf = track->getNodeKeyFrame(i);
-			//set the keyframe to be UsedRelative Coordinate
-			// thus Interpolated Keyframe will take the "hip" boneNode's current
-			// translation into account, so the global position of the Entity
-			// will be in relative coordinate system
-			CurrentKf->SetRelativeCoordinate(true);
+			
+			
 
 			Ogre::Vector3 TranslationOffset;
 			if ( 0 == i)
@@ -1049,9 +1210,72 @@ namespace Ogre {
 		*/
 	}
 
+
+	bool MotionGraph::TransitToState(const Ogre::String &stateName)
+	{
+		for( StateMap::iterator it = mStates.begin(); it != mStates.end(); it++)
+		{
+			if( it->second )
+			{
+				if ( stateName == it->second->GetCurrentActionName() )
+				{
+					mCurrentState = it->second;
+					return true;
+				}
+
+			}
+			else
+				continue;
+		}
+		return false;
+	}
+
 	bool MotionGraphScript::IsLoaded() const
 	{
 		return (strcmp(mScriptName.c_str(),""))?true:false;
 	}
+
+	int MotionGraph::LookForFootStep(const FootStepDirection& footdirect) const
+	{
+		DirectionLookupTable::const_iterator it;
+		switch (footdirect.foottype)
+		{
+		case FOOTTYPE_LF_STAND:
+			{
+
+				it = mLFDirectTable.lower_bound(footdirect.rad);
+				if ( it != mLFDirectTable.end())
+				{
+				return it->second;
+				}
+				else
+				{
+					return mLFDirectTable.rbegin()->second;
+				}
+				break;
+			}
+		case FOOTTYPE_RF_STAND:
+			{
+				it = mRFDirectTable.lower_bound(footdirect.rad);
+				if ( it != mRFDirectTable.end())
+				{
+					return it->second;
+				}
+				else
+				{
+					return mRFDirectTable.rbegin()->second;
+				}
+				break;
+			}
+		case FOOTTYPE_BOTHF_STAND:
+			{
+				break;
+			}
+		default:
+			;
+		}
+		return FOUND_NON;
+	}
+
 
 }
