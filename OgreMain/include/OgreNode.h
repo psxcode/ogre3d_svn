@@ -753,7 +753,7 @@ namespace Ogre {
 
 		/** set this node's start frame orientation in relative coordinate system
 		*/
-		virtual void SetRelativeStartPosition( const Vector3& pos);
+		virtual void setRelativeStartPosition( const Vector3& pos);
 
 		/** get this node's start frame orientation in relative coordinate system
 		*/
