@@ -213,11 +213,26 @@ namespace Ogre {
 		*/
 		bool mUseRelativeCoordinate;
 
-		/// The position in relative coordinate system's start frame
-		Vector3 mAlignPosition;
+		
+		/**  The first frame of this Motion Graph State should be aligned to the latest translation
+		@remarks
+		the following frames' global translations are calculated with
+		(K' translation - mRelativeStartPosition)*mAlignRotation + mLatestGlobalPosition 
+		*/
+		/// The position in fixed coordinate system's latest frame
+		Vector3 mLatestGlobalPosition;
 
-		/// The orientation in relative coordinate system's start frame
-		Quaternion mAlignOrientation;
+		// The position in original animation clip's at this foot step's start frame 
+		Vector3 mRelativeStartPosition;
+
+		/** The first frame of this Motion Graph State should be rotated to match the character face 
+		direction
+		@remarks
+		this variable's value is the radian angle how this State's first frame needs to rotate to the latest 
+		character's face direction
+		*/
+		/// The rotation needed to be aligned at start frame in relative coordinate system
+		Quaternion mAlignRotation;
 
 
     public:
@@ -722,11 +737,11 @@ namespace Ogre {
 
 		/** set this node's start frame position in relative coordinate system
 		*/
-		virtual void setAlignPosition( const Vector3& pos);
+		virtual void setLatestGlobalPosition( const Vector3& pos);
 
 		/** get this node's start frame position in relative coordinate system
 		*/
-		virtual const Vector3 & getAlignPosition(void) const;
+		virtual const Vector3 & getLatestGlobalPosition(void) const;
 
 		/** set this node's start frame orientation in relative coordinate system
 		*/
@@ -735,6 +750,16 @@ namespace Ogre {
 		/** get this node's start frame orientation in relative coordinate system
 		*/
 		virtual const Quaternion & getAlignOrientation(void) const;
+
+		/** set this node's start frame orientation in relative coordinate system
+		*/
+		virtual void SetRelativeStartPosition( const Vector3& pos);
+
+		/** get this node's start frame orientation in relative coordinate system
+		*/
+		virtual const Vector3 & getRelativeStartPosition(void) const;
+
+
 
 		/** If a node is set to be using relativeCoordinate system, all AnimationTrack applied 
 		to it should align keyframes to its StartFrame orientation and translation*/
