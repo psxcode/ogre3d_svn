@@ -62,8 +62,9 @@ namespace Ogre {
 		mInitialPosition(Vector3::ZERO),
 		mInitialOrientation(Quaternion::IDENTITY),
 		mInitialScale(Vector3::UNIT_SCALE),
-		mAlignPosition(Vector3::ZERO),
-		mAlignOrientation(Quaternion::IDENTITY),
+		mLatestGlobalPosition(Vector3::ZERO),
+		mAlignRotation(Quaternion::IDENTITY),
+		mRelativeStartPosition(Vector3::ZERO),
 		mCachedTransformOutOfDate(true),
 		mListener(0)
     {
@@ -95,8 +96,9 @@ namespace Ogre {
 		mInitialPosition(Vector3::ZERO),
 		mInitialOrientation(Quaternion::IDENTITY),
 		mInitialScale(Vector3::UNIT_SCALE),
-		mAlignPosition(Vector3::ZERO),
-		mAlignOrientation(Quaternion::IDENTITY),
+		mLatestGlobalPosition(Vector3::ZERO),
+		mAlignRotation(Quaternion::IDENTITY),
+		mRelativeStartPosition(Vector3::ZERO),
 		mCachedTransformOutOfDate(true),
 		mListener(0)
 
@@ -841,27 +843,39 @@ namespace Ogre {
     }
 
 	//-----------------------------------------------------------------------
-	const Vector3 & Node::getAlignPosition(void) const
+	const Vector3 & Node::getLatestGlobalPosition(void) const
 	{
-		return mAlignPosition;
+		return mLatestGlobalPosition;
 	}
 
 	//-----------------------------------------------------------------------
 	const Quaternion & Node::getAlignOrientation(void) const
 	{
-		return mAlignOrientation;
+		return mAlignRotation;
 	}
 
 	//-----------------------------------------------------------------------
 	void Node::setAlignOrientation(const Quaternion& q)
 	{
-		mAlignOrientation = q;
+		mAlignRotation = q;
 	}
 
 	//-----------------------------------------------------------------------
-	void Node::setAlignPosition(const Vector3& pos)
+	void Node::setLatestGlobalPosition(const Vector3& pos)
 	{
-		mAlignPosition = pos;
+		mLatestGlobalPosition = pos;
+	}
+
+	//-----------------------------------------------------------------------
+	void Node::setRelativeStartPosition(const Vector3& pos)
+	{
+		mRelativeStartPosition = pos;
+	}
+
+	//-----------------------------------------------------------------------
+	const Vector3 & Node::getRelativeStartPosition(void) const 
+	{
+		return mRelativeStartPosition;
 	}
 }
 
