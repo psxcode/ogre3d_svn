@@ -50,19 +50,7 @@ class ExampleFrameListener: public FrameListener, public WindowEventListener
 {
 
 protected:
-	enum LocomotionSpeed
-	{
-		LOCOSPEED_STOP = 0,
-		LOCOSPEED_WALK = 1,
-		LOCOSPEED_RUN = 2
-	};
-	enum LocomotionDirection
-	{
-		LOCODIRECTION_FORWARD = 0,
-		LOCODIRECTION_BACKWARD = 1,
-		LOCODIRECTION_LEFT = 2,
-		LOCODIRECTION_RIGHT = 3
-	};
+	
 
 	virtual void updateStats(void)
 	{
@@ -183,20 +171,6 @@ public:
 	virtual bool processUnbufferedKeyInput(const FrameEvent& evt)
 	{
 		using namespace OIS;
-		
-		if ( mKeyboard->isKeyDown(KC_1) )
-			mLocomotionSpeed = LOCOSPEED_WALK;
-		if ( mKeyboard->isKeyDown(KC_2) )
-			mLocomotionSpeed = LOCOSPEED_RUN;
-		if ( mKeyboard->isKeyDown(KC_Y) )
-			mLocomotionDirection = LOCODIRECTION_FORWARD;
-		if ( mKeyboard->isKeyDown(KC_H) )
-			mLocomotionDirection = LOCODIRECTION_BACKWARD;
-		if ( mKeyboard->isKeyDown(KC_G))
-			mLocomotionDirection = LOCODIRECTION_LEFT;
-		if ( mKeyboard->isKeyDown(KC_J))
-			mLocomotionDirection = LOCODIRECTION_RIGHT;
-		
 		
 
 		if(mKeyboard->isKeyDown(KC_A))
@@ -403,10 +377,7 @@ protected:
 	Camera* mCamera;
 
 	Vector3 mTranslateVector;
-	//If interactive control is active, character's x-z plane moving direction is repesented by this variable
-	LocomotionDirection mLocomotionDirection;
-	//When a character is locomoting, its speed is set by interactive input, and kept by this variable
-	LocomotionSpeed mLocomotionSpeed;
+	
 	RenderWindow* mWindow;
 	bool mStatsOn;
 	//westine added stats for controlling the playing of animation 
