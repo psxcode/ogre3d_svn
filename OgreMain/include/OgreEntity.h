@@ -750,7 +750,7 @@ namespace Ogre {
 		true: Motion Graph has been advanced successfully
 		false: there is no motion graph to be advanced
 		*/
-		bool AdvanceMotionGraphTime(Real offset);
+		bool AdvanceMotionGraphTime(Real offset, const MotionGraph::InteractiveControlInfo& CtrlInfo);
 		/** An entity can execute many types of behavior,
 		for now only motion graph is provided, so let this be ExecuteMotionGraph().
 		Future version of Execute() will
