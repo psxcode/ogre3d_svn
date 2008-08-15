@@ -1960,7 +1960,7 @@ namespace Ogre {
 			 //do motiongraph search algorithm preparation
 			 //includes calculating velocity and acceleration
 			 mpMotionGraph->CalcKinematics(this); 
-			 mpMotionGraph->AlignAnimations(this);
+			// mpMotionGraph->AlignAnimations(this);
 			 mpMotionGraph->ConstructDirectionalSubGraph(*this);
 		 MotionGraph::State* pState = mpMotionGraph->GetCurrentState();
 		 String ActionName = pState->GetCurrentActionName();
@@ -1974,7 +1974,7 @@ namespace Ogre {
 
 
 	//-----------------------------------------------------------------------
-	bool Entity::AdvanceMotionGraphTime(Real offset)
+	bool Entity::AdvanceMotionGraphTime(Real offset,const MotionGraph::InteractiveControlInfo& CtrlInfo)
 	{
 		String ActionName;
 		if ( !mpMotionGraph )
@@ -1985,7 +1985,33 @@ namespace Ogre {
 		{
 			ActionName = pState->GetCurrentActionName();
 			AnimationState* pAnimState = getAnimationState(ActionName);
+
+
 			
+			
+			
+			if ( CtrlInfo.speed == MotionGraph::LOCOSPEED_IDLE )
+			{
+				if ( pState->GetCurrentActionName() != "idle" )
+				{
+					MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ACTION_IDLE);
+					pState->AddTrigger(trigger);
+				}
+			}else if ( CtrlInfo.direct != MotionGraph::LOCODIRECTION_CENTER )
+			{
+				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::DIRECTION_CONTROL);
+				trigger->CtrlInfo.speed = CtrlInfo.speed;
+				trigger->CtrlInfo.direct = CtrlInfo.direct;
+				pState->AddTrigger(trigger);
+			}
+
+//one foot step has been completed
+			if ( pAnimState->getTimePosition() > pState->GetEndTimePosition() )
+			{
+				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ANIMATION_END);
+				pState->AddTrigger(trigger);
+			}
+
 			if ( pAnimState->hasEnded() )
 			{
 				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ANIMATION_END);
@@ -2001,6 +2027,19 @@ namespace Ogre {
 				
 				//getParentSceneNode()->setPosition(0,0,0);//set root to original point
 				pAnimState->addTime(offset);
+
+				//if current state is "wonder", and a foot step has just be accomplished
+				// "idle" state will be transited to regardless whether there are new LOCOMOTION
+				// control commands to set new DIRECTION_CONTROL Triggers
+				if ( pAnimState->getAnimationName() == "wonder")
+				{				
+					if ( pAnimState->getTimePosition() > pState->GetEndTimePosition() )
+					{
+						MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ACTION_IDLE);
+						pState->AddTrigger(trigger);
+					}
+				}
+				
 				//getParentSceneNode()->setPosition(getParentSceneNode()->getPosition()+CurrentRootTranslation);
 				//getParentSceneNode()->translate(CurrentRootTranslation);
 			}
