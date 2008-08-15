@@ -29,6 +29,7 @@ Finite State Machine based AI
 */
 
 #include "ExampleApplication.h"
+#include "OgreMotionGraph.h"
 
 
 AnimationState* mAnimState;
@@ -41,9 +42,15 @@ const std::string animationName = "pushup.bvh";
 class CharacterAnimationFrameListener : public ExampleFrameListener
 {
 protected:
+	//If interactive control is active, character's x-z plane moving direction is repesented by this variable
+	MotionGraph::LocomotionDirection mLocomotionDirection;
+	//When a character is locomoting, its speed is set by interactive input, and kept by this variable
+	MotionGraph::LocomotionSpeed mLocomotionSpeed;
+
 public:
 	CharacterAnimationFrameListener(RenderWindow* win, Camera* cam, const std::string &debugText)
-		: ExampleFrameListener(win, cam)
+		: ExampleFrameListener(win, cam),mLocomotionSpeed(MotionGraph::LOCOSPEED_IDLE),
+		mLocomotionDirection(MotionGraph::LOCODIRECTION_CENTER)
 	{
 		mDebugText = debugText;
 	}
@@ -52,12 +59,49 @@ public:
 	{
 		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
 			return false;
+
+		
+		if ( mLocomotionDirection != MotionGraph::LOCODIRECTION_CENTER )
+		{
+			if ( mLocomotionSpeed == MotionGraph::LOCOSPEED_IDLE )
+			{
+				mLocomotionSpeed = MotionGraph::LOCOSPEED_WALK;
+			}
+		}
+
+		MotionGraph::InteractiveControlInfo ControlInfo;
+		ControlInfo.direct = mLocomotionDirection;
+		ControlInfo.speed = mLocomotionSpeed;
 		if ( IsAnimated() )
-			ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame*2);
+			ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame*2,ControlInfo);
 		else
 			;
 		//mAnimState->addTime(evt.timeSinceLastFrame*2);
 		return true;
+	}
+
+	bool processUnbufferedKeyInput(const FrameEvent& evt)
+	{
+		
+
+		using namespace OIS;
+		if ( mKeyboard->isKeyDown(KC_1) )
+			mLocomotionSpeed = MotionGraph::LOCOSPEED_WALK;
+		else if ( mKeyboard->isKeyDown(KC_2) )
+			mLocomotionSpeed = MotionGraph::LOCOSPEED_RUN;
+		else if ( mKeyboard->isKeyDown(KC_Y) )
+			mLocomotionDirection = MotionGraph::LOCODIRECTION_FORWARD;
+		else if ( mKeyboard->isKeyDown(KC_B) )
+			mLocomotionDirection = MotionGraph::LOCODIRECTION_BACKWARD;
+		else if ( mKeyboard->isKeyDown(KC_G))
+			mLocomotionDirection = MotionGraph::LOCODIRECTION_LEFT;
+		else if ( mKeyboard->isKeyDown(KC_J))
+			mLocomotionDirection = MotionGraph::LOCODIRECTION_RIGHT;
+		else
+			mLocomotionDirection = MotionGraph::LOCODIRECTION_CENTER;
+
+		return ExampleFrameListener::processUnbufferedKeyInput(evt);
+
 	}
 };
 
