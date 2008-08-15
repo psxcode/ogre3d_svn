@@ -132,18 +132,13 @@ namespace Ogre
 
 		/** Clone a keyframe (internal use only) */
 		KeyFrame* _clone(AnimationTrack* newParent) const;
-		void SetRelativeCoordinate( bool isRelative ) { mUseRelativeCoordinate = isRelative; }
-		bool IsRelativeCoordinate() const { return mUseRelativeCoordinate; }
+		
 
 	protected:
 		Vector3 mTranslate;
 		Vector3 mScale;
 		Quaternion mRotate;
-		/** If relative coordinate is used, keyframe's mTranslate will not only determined by NodeAnimationTrack
-		but NodeAnimationTrack's associated node's current translation and this keyframe's offset translation
-		If relative coordinate is not used, this keyframe's mTranslate is interpolated by its NodeAnimatoinTrack
-		*/
-		bool mUseRelativeCoordinate;
+		
 
 
 	};
