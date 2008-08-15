@@ -181,7 +181,6 @@ protected:
 		mCamera->setPosition(0,35,-100);
 		mCamera->lookAt(0,35,0);
 		
-		/*
 		//Add an ogre head to the scene
 		SceneNode* ogreHeadSN = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		Entity *ogreHead = mSceneMgr->createEntity("head", "ogrehead.mesh");        
@@ -200,7 +199,6 @@ protected:
 		pPlaneEnt->setMaterialName("Examples/Rockwall");
 		pPlaneEnt->setCastShadows(false);
 		mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(0,95,0))->attachObject(pPlaneEnt);
-		*/
     }
 };
 
