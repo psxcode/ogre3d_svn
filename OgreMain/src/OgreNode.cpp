@@ -50,6 +50,7 @@ namespace Ogre {
 		mNeedChildUpdate(false),
 		mParentNotified(false),
         mQueuedForUpdate(false),
+	    mUseRelativeCoordinate(false),
 		mOrientation(Quaternion::IDENTITY),
 		mPosition(Vector3::ZERO),
 		mScale(Vector3::UNIT_SCALE),
@@ -61,6 +62,8 @@ namespace Ogre {
 		mInitialPosition(Vector3::ZERO),
 		mInitialOrientation(Quaternion::IDENTITY),
 		mInitialScale(Vector3::UNIT_SCALE),
+		mAlignPosition(Vector3::ZERO),
+		mAlignOrientation(Quaternion::IDENTITY),
 		mCachedTransformOutOfDate(true),
 		mListener(0)
     {
@@ -79,6 +82,7 @@ namespace Ogre {
 		mNeedChildUpdate(false),
 		mParentNotified(false),
         mQueuedForUpdate(false),
+		mUseRelativeCoordinate(false),
 		mName(name),
 		mOrientation(Quaternion::IDENTITY),
 		mPosition(Vector3::ZERO),
@@ -91,6 +95,8 @@ namespace Ogre {
 		mInitialPosition(Vector3::ZERO),
 		mInitialOrientation(Quaternion::IDENTITY),
 		mInitialScale(Vector3::UNIT_SCALE),
+		mAlignPosition(Vector3::ZERO),
+		mAlignOrientation(Quaternion::IDENTITY),
 		mCachedTransformOutOfDate(true),
 		mListener(0)
 
@@ -422,6 +428,10 @@ namespace Ogre {
     {
         return mPosition;
     }
+
+
+	
+
     //-----------------------------------------------------------------------
     Matrix3 Node::getLocalAxes(void) const
     {
@@ -670,6 +680,8 @@ namespace Ogre {
         mInitialOrientation = mOrientation;
         mInitialScale = mScale;
     }
+
+
     //-----------------------------------------------------------------------
     void Node::resetToInitialState(void)
     {
@@ -827,5 +839,29 @@ namespace Ogre {
         static LightList ll;
         return ll;
     }
+
+	//-----------------------------------------------------------------------
+	const Vector3 & Node::getAlignPosition(void) const
+	{
+		return mAlignPosition;
+	}
+
+	//-----------------------------------------------------------------------
+	const Quaternion & Node::getAlignOrientation(void) const
+	{
+		return mAlignOrientation;
+	}
+
+	//-----------------------------------------------------------------------
+	void Node::setAlignOrientation(const Quaternion& q)
+	{
+		mAlignOrientation = q;
+	}
+
+	//-----------------------------------------------------------------------
+	void Node::setAlignPosition(const Vector3& pos)
+	{
+		mAlignPosition = pos;
+	}
 }
 
