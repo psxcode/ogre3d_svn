@@ -100,6 +100,15 @@ public:
 		else
 			mLocomotionDirection = MotionGraph::LOCODIRECTION_CENTER;
 
+		if ( mKeyboard->isKeyDown(KC_T) && mTimeUntilNextToggle <= 0)
+		{
+			//relocate character to initializing position
+		//	Vector3 currentPosition = mSceneNode->getPosition();
+
+			Vector3 currentPosition = ent->getSkeleton()->getRootBone()->getPosition();
+			mSceneNode->setPosition(-currentPosition.x,currentPosition.y,-currentPosition.z);
+		}
+
 		return ExampleFrameListener::processUnbufferedKeyInput(evt);
 
 	}
