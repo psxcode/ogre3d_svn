@@ -849,13 +849,13 @@ namespace Ogre {
 	}
 
 	//-----------------------------------------------------------------------
-	const Quaternion & Node::getAlignOrientation(void) const
+	const Quaternion & Node::getAlignRotation(void) const
 	{
 		return mAlignRotation;
 	}
 
 	//-----------------------------------------------------------------------
-	void Node::setAlignOrientation(const Quaternion& q)
+	void Node::setAlignRotation(const Quaternion& q)
 	{
 		mAlignRotation = q;
 	}
