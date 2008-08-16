@@ -407,6 +407,7 @@ namespace Ogre {
 				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(lfoottrack->getKeyFrame(*(nextit)));
 				Quaternion faceorientation = hipkf->getRotation();
 				Ogre::Vector3 facedirection = faceorientation.zAxis();
+				facedirection.y = 0.;
 				Ogre::Vector3 footdirection = nextlfky->getTranslate() - hipkf->getTranslate();
 				footdirection.y = 0.;
 				Ogre::Radian StepDirectionAngle = facedirection.angleBetween(footdirection); 
@@ -428,6 +429,7 @@ namespace Ogre {
 				TransformKeyFrame* nextlfky = static_cast<TransformKeyFrame*>(rfoottrack->getKeyFrame(*(nextit)));
 				Quaternion faceorientation = hipkf->getRotation();
 				Ogre::Vector3 facedirection = faceorientation.zAxis();
+				facedirection.y = 0.;
 				Ogre::Vector3 footdirection = nextlfky->getTranslate() - hipkf->getTranslate();
 				footdirection.y = 0.;
 				Ogre::Radian StepDirectionAngle = facedirection.angleBetween(footdirection); 
@@ -1194,6 +1196,14 @@ namespace Ogre {
 		return mCurrentAction.foottype;
 	}
 
+	//StitchMotion is applied when current state is a new state,
+	// 1¡¢It first records the current character's position as LastGlobalPosition 
+	// which is at the end of the last state
+	// 2¡¢It then records the StartFrame's translation 
+	// 3¡¢It also record the how much radian does StartFrame needs to rotate along the
+	// current facedirection
+	// All of these params restored in Node will be used to align interpolated Keyframes
+	// between StartFrame and EndFrame in this new State
 	void MotionGraph::State::StitchMotion(const Entity* pEntity)
 	{
 
@@ -1239,7 +1249,9 @@ namespace Ogre {
 			facedirection.y = 0;
 			StartFrameOrientation.y = 0;
 			
-			Ogre::Quaternion alignrotation = StartFrameDirection.getRotationTo(facedirection); 
+			Radian rot = StartFrameDirection.angleBetween(facedirection);
+			Ogre::Quaternion alignrotation;
+			alignrotation.FromAngleAxis(Radian(rot), Vector3::UNIT_Y); 
 			
 			bonenode->setAlignRotation(alignrotation);
 		}
