@@ -116,7 +116,7 @@ namespace Ogre {
 				String actionname = *it++;
 				//now just go through, there is nothing in States
 				MotionGraph::State* pState = new MotionGraph::State(StateId);
-				pState->SetCurrentAction(actionname);
+				pState->SetCurrentActionName(actionname);
 
 				mStates.insert(std::make_pair<int,MotionGraph::State*>(pState->GetStateID(),pState));
 			}			
@@ -358,7 +358,7 @@ namespace Ogre {
 			it != mgScript.GetStates().end(); it++)
 		{
 			State* pState = new State( it->first, this );
-			pState->SetCurrentAction(it->second->GetCurrentActionName());
+			pState->SetCurrentActionName(it->second->GetCurrentActionName());
 			mStates.insert(std::make_pair(pState->GetStateID(),pState));
 
 
@@ -1088,7 +1088,20 @@ namespace Ogre {
 							{
 							case LOCODIRECTION_FORWARD:
 								{
-									footdirect.foottype = FOOTTYPE_LF_STAND;
+									//human beings use left and right legs by turns to
+									// move
+									if ( mCurrentState->GetCurrentFootType() == FOOTTYPE_LF_STAND )
+									{
+										footdirect.foottype = FOOTTYPE_RF_STAND;
+									}
+									else if ( mCurrentState->GetCurrentFootType() == FOOTTYPE_RF_STAND )
+									{
+										footdirect.foottype = FOOTTYPE_LF_STAND;
+									}else if ( mCurrentState->GetCurrentFootType() == FOOTTYPE_BOTHF_STAND )
+									{
+										footdirect.foottype = FOOTTYPE_LF_STAND;
+									}
+								
 									footdirect.rad = 0;
 									break;
 								}
@@ -1169,6 +1182,18 @@ namespace Ogre {
 
 	}
 
+	void MotionGraph::State::SetCurrentAction( const Action& action )
+	{
+		mCurrentAction.actionName = action.actionName;
+		mCurrentAction.direction = action.direction;
+		mCurrentAction.foottype = action.foottype;
+	}
+
+	MotionGraph::FootType MotionGraph::State::GetCurrentFootType(void) const
+	{
+		return mCurrentAction.foottype;
+	}
+
 	void MotionGraph::State::StitchMotion(const Entity* pEntity)
 	{
 
@@ -1204,15 +1229,19 @@ namespace Ogre {
 			bonenode->setRelativeStartPosition(CurrentKf->getTranslate());
 
 			//calculate the align rotation of the first frame of this state's current foot step
-			Ogre::Quaternion faceorientation = pEntity->getSkeleton()->getRootBone()->getInitialOrientation();
+			//get the current root node's orientation
+			Ogre::Quaternion faceorientation = pEntity->getSkeleton()->getRootBone()->getOrientation();
 
 
 			Ogre::Quaternion StartFrameOrientation = CurrentKf->getRotation();
 			Ogre::Vector3 facedirection = faceorientation.zAxis();
 			Ogre::Vector3 StartFrameDirection = StartFrameOrientation.zAxis();
+			facedirection.y = 0;
+			StartFrameOrientation.y = 0;
 			
 			Ogre::Quaternion alignrotation = StartFrameDirection.getRotationTo(facedirection); 
-			bonenode->setAlignOrientation(alignrotation);
+			
+			bonenode->setAlignRotation(alignrotation);
 		}
 		
 
