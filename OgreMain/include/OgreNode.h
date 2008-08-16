@@ -745,11 +745,11 @@ namespace Ogre {
 
 		/** set this node's start frame orientation in relative coordinate system
 		*/
-		virtual void setAlignOrientation( const Quaternion& q);
+		virtual void setAlignRotation( const Quaternion& q);
 
 		/** get this node's start frame orientation in relative coordinate system
 		*/
-		virtual const Quaternion & getAlignOrientation(void) const;
+		virtual const Quaternion & getAlignRotation(void) const;
 
 		/** set this node's start frame orientation in relative coordinate system
 		*/
