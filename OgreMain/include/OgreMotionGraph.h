@@ -120,6 +120,15 @@ namespace Ogre {
 			FootType foottype;
 		};
 
+		struct Action
+		{
+			String actionName;
+			LocomotionDirection direction;
+			FootType foottype;
+			Action(void):actionName(""),direction(LOCODIRECTION_NON),
+				foottype(FOOTTYPE_BOTHF_STAND){}
+		};
+
 		/** A State is a character action unit, it keeps steady until some trigger pulses.
 		p.s. Trigger will be another class not created at this level of character animation.
 		@remarks
@@ -233,7 +242,12 @@ namespace Ogre {
 				mCurrentAction.direction = direction;
 			}
 
-			void SetCurrentAction( const String& actionname ) { mCurrentAction.actionName = actionname; }
+			void SetCurrentActionName( const String& actionname ) { mCurrentAction.actionName = actionname; }
+			void SetCurrentAction( const Action& action );
+			
+
+			FootType GetCurrentFootType(void) const;
+
 			void StitchMotion( const Entity* pEntity );
 			/// Gets the time position in original motion for this state
 			Ogre::Real GetEndTimePosition(void) const;
@@ -275,12 +289,7 @@ namespace Ogre {
 				return mEndFrameIndex;
 			}
 
-			struct Action
-			{
-				String actionName;
-				LocomotionDirection direction;
-				Action(void):actionName(""),direction(LOCODIRECTION_NON){}
-			};
+		
 			
 		protected:
 			String  mStateName;
