@@ -503,13 +503,19 @@ namespace Ogre {
 		//align interpolated keyframe to current motion clip's start frame
 		// the following procedure is executed when relative coordinate system
 		// is used in this motion segmentation
+		/************************************************************************/
+		/* Note: Current character alignment is done by skeleton node,
+		but when a skeleton is shared with multiple characters,
+		this relative coordinate system should done to the SceneNode of each character 
+		*/
+		/************************************************************************/
 		if ( node->IsRelativeCoordinate() == true)
 		{
 			Vector3 offsetTranslation = kf.getTranslate() - node->getRelativeStartPosition();
 			// just align translation in X-Z plane
 			offsetTranslation.y = 0.;
 			// rotate offsettranslation to the correct facedirection 
-			offsetTranslation = node->getAlignOrientation()*offsetTranslation;
+			offsetTranslation = node->getAlignRotation()*offsetTranslation;
 
 			Vector3 currentTranslation = kf.getTranslate();
 			offsetTranslation.x += node->getLatestGlobalPosition().x;
@@ -518,7 +524,7 @@ namespace Ogre {
 			currentTranslation.z = offsetTranslation.z;
 
 			kf.setTranslate(currentTranslation);
-			kf.setRotation(kf.getRotation()*node->getAlignOrientation());
+			kf.setRotation(kf.getRotation()*node->getAlignRotation());
 		}
 			
 
