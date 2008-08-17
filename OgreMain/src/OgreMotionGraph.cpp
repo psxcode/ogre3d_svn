@@ -284,7 +284,6 @@ namespace Ogre {
 		const FootStepDirection& footdirect)
 	{
 
-		
 		String ActionName = this->GetCurrentActionName();
 		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
 		assert(pAnimState);
@@ -342,9 +341,25 @@ namespace Ogre {
 		endtimeindex = *it;
 		this->SetEndTimePos(endtimepos,endtimeindex);
 		
+	}
 
+	void MotionGraph::State::SetWholeAnimation(const Entity* pEntity)
+	{
+		String ActionName = this->GetCurrentActionName();
+		AnimationState* pAnimState = pEntity->getAnimationState(ActionName);
+		assert(pAnimState);
 
+		//convert footindex from unsigned short frame index to Ogre::Real time pos
+		Animation* anim = pEntity->getSkeleton()->getAnimation(ActionName);
+		NodeAnimationTrack* track = anim->getNodeTrack(pEntity->getSkeleton()->getRootBone()->getHandle());
 		
+		pAnimState->setTimePosition(0);
+		pAnimState->setEnabled(true);
+		pAnimState->setLoop(false);
+
+		this->SetStartTimePos(0,0);
+
+		this->SetEndTimePos(pAnimState->getLength(),track->getNumKeyFrames());
 	}
 
 
@@ -383,6 +398,12 @@ namespace Ogre {
 
 	bool MotionGraph::ConstructDirectionalSubGraph(const Entity& entity)
 	{
+		//only "wonder" animation has directional subgraph
+		if ( entity.getSkeleton()->hasAnimation("wonder") == false )
+		{
+			return false;
+		}
+
 		AnimationState* animState = entity.getAnimationState("wonder");
 		Animation* anim = 0;
 		if ( animState )
@@ -934,7 +955,25 @@ namespace Ogre {
 				mAnnotationData.insert(std::make_pair(animstate->getAnimationName(),AnnotationList));
 			}//end "for" animation track
 
-			for ( unsigned short i = 0; i < trackNum; i++  )
+			FootStandList::iterator FSpos,FSit;
+			for (FSpos = mLFStandPoints.begin(); FSpos != mLFStandPoints.end(); FSpos++)
+			{
+				if ( FSpos == mLFStandPoints.begin())
+				{
+					AccelerationFile<<anim->getName()<<std::endl;
+					AccelerationFile<<trackNum<<std::endl;
+				}
+				AccelerationFile<<*FSpos<<std::endl;
+
+				FSit = FSpos;
+				FSit++;
+				if ( FSit == mLFStandPoints.end())
+				{
+					AccelerationFile<<"\n"<<std::endl;
+				}
+			}
+				
+			for ( unsigned short i = 0; i < trackNum; i++ )
 			{
 				if ( 0 == i)
 				{
@@ -942,20 +981,15 @@ namespace Ogre {
 					PositionFile<<trackNum<<std::endl;
 					VelocityFile<<anim->getName()<<std::endl;
 					VelocityFile<<trackNum<<std::endl;
-					AccelerationFile<<anim->getName()<<std::endl;
-					AccelerationFile<<trackNum<<std::endl;
-
 				}
 
 				PositionFile<<Kinemap[i]->RightFootTranslation.y<<std::endl;
-				VelocityFile<<AnnotationList[i]->bLeftFootContact<<std::endl;
-				AccelerationFile<<AnnotationList[i]->bRightFootContact<<std::endl;
-
+				VelocityFile<<Kinemap[i]->LeftFootTranslation.y<<std::endl;
+				
 				if ( i == trackNum - 1)
 				{
 					PositionFile<<"\n"<<std::endl;
 					VelocityFile<<"\n"<<std::endl;
-					AccelerationFile<<"\n"<<std::endl;
 				}
 
 			}
@@ -1051,6 +1085,8 @@ namespace Ogre {
 						// of interactive control commands
 						mCurrentState->RemoveAllTriggers();
 						Transit(pEntity);
+						mCurrentState->SetWholeAnimation(pEntity);
+						mCurrentState->StitchMotion(pEntity);
 						mCurrentState->EnableAnimation(pEntity);
 						break;
 					}
@@ -1080,7 +1116,12 @@ namespace Ogre {
 						{
 							mCurrentState->ProcessAnimationEnded(pEntity);
 							mCurrentState->RemoveAllTriggers();
-							TransitToState("wonder");
+							bool bHasWonder = TransitToState("wonder");
+
+							if ( bHasWonder == false)
+							{
+								break;
+							}
 
 							//then the most important part of interactive locomotion control
 							//select matching directional motion clips in "wonder" 
