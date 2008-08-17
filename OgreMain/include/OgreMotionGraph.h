@@ -158,7 +158,8 @@ namespace Ogre {
 			ANIMATION_END,
 			DIRECTION_CONTROL,
 			SPEED_CHANGE,
-			ACTION_IDLE
+			ACTION_IDLE,
+			TIMESUP
 		};
 
 		static TriggerType TriggerNameToTriggerType(const String& triggertype);
@@ -214,6 +215,13 @@ namespace Ogre {
 			when animation state is set, footindex must be converted to time value in Ogre::Real
 			*/
 			void SetOneFootStep(const Entity* pEntity,unsigned short footindex,const FootStepDirection& footdirect); 
+			
+			/** When a new state is entered, it uses its whole animation clip
+			@remarks
+			Only call this immediately after Transit() a new state, and make sure the new state
+			is neither interactive nor on-line synthesis, it is a scripted state animation
+			*/
+			void SetWholeAnimation(const Entity* pEntity);
 
 			/** Get the first trigger in the trigger queue
 			*/
