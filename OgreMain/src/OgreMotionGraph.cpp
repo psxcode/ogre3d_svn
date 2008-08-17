@@ -401,7 +401,13 @@ namespace Ogre {
 		//only "wonder" animation has directional subgraph
 		if ( entity.getSkeleton()->hasAnimation("wonder") == false )
 		{
+			// reset false is safer than using default unInteractive configuration
+			SetInteractive(false);		
 			return false;
+		}
+		else
+		{
+			SetInteractive(true);
 		}
 
 		AnimationState* animState = entity.getAnimationState("wonder");

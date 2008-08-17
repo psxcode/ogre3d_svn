@@ -1986,65 +1986,51 @@ namespace Ogre {
 			ActionName = pState->GetCurrentActionName();
 			AnimationState* pAnimState = getAnimationState(ActionName);
 
-			if ( CtrlInfo.speed == MotionGraph::LOCOSPEED_IDLE )
+			if( mpMotionGraph->IsInteractive() )
 			{
-				if ( pState->GetCurrentActionName() != "idle" )
+
+				if ( CtrlInfo.speed == MotionGraph::LOCOSPEED_IDLE )
 				{
-					MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ACTION_IDLE);
-					pState->AddTrigger(trigger);
-				}
-			//	else //current state is "idle", and will keep in "idle"
-			//	{
-			//		pAnimState->addTime(offset);
-
-			//	}
-			}else if ( CtrlInfo.direct != MotionGraph::LOCODIRECTION_CENTER )
-			{
-				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::DIRECTION_CONTROL);
-				trigger->CtrlInfo.speed = CtrlInfo.speed;
-				trigger->CtrlInfo.direct = CtrlInfo.direct;
-				pState->AddTrigger(trigger);
-			}
-
-			//one foot step has been completed
-			// only "wonder" state can be set to IsActive
-			if ( pState->IsActive() )
-			{
-				if (pAnimState->getTimePosition() > pState->GetEndTimePosition())
-				{
-					//check if there are triggers of type DIRECTION_CONTROL
-					// if so there is no need to switch from "wonder" to "idle"
-					// directly prepare new foot step in "wonder" state
-
-					if ( pState->HasLocomtionTrigger())
-					{
-						;//processTrigger will take over next foot prepare work
-					}
-					else
-						//Because there is no new locomotion command, it is "idle" time
+					if ( pState->GetCurrentActionName() != "idle" )
 					{
 						MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ACTION_IDLE);
 						pState->AddTrigger(trigger);
-					}	
+					}
+					//	else //current state is "idle", and will keep in "idle"
+					//	{
+					//		pAnimState->addTime(offset);
+
+					//	}
+				}else if ( CtrlInfo.direct != MotionGraph::LOCODIRECTION_CENTER )
+				{
+					MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::DIRECTION_CONTROL);
+					trigger->CtrlInfo.speed = CtrlInfo.speed;
+					trigger->CtrlInfo.direct = CtrlInfo.direct;
+					pState->AddTrigger(trigger);
 				}
-			}
 
-			if ( pAnimState->hasEnded() )
-			{
-				MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ANIMATION_END);
-				pState->AddTrigger(trigger);
-				/* do the animationState reset in the trigger processing procedure
-				*/
-			//	pAnimState->setEnabled(false);   
-			//	pAnimState->setLoop(false);
-			}
-			else
-			{
-				//Ogre::Vector3 CurrentRootTranslation = getSkeleton()->getRootBone()->getPosition();
-				
-				//getParentSceneNode()->setPosition(0,0,0);//set root to original point
-				pAnimState->addTime(offset);
+				//one foot step has been completed
+				// only "wonder" state can be set to IsActive
+				if ( pState->IsActive() )
+				{
+					if (pAnimState->getTimePosition() > pState->GetEndTimePosition())
+					{
+						//check if there are triggers of type DIRECTION_CONTROL
+						// if so there is no need to switch from "wonder" to "idle"
+						// directly prepare new foot step in "wonder" state
 
+						if ( pState->HasLocomtionTrigger())
+						{
+							;//processTrigger will take over next foot prepare work
+						}
+						else
+							//Because there is no new locomotion command, it is "idle" time
+						{
+							MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ACTION_IDLE);
+							pState->AddTrigger(trigger);
+						}	
+					}
+				}
 				//if current state is "wonder", and a foot step has just be accomplished
 				// "idle" state will be transited to regardless whether there are new LOCOMOTION
 				// control commands to set new DIRECTION_CONTROL Triggers
@@ -2056,15 +2042,31 @@ namespace Ogre {
 						pState->AddTrigger(trigger);
 					}
 				}
-				
-				//getParentSceneNode()->setPosition(getParentSceneNode()->getPosition()+CurrentRootTranslation);
-				//getParentSceneNode()->translate(CurrentRootTranslation);
 			}
-			
-			
+			else
+			{
+				if ( pAnimState->hasEnded() )
+				{
+					MotionGraph::Trigger* trigger = new MotionGraph::Trigger(MotionGraph::ANIMATION_END);
+					pState->AddTrigger(trigger);
+					/* do the animationState reset in the trigger processing procedure
+					*/
+					//	pAnimState->setEnabled(false);   
+					//	pAnimState->setLoop(false);
+				}
+				else
+				{
+					//Ogre::Vector3 CurrentRootTranslation = getSkeleton()->getRootBone()->getPosition();
+
+					//getParentSceneNode()->setPosition(0,0,0);//set root to original point
+					pAnimState->addTime(offset);
+
+					//getParentSceneNode()->setPosition(getParentSceneNode()->getPosition()+CurrentRootTranslation);
+					//getParentSceneNode()->translate(CurrentRootTranslation);
+				}
+			}	
 		}
         
-
 		mpMotionGraph->ProcessTrigger(this);
 		return true;
 	}

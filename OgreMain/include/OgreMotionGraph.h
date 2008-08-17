@@ -358,8 +358,14 @@ namespace Ogre {
 
 		};
 
-		MotionGraph(const String& mgName):mMotionGraphName(mgName),mCurrentState(0){};
+		MotionGraph(const String& mgName):mMotionGraphName(mgName),mCurrentState(0),mIsInteractive(false){};
 
+		/** When motion graph script has Interactive type of triggers, and the motion asset really
+		has interactive animation material, this motion graph will be set IsInteractive true
+		in ConstructDirectionalSubGraph(), otherwise motion graph is defaultly uninteractive
+		*/
+		void SetInteractive(bool bIsInteractive) { mIsInteractive = bIsInteractive;}
+		bool IsInteractive(void) const { return mIsInteractive; }
 
 		/** Construct a motion graph using a motion graph script
 		@remarks
@@ -478,6 +484,10 @@ namespace Ogre {
 		FootStandList mRFStandPoints;
 
 		static const int FOUND_NON;
+
+		/** When this flag is set true, this motion graph can feed interactive control commands
+		*/
+		bool mIsInteractive;
 
 
 	};
