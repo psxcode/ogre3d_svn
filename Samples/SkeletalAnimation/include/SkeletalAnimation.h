@@ -21,8 +21,9 @@ Description: Specialisation of OGRE's framework application to show the
 
 
 #include "ExampleApplication.h"
+#include "OgreMotionGraph.h"
 
-#define NUM_JAIQUAS 6
+#define NUM_JAIQUAS 1
 AnimationState* mAnimState[NUM_JAIQUAS];
 Real mAnimationSpeed[NUM_JAIQUAS];
 Vector3 mSneakStartOffset;
@@ -32,19 +33,25 @@ Quaternion mOrientations[NUM_JAIQUAS];
 Vector3 mBasePositions[NUM_JAIQUAS];
 SceneNode* mSceneNode[NUM_JAIQUAS];
 Degree mAnimationRotation(-60);
-Real mAnimChop = 4.26662f;
+Real mAnimChop = 2.26662f;
 Real mAnimChopBlend = 0.3f;
+Entity *ent;
 
-const std::string animationName = "jump.bvh";
-const std::string modelname = "stickfigure";
+const std::string animationName = "rush";
+const std::string modelname = "character";
 
 // Event handler to animate
 class SkeletalAnimationFrameListener : public ExampleFrameListener
 {
 protected:
+	//If interactive control is active, character's x-z plane moving direction is repesented by this variable
+	MotionGraph::LocomotionDirection mLocomotionDirection;
+	//When a character is locomoting, its speed is set by interactive input, and kept by this variable
+	MotionGraph::LocomotionSpeed mLocomotionSpeed;
 public:
 	SkeletalAnimationFrameListener(RenderWindow* win, Camera* cam, const std::string &debugText)
-        : ExampleFrameListener(win, cam)
+		: ExampleFrameListener(win, cam),mLocomotionSpeed(MotionGraph::LOCOSPEED_IDLE),
+		mLocomotionDirection(MotionGraph::LOCODIRECTION_CENTER)
     {
 		mDebugText = debugText;
     }
@@ -54,37 +61,63 @@ public:
 	if( ExampleFrameListener::frameRenderingQueued(evt) == false )
 		return false;
 
-        for (int i = 0; i < NUM_JAIQUAS; ++i)
-        {
-			Real inc;
-			if ( IsAnimated() )
-			inc = evt.timeSinceLastFrame * mAnimationSpeed[i]; 
-			else
-				inc = 0;
-			if ((mAnimState[i]->getTimePosition() + inc) >= mAnimChop)
-			{
-				// Loop
-				// Need to reposition the scene node origin since animation includes translation
-				// Calculate as an offset to the end position, rotated by the
-				// amount the animation turns the character
-				Quaternion rot(mAnimationRotation, Vector3::UNIT_Y);
-				Vector3 startoffset = mSceneNode[i]->getOrientation() * -mSneakStartOffset;
-				Vector3 endoffset = mSneakEndOffset;
-				Vector3 offset = rot * startoffset;
-				Vector3 currEnd = mSceneNode[i]->getOrientation() * endoffset + mSceneNode[i]->getPosition();
-				mSceneNode[i]->setPosition(currEnd + offset);
-				mSceneNode[i]->rotate(rot);
+   //     for (int i = 0; i < NUM_JAIQUAS; ++i)
+   //     {
+			//Real inc;
+			//if ( IsAnimated() )
+			//inc = evt.timeSinceLastFrame * mAnimationSpeed[i]; 
+			//else
+			//	inc = 0;
+			//if ((mAnimState[i]->getTimePosition() + inc) >= mAnimChop)
+			//{
+			//	// Loop
+			//	// Need to reposition the scene node origin since animation includes translation
+			//	// Calculate as an offset to the end position, rotated by the
+			//	// amount the animation turns the character
+			//	Quaternion rot(mAnimationRotation, Vector3::UNIT_Y);
+			//	Vector3 startoffset = mSceneNode[i]->getOrientation() * -mSneakStartOffset;
+			//	Vector3 endoffset = mSneakEndOffset;
+			//	Vector3 offset = rot * startoffset;
+			//	Vector3 currEnd = mSceneNode[i]->getOrientation() * endoffset + mSceneNode[i]->getPosition();
+			//	mSceneNode[i]->setPosition(currEnd + offset);
+			//	mSceneNode[i]->rotate(rot);
 
-				mAnimState[i]->setTimePosition((mAnimState[i]->getTimePosition() + inc) - mAnimChop);
-			}
-			else
-			{
-				mAnimState[i]->addTime(inc);
-			}
-        }
+			//	//mAnimState[i]->setTimePosition((mAnimState[i]->getTimePosition() + inc) - mAnimChop);
+			//}
+			//else
+			//{
+			//	//mAnimState[i]->addTime(inc);
+			//}
+   //     }
 
+	MotionGraph::InteractiveControlInfo ControlInfo;
+	ControlInfo.direct = mLocomotionDirection;
+	ControlInfo.speed = mLocomotionSpeed;
+	if ( IsAnimated() )
+		ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame,ControlInfo);
+	else
+		ent->AdvanceMotionGraphTime(0.,ControlInfo);
         return true;
     }
+
+	bool processUnbufferedKeyInput(const FrameEvent& evt)
+	{
+
+
+		using namespace OIS;
+	
+		if ( mKeyboard->isKeyDown(KC_T) && mTimeUntilNextToggle <= 0)
+		{
+			//relocate character to initializing position
+			//Vector3 currentPosition = mSceneNode[0]->getPosition();
+			Vector3 currentPosition = ent->getSkeleton()->getRootBone()->getPosition();
+//ent->getSkeleton()->getRootBone()->setPosition()
+			mSceneNode[0]->setPosition(-currentPosition.x,currentPosition.y,-currentPosition.z);
+		}
+
+		return ExampleFrameListener::processUnbufferedKeyInput(evt);
+
+	}
 };
 
 
@@ -116,47 +149,47 @@ protected:
 		// to give it an offset of where the animation ends
 		SkeletonPtr skel = SkeletonManager::getSingleton().load(modelname+".skeleton", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Animation* anim = skel->getAnimation(animationName);
-		Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
-		while (trackIter.hasMoreElements())
-		{
-			NodeAnimationTrack* track = trackIter.getNext();
+		//Animation* anim = skel->getAnimation(animationName);
+		//Animation::NodeTrackIterator trackIter = anim->getNodeTrackIterator();
+		//while (trackIter.hasMoreElements())
+		//{
+		//	NodeAnimationTrack* track = trackIter.getNext();
 
-			TransformKeyFrame oldKf(0, 0);
-			track->getInterpolatedKeyFrame(mAnimChop, &oldKf);
+		//	TransformKeyFrame oldKf(0, 0);
+		//	track->getInterpolatedKeyFrame(mAnimChop, &oldKf);
 
-			// Drop all keyframes after the chop
-			while (track->getKeyFrame(track->getNumKeyFrames()-1)->getTime() >= mAnimChop - mAnimChopBlend)
-				track->removeKeyFrame(track->getNumKeyFrames()-1);
+		//	// Drop all keyframes after the chop
+		//	while (track->getKeyFrame(track->getNumKeyFrames()-1)->getTime() >= mAnimChop - mAnimChopBlend)
+		//		track->removeKeyFrame(track->getNumKeyFrames()-1);
 
-			TransformKeyFrame* newKf = track->createNodeKeyFrame(mAnimChop);
-			TransformKeyFrame* startKf = track->getNodeKeyFrame(0);
+		//	TransformKeyFrame* newKf = track->createNodeKeyFrame(mAnimChop);
+		//	TransformKeyFrame* startKf = track->getNodeKeyFrame(0);
 
-			Bone* bone = skel->getBone(track->getHandle());
-			if (bone->getName() == "Spineroot")
-			{
-				mSneakStartOffset = startKf->getTranslate() + bone->getInitialPosition();
-				mSneakEndOffset = oldKf.getTranslate() + bone->getInitialPosition();
-				mSneakStartOffset.y = mSneakEndOffset.y;
-				// Adjust spine root relative to new location
-				newKf->setRotation(oldKf.getRotation());
-				newKf->setTranslate(oldKf.getTranslate());
-				newKf->setScale(oldKf.getScale());
-
-
-			}
-			else
-			{
-				newKf->setRotation(startKf->getRotation());
-				newKf->setTranslate(startKf->getTranslate());
-				newKf->setScale(startKf->getScale());
-			}
-		}
+		//	Bone* bone = skel->getBone(track->getHandle());
+		//	if (bone->getName() == "hip")//root bone name is "Spineroot" before
+		//	{
+		//		mSneakStartOffset = startKf->getTranslate() + bone->getInitialPosition();
+		//		mSneakEndOffset = oldKf.getTranslate() + bone->getInitialPosition();
+		//		mSneakStartOffset.y = mSneakEndOffset.y;
+		//		// Adjust spine root relative to new location
+		//		newKf->setRotation(oldKf.getRotation());
+		//		newKf->setTranslate(oldKf.getTranslate());
+		//		newKf->setScale(oldKf.getScale());
 
 
+		//	}
+		//	else
+		//	{
+		//		newKf->setRotation(startKf->getRotation());
+		//		newKf->setTranslate(startKf->getTranslate());
+		//		newKf->setScale(startKf->getScale());
+		//	}
+		//}
 
 
-        Entity *ent;
+
+
+        
 		Real rotInc = Math::TWO_PI / (float)NUM_JAIQUAS;
 		Real rot = 0.0f;
         for (int i = 0; i < NUM_JAIQUAS; ++i)
@@ -173,14 +206,19 @@ protected:
 			mSceneNode[i]->attachObject(ent);
 			mSceneNode[i]->rotate(q);
 			mSceneNode[i]->translate(mBasePositions[i]);
+			mSceneNode[i]->translate(0,12,0);
 			
-            mAnimState[i] = ent->getAnimationState(animationName);
-            mAnimState[i]->setEnabled(true);
-			mAnimState[i]->setLoop(false); // manual loop since translation involved
+           // mAnimState[i] = ent->getAnimationState(animationName);
+          //  mAnimState[i]->setEnabled(true);
+			//mAnimState[i]->setLoop(false); // manual loop since translation involved
             mAnimationSpeed[i] = Math::RangeRandom(0.5, 1.5);
 
 			rot += rotInc;
         }
+		
+
+		ent->ExecuteMotionGraph("mg");
+
 
 
 
