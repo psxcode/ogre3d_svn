@@ -73,9 +73,9 @@ public:
 		ControlInfo.direct = mLocomotionDirection;
 		ControlInfo.speed = mLocomotionSpeed;
 		if ( IsAnimated() )
-			ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame*2,ControlInfo);
+			ent->AdvanceMotionGraphTime(evt.timeSinceLastFrame,ControlInfo);
 		else
-			;
+			ent->AdvanceMotionGraphTime(0.,ControlInfo);
 		//mAnimState->addTime(evt.timeSinceLastFrame*2);
 		return true;
 	}
@@ -181,16 +181,16 @@ protected:
 
 		// Position the camera
 		mCamera->setPosition(100,20,0);
-		mCamera->setNearClipDistance(.01);
+	//	mCamera->setNearClipDistance(.01);
 		mCamera->lookAt(0,10,0);
 
 		// Report whether hardware skinning is enabled or not
-		/*Technique* t = ent->getSubEntity(0)->getMaterial()->getBestTechnique();
+		Technique* t = ent->getSubEntity(0)->getMaterial()->getBestTechnique();
 		Pass* p = t->getPass(0);
 		if (p->hasVertexProgram() && p->getVertexProgram()->isSkeletalAnimationIncluded())
 		mDebugText = "Hardware skinning is enabled";
 		else
-		mDebugText = "Software skinning is enabled";*/
+		mDebugText = "Software skinning is enabled";
 
 		Plane plane;
 		plane.normal = Vector3::UNIT_Y;
