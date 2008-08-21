@@ -1,10 +1,9 @@
-States: 4
-0,jump
+States: 3
+0,walk
 1,rush
-2,wonder
-3,idle
-Transitions: 
-3,'DirectionControl',walk,2
-2,'DirectionControl',walk,2
-2,'NoMoreAction',idle,3
+2,idle
+Transitions: 3
+2,'AnimationEnd',walk,0
+0,'AnimationEnd',rush,1
+1,'AnimationEnd',idle,2
 
