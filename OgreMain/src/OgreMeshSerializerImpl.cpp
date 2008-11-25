@@ -1212,7 +1212,7 @@ namespace Ogre {
         size += manualSize;
 
         writeChunkHeader(M_MESH_LOD_USAGE, size);
-        writeFloats(&(usage.value), 1);
+        writeFloats(&(usage.userValue), 1);
 
         writeChunkHeader(M_MESH_LOD_MANUAL, manualSize);
         writeString(usage.manualName);
@@ -1257,7 +1257,7 @@ namespace Ogre {
 		}
 
         writeChunkHeader(M_MESH_LOD_USAGE, size);
-        writeFloats(&(usage.value), 1);
+        writeFloats(&(usage.userValue), 1);
 
 		// Now write sections
         // Calc generated SubMesh sections size
@@ -1391,7 +1391,7 @@ namespace Ogre {
 			}
 			// Read depth
 			MeshLodUsage usage;
-			readFloats(stream, &(usage.value), 1);
+			readFloats(stream, &(usage.userValue), 1);
 
 			if (pMesh->isLodManual())
 			{
@@ -2524,6 +2524,7 @@ namespace Ogre {
             // Read depth
             MeshLodUsage usage;
             readFloats(stream, &(usage.value), 1);
+            usage.userValue = Math::Sqrt(usage.value);
 
             if (pMesh->isLodManual())
             {
