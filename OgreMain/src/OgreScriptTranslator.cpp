@@ -446,7 +446,7 @@ namespace Ogre{
                         {
                             Real v = 0;
                             if(getReal(*j, &v))
-                                lods.push_back(Math::Sqr(v));
+                                lods.push_back(v);
                             else
                                 compiler->addError(ScriptCompiler::CE_NUMBEREXPECTED, prop->file, prop->line,
                                     "lod_values expects only numbers as arguments");

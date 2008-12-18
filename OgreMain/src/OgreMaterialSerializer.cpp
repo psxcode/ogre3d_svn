@@ -2858,8 +2858,7 @@ namespace Ogre
         iend = vecparams.end();
         for (i = vecparams.begin(); i != iend; ++i)
         {
-            // Square each distance to get correct lod value
-            lodList.push_back(Math::Sqr(StringConverter::parseReal(*i)));
+            lodList.push_back(StringConverter::parseReal(*i));
         }
 
         context.material->setLodLevels(lodList);
