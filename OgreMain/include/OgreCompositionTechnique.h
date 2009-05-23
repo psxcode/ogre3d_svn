@@ -48,6 +48,16 @@ namespace Ogre {
         CompositionTechnique(Compositor *parent);
         virtual ~CompositionTechnique();
     
+        //The scope of a texture defined by the compositor
+        enum TextureScope { 
+            //Local texture - only available to the compositor passes in this technique
+            TS_LOCAL, 
+            //Chain texture - available to the other compositors in the chain
+            TS_CHAIN, 
+            //Global texture - available to everyone in every scope
+            TS_GLOBAL 
+        };
+
         /// Local texture definition
         class TextureDefinition : public CompositorInstAlloc
         {
@@ -60,10 +70,11 @@ namespace Ogre {
             PixelFormatList formatList; // more than one means MRT
 			bool fsaa;			// FSAA enabled; true = determine from main target (if render_scene), false = disable
 			bool hwGammaWrite;	// Do sRGB gamma correction on write (only 8-bit per channel formats) 
-			bool shared;		// whether to use shared textures for this one
+			bool pooled;		// whether to use pooled textures for this one
+            TextureScope scope; // Which scope has access to this texture
 
 			TextureDefinition() :width(0), height(0), widthFactor(1.0f), heightFactor(1.0f), 
-				fsaa(true), hwGammaWrite(false), shared(false) {}
+				fsaa(true), hwGammaWrite(false), pooled(false), scope(TS_LOCAL) {}
         };
         /// Typedefs for several iterators
         typedef vector<CompositionTargetPass *>::type TargetPasses;

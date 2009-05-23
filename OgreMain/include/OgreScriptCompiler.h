@@ -722,7 +722,7 @@ namespace Ogre
 				ID_TARGET_HEIGHT,
 				ID_TARGET_WIDTH_SCALED,
 				ID_TARGET_HEIGHT_SCALED,
-			ID_SHARED,
+			ID_POOLED,
 			//ID_GAMMA, - already registered for material
 			ID_NO_FSAA,
 			ID_ONLY_INITIAL,

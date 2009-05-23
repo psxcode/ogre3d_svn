@@ -122,22 +122,22 @@ namespace Ogre {
 
 		typedef set<Texture*>::type UniqueTextureSet;
 
-		/** Utility function to get an existing shared texture matching a given
+		/** Utility function to get an existing pooled texture matching a given
 			definition, or creating one if one doesn't exist. It also takes into
-			account whether a shared texture has already been supplied to this
+			account whether a pooled texture has already been supplied to this
 			same requester already, in which case it won't give the same texture
 			twice (this is important for example if you request 2 ping-pong textures, 
 			you don't want to get the same texture for both requests!
 		*/
-		TexturePtr getSharedTexture(const String& name, const String& localName, 
+		TexturePtr getPooledTexture(const String& name, const String& localName, 
 			size_t w, size_t h, 
 			PixelFormat f, uint aa, const String& aaHint, bool srgb, UniqueTextureSet& texturesAlreadyAssigned, 
 			CompositorInstance* inst);
 
-		/** Free shared textures from the shared pool (compositor instances still 
+		/** Free pooled textures from the shared pool (compositor instances still 
 			using them will keep them in memory though). 
 		*/
-		void freeSharedTextures(bool onlyIfUnreferenced = true);
+		void freePooledTextures(bool onlyIfUnreferenced = true);
 
 
 		/** Override standard Singleton retrieval.

@@ -5207,7 +5207,7 @@ namespace Ogre{
 						size_t width = 0, height = 0;
 						float widthFactor = 1.0f, heightFactor = 1.0f;
 						bool widthSet = false, heightSet = false, formatSet = false;
-						bool shared = false;
+						bool pooled = false;
 						bool hwGammaWrite = false;
 						bool fsaa = true;
 						Ogre::PixelFormatList formats;
@@ -5269,8 +5269,8 @@ namespace Ogre{
 									*pSetFlag = true;
 								}
 								break;
-							case ID_SHARED:
-								shared = true;
+							case ID_POOLED:
+								pooled = true;
 								break;
 							case ID_GAMMA:
 								hwGammaWrite = true;
@@ -5335,7 +5335,7 @@ namespace Ogre{
 						def->formatList = formats;
 						def->hwGammaWrite = hwGammaWrite;
 						def->fsaa = fsaa;
-						def->shared = shared;
+						def->pooled = pooled;
 					}
 					break;
 				case ID_SCHEME:

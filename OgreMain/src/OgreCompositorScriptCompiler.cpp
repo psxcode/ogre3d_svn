@@ -170,7 +170,7 @@ namespace Ogre {
 		addLexemeToken("PF_FLOAT32_GR", ID_PF_FLOAT32_GR);
 		addLexemeToken("PF_FLOAT32_RGB", ID_PF_FLOAT32_RGB);
 		addLexemeToken("PF_FLOAT32_RGBA", ID_PF_FLOAT32_RGBA);
-		addLexemeToken("shared", ID_SHARED);
+		addLexemeToken("shared", ID_POOLED); //TODO GSOC : change name string later too
 		addLexemeToken("gamma", ID_GAMMA);
 		addLexemeToken("no_fsaa", ID_NO_FSAA);
 
@@ -441,8 +441,8 @@ namespace Ogre {
 			case ID_PF_FLOAT32_RGBA:
 				textureDef->formatList.push_back(PF_FLOAT32_RGBA);
 				break;
-			case ID_SHARED:
-				textureDef->shared = true;
+			case ID_POOLED:
+				textureDef->pooled = true;
 				break;
 			case ID_GAMMA:
 				textureDef->hwGammaWrite = true;

@@ -76,7 +76,7 @@ CompositorManager::CompositorManager():
 CompositorManager::~CompositorManager()
 {
     freeChains();
-	freeSharedTextures(false);
+	freePooledTextures(false);
 	OGRE_DELETE mRectangle;
 
 	OGRE_THREAD_POINTER_DELETE(mSerializer);
@@ -287,7 +287,7 @@ void CompositorManager::_reconstructAllCompositorResources()
 	}
 }
 //---------------------------------------------------------------------
-TexturePtr CompositorManager::getSharedTexture(const String& name, 
+TexturePtr CompositorManager::getPooledTexture(const String& name, 
 	const String& localName,
 	size_t w, size_t h, PixelFormat f, uint aa, const String& aaHint, bool srgb, 
 	CompositorManager::UniqueTextureSet& texturesAssigned, 
@@ -441,7 +441,7 @@ bool CompositorManager::isInputToOutputTarget(CompositorInstance* inst, TextureP
 
 }
 //---------------------------------------------------------------------
-void CompositorManager::freeSharedTextures(bool onlyIfUnreferenced)
+void CompositorManager::freePooledTextures(bool onlyIfUnreferenced)
 {
 	if (onlyIfUnreferenced)
 	{

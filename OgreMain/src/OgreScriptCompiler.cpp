@@ -1230,7 +1230,7 @@ namespace Ogre
 			mIds["target_height"] = ID_TARGET_HEIGHT;
 			mIds["target_width_scaled"] = ID_TARGET_WIDTH_SCALED;
 			mIds["target_height_scaled"] = ID_TARGET_HEIGHT_SCALED;
-			mIds["shared"] = ID_SHARED;
+			mIds["shared"] = ID_POOLED; //TODO GSOC : Change strings later too
 			//mIds["gamma"] = ID_GAMMA; - already registered
 			mIds["no_fsaa"] = ID_NO_FSAA;
 		mIds["only_initial"] = ID_ONLY_INITIAL;

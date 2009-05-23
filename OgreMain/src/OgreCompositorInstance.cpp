@@ -412,7 +412,7 @@ void CompositorInstance::setTechnique(CompositionTechnique* tech, bool reuseText
 			while(it.hasMoreElements())
 			{
 				CompositionTechnique::TextureDefinition *def = it.getNext();
-				if (def->shared)
+				if (def->pooled)
 				{
 					LocalTextureMap::iterator i = mLocalTextures.find(def->name);
 					if (i != mLocalTextures.end())
@@ -563,10 +563,10 @@ void CompositorInstance::createResources(bool forResizeOnly)
 
 				String texname = MRTbaseName + "/" + StringConverter::toString(atch);
 				TexturePtr tex;
-				if (def->shared)
+				if (def->pooled)
 				{
-					// get / create shared texture
-					tex = CompositorManager::getSingleton().getSharedTexture(texname,
+					// get / create pooled texture
+					tex = CompositorManager::getSingleton().getPooledTexture(texname,
 						def->name, 
 						width, height, *p, fsaa, fsaaHint,  
 						hwGamma && !PixelUtil::isFloatingPoint(*p), 
@@ -603,10 +603,10 @@ void CompositorInstance::createResources(bool forResizeOnly)
 			std::replace( texName.begin(), texName.end(), ' ', '_' ); 
 
 			TexturePtr tex;
-			if (def->shared)
+			if (def->pooled)
 			{
-				// get / create shared texture
-				tex = CompositorManager::getSingleton().getSharedTexture(texName, 
+				// get / create pooled texture
+				tex = CompositorManager::getSingleton().getPooledTexture(texName, 
 					def->name, width, height, def->formatList[0], fsaa, fsaaHint,
 					hwGamma && !PixelUtil::isFloatingPoint(def->formatList[0]), assignedTextures, 
 					this);
@@ -755,9 +755,9 @@ void CompositorInstance::freeResources(bool forResizeOnly, bool clearReserveText
 				LocalTextureMap::iterator i = mLocalTextures.find(texName);
 				if (i != mLocalTextures.end())
 				{
-					if (!def->shared)
+					if (!def->pooled)
 					{
-						// remove myself from central only if not shared
+						// remove myself from central only if not pooled
 						TextureManager::getSingleton().remove(i->second->getName());
 					}
 
@@ -810,7 +810,7 @@ void CompositorInstance::freeResources(bool forResizeOnly, bool clearReserveText
 	// Now we tell the central list of textures to check if its unreferenced, 
 	// and to remove if necessary. Anything shared that was left in the reserve textures
 	// will not be released here
-	CompositorManager::getSingleton().freeSharedTextures(true);
+	CompositorManager::getSingleton().freePooledTextures(true);
 }
 //---------------------------------------------------------------------
 RenderTarget* CompositorInstance::getRenderTarget(const String& name)

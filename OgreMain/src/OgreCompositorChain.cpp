@@ -181,7 +181,7 @@ void CompositorChain::setCompositorEnabled(size_t position, bool state)
 				CompositionTargetPass* tp = tpit.getNext();
 				if (tp->getInputMode() == CompositionTargetPass::IM_PREVIOUS)
 				{
-					if (nextInstance->getTechnique()->getTextureDefinition(tp->getOutputName())->shared)
+					if (nextInstance->getTechnique()->getTextureDefinition(tp->getOutputName())->pooled)
 					{
 						// recreate
 						nextInstance->freeResources(false, true);
