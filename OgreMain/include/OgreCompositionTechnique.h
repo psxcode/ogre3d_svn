@@ -63,6 +63,9 @@ namespace Ogre {
         {
         public:
             String name;
+			//TODO GSOC: Should these be fields in TextureDefinition, or created in a new struct?
+			String refCompName; //If a reference, the name of the compositor being referenced
+			String refTexName;	//If a reference, the name of the texture in the compositor being referenced
             size_t width;       // 0 means adapt to target width
             size_t height;      // 0 means adapt to target height
 			float widthFactor;  // multiple of target width to use (if width = 0)
