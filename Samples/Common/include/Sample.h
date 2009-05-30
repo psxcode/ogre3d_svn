@@ -6,8 +6,8 @@
 namespace OgreBites
 {
     class Sample : public Ogre::FrameListener, public Ogre::WindowEventListener
-	{
-	public:
+    {
+    public:
 
         Sample()
         {
@@ -19,10 +19,10 @@ namespace OgreBites
             return mCamera;
         }
 
-	protected:
+    protected:
 
         Ogre::Camera* mCamera;
-	};
+    };
 }
 
 #endif
