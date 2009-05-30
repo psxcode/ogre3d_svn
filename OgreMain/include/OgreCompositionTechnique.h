@@ -152,6 +152,14 @@ namespace Ogre {
 		/** Get the scheme name assigned to this technique. */
 		const String& getSchemeName() const { return mSchemeName; }
         
+		/** Set the name of the compositor logic assigned to this technique.
+			Instances of this technique will be auto-coupled with the matching logic.
+		*/
+		void setCompositorLogicName(const String& compositorLogicName) 
+			{ mCompositorLogicName = compositorLogicName; }
+		/** Get the compositor logic name assigned to this technique */
+		const String& getCompositorLogicName() const { return mCompositorLogicName; }
+
         /** Get parent object */
         Compositor *getParent();
     private:
@@ -167,6 +175,9 @@ namespace Ogre {
 
 		/// Optional scheme name
 		String mSchemeName;
+		
+		/// Optional compositor logic name
+		String mCompositorLogicName;
 
     };
 	/** @} */

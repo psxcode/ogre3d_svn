@@ -52,8 +52,9 @@ namespace Ogre {
 		"<Script> ::= {<Compositor>} \n"
 		"<Compositor> ::= 'compositor' <Flex_Label> '{' {<Technique>} '}' \n"
 		// Technique
-		"<Technique> ::= 'technique' '{' {<Texture>} {<Target>} <TargetOutput> '}' \n"
-		"<Texture> ::= 'texture' <Label> <WidthOption> <HeightOption> <PixelFormat> {<PixelFormat>} [<Shared>] \n"
+		"<Technique> ::= 'technique' '{' {<Logic>} {<Texture>} {<Target>} <TargetOutput> '}' \n"
+		"<Logic> ::= 'compositor_logic' <Label> \n"
+		"<Texture> ::= 'texture' <Label> <WidthOption> <HeightOption> <PixelFormat> {<PixelFormat>} [<Shared>] [<Scope>] \n"
 		"<WidthOption> ::= <TargetWidthScaled> | 'target_width' | <#width> \n"
 		"<HeightOption> ::= <TargetHeightScaled> | 'target_height' | <#height> \n"
 		"<TargetWidthScaled> ::= 'target_width_scaled' <#scaling> \n"
@@ -157,6 +158,7 @@ namespace Ogre {
 		addLexemeAction("technique", &CompositorScriptCompiler::parseTechnique);
 		addLexemeAction("texture", &CompositorScriptCompiler::parseTexture);
 		addLexemeAction("texture_ref", &CompositorScriptCompiler::parseTextureRef);
+		addLexemeAction("compositor_logic", &CompositorScriptCompiler::parseCompositorLogic);
 		addLexemeAction("scheme", &CompositorScriptCompiler::parseScheme);
 		addLexemeToken("target_width_scaled", ID_TARGET_WIDTH_SCALED);
 		addLexemeToken("target_height_scaled", ID_TARGET_HEIGHT_SCALED);
@@ -482,6 +484,14 @@ namespace Ogre {
         CompositionTechnique::TextureDefinition* textureDef = mScriptContext.technique->createTextureDefinition(textureName);
 		textureDef->refCompName = compositorName;
 		textureDef->refTexName = compositorTextureName;
+	}
+	//-----------------------------------------------------------------------
+	void CompositorScriptCompiler::parseCompositorLogic(void)
+	{
+	    assert(mScriptContext.technique);
+		const String compositorLogicName = getNextTokenLabel();
+
+		mScriptContext.technique->setCompositorLogicName(compositorLogicName);
 	}
 	//-----------------------------------------------------------------------
 	void CompositorScriptCompiler::parseScheme(void)

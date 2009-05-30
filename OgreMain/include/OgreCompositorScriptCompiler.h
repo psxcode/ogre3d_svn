@@ -164,6 +164,7 @@ namespace Ogre {
 		void parseTechnique(void);
 		void parseTexture(void);
 		void parseTextureRef(void);
+		void parseCompositorLogic(void);
 		void parseScheme(void);
 		void parseTarget(void);
 		void parseInput(void);
