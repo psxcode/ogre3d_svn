@@ -852,9 +852,9 @@ const String &CompositorInstance::getSourceForTex(const String &name, size_t mrt
 
 	if (!texDef->refCompName.empty()) 
 	{
-		//TODO : Currently only handling chain-scope. Handle global scope too
 		//This is a reference - find the compositor and get the texture name
 		CompositorInstance* refComp = mChain->getCompositor(texDef->refCompName);
+		//TODO GSOC: Check that the referencing compositor is BEFORE us.
 		if (refComp == 0 || !refComp->getEnabled()) 
 		{
 			OGRE_EXCEPT(Exception::ERR_INVALID_STATE, "Referencing inactive compositor texture",
@@ -862,12 +862,18 @@ const String &CompositorInstance::getSourceForTex(const String &name, size_t mrt
 		}
 		CompositionTechnique::TextureDefinition* refTexDef = 
 			refComp->getTechnique()->getTextureDefinition(texDef->refTexName);
-		if (refTexDef->scope == CompositionTechnique::TS_LOCAL) 
+		switch (refTexDef->scope) 
 		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Referencing local compositor texture",
-				"CompositorInstance::getSourceForTex");
+			case CompositionTechnique::TS_CHAIN:
+				return refComp->getSourceForTex(texDef->refTexName, mrtIndex);
+			case CompositionTechnique::TS_GLOBAL:
+				//TODO GSOC: Handle
+				return 0;
+			case CompositionTechnique::TS_LOCAL:
+			default:
+				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Referencing local compositor texture",
+					"CompositorInstance::getSourceForTex");
 		}
-		return refComp->getSourceForTex(texDef->refTexName, mrtIndex);
 	}
 
 	if (texDef->formatList.size() == 1) 
