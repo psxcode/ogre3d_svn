@@ -86,7 +86,7 @@ DeferredShadingSystem::~DeferredShadingSystem()
 
 	if (mCurrentMode==DSM_SHOWLIT && mInstance[mCurrentMode]->getEnabled())
 	{
-		RenderTarget* renderTarget = mInstance[mCurrentMode]->getRenderTarget("mrt_output");
+		RenderTarget* renderTarget = mGBufferInstance->getRenderTarget("mrt_output");
 		assert(renderTarget);
 
 		LogManager::getSingleton().logMessage("Removing Listener from:");
@@ -116,7 +116,7 @@ void DeferredShadingSystem::setMode(DSMode mode)
 	if (  mCurrentMode == DSM_SHOWLIT
 	   && mInstance[mCurrentMode]->getEnabled())
 	{
-		RenderTarget* renderTarget = mInstance[mCurrentMode]->getRenderTarget("mrt_output");
+		RenderTarget* renderTarget = mGBufferInstance->getRenderTarget("mrt_output");
 		assert(renderTarget);
 
 		LogManager::getSingleton().logMessage("Removing Listener from:");
@@ -296,7 +296,7 @@ void DeferredShadingSystem::preRenderTargetUpdate(const RenderTargetEvent& evt)
 	{
 		assert(mCurrentMode==DSM_SHOWLIT
 			&& mInstance[mCurrentMode]->getEnabled()
-			&& (evt.source == mInstance[mCurrentMode]->getRenderTarget("mrt_output"))
+			&& (evt.source == mGBufferInstance->getRenderTarget("mrt_output"))
 			);
 		setupLightMaterials();
 	}
