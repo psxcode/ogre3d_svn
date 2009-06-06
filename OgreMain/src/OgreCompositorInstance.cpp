@@ -516,6 +516,11 @@ void CompositorInstance::createResources(bool forResizeOnly)
     while(it.hasMoreElements())
     {
         CompositionTechnique::TextureDefinition *def = it.getNext();
+
+		if (!def->refCompName.empty()) {
+			//This is a reference, isn't created in this compositor
+			continue;
+		}
         /// Determine width and height
         size_t width = def->width;
         size_t height = def->height;
@@ -741,6 +746,12 @@ void CompositorInstance::freeResources(bool forResizeOnly, bool clearReserveText
 	while(it.hasMoreElements())
 	{
 		CompositionTechnique::TextureDefinition *def = it.getNext();
+
+		if (!def->refCompName.empty()) 
+		{
+			//This is a reference, isn't created here
+			continue;
+		}
 		// potentially only remove this one if based on size
 		if (!forResizeOnly || def->width == 0 || def->height == 0)
 		{
@@ -837,22 +848,49 @@ RenderTarget *CompositorInstance::getTargetForTex(const String &name)
 //-----------------------------------------------------------------------
 const String &CompositorInstance::getSourceForTex(const String &name, size_t mrtIndex)
 {
-	// try simple textures first
-    LocalTextureMap::iterator i = mLocalTextures.find(name);
-    if(i != mLocalTextures.end())
-    {
-		return i->second->getName();
-    }
+	CompositionTechnique::TextureDefinition* texDef = mTechnique->getTextureDefinition(name);
 
-	// try MRTs - texture (rather than target)
-	i = mLocalTextures.find(getMRTTexLocalName(name, mrtIndex));
-	if (i != mLocalTextures.end())
+	if (!texDef->refCompName.empty()) 
 	{
-		return i->second->getName();
+		//TODO : Currently only handling chain-scope. Handle global scope too
+		//This is a reference - find the compositor and get the texture name
+		CompositorInstance* refComp = mChain->getCompositor(texDef->refCompName);
+		if (refComp == 0 || !refComp->getEnabled()) 
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALID_STATE, "Referencing inactive compositor texture",
+				"CompositorInstance::getSourceForTex");
+		}
+		CompositionTechnique::TextureDefinition* refTexDef = 
+			refComp->getTechnique()->getTextureDefinition(texDef->refTexName);
+		if (refTexDef->scope == CompositionTechnique::TS_LOCAL) 
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Referencing local compositor texture",
+				"CompositorInstance::getSourceForTex");
+		}
+		return refComp->getSourceForTex(texDef->refTexName, mrtIndex);
+	}
+
+	if (texDef->formatList.size() == 1) 
+	{
+		//This is a simple texture
+		LocalTextureMap::iterator i = mLocalTextures.find(name);
+		if(i != mLocalTextures.end())
+		{
+			return i->second->getName();
+		}
 	}
 	else
-		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Non-existent local texture name", 
-			"CompositorInstance::getSourceForTex");
+	{
+		// try MRTs - texture (rather than target)
+		LocalTextureMap::iterator i = mLocalTextures.find(getMRTTexLocalName(name, mrtIndex));
+		if (i != mLocalTextures.end())
+		{
+			return i->second->getName();
+		}
+	}
+	
+	OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Non-existent local texture name", 
+		"CompositorInstance::getSourceForTex");
 }
 //-----------------------------------------------------------------------
 void CompositorInstance::queueRenderSystemOp(TargetOperation &finalState, RenderSystemOperation *op)

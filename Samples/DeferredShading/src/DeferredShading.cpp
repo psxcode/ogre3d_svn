@@ -66,9 +66,9 @@ DeferredShadingSystem::DeferredShadingSystem(
 	createResources();
 	createAmbientLight();
 
-	mActive = true;
-	mCurrentMode = DSM_COUNT;
-	setMode(DSM_SHOWLIT);
+	mActive = false;
+	mCurrentMode = DSM_SHOWLIT;
+	setActive(true);
 
 	mLightMaterialsDirty=true;
 
@@ -145,7 +145,7 @@ void DeferredShadingSystem::setMode(DSMode mode)
 	if (  mCurrentMode == DSM_SHOWLIT
 	   && mInstance[mCurrentMode]->getEnabled())
 	{
-		RenderTarget* renderTarget = mInstance[mCurrentMode]->getRenderTarget("mrt_output");
+		RenderTarget* renderTarget = mGBufferInstance->getRenderTarget("mrt_output");
 		assert(renderTarget);
 
 		LogManager::getSingleton().logMessage("Adding Listener to:");
@@ -167,6 +167,8 @@ void DeferredShadingSystem::setActive(bool active)
 	if (mActive != active)
 	{
 		mActive = active;
+		mGBufferInstance->setEnabled(active);
+
 		// mCurrentMode could have changed with a prior call to setMode, so iterate all
 		setMode(mCurrentMode);
 	}
@@ -207,6 +209,9 @@ void DeferredShadingSystem::createResources(void)
 	else
 		mLightMaterialGenerator = new LightMaterialGenerator("hlsl");
 
+	// Create the main GBuffer compositor
+	mGBufferInstance = compMan.addCompositor(mViewport, "DeferredShading/GBuffer");
+	
 	// Create filters
 	mInstance[DSM_SHOWLIT] = compMan.addCompositor(mViewport, "DeferredShading/ShowLit");
 	mInstance[DSM_SHOWNORMALS] = compMan.addCompositor(mViewport, "DeferredShading/ShowNormals");

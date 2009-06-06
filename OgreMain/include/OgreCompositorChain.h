@@ -87,6 +87,10 @@ namespace Ogre {
          */
         CompositorInstance *getCompositor(size_t index);
 
+		/** Get compositor instance by name.
+         */
+        CompositorInstance *getCompositor(const String& name);
+
 		/** Get the original scene compositor instance for this chain (internal use). 
 		*/
 		CompositorInstance* _getOriginalSceneCompositor(void) { return mOriginalScene; }

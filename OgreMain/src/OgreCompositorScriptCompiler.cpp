@@ -52,9 +52,10 @@ namespace Ogre {
 		"<Script> ::= {<Compositor>} \n"
 		"<Compositor> ::= 'compositor' <Flex_Label> '{' {<Technique>} '}' \n"
 		// Technique
-		"<Technique> ::= 'technique' '{' {<Logic>} {<Texture>} {<Target>} <TargetOutput> '}' \n"
+		"<Technique> ::= 'technique' '{' {<Logic>} {<Texture>} {<TextureReference>} {<Target>} <TargetOutput> '}' \n"
 		"<Logic> ::= 'compositor_logic' <Label> \n"
 		"<Texture> ::= 'texture' <Label> <WidthOption> <HeightOption> <PixelFormat> {<PixelFormat>} [<Shared>] [<Scope>] \n"
+		"<TextureReference> ::= 'texture_ref' <Label> <RefCompositorName> <RefTextureName> \n"
 		"<WidthOption> ::= <TargetWidthScaled> | 'target_width' | <#width> \n"
 		"<HeightOption> ::= <TargetHeightScaled> | 'target_height' | <#height> \n"
 		"<TargetWidthScaled> ::= 'target_width_scaled' <#scaling> \n"

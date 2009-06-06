@@ -98,6 +98,7 @@ protected:
 	Ogre::SceneManager *mSceneMgr;
 	Ogre::Camera *mCamera;
 	
+	Ogre::CompositorInstance *mGBufferInstance;
 	// Filters
 	Ogre::CompositorInstance *mInstance[DSM_COUNT];
 	// Active/inactive

@@ -5210,6 +5210,7 @@ namespace Ogre{
 						bool pooled = false;
 						bool hwGammaWrite = false;
 						bool fsaa = true;
+						CompositionTechnique::TextureScope scope = CompositionTechnique::TS_LOCAL;
 						Ogre::PixelFormatList formats;
 
 						while (atomIndex < prop->values.size())
@@ -5271,6 +5272,15 @@ namespace Ogre{
 								break;
 							case ID_POOLED:
 								pooled = true;
+								break;
+							case ID_SCOPE_LOCAL:
+								scope = CompositionTechnique::TS_LOCAL;
+								break;
+							case ID_SCOPE_CHAIN:
+								scope = CompositionTechnique::TS_CHAIN;
+								break;
+							case ID_SCOPE_GLOBAL:
+								scope = CompositionTechnique::TS_GLOBAL;
 								break;
 							case ID_GAMMA:
 								hwGammaWrite = true;
@@ -5336,6 +5346,43 @@ namespace Ogre{
 						def->hwGammaWrite = hwGammaWrite;
 						def->fsaa = fsaa;
 						def->pooled = pooled;
+						def->scope = scope;
+					}
+					break;
+				case ID_TEXTURE_REF:
+					if(prop->values.empty())
+					{
+						compiler->addError(ScriptCompiler::CE_STRINGEXPECTED, prop->file, prop->line);
+					}
+					else if(prop->values.size() != 3)
+					{
+						compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+							"texture_ref only supports 3 argument");
+					}
+					else
+					{
+						String texName, refCompName, refTexName;
+
+						AbstractNodeList::const_iterator i = getNodeAt(prop->values, 0);
+						if(!getString(*i, &texName))
+							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+							"texture_ref must have 3 string arguments");
+
+						i = getNodeAt(prop->values, 1);
+						if(!getString(*i, &refCompName))
+							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+							"texture_ref must have 3 string arguments");
+
+						i = getNodeAt(prop->values, 2);
+						if(!getString(*i, &refTexName))
+							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+							"texture_ref must have 3 string arguments");
+
+						CompositionTechnique::TextureDefinition* refTexDef = 
+							mTechnique->createTextureDefinition(texName);
+
+						refTexDef->refCompName = refCompName;
+						refTexDef->refTexName = refTexName;
 					}
 					break;
 				case ID_SCHEME:
@@ -5357,6 +5404,27 @@ namespace Ogre{
 						else
 							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
 							"scheme must have 1 string argument");
+					}
+					break;
+				case ID_COMPOSITOR_LOGIC:
+					if(prop->values.empty())
+					{
+						compiler->addError(ScriptCompiler::CE_STRINGEXPECTED, prop->file, prop->line);
+					}
+					else if(prop->values.size() > 1)
+					{
+						compiler->addError(ScriptCompiler::CE_FEWERPARAMETERSEXPECTED, prop->file, prop->line,
+							"compositor logic only supports 1 argument");
+					}
+					else
+					{
+						AbstractNodeList::const_iterator i0 = getNodeAt(prop->values, 0);
+						String logicName;
+						if(getString(*i0, &logicName))
+							mTechnique->setCompositorLogicName(logicName);
+						else
+							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+							"compositor logic must have 1 string argument");
 					}
 					break;
 				default:
