@@ -267,26 +267,45 @@ namespace Ogre {
 		mActiveSchemeName = schemeName;
 	}
     //-----------------------------------------------------------------------
-	void MaterialManager::addListener(Listener* l)
+	void MaterialManager::addListener(Listener* l, const Ogre::String& schemeName)
 	{
-		mListenerList.push_back(l);
+		mListenerMap[schemeName].push_back(l);
 	}
 	//---------------------------------------------------------------------
-	void MaterialManager::removeListener(Listener* l)
+	void MaterialManager::removeListener(Listener* l, const Ogre::String& schemeName)
 	{
-		mListenerList.remove(l);
+		mListenerMap[schemeName].remove(l);
 	}
 	//---------------------------------------------------------------------
 	Technique* MaterialManager::_arbitrateMissingTechniqueForActiveScheme(
 		Material* mat, unsigned short lodIndex, const Renderable* rend)
 	{
-		for (ListenerList::iterator i = mListenerList.begin(); i != mListenerList.end(); ++i)
-		{
-			Technique* t = (*i)->handleSchemeNotFound(mActiveSchemeIndex, 
-				mActiveSchemeName, mat, lodIndex, rend);
-			if (t)
-				return t;
+		//First, check the scheme specific listeners
+		ListenerMap::iterator it = mListenerMap.find(mActiveSchemeName);
+		if (it != mListenerMap.end()) {
+			ListenerList& listenerList = it->second;
+			for (ListenerList::iterator i = listenerList.begin(); i != listenerList.end(); ++i)
+			{
+				Technique* t = (*i)->handleSchemeNotFound(mActiveSchemeIndex, 
+					mActiveSchemeName, mat, lodIndex, rend);
+				if (t)
+					return t;
+			}
 		}
+
+		//If no success, check generic listeners
+		it = mListenerMap.find(StringUtil::BLANK);
+		if (it != mListenerMap.end()) {
+			ListenerList& listenerList = it->second;
+			for (ListenerList::iterator i = listenerList.begin(); i != listenerList.end(); ++i)
+			{
+				Technique* t = (*i)->handleSchemeNotFound(mActiveSchemeIndex, 
+					mActiveSchemeName, mat, lodIndex, rend);
+				if (t)
+					return t;
+			}
+		}
+		
 
 		return 0;
 

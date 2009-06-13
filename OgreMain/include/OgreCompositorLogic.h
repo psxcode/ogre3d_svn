@@ -41,7 +41,7 @@ namespace Ogre {
 	/** Interface for compositor logics, which can be automatically binded to compositors,
 	*	allowing per-compositor logic (such as attaching a relevant listener) to happen
 	*	automatically.
-	*	@remarks All methods have empty implementations to not force an implementing into
+	*	@remarks All methods have empty implementations to not force an implementer into
 	*		extending all of them.
     */
     class _OgreExport CompositorLogic

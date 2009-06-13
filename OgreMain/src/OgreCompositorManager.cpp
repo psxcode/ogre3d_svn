@@ -480,6 +480,12 @@ void CompositorManager::freePooledTextures(bool onlyIfUnreferenced)
 //---------------------------------------------------------------------
 void CompositorManager::registerCompositorLogic(const String& name, CompositorLogic* logic)
 {	
+	if (name.empty()) 
+	{
+		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
+			"Compositor logic name must not be empty.",
+			"CompositorManager::registerCompositorLogic");
+	}
 	if (mCompositorLogics.find(name) != mCompositorLogics.end())
 	{
 		OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM,
