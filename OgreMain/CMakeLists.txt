@@ -42,6 +42,7 @@ set (HEADER_FILES
   include/OgreCompositor.h
   include/OgreCompositorChain.h
   include/OgreCompositorInstance.h
+  include/OgreCompositorLogic.h
   include/OgreCompositorManager.h
   include/OgreCompositorScriptCompiler.h
   include/OgreCompositorScriptCompiler2.h

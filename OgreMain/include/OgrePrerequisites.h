@@ -391,6 +391,7 @@ namespace Ogre {
     class CompositorManager;
     class CompositorChain;
     class CompositorInstance;
+	class CompositorLogic;
     class CompositionTechnique;
     class CompositionPass;
     class CompositionTargetPass;

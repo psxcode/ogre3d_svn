@@ -139,6 +139,14 @@ namespace Ogre {
 		*/
 		void freePooledTextures(bool onlyIfUnreferenced = true);
 
+		/** Register a compositor logic for listening in to expecting composition
+			techniques.
+		*/
+		void registerCompositorLogic(const String& name, CompositorLogic* logic);
+		
+		/** Get a compositor logic by its name
+		*/
+		CompositorLogic* getCompositorLogic(const String& name);
 
 		/** Override standard Singleton retrieval.
 		@remarks
@@ -190,6 +198,10 @@ namespace Ogre {
 		/// List of instances
 		typedef vector<CompositorInstance *>::type Instances;
 		Instances mInstances;
+
+		/// Map of registered compositor logics
+		typedef map<String, CompositorLogic*>::type CompositorLogicMap;
+		CompositorLogicMap mCompositorLogics;
 
 		typedef vector<TexturePtr>::type TextureList;
 		typedef VectorIterator<TextureList> TextureIterator;

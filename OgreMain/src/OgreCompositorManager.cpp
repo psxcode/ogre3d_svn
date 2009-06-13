@@ -477,5 +477,28 @@ void CompositorManager::freePooledTextures(bool onlyIfUnreferenced)
 
 }
 
+//---------------------------------------------------------------------
+void CompositorManager::registerCompositorLogic(const String& name, CompositorLogic* logic)
+{	
+	if (mCompositorLogics.find(name) != mCompositorLogics.end())
+	{
+		OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM,
+			"Compositor logic '" + name + "' already exists.",
+			"CompositorManager::registerCompositorLogic");
+	}
+	mCompositorLogics[name] = logic;
+}
+//---------------------------------------------------------------------
+CompositorLogic* CompositorManager::getCompositorLogic(const String& name)
+{
+	CompositorLogicMap::iterator it = mCompositorLogics.find(name);
+	if (it == mCompositorLogics.end())
+	{
+		OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
+			"Compositor logic '" + name + "' not registered.",
+			"CompositorManager::getCompositorLogic");
+	}
+	return it->second;
+}
 
 }

@@ -47,6 +47,7 @@ Torus Knot Software Ltd.
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
 #include "OgreHardwareBufferManager.h"
+#include "OgreCompositorLogic.h"
 
 namespace Ogre {
 CompositorInstance::CompositorInstance(CompositionTechnique *technique,
@@ -54,10 +55,23 @@ CompositorInstance::CompositorInstance(CompositionTechnique *technique,
     mCompositor(technique->getParent()), mTechnique(technique), mChain(chain),
 		mEnabled(false)
 {
+	const String& logicName = mTechnique->getCompositorLogicName();
+	if (!logicName.empty())
+	{
+		CompositorManager::getSingleton().
+			getCompositorLogic(logicName)->compositorInstanceCreated(this);
+	}
 }
 //-----------------------------------------------------------------------
 CompositorInstance::~CompositorInstance()
 {
+	const String& logicName = mTechnique->getCompositorLogicName();
+	if (!logicName.empty())
+	{
+		CompositorManager::getSingleton().
+			getCompositorLogic(logicName)->compositorInstanceDestroyed(this);
+	}
+
     freeResources(false, true);
 }
 //-----------------------------------------------------------------------
@@ -76,6 +90,14 @@ void CompositorInstance::setEnabled(bool value)
         {
             freeResources(false, true);
         }
+
+		//Notify compositor logic
+		const String& logicName = mTechnique->getCompositorLogicName();
+		if (!logicName.empty())
+		{
+			CompositorManager::getSingleton().
+				getCompositorLogic(logicName)->compositorInstanceEnabledChanged(this, value);
+		}
 
         /// Notify chain state needs recompile.
         mChain->_markDirty();
