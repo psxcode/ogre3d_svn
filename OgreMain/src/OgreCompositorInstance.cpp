@@ -521,6 +521,29 @@ void CompositorInstance::createResources(bool forResizeOnly)
 			//This is a reference, isn't created in this compositor
 			continue;
 		}
+		if (def->scope == CompositionTechnique::TS_GLOBAL) {
+			//This is a global texture, just link the created resources from the parent
+			Compositor* parentComp = mTechnique->getParent();
+			if (def->formatList.size() > 1) 
+			{
+				size_t atch = 0;
+				for (PixelFormatList::iterator p = def->formatList.begin(); 
+					p != def->formatList.end(); ++p, ++atch)
+				{
+					Ogre::TexturePtr tex = parentComp->getTextureInstance(def->name, atch);
+					mLocalTextures[getMRTTexLocalName(def->name, atch)] = tex;
+				}
+				MultiRenderTarget* mrt = static_cast<MultiRenderTarget*>
+					(parentComp->getRenderTarget(def->name));
+				mLocalMRTs[def->name] = mrt;
+			}
+			else
+			{
+				Ogre::TexturePtr tex = parentComp->getTextureInstance(def->name, 0);
+				mLocalTextures[def->name] = tex;
+			}
+			continue;
+		}
         /// Determine width and height
         size_t width = def->width;
         size_t height = def->height;
@@ -752,6 +775,7 @@ void CompositorInstance::freeResources(bool forResizeOnly, bool clearReserveText
 			//This is a reference, isn't created here
 			continue;
 		}
+		
 		// potentially only remove this one if based on size
 		if (!forResizeOnly || def->width == 0 || def->height == 0)
 		{
@@ -766,9 +790,9 @@ void CompositorInstance::freeResources(bool forResizeOnly, bool clearReserveText
 				LocalTextureMap::iterator i = mLocalTextures.find(texName);
 				if (i != mLocalTextures.end())
 				{
-					if (!def->pooled)
+					if (!def->pooled && def->scope != CompositionTechnique::TS_GLOBAL)
 					{
-						// remove myself from central only if not pooled
+						// remove myself from central only if not pooled and not global
 						TextureManager::getSingleton().remove(i->second->getName());
 					}
 
@@ -785,8 +809,12 @@ void CompositorInstance::freeResources(bool forResizeOnly, bool clearReserveText
 				LocalMRTMap::iterator mrti = mLocalMRTs.find(def->name);
 				if (mrti != mLocalMRTs.end())
 				{
-					// remove MRT
-					Root::getSingleton().getRenderSystem()->destroyRenderTarget(mrti->second->getName());
+					if (def->scope != CompositionTechnique::TS_GLOBAL) 
+					{
+						// remove MRT if not global
+						Root::getSingleton().getRenderSystem()->destroyRenderTarget(mrti->second->getName());
+					}
+					
 					mLocalMRTs.erase(mrti);
 				}
 
@@ -865,10 +893,9 @@ const String &CompositorInstance::getSourceForTex(const String &name, size_t mrt
 		switch (refTexDef->scope) 
 		{
 			case CompositionTechnique::TS_CHAIN:
-				return refComp->getSourceForTex(texDef->refTexName, mrtIndex);
 			case CompositionTechnique::TS_GLOBAL:
-				//TODO GSOC: Handle
-				return 0;
+				//Chain and global case - the referenced compositor will know how to handle
+				return refComp->getSourceForTex(texDef->refTexName, mrtIndex);
 			case CompositionTechnique::TS_LOCAL:
 			default:
 				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Referencing local compositor texture",
