@@ -218,7 +218,6 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void createInputDevices()
 		{
-			// 
 			mKeyboard = static_cast<OIS::Keyboard*>(mInputMgr->createInputObject(OIS::OISKeyboard, false));
 			mMouse = static_cast<OIS::Mouse*>(mInputMgr->createInputObject(OIS::OISMouse, false));
 		}
@@ -313,11 +312,18 @@ namespace OgreBites
 			// quit if current sample has ended and cannot run the next one
 			if (mCurrentSample->isDone() && !runNextSample()) return false;
 
-			// capture input devices
-			mKeyboard->capture();
-			mMouse->capture();
+			captureInputDevices();
 
 			return true;
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Captures input device states.
+		-----------------------------------------------------------------------------*/
+		virtual void captureInputDevices()
+		{
+			mKeyboard->capture();
+			mMouse->capture();
 		}
 
 		/*-----------------------------------------------------------------------------

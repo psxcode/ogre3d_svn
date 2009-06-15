@@ -13,20 +13,19 @@ namespace OgreBites
     {
     public:
 
-		/*-----------------------------------------------------------------------------
-		| Constructor that takes an optional sample name.
-		-----------------------------------------------------------------------------*/
-		Sample(const Ogre::String& name = "Ogre Sample")
+		Sample()
         {
-			mName = name;
 			mWindow = 0;
 			mSceneMgr = 0;
 			mDone = true;       // sample has not started
         }
 
-		const Ogre::String& getName()
+		/*-----------------------------------------------------------------------------
+		| Returns name of the sample.
+		-----------------------------------------------------------------------------*/
+		virtual Ogre::String getName()
 		{
-			return mName;
+			return "OGRE Sample";
 		}
 
 		Ogre::SceneManager* getSceneManager()
@@ -150,7 +149,6 @@ namespace OgreBites
 
 		Ogre::RenderWindow* mWindow;     // render window used by the sample context
 		Ogre::SceneManager* mSceneMgr;   // scene manager for this sample
-		Ogre::String mName;              // the name of this sample
 		bool mDone;                      // flag to mark the end of the sample
     };
 
