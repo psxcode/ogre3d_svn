@@ -4,18 +4,19 @@
 #include "Ogre.h"
 #include "Sample.h"
 
+#define OIS_DYNAMIC_LIB
+#include "OIS/OIS.h"
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 #include <CoreFoundation/CoreFoundation.h>
-#endif
 
 /*-----------------------------------------------------------------------------
 | This function will return the appropriate working directory depending
 | on the platform. For Windows, a blank string will suffice. For OS X,
 | however, we need to do a little extra work.
 -----------------------------------------------------------------------------*/
-std::string getWorkingDirectory()
+std::string macBundlePath()
 {
-	#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 	char path[1024];
 	CFBundleRef mainBundle = CFBundleGetMainBundle();
 	assert(mainBundle);
@@ -26,17 +27,17 @@ std::string getWorkingDirectory()
 	CFStringGetCString(cfStringRef, path, 1024, kCFStringEncodingASCII);
 	CFRelease(mainBundleURL);
 	CFRelease(cfStringRef);
-	return std::string(path) + "/Contents/Resources/";
-	#else
-	return "";
-	#endif
+	return std::string(path);
 }
+#endif
 
 namespace OgreBites
 {
-	/*-----------------------------------------------------------------------------
-	| To be documented...
-	-----------------------------------------------------------------------------*/
+	/*=============================================================================
+	| Base class responsible for setting up a common context for samples.
+	| May be subclassed for specific sample types (not specific samples).
+	| Allows one sample to run at a time, while maintaining a sample queue.
+	=============================================================================*/
 	class SampleContext : public Ogre::FrameListener, public Ogre::WindowEventListener
 	{
 	public:
@@ -45,123 +46,302 @@ namespace OgreBites
 		{
 			mRoot = 0;
 			mWindow = 0;
-			mSample = 0;
-			mBlankSample = new Sample();
+			mCurrentSample = 0;
 		}
 
-		~SampleContext()
+		virtual Ogre::RenderWindow* getRenderWindow()
 		{
-			if (mBlankSample) delete mBlankSample;
-		}
-
-		virtual void switchSample(Sample* sample)
-		{
-			// to be implemented...
-
-			mSample = sample;
+			return mWindow;
 		}
 
 		virtual Sample* getCurrentSample()
 		{
-			return mSample;
+			return mCurrentSample;
 		}
 
-		virtual void go(Sample* initialSample = 0)
+		/*-----------------------------------------------------------------------------
+		| Adds a sample to the end of the queue.
+		-----------------------------------------------------------------------------*/
+		virtual void queueSample(Sample* s)
+		{
+			mSampleQueue.push(s);
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Retrieves the next sample in the queue without removing it.
+		-----------------------------------------------------------------------------*/
+		virtual Sample* getNextSample()
+		{
+			if (mSampleQueue.empty()) return 0;
+			return mSampleQueue.front();
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Removes the next sample in the queue without running it.
+		-----------------------------------------------------------------------------*/
+		virtual void skipNextSample()
+		{
+			mSampleQueue.pop();
+		}
+
+		virtual unsigned int getNumQueuedSamples()
+		{
+			return mSampleQueue.size();
+		}
+
+		virtual void clearSampleQueue()
+		{
+			while (!mSampleQueue.empty()) mSampleQueue.pop();
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Quits the current sample and starts a new one.
+		-----------------------------------------------------------------------------*/
+		virtual void runSample(Sample* s)
+		{
+			if (!s) return;
+
+			if (mCurrentSample) mCurrentSample->quit();
+
+			mWindow->removeAllViewports();
+			mWindow->addViewport(0);
+
+			s->start(mWindow);
+
+			mCurrentSample = s;
+		}
+
+		/*-----------------------------------------------------------------------------
+		| This function quits the current sample and starts the next one.
+		| Returns false if no more samples are queued.
+		-----------------------------------------------------------------------------*/
+		virtual bool runNextSample()
+		{
+			if (!mSampleQueue.empty())
+			{
+				runSample(mSampleQueue.front());
+				mSampleQueue.pop();
+				return true;
+			}
+
+			return false;
+		}
+
+		/*-----------------------------------------------------------------------------
+		| This function encapsulates the entire lifetime of the context. It calls
+		| setup, starts the first queued sample, and enters the rendering loop.
+		| When rendering finishes, the context shuts down.
+		-----------------------------------------------------------------------------*/
+		virtual void go()
 		{
 			if (!setup()) return;
-
-			if (initialSample) switchSample(initialSample);
-			else switchSample(mBlankSample);
-
-			mRoot->startRendering();
-
+			if (runNextSample()) mRoot->startRendering();  // start initial sample and enter render loop
 			shutdown();
 		}
 
 	protected:
 
+		/*-----------------------------------------------------------------------------
+		| Sets up the context - the parts that are required by every sample to run.
+		-----------------------------------------------------------------------------*/
 		virtual bool setup()
 		{
-			// NOTE: override to setup common elements like menus, sorta like this...
-			/*
-				virtual bool setup()
-				{
-					if (!SampleContext::setup()) return false;
-					// setup menu
-					return true;
-				}
-			*/
+			// get platform-specific working directory
+			Ogre::String workDir = "";
+			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+			workDir = macBundlePath() + "/Contents/Resources/";
+			#endif
 
-			Ogre::String workDir = getWorkingDirectory();
 			mRoot = OGRE_NEW Ogre::Root(workDir + "Plugins.cfg", workDir + "Ogre.cfg", workDir + "Ogre.log");
 
-			if (!configure()) return false;
+			if (!configure()) return false;    // configure the settings
 
 			createWindow();
-
 			setupInput();
-
 			locateResources();
-
 			loadResources();
 
-			mRoot->addFrameListener(this);
+			Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
+			// adds context as listener to process context-level (above the sample level) events
+			mRoot->addFrameListener(this);
 			Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
 
 			return true;
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Configures the startup settings for OGRE. I use the config dialog here,
+		| but you can also restore from a config file.
+		-----------------------------------------------------------------------------*/
 		virtual bool configure()
 		{
 			return mRoot->showConfigDialog();
+			// return mRoot->restoreConfig();
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Creates the render window to be used for this context. I use an auto-created
+		| window here, but you can also create an external window if you wish.
+		| Just don't forget to initialise the root.
+		-----------------------------------------------------------------------------*/
 		virtual void createWindow()
 		{
 			mWindow = mRoot->initialise(true);
-			mWindow->addViewport(0);
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Sets up OIS input.
+		-----------------------------------------------------------------------------*/
 		virtual void setupInput()
 		{
-			// to be implemented...
+			OIS::ParamList pl;
+			size_t winHandle = 0;
+			std::ostringstream winHandleStr;
+
+			mWindow->getCustomAttribute("WINDOW", &winHandle);
+			winHandleStr << winHandle;
+
+			pl.insert(std::make_pair("WINDOW", winHandleStr.str()));
+
+			mInputMgr = OIS::InputManager::createInputSystem(pl);
+
+			createInputDevices();      // create the specific input devices
+
+			windowResized(mWindow);    // do an initial adjustment of mouse area
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Creates the individual input devices. I only create unbuffered keyboard
+		| and mouse here because they are the most common, but you can override this
+		| method for other modes and devices.
+		-----------------------------------------------------------------------------*/
+		virtual void createInputDevices()
+		{
+			// 
+			mKeyboard = static_cast<OIS::Keyboard*>(mInputMgr->createInputObject(OIS::OISKeyboard, false));
+			mMouse = static_cast<OIS::Mouse*>(mInputMgr->createInputObject(OIS::OISMouse, false));
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Finds context-wide resource groups. I load paths from a config file here,
+		| but you can choose your resource locations however you want.
+		-----------------------------------------------------------------------------*/
 		virtual void locateResources()
 		{
+			// load resource paths from config file
+			Ogre::ConfigFile cf;
+			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+			cf.load(macBundlePath() + "/Contents/Resources/Resources.cfg");
+			#else
+			cf.load("Resources.cfg");
+			#endif
+
+			Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
+			Ogre::String sec, type, arch;
+
+			// go through all specified resource groups
+			while (seci.hasMoreElements())
+			{
+				sec = seci.peekNextKey();
+				Ogre::ConfigFile::SettingsMultiMap* settings = seci.getNext();
+				Ogre::ConfigFile::SettingsMultiMap::iterator i;
+
+				// go through all resource paths
+				for (i = settings->begin(); i != settings->end(); i++)
+				{
+					type = i->first;
+					arch = i->second;
+
+					#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+					if (!Ogre::StringUtil::startsWith(archName, "/", false)) // only adjust relative dirs
+						archName = String(macBundlePath() + "/" + archName);
+					#endif
+					Ogre::ResourceGroupManager::getSingleton().addResourceLocation(arch, type, sec);
+				}
+			}
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Loads context-wide resource groups. I chose here to simply initialise all
+		| groups, but you can fully load specific ones if you wish.
+		-----------------------------------------------------------------------------*/
 		virtual void loadResources()
 		{
-			Ogre::ResourceGroupManager::getSingletonPtr()->initialiseAllResourceGroups();
+			Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Cleans up and shuts down the context.
+		-----------------------------------------------------------------------------*/
 		virtual void shutdown()
 		{
-			shutdownInput();
-
+			// remove window event listener before shutting down OIS
 			Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
 
-			if (mRoot) OGRE_DELETE mRoot;
+			shutdownInput();
+
+			if (mRoot) 
+			{
+				OGRE_DELETE mRoot;
+				mRoot = 0;
+			}
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Destroys OIS input devices and the input manager.
+		-----------------------------------------------------------------------------*/
 		virtual void shutdownInput()
 		{
-			// to be implemented...
+			if (mInputMgr)
+			{
+				mInputMgr->destroyInputObject(mKeyboard);
+				mInputMgr->destroyInputObject(mMouse);
+
+				OIS::InputManager::destroyInputSystem(mInputMgr);
+				mInputMgr = 0;
+			}
 		}
 			
+		/*-----------------------------------------------------------------------------
+		| Processes frame events.
+		-----------------------------------------------------------------------------*/
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
+			// quit if window was closed
 			if (mWindow->isClosed()) return false;
+			// quit if current sample has ended and cannot run the next one
+			if (mCurrentSample->isDone() && !runNextSample()) return false;
+
+			// capture input devices
+			mKeyboard->capture();
+			mMouse->capture();
 
 			return true;
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Processes window size change event. Adjusts mouse's region to match that
+		| of the window. You could also override this method to prevent resizing.
+		-----------------------------------------------------------------------------*/
+		virtual void windowResized(Ogre::RenderWindow* rw)
+		{
+			const OIS::MouseState& ms = mMouse->getMouseState();
+			ms.width = rw->getWidth();
+			ms.height = rw->getHeight();
+		}
+
+		// OGRE objects
 		Ogre::Root* mRoot;
 		Ogre::RenderWindow* mWindow;
-		Sample* mSample;
-		Sample* mBlankSample;
+
+		// OIS objects
+		OIS::InputManager* mInputMgr;
+		OIS::Keyboard* mKeyboard;
+		OIS::Mouse* mMouse;
+
+		Sample* mCurrentSample;         // currently running sample
+		SampleQueue mSampleQueue;       // queued samples
 	};
 }
 
