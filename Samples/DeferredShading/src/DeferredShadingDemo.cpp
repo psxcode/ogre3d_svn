@@ -33,6 +33,9 @@ This demo source file is in the public domain.
 #include "DeferredShading.h"
 #include "MLight.h"
 #include "GeomUtils.h"
+#include "DeferredShadingLogic.h"
+#include "GbufferSchemeHandler.h"
+
 class SharedData : public Ogre::Singleton<SharedData> {
 
 public:
@@ -224,6 +227,11 @@ protected:
                 "run this demo. Sorry!", 
                 "DeferredShading::createScene");
         }
+
+		//Hook up the compositor logic and scheme handlers.
+		//This can theoretically happen in a loaded plugin, but in this case the demo contains the code.
+		MaterialManager::getSingleton().addListener(new GBufferSchemeHandler, "GBuffer");
+		CompositorManager::getSingleton().registerCompositorLogic("deferred", new DeferredShadingLogic);
 
 		// Prepare athene mesh for normalmapping
         MeshPtr pAthene = MeshManager::getSingleton().load("athene.mesh", 

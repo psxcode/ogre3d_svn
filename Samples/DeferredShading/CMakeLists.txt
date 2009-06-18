@@ -7,6 +7,8 @@ set(HEADER_FILES
   include/LightMaterialGenerator.h
   include/MaterialGenerator.h
   include/MLight.h
+  include/DeferredShadingLogic.h
+  include/GBufferSchemeHandler.h
 )
 set(SOURCE_FILES 
   src/AmbientLight.cpp
@@ -16,6 +18,8 @@ set(SOURCE_FILES
   src/LightMaterialGenerator.cpp
   src/MaterialGenerator.cpp
   src/MLight.cpp
+  src/DeferredShadingLogic.cpp
+  src/GBufferSchemeHandler.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
