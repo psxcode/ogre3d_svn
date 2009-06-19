@@ -49,12 +49,12 @@ namespace OgreBites
 			mCurrentSample = 0;
 		}
 
-		virtual Ogre::RenderWindow* getRenderWindow()
+		Ogre::RenderWindow* getRenderWindow()
 		{
 			return mWindow;
 		}
 
-		virtual Sample* getCurrentSample()
+		Sample* getCurrentSample()
 		{
 			return mCurrentSample;
 		}
@@ -62,7 +62,7 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Adds a sample to the end of the queue.
 		-----------------------------------------------------------------------------*/
-		virtual void queueSample(Sample* s)
+		void queueSample(Sample* s)
 		{
 			mSampleQueue.push(s);
 		}
@@ -70,7 +70,7 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Retrieves the next sample in the queue without removing it.
 		-----------------------------------------------------------------------------*/
-		virtual Sample* getNextSample()
+		Sample* getNextSample()
 		{
 			if (mSampleQueue.empty()) return 0;
 			return mSampleQueue.front();
@@ -79,17 +79,17 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Removes the next sample in the queue without running it.
 		-----------------------------------------------------------------------------*/
-		virtual void skipNextSample()
+		void skipNextSample()
 		{
 			mSampleQueue.pop();
 		}
 
-		virtual unsigned int getNumQueuedSamples()
+		unsigned int getNumQueuedSamples()
 		{
 			return mSampleQueue.size();
 		}
 
-		virtual void clearSampleQueue()
+		void clearQueuedSamples()
 		{
 			while (!mSampleQueue.empty()) mSampleQueue.pop();
 		}
@@ -101,21 +101,22 @@ namespace OgreBites
 		{
 			if (!s) return;
 
-			if (mCurrentSample) mCurrentSample->quit();
+			if (mCurrentSample) mCurrentSample->quit();  // quit current sample
 
+			// reset viewport layout to default
 			mWindow->removeAllViewports();
 			mWindow->addViewport(0);
 
-			s->start(mWindow);
+			s->start(mWindow, mKeyboard, mMouse);        // start new sample
 
 			mCurrentSample = s;
 		}
 
 		/*-----------------------------------------------------------------------------
-		| This function quits the current sample and starts the next one.
-		| Returns false if no more samples are queued.
+		| This function quits the current sample, starts the next one in the queue,
+		| and removes it from the queue. Returns false if no samples are queued.
 		-----------------------------------------------------------------------------*/
-		virtual bool runNextSample()
+		bool runNextSample()
 		{
 			if (!mSampleQueue.empty())
 			{
@@ -128,23 +129,26 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| This function encapsulates the entire lifetime of the context. It calls
-		| setup, starts the first queued sample, and enters the rendering loop.
-		| When rendering finishes, the context shuts down.
+		| This function encapsulates the entire lifetime of the context.
 		-----------------------------------------------------------------------------*/
 		virtual void go()
 		{
-			if (!setup()) return;
+			createRoot();                     // create root
+			if (!oneTimeConfig()) return;     // configure startup settings
+			if (!setup()) return;             // setup context
+
 			if (runNextSample()) mRoot->startRendering();  // start initial sample and enter render loop
-			shutdown();
+
+			shutdown();                       // shutdown context
+			if (mRoot) OGRE_DELETE mRoot;     // destroy root
 		}
 
 	protected:
 
 		/*-----------------------------------------------------------------------------
-		| Sets up the context - the parts that are required by every sample to run.
+		| Creates the OGRE root.
 		-----------------------------------------------------------------------------*/
-		virtual bool setup()
+		virtual void createRoot()
 		{
 			// get platform-specific working directory
 			Ogre::String workDir = "";
@@ -153,9 +157,24 @@ namespace OgreBites
 			#endif
 
 			mRoot = OGRE_NEW Ogre::Root(workDir + "Plugins.cfg", workDir + "Ogre.cfg", workDir + "Ogre.log");
+		}
 
-			if (!configure()) return false;    // configure the settings
+		/*-----------------------------------------------------------------------------
+		| Configures the startup settings for OGRE. I use the config dialog here,
+		| but you can also restore from a config file. Note that this only happens
+		| the first time you start the context.
+		-----------------------------------------------------------------------------*/
+		virtual bool oneTimeConfig()
+		{
+			return mRoot->showConfigDialog();
+			// return mRoot->restoreConfig();
+		}
 
+		/*-----------------------------------------------------------------------------
+		| Sets up the context after configuration.
+		-----------------------------------------------------------------------------*/
+		virtual bool setup()
+		{
 			createWindow();
 			setupInput();
 			locateResources();
@@ -168,16 +187,6 @@ namespace OgreBites
 			Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
 
 			return true;
-		}
-
-		/*-----------------------------------------------------------------------------
-		| Configures the startup settings for OGRE. I use the config dialog here,
-		| but you can also restore from a config file.
-		-----------------------------------------------------------------------------*/
-		virtual bool configure()
-		{
-			return mRoot->showConfigDialog();
-			// return mRoot->restoreConfig();
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -271,6 +280,36 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
+		| Reconfigures the context with a specific render system and options.
+		| Attempts to preserve the current sample state.
+		-----------------------------------------------------------------------------*/
+		virtual void reconfigure(const Ogre::String& rsName, Ogre::NameValuePairList& rsOptions)
+		{
+			// save current sample state and quit it
+			Ogre::NameValuePairList sampleState;
+			mCurrentSample->saveState(sampleState);
+			mCurrentSample->quit();
+
+			shutdown();
+			if (mRoot) OGRE_DELETE mRoot;
+			createRoot();
+
+			mRoot->setRenderSystem(mRoot->getRenderSystemByName(rsName));   // set new render system
+
+			// set all given render system options
+			for (Ogre::NameValuePairList::iterator it = rsOptions.begin(); it != rsOptions.end(); it++)
+			{
+				mRoot->getRenderSystem()->setConfigOption(it->first, it->second);
+			}
+
+			setup();
+
+			// restart sample and restore its state
+			mCurrentSample->start(mWindow, mKeyboard, mMouse);
+			mCurrentSample->restoreState(sampleState);
+		}
+
+		/*-----------------------------------------------------------------------------
 		| Cleans up and shuts down the context.
 		-----------------------------------------------------------------------------*/
 		virtual void shutdown()
@@ -337,17 +376,17 @@ namespace OgreBites
 			ms.height = rw->getHeight();
 		}
 
-		// OGRE objects
-		Ogre::Root* mRoot;
-		Ogre::RenderWindow* mWindow;
+		Ogre::Root* mRoot;              // OGRE root
+		Ogre::RenderWindow* mWindow;    // render window
 
-		// OIS objects
-		OIS::InputManager* mInputMgr;
-		OIS::Keyboard* mKeyboard;
-		OIS::Mouse* mMouse;
+		OIS::InputManager* mInputMgr;   // OIS input manager
+		OIS::Keyboard* mKeyboard;       // keyboard device
+		OIS::Mouse* mMouse;             // mouse device
 
 		Sample* mCurrentSample;         // currently running sample
 		SampleQueue mSampleQueue;       // queued samples
+
+		bool mConfigured;               // true if OGRE has already been configured
 	};
 }
 

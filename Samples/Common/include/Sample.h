@@ -3,6 +3,9 @@
 
 #include "Ogre.h"
 
+#define OIS_DYNAMIC_LIB
+#include "OIS/OIS.h"
+
 namespace OgreBites
 {
 	/*=============================================================================
@@ -28,12 +31,46 @@ namespace OgreBites
 			return "OGRE Sample";
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Returns a description of the sample.
+		-----------------------------------------------------------------------------*/
+		virtual Ogre::String getDescription()
+		{
+			return "";
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Tests to see if target machine meets any special requirements of
+		| this sample. Signal a failure by throwing an exception.
+		-----------------------------------------------------------------------------*/
+		virtual void testCapabilities()
+		{
+		}
+
+		/*-----------------------------------------------------------------------------
+		| If this sample requires a specific render system to run, this method
+		| will be used to return its name.
+		-----------------------------------------------------------------------------*/
+		virtual Ogre::String getRequiredRenderSystem()
+		{
+			return "";
+		}
+
+		/*-----------------------------------------------------------------------------
+		| If this sample requires specific plugins to run, this method will be
+		| used to return their names.
+		-----------------------------------------------------------------------------*/
+		virtual Ogre::StringVector getRequiredPlugins()
+		{
+			return Ogre::StringVector();
+		}
+
 		Ogre::SceneManager* getSceneManager()
 		{
 			return mSceneMgr;
 		}
 
-		virtual bool isDone()
+		bool isDone()
 		{
 			return mDone;
 		}
@@ -41,13 +78,15 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Starts a sample. Used by the SampleContext class. Do not call directly.
 		-----------------------------------------------------------------------------*/
-		virtual void start(Ogre::RenderWindow* rw)
+		virtual void start(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
 		{
 			if (!mDone) return;    // sample already started
 
-			mWindow = rw;          // save off render window from context
+			// save off objects provided by context
+			mWindow = window;
+			mKeyboard = keyboard;
+			mMouse = mouse;
 
-			testCapabilities();
 			locateResources();
 			loadResources();
 			createSceneManager();
@@ -88,16 +127,24 @@ namespace OgreBites
 			mDone = true;          // sample now ended
 		}
 
-    protected:
-
 		/*-----------------------------------------------------------------------------
-		| Tests to see if target machine meets any special requirements of
-		| this sample. Signal a failure by throwing an exception, which can then be
-		| caught by an extended SampleContext if you wish.
+		| Saves the sample state to a string map.
+		| Optional. Used by SampleContext::reset.
 		-----------------------------------------------------------------------------*/
-		virtual void testCapabilities()
+		virtual void saveState(Ogre::NameValuePairList& state)
 		{
 		}
+
+		/*-----------------------------------------------------------------------------
+		| Restores the sample state from a string map.
+		| Optional. Used by SampleContext::reset.
+		-----------------------------------------------------------------------------*/
+		virtual void restoreState(const Ogre::NameValuePairList state)
+		{
+			state.find("BLAH");
+		}
+
+    protected:
 
 		/*-----------------------------------------------------------------------------
 		| Finds sample-specific resources. No such effort is made for most samples,
@@ -147,9 +194,13 @@ namespace OgreBites
 			}
 		}
 
-		Ogre::RenderWindow* mWindow;     // render window used by the sample context
-		Ogre::SceneManager* mSceneMgr;   // scene manager for this sample
-		bool mDone;                      // flag to mark the end of the sample
+		Ogre::RenderWindow* mWindow;      // context render window
+		OIS::Keyboard* mKeyboard;         // context keyboard device
+		OIS::Mouse* mMouse;               // context mouse device
+
+		Ogre::SceneManager* mSceneMgr;    // scene manager for this sample
+
+		bool mDone;                       // flag to mark the end of the sample
     };
 
 	typedef std::queue<Sample*> SampleQueue;    // typedef for convenience
