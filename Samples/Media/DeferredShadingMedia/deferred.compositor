@@ -16,6 +16,8 @@ compositor DeferredShading/GBuffer
 			{
 			}
 			
+			material_scheme GBuffer
+			
 			// everything but the lights and their meshes
 			// could do this with something like a visibility mask too
 			pass render_scene

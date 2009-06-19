@@ -247,11 +247,9 @@ protected:
 
 		// Create an entity from a model (will be loaded automatically)
 		Entity* ogreHead = mSceneMgr->createEntity("Head", "ogrehead.mesh");
-		ogreHead->getSubEntity(0)->setMaterialName("DeferredDemo/Ogre/Eyes");// eyes
-		ogreHead->getSubEntity(1)->setMaterialName("DeferredDemo/Ogre/Skin"); 
-		ogreHead->getSubEntity(2)->setMaterialName("DeferredDemo/Ogre/EarRing"); // earrings
-		ogreHead->getSubEntity(3)->setMaterialName("DeferredDemo/Ogre/Tusks"); // tusks
 		rootNode->createChildSceneNode( "Head" )->attachObject( ogreHead );
+		//For the Ogre head, we do not supply a unique material, but will
+		//let the material handler make the arrangements by itself.
 
 		// Add a whole bunch of extra entities to fill the scene a bit
 		Entity *cloneEnt;
