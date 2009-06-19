@@ -15,10 +15,20 @@ LGPL like the rest of the engine.
 #ifndef _DEFERREDSHADINGLOGIC_H
 #define _DEFERREDSHADINGLOGIC_H
 
+#include <OgreCompositorInstance.h>
 #include <OgreCompositorLogic.h>
+#include <map>
 
 class DeferredShadingLogic : public Ogre::CompositorLogic
 {
+public:
+
+	virtual void compositorInstanceCreated(Ogre::CompositorInstance* newInstance);
+
+	virtual void compositorInstanceDestroyed(Ogre::CompositorInstance* destroyedInstance);
+private:
+	typedef std::map<Ogre::CompositorInstance*, Ogre::CompositorInstance::Listener*> ListenerMap;
+	ListenerMap mListeners;
 
 };
 

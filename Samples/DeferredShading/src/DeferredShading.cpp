@@ -60,6 +60,11 @@ DeferredShadingSystem::DeferredShadingSystem(
 	mSceneMgr(sm), mViewport(vp), mCamera(cam),
 		mLightMaterialGenerator(0)
 {
+	
+}
+
+void DeferredShadingSystem::initialize()
+{
 	for(int i=0; i<DSM_COUNT; ++i)
 		mInstance[i]=0;
 
@@ -67,11 +72,9 @@ DeferredShadingSystem::DeferredShadingSystem(
 	createAmbientLight();
 
 	mActive = false;
+	
 	mCurrentMode = DSM_SHOWLIT;
 	setActive(true);
-
-	mLightMaterialsDirty=true;
-
 }
 
 DeferredShadingSystem::~DeferredShadingSystem()
@@ -83,17 +86,6 @@ DeferredShadingSystem::~DeferredShadingSystem()
 	}
 	// Delete the ambient light
 	delete mAmbientLight;
-
-	if (mCurrentMode==DSM_SHOWLIT && mInstance[mCurrentMode]->getEnabled())
-	{
-		RenderTarget* renderTarget = mGBufferInstance->getRenderTarget("mrt_output");
-		assert(renderTarget);
-
-		LogManager::getSingleton().logMessage("Removing Listener from:");
-		LogManager::getSingleton().logMessage(renderTarget->getName());
-
-		renderTarget->removeListener(this);
-	}
 
 	CompositorChain *chain = CompositorManager::getSingleton().getCompositorChain(mViewport);
 	for(int i=0; i<DSM_COUNT; ++i)
@@ -110,22 +102,6 @@ void DeferredShadingSystem::setMode(DSMode mode)
 	if (mCurrentMode == mode && mInstance[mode]->getEnabled()==mActive)
 		return;
 
-	// if the mode is getting disabled 
-	// -> we need to remove self as listener only if it was enabled to begin with
-	// This should happen before the setEnabled(false) is called
-	if (  mCurrentMode == DSM_SHOWLIT
-	   && mInstance[mCurrentMode]->getEnabled())
-	{
-		RenderTarget* renderTarget = mGBufferInstance->getRenderTarget("mrt_output");
-		assert(renderTarget);
-
-		LogManager::getSingleton().logMessage("Removing Listener from:");
-		LogManager::getSingleton().logMessage(renderTarget->getName());
-
-		// remove the listener prior to the texture getting possibly reclaimed
-		renderTarget->removeListener(this);
-	}
-
 	for(int i=0; i<DSM_COUNT; ++i)
 	{
 		if(i == mode)
@@ -138,28 +114,6 @@ void DeferredShadingSystem::setMode(DSMode mode)
 		}
 	}
 	mCurrentMode = mode;
-
-	// if some mode got enabled,
-	// set self as listener so that the light materials can be set up if dirty. This should happen after the setEnabled(true)
-	// is called
-	if (  mCurrentMode == DSM_SHOWLIT
-	   && mInstance[mCurrentMode]->getEnabled())
-	{
-		RenderTarget* renderTarget = mGBufferInstance->getRenderTarget("mrt_output");
-		assert(renderTarget);
-
-		LogManager::getSingleton().logMessage("Adding Listener to:");
-		LogManager::getSingleton().logMessage(renderTarget->getName());
-		renderTarget->addListener(this);
-
-		// Additionally, mark the light materials as always dirty
-		mLightMaterialsDirty = true;
-		mDirtyLightList.clear();
-		mDirtyLightList = mLights;
-
-		// set up the ambient light here
-		setUpAmbientLightMaterial();
-	}
 }
 
 void DeferredShadingSystem::setActive(bool active)
@@ -184,10 +138,8 @@ MLight *DeferredShadingSystem::createMLight()
 	MLight *rv = new MLight(mLightMaterialGenerator);
 	mLights.insert(rv);
 
-	if (mCurrentMode==DSM_SHOWLIT)
-	{
-		mDirtyLightList.insert(rv);
-		mLightMaterialsDirty = true;
+	if (!mTexName0.empty()) {
+		setupMaterial(rv->getMaterial(), mTexName0, mTexName1);
 	}
 
 	return rv;
@@ -219,24 +171,12 @@ void DeferredShadingSystem::createResources(void)
 	mInstance[DSM_SHOWCOLOUR] = compMan.addCompositor(mViewport, "DeferredShading/ShowColour");
 }
 
-void DeferredShadingSystem::setupLightMaterials(void)
+void DeferredShadingSystem::setupLightMaterials()
 {
-	assert( mLightMaterialsDirty 
-		&& mCurrentMode == DSM_SHOWLIT
-		&& mInstance[mCurrentMode]->getEnabled()==true);
-
-	CompositorInstance* ci = mInstance[mCurrentMode];
-
-	String mrt0 = ci->getTextureInstanceName("mrt_output", 0);
-	String mrt1 = ci->getTextureInstanceName("mrt_output", 1);
-
-	for(LightList::iterator it = mDirtyLightList.begin(); it != mDirtyLightList.end(); ++it)
+	for(LightList::iterator it = mLights.begin(); it != mLights.end(); ++it)
 	{
-		MLight* light = *it;
-		setupMaterial(light->getMaterial(), mrt0, mrt1);
-	}
-
-	mLightMaterialsDirty = false;
+		setupMaterial((*it)->getMaterial(), mTexName0, mTexName1);
+	}	
 }
 
 void DeferredShadingSystem::setupMaterial(const MaterialPtr &mat
@@ -259,13 +199,7 @@ void DeferredShadingSystem::createAmbientLight(void)
 
 void DeferredShadingSystem::setUpAmbientLightMaterial(void)
 {
-	assert(mAmbientLight 
-		&& mCurrentMode==DSM_SHOWLIT 
-		&& mInstance[mCurrentMode]->getEnabled()==true);
-
-	String mrt0 = mInstance[mCurrentMode]->getTextureInstanceName("mrt_output", 0);
-	String mrt1 = mInstance[mCurrentMode]->getTextureInstanceName("mrt_output", 1);
-	setupMaterial(mAmbientLight->getMaterial(), mrt0, mrt1);
+	setupMaterial(mAmbientLight->getMaterial(), mTexName0, mTexName1);
 }
 
 void DeferredShadingSystem::logCurrentMode(void)
@@ -285,19 +219,15 @@ void DeferredShadingSystem::logCurrentMode(void)
 	if (mCurrentMode==DSM_SHOWLIT)
 	{			
 		LogManager::getSingleton().logMessage("Current mrt outputs are:");
-		LogManager::getSingleton().logMessage(ci->getTextureInstanceName("mrt_output", 0));
-		LogManager::getSingleton().logMessage(ci->getTextureInstanceName("mrt_output", 1));
+		LogManager::getSingleton().logMessage(mTexName0);
+		LogManager::getSingleton().logMessage(mTexName1);
 	}
 }
 
-void DeferredShadingSystem::preRenderTargetUpdate(const RenderTargetEvent& evt)
+void DeferredShadingSystem::setLightTextures(const Ogre::String& texName0, const Ogre::String& texName1)
 {
-	if (mLightMaterialsDirty)
-	{
-		assert(mCurrentMode==DSM_SHOWLIT
-			&& mInstance[mCurrentMode]->getEnabled()
-			&& (evt.source == mGBufferInstance->getRenderTarget("mrt_output"))
-			);
-		setupLightMaterials();
-	}
+	mTexName0 = texName0;
+	mTexName1 = texName1;
+	setupLightMaterials();
+	setUpAmbientLightMaterial();
 }

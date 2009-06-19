@@ -9,6 +9,7 @@ set(HEADER_FILES
   include/MLight.h
   include/DeferredShadingLogic.h
   include/GBufferSchemeHandler.h
+  include/SharedData.h
 )
 set(SOURCE_FILES 
   src/AmbientLight.cpp

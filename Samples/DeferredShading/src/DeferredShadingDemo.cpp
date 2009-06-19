@@ -35,44 +35,8 @@ This demo source file is in the public domain.
 #include "GeomUtils.h"
 #include "DeferredShadingLogic.h"
 #include "GbufferSchemeHandler.h"
+#include "SharedData.h"
 
-class SharedData : public Ogre::Singleton<SharedData> {
-
-public:
-
-	SharedData()
-		: iRoot(0),
-		  iCamera(0),
-		  iWindow(0),
-		  mAnimState(0),
-		  mMLAnimState(0),
-		  iMainLight(0)
-	{
-		iActivate = false;
-	}
-
-		~SharedData() {}
-
-		// shared data across the application
-		Real iLastFrameTime;
-		Root *iRoot;
-		Camera *iCamera;
-		RenderWindow *iWindow;
-
-		DeferredShadingSystem *iSystem;
-		bool iActivate;
-		bool iGlobalActivate;
-
-		// Animation state for big lights
-		AnimationState* mAnimState;
-		// Animation state for light swarm
-		AnimationState* mMLAnimState;
-
-		MLight *iMainLight;
-
-		vector<Node*>::type mLightNodes;
-
-};
 template<> SharedData* Singleton<SharedData>::ms_Singleton = 0;
 
 class RenderToTextureFrameListener : public ExampleFrameListener
@@ -231,7 +195,7 @@ protected:
 		//Hook up the compositor logic and scheme handlers.
 		//This can theoretically happen in a loaded plugin, but in this case the demo contains the code.
 		MaterialManager::getSingleton().addListener(new GBufferSchemeHandler, "GBuffer");
-		CompositorManager::getSingleton().registerCompositorLogic("deferred", new DeferredShadingLogic);
+		CompositorManager::getSingleton().registerCompositorLogic("DeferredLogic", new DeferredShadingLogic);
 
 		// Prepare athene mesh for normalmapping
         MeshPtr pAthene = MeshManager::getSingleton().load("athene.mesh", 
@@ -324,6 +288,8 @@ protected:
 		overlay->show();
 
 		mSystem = new DeferredShadingSystem(mWindow->getViewport(0), mSceneMgr, mCamera);
+		SharedData::getSingleton().iSystem = mSystem;
+		mSystem->initialize();
 
 		// Create main, moving light
 		MLight* l1 = mSystem->createMLight();//"MainLight");
@@ -363,7 +329,7 @@ protected:
 		SharedData::getSingleton().iWindow = mWindow;
 		SharedData::getSingleton().iActivate = true;
 		SharedData::getSingleton().iGlobalActivate = true;
-		SharedData::getSingleton().iSystem = mSystem;
+		
 		SharedData::getSingleton().iMainLight = l1;
 	}
 

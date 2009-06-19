@@ -68,6 +68,8 @@ public:
 		DSM_COUNT = 4
 	};
 
+	void initialize();
+
 	/** Set rendering mode (one of DSMode)
 	 */
 	void setMode(DSMode mode);
@@ -91,8 +93,11 @@ public:
 	/// Visibility mask for post-processing geometry (lights, unlit particles)
 	static const Ogre::uint32 PostVisibilityMask = 0x00000002;
 
-	// Render Target Listener overrides
-	virtual void preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
+	// when you enable the compositor, if the compositor is the lit mode, we have to set up the light materials 
+	// to that of the mrt
+	void setupLightMaterials();
+
+	void setLightTextures(const Ogre::String& texName0, const Ogre::String& texName1);
 protected:
 	Ogre::Viewport *mViewport;
 	Ogre::SceneManager *mSceneMgr;
@@ -108,10 +113,7 @@ protected:
 	typedef Ogre::set<MLight*>::type LightList;
 
 	LightList mLights;
-
-	bool mLightMaterialsDirty;
-	LightList mDirtyLightList;
-
+	
 	MaterialGenerator *mLightMaterialGenerator;
 
 	void createAmbientLight(void);
@@ -121,11 +123,8 @@ protected:
     void createResources();
 	void initialiseLightGeometry();
 
-	// iterates through all the lights and sets up their materials
-
-	// when you enable the compositor, if the compositor is the lit mode, we have to set up the light materials 
-	// to that of the mrt
-	void setupLightMaterials(void);
+	Ogre::String mTexName0;
+	Ogre::String mTexName1;
 
 	// sets up the materials' pass' texture units 0 and 1 to texName0 and texName1
 	void setupMaterial(const Ogre::MaterialPtr &mat

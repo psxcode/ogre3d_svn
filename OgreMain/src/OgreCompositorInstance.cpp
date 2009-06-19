@@ -92,12 +92,13 @@ void CompositorInstance::setEnabled(bool value)
         }
 
 		//Notify compositor logic
-		const String& logicName = mTechnique->getCompositorLogicName();
-		if (!logicName.empty())
-		{
-			CompositorManager::getSingleton().
-				getCompositorLogic(logicName)->compositorInstanceEnabledChanged(this, value);
-		}
+		//TODO GSOC : Decide if we should bring this back, remove it or add to CompositorInstanceListener
+		//const String& logicName = mTechnique->getCompositorLogicName();
+		//if (!logicName.empty())
+		//{
+		//	CompositorManager::getSingleton().
+		//		getCompositorLogic(logicName)->compositorInstanceEnabledChanged(this, value);
+		//}
 
         /// Notify chain state needs recompile.
         mChain->_markDirty();
@@ -700,7 +701,8 @@ void CompositorInstance::createResources(bool forResizeOnly)
 			camera->_notifyViewport(oldViewport);
 		}
     }
-    
+
+	_fireNotifyResourcesCreated(forResizeOnly);
 }
 //---------------------------------------------------------------------
 void CompositorInstance::deriveTextureRenderTargetOptions(
@@ -980,6 +982,13 @@ void CompositorInstance::_fireNotifyMaterialRender(uint32 pass_id, MaterialPtr &
 		(*i)->notifyMaterialRender(pass_id, mat);
 }
 //-----------------------------------------------------------------------
+void CompositorInstance::_fireNotifyResourcesCreated(bool forResizeOnly)
+{
+	Listeners::iterator i, iend=mListeners.end();
+	for(i=mListeners.begin(); i!=iend; ++i)
+		(*i)->notifyResourcesCreated(forResizeOnly);
+}
+//-----------------------------------------------------------------------
 CompositorInstance::RenderSystemOperation::~RenderSystemOperation()
 {
 }
@@ -991,6 +1000,9 @@ void CompositorInstance::Listener::notifyMaterialSetup(uint32 pass_id, MaterialP
 {
 }
 void CompositorInstance::Listener::notifyMaterialRender(uint32 pass_id, MaterialPtr &mat)
+{
+}
+void CompositorInstance::Listener::notifyResourcesCreated(bool forResizeOnly)
 {
 }
 

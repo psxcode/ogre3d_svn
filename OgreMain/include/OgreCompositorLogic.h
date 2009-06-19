@@ -59,10 +59,6 @@ namespace Ogre {
 			The chain that contained the compositor is still alive during this call.
         */
 		virtual void compositorInstanceDestroyed(CompositorInstance* destroyedInstance) {}
-
-		/** Called when a compositor instance's enabled state has changed
-        */
-		virtual void compositorInstanceEnabledChanged(CompositorInstance* instance, bool enabled) {}
 	};
 	/** @} */
 	/** @} */
