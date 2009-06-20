@@ -73,6 +73,7 @@ void DeferredShadingSystem::initialize()
 
 	mActive = false;
 	
+	mSSAO = false;
 	mCurrentMode = DSM_SHOWLIT;
 	setActive(true);
 }
@@ -113,9 +114,28 @@ void DeferredShadingSystem::setMode(DSMode mode)
 			mInstance[i]->setEnabled(false);
 		}
 	}
+
 	mCurrentMode = mode;
+
+	mSSAOInstance->setEnabled(mActive && mSSAO && mCurrentMode == DSM_SHOWLIT);
 }
 
+void DeferredShadingSystem::setSSAO(bool ssao)
+{
+	if (ssao != mSSAO) 
+	{
+		mSSAO = ssao;
+		if (mActive && mCurrentMode == DSM_SHOWLIT)
+		{
+			mSSAOInstance->setEnabled(ssao);
+		}
+	}
+}
+	
+bool DeferredShadingSystem::getSSAO() const
+{
+	return mSSAO;
+}
 void DeferredShadingSystem::setActive(bool active)
 {
 	if (mActive != active)
@@ -169,6 +189,9 @@ void DeferredShadingSystem::createResources(void)
 	mInstance[DSM_SHOWNORMALS] = compMan.addCompositor(mViewport, "DeferredShading/ShowNormals");
 	mInstance[DSM_SHOWDSP] = compMan.addCompositor(mViewport, "DeferredShading/ShowDepthSpecular");
 	mInstance[DSM_SHOWCOLOUR] = compMan.addCompositor(mViewport, "DeferredShading/ShowColour");
+
+	mInstance[DSM_SHOWCOLOUR] = compMan.addCompositor(mViewport, "DeferredShading/ShowColour");
+	mSSAOInstance =  compMan.addCompositor(mViewport, "DeferredShading/SSAO");
 }
 
 void DeferredShadingSystem::setupLightMaterials()

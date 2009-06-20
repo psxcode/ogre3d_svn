@@ -76,6 +76,9 @@ public:
 
 	DSMode getMode(void) const;
 
+	void setSSAO(bool ssao);
+	
+	bool getSSAO() const;
 	/** Activate or deactivate system
 	 */
 	void setActive(bool active);
@@ -106,9 +109,11 @@ protected:
 	Ogre::CompositorInstance *mGBufferInstance;
 	// Filters
 	Ogre::CompositorInstance *mInstance[DSM_COUNT];
+	Ogre::CompositorInstance* mSSAOInstance;
 	// Active/inactive
 	bool mActive;
 	DSMode mCurrentMode;
+	bool mSSAO;
 
 	typedef Ogre::set<MLight*>::type LightList;
 

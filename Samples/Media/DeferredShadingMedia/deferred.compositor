@@ -40,6 +40,10 @@ compositor DeferredShading/ShowLit
         {
 			input none
 			
+			pass clear
+			{
+			
+			}
 			// render skies
 			pass render_scene
 			{

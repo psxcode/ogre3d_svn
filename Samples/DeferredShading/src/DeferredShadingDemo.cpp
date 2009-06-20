@@ -34,6 +34,7 @@ This demo source file is in the public domain.
 #include "MLight.h"
 #include "GeomUtils.h"
 #include "DeferredShadingLogic.h"
+#include "SSAOLogic.h"
 #include "GbufferSchemeHandler.h"
 #include "SharedData.h"
 
@@ -109,6 +110,15 @@ public:
 			updateOverlays();
 		}
 
+		// "V" activate/deactivate ssao
+		if (mKeyboard->isKeyDown(OIS::KC_V) && timeoutDelay==0) 
+		{
+			timeoutDelay = 0.5f;
+			bool curMode = SharedData::getSingleton().iSystem->getSSAO();
+			SharedData::getSingleton().iSystem->setSSAO(!curMode);
+			updateOverlays();
+		}
+
 		timeoutDelay -= evt.timeSinceLastFrame;
 		if (timeoutDelay <= 0) timeoutDelay = 0;
 
@@ -139,9 +149,8 @@ public:
 			name="ShowDepthSpecular"; break;
 		}
 		OverlayManager::getSingleton().getOverlayElement( "Example/Shadows/Materials" )
-			->setCaption( "[C] Change mode, current is \"" 
-			+ name 
-			+ "\"");
+			->setCaption( "[C] Change mode, current is \"" + name  + "\". " +
+			"[V] SSAO on ? " + StringConverter::toString( SharedData::getSingleton().iSystem->getSSAO() ) );
 
 		OverlayManager::getSingleton().getOverlayElement( "Example/Shadows/Info" )
 			->setCaption( "[G] Global lights active: " + StringConverter::toString( SharedData::getSingleton().iGlobalActivate ) );
@@ -196,6 +205,7 @@ protected:
 		//This can theoretically happen in a loaded plugin, but in this case the demo contains the code.
 		MaterialManager::getSingleton().addListener(new GBufferSchemeHandler, "GBuffer");
 		CompositorManager::getSingleton().registerCompositorLogic("DeferredLogic", new DeferredShadingLogic);
+		CompositorManager::getSingleton().registerCompositorLogic("SSAOLogic", new SSAOLogic);
 
 		// Prepare athene mesh for normalmapping
         MeshPtr pAthene = MeshManager::getSingleton().load("athene.mesh", 
