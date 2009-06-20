@@ -8,6 +8,7 @@ set(HEADER_FILES
   include/MaterialGenerator.h
   include/MLight.h
   include/DeferredShadingLogic.h
+  include/SSAOLogic.h
   include/GBufferSchemeHandler.h
   include/SharedData.h
 )
@@ -20,6 +21,7 @@ set(SOURCE_FILES
   src/MaterialGenerator.cpp
   src/MLight.cpp
   src/DeferredShadingLogic.cpp
+  src/SSAOLogic.cpp
   src/GBufferSchemeHandler.cpp
 )
 
