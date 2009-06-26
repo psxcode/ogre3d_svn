@@ -613,15 +613,16 @@ void CompositorInstance::createResources(bool forResizeOnly)
 			{
 
 				String texname = MRTbaseName + "/" + StringConverter::toString(atch);
+				String mrtLocalName = getMRTTexLocalName(def->name, atch);
 				TexturePtr tex;
 				if (def->pooled)
 				{
 					// get / create pooled texture
 					tex = CompositorManager::getSingleton().getPooledTexture(texname,
-						def->name, 
+						mrtLocalName, 
 						width, height, *p, fsaa, fsaaHint,  
 						hwGamma && !PixelUtil::isFloatingPoint(*p), 
-						assignedTextures, this);
+						assignedTextures, this, def->scope);
 				}
 				else
 				{
@@ -637,7 +638,6 @@ void CompositorInstance::createResources(bool forResizeOnly)
 				mrt->bindSurface(atch, rt);
 
 				// Also add to local textures so we can look up
-				String mrtLocalName = getMRTTexLocalName(def->name, atch);
 				mLocalTextures[mrtLocalName] = tex;
 				
 			}
@@ -660,7 +660,7 @@ void CompositorInstance::createResources(bool forResizeOnly)
 				tex = CompositorManager::getSingleton().getPooledTexture(texName, 
 					def->name, width, height, def->formatList[0], fsaa, fsaaHint,
 					hwGamma && !PixelUtil::isFloatingPoint(def->formatList[0]), assignedTextures, 
-					this);
+					this, def->scope);
 			}
 			else
 			{
@@ -808,7 +808,7 @@ void CompositorInstance::freeResources(bool forResizeOnly, bool clearReserveText
 			// Potentially many surfaces
 			for (size_t s = 0; s < subSurf; ++s)
 			{
-				String texName = subSurf > 1 ? getMRTTexLocalName(def->name, subSurf)
+				String texName = subSurf > 1 ? getMRTTexLocalName(def->name, s)
 					: def->name;
 
 				LocalTextureMap::iterator i = mLocalTextures.find(texName);

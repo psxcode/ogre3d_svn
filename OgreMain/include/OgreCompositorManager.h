@@ -35,6 +35,7 @@ Torus Knot Software Ltd.
 #include "OgreRectangle2D.h"
 #include "OgreCompositorSerializer.h"
 #include "OgreRenderSystem.h"
+#include "OgreCompositionTechnique.h"
 
 namespace Ogre {
 	/** \addtogroup Core
@@ -132,7 +133,7 @@ namespace Ogre {
 		TexturePtr getPooledTexture(const String& name, const String& localName, 
 			size_t w, size_t h, 
 			PixelFormat f, uint aa, const String& aaHint, bool srgb, UniqueTextureSet& texturesAlreadyAssigned, 
-			CompositorInstance* inst);
+			CompositorInstance* inst, CompositionTechnique::TextureScope scope);
 
 		/** Free pooled textures from the shared pool (compositor instances still 
 			using them will keep them in memory though). 
@@ -259,6 +260,11 @@ namespace Ogre {
 		typedef map<TextureDef, TextureList*, TextureDefLess>::type TexturesByDef;
 		TexturesByDef mTexturesByDef;
 
+		typedef std::pair<String, String> StringPair;
+		typedef map<TextureDef, TexturePtr, TextureDefLess>::type TextureDefMap;
+		typedef std::map<StringPair, TextureDefMap> ChainTexturesByDef;
+		
+		ChainTexturesByDef mChainTexturesByDef;
 
 		bool isInputPreviousTarget(CompositorInstance* inst, const Ogre::String& localName);
 		bool isInputPreviousTarget(CompositorInstance* inst, TexturePtr tex);

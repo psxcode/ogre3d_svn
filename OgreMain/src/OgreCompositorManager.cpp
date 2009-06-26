@@ -291,9 +291,35 @@ TexturePtr CompositorManager::getPooledTexture(const String& name,
 	const String& localName,
 	size_t w, size_t h, PixelFormat f, uint aa, const String& aaHint, bool srgb, 
 	CompositorManager::UniqueTextureSet& texturesAssigned, 
-	CompositorInstance* inst)
+	CompositorInstance* inst, CompositionTechnique::TextureScope scope)
 {
+	if (scope == CompositionTechnique::TS_GLOBAL) {
+		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
+			"Global scope texture can not be pooled.",
+			"CompositorManager::getPooledTexture");
+	}
+
 	TextureDef def(w, h, f, aa, aaHint, srgb);
+
+	if (scope == CompositionTechnique::TS_CHAIN)
+	{
+		StringPair pair = std::make_pair(inst->getCompositor()->getName(), localName);
+		TextureDefMap& defMap = mChainTexturesByDef[pair];
+		TextureDefMap::iterator it = defMap.find(def);
+		if (it != defMap.end())
+		{
+			return it->second;
+		}
+		// ok, we need to create a new one
+		TexturePtr newTex = TextureManager::getSingleton().createManual(
+			name, 
+			ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 
+			(uint)w, (uint)h, 0, f, TU_RENDERTARGET, 0,
+			srgb, aa, aaHint);
+		defMap.insert(TextureDefMap::value_type(def, newTex));
+		return newTex;
+	}
+
 	TexturesByDef::iterator i = mTexturesByDef.find(def);
 	if (i == mTexturesByDef.end())
 	{
@@ -462,7 +488,20 @@ void CompositorManager::freePooledTextures(bool onlyIfUnreferenced)
 					++j;
 			}
 		}
-		
+		for (ChainTexturesByDef::iterator i = mChainTexturesByDef.begin(); i != mChainTexturesByDef.end(); ++i)
+		{
+			TextureDefMap& texMap = i->second;
+			for (TextureDefMap::iterator j = texMap.begin(); j != texMap.end();) {
+				const TexturePtr& tex = j->second;
+				if (tex.useCount() == ResourceGroupManager::RESOURCE_SYSTEM_NUM_REFERENCE_COUNTS + 1)
+				{
+					TextureManager::getSingleton().remove(tex->getHandle());
+					j = texMap.erase(j);
+				}
+				else
+					++j;
+			}
+		}
 	}
 	else
 	{
@@ -472,7 +511,7 @@ void CompositorManager::freePooledTextures(bool onlyIfUnreferenced)
 			OGRE_DELETE_T(i->second, TextureList, MEMCATEGORY_GENERAL);
 		}
 		mTexturesByDef.clear();
-
+		mChainTexturesByDef.clear();
 	}
 
 }
