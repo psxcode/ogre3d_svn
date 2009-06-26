@@ -752,23 +752,28 @@ inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
 				// HDR must be first in the chain
 				addPosition = 0;
 			}
-            Ogre::CompositorInstance *instance = Ogre::CompositorManager::getSingleton().addCompositor(vp, compositorName, addPosition);
-            Ogre::CompositorManager::getSingleton().setCompositorEnabled(vp, compositorName, false);
-            // special handling for Heat Vision which uses a listener
-            if(instance && (compositorName == "Heat Vision"))
-                instance->addListener(hvListener);
-			else if(instance && (compositorName == "HDR"))
+			try 
 			{
-				instance->addListener(hdrListener);
-				hdrListener->notifyViewportSize(vp->getActualWidth(), vp->getActualHeight());
-				hdrListener->notifyCompositor(instance);
+				Ogre::CompositorInstance *instance = Ogre::CompositorManager::getSingleton().addCompositor(vp, compositorName, addPosition);
+				Ogre::CompositorManager::getSingleton().setCompositorEnabled(vp, compositorName, false);
+				// special handling for Heat Vision which uses a listener
+				if(instance && (compositorName == "Heat Vision"))
+					instance->addListener(hvListener);
+				else if(instance && (compositorName == "HDR"))
+				{
+					instance->addListener(hdrListener);
+					hdrListener->notifyViewportSize(vp->getActualWidth(), vp->getActualHeight());
+					hdrListener->notifyCompositor(instance);
 
+				}
+				else if(instance && (compositorName == "Gaussian Blur"))
+				{
+					instance->addListener(gaussianListener);
+					gaussianListener->notifyViewportSize(vp->getActualWidth(), vp->getActualHeight());
+				}
+			} catch (...) {
 			}
-			else if(instance && (compositorName == "Gaussian Blur"))
-			{
-				instance->addListener(gaussianListener);
-				gaussianListener->notifyViewportSize(vp->getActualWidth(), vp->getActualHeight());
-			}
+            
         }
     }
 	//---------------------------------------------------------------------

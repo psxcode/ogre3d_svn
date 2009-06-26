@@ -47,15 +47,7 @@ private:
 	Ogre::CompositorInstance* mInstance;
 };
 
-void SSAOLogic::compositorInstanceCreated(Ogre::CompositorInstance* newInstance)
+Ogre::CompositorInstance::Listener* SSAOLogic::createListener(Ogre::CompositorInstance* instance)
 {
-	ssaoListener* listener = new ssaoListener(newInstance);
-	newInstance->addListener(listener);
-	mListeners[newInstance] = listener;
-}
-
-void SSAOLogic::compositorInstanceDestroyed(Ogre::CompositorInstance* destroyedInstance)
-{
-	delete mListeners[destroyedInstance];
-	mListeners.erase(destroyedInstance);
+	return new ssaoListener(instance);
 }

@@ -11,6 +11,7 @@ set(HEADER_FILES
   include/SSAOLogic.h
   include/GBufferSchemeHandler.h
   include/SharedData.h
+  include/ListenerFactoryLogic.h
 )
 set(SOURCE_FILES 
   src/AmbientLight.cpp

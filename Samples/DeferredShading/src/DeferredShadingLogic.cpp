@@ -22,15 +22,7 @@ private:
 	Ogre::CompositorInstance* mInstance;
 };
 
-void DeferredShadingLogic::compositorInstanceCreated(Ogre::CompositorInstance* newInstance)
+Ogre::CompositorInstance::Listener* DeferredShadingLogic::createListener(Ogre::CompositorInstance* instance)
 {
-	DeferredCompositionListener* listener = new DeferredCompositionListener(newInstance);
-	newInstance->addListener(listener);
-	mListeners[newInstance] = listener;
-}
-
-void DeferredShadingLogic::compositorInstanceDestroyed(Ogre::CompositorInstance* destroyedInstance)
-{
-	delete mListeners[destroyedInstance];
-	mListeners.erase(destroyedInstance);
+	return new DeferredCompositionListener(instance);
 }
