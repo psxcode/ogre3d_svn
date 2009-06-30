@@ -33,13 +33,13 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void addSample(Sample* s)
 		{
-			mSamples.push(s);
+			mSamples.push_back(s);
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Retrieves the queue of samples.
 		-----------------------------------------------------------------------------*/
-		const SampleQueue& getSamples()
+		const SampleList& getSamples()
 		{
 			return mSamples;
 		}
@@ -47,7 +47,7 @@ namespace OgreBites
 	protected:
 
 		Ogre::String mName;
-		SampleQueue mSamples;
+		SampleList mSamples;
     };
 }
 

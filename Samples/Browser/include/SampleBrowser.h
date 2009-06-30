@@ -90,28 +90,8 @@ namespace OgreBites
 					OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, src); 
 				}
 
-				SampleQueue sq = sp->getSamples();
-				while (!sq.empty())
-				{
-					queueSample(sq.front());
-					sq.pop();
-				}
+				// TODO: store samples here
 			}
-		}
-			
-		/*-----------------------------------------------------------------------------
-		| Override default frameEnded to ignore the queue.
-		-----------------------------------------------------------------------------*/
-		virtual bool frameEnded(const Ogre::FrameEvent& evt)
-		{
-			// manually call sample callback to ensure correct order
-			if (mCurrentSample && !mCurrentSample->frameEnded(evt)) return false;
-			// quit current sample if it has ended
-			if (mCurrentSample && mCurrentSample->isDone()) runSample(0);
-			// quit if window was closed
-			if (mWindow->isClosed()) return false;
-
-			return true;
 		}
 	};
 }

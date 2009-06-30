@@ -66,9 +66,9 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Starts a sample. Used by the SampleContext class. Do not call directly.
+		| Sets up a sample. Used by the SampleContext class. Do not call directly.
 		-----------------------------------------------------------------------------*/
-		virtual void _start(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
+		virtual void _setup(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
 		{
 			mWindow = window;
 			mKeyboard = keyboard;
@@ -96,9 +96,9 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Ends a sample. Used by the SampleContext class. Do not call directly.
+		| Shuts down a sample. Used by the SampleContext class. Do not call directly.
 		-----------------------------------------------------------------------------*/
-		virtual void _quit()
+		virtual void _shutdown()
 		{
 			Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
 			unloadResources();
@@ -207,7 +207,7 @@ namespace OgreBites
 		bool mDone;                       // flag to mark the end of the sample
     };
 
-	typedef std::queue<Sample*> SampleQueue;    // typedef for convenience
+	typedef std::vector<Sample*> SampleList;    // typedef for convenience
 }
 
 #endif

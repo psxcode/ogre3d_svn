@@ -65,46 +65,11 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Adds a sample to the end of the queue.
-		-----------------------------------------------------------------------------*/
-		void queueSample(Sample* s)
-		{
-			mSampleQueue.push(s);
-		}
-
-		/*-----------------------------------------------------------------------------
-		| Retrieves the next sample in the queue without removing it.
-		-----------------------------------------------------------------------------*/
-		Sample* getNextSample()
-		{
-			if (mSampleQueue.empty()) return 0;
-			return mSampleQueue.front();
-		}
-
-		/*-----------------------------------------------------------------------------
-		| Removes the next sample in the queue without running it.
-		-----------------------------------------------------------------------------*/
-		void skipNextSample()
-		{
-			mSampleQueue.pop();
-		}
-
-		unsigned int getNumQueuedSamples()
-		{
-			return mSampleQueue.size();
-		}
-
-		void clearQueuedSamples()
-		{
-			while (!mSampleQueue.empty()) mSampleQueue.pop();
-		}
-
-		/*-----------------------------------------------------------------------------
 		| Quits the current sample and starts a new one.
 		-----------------------------------------------------------------------------*/
 		virtual void runSample(Sample* s)
 		{
-			if (mCurrentSample) mCurrentSample->_quit();    // quit current sample
+			if (mCurrentSample) mCurrentSample->_shutdown();    // quit current sample
 
 			mWindow->removeAllViewports();                  // wipe viewports
 
@@ -146,38 +111,24 @@ namespace OgreBites
 				// test system capabilities against sample requirements
 				s->testCapabilities(mRoot->getRenderSystem()->getCapabilities());
 
-				s->_start(mWindow, mKeyboard, mMouse);   // start new sample
+				s->_setup(mWindow, mKeyboard, mMouse);   // start new sample
 			}
 
 			mCurrentSample = s;
 		}
 
 		/*-----------------------------------------------------------------------------
-		| This function quits the current sample, starts the next one in the queue,
-		| and removes it from the queue. Returns false if no samples are queued.
-		-----------------------------------------------------------------------------*/
-		bool runNextSample()
-		{
-			if (!mSampleQueue.empty())
-			{
-				runSample(mSampleQueue.front());
-				mSampleQueue.pop();
-				return true;
-			}
-
-			return false;
-		}
-
-		/*-----------------------------------------------------------------------------
 		| This function encapsulates the entire lifetime of the context.
 		-----------------------------------------------------------------------------*/
-		virtual void go()
+		virtual void go(Sample* initialSample = 0)
 		{
 			createRoot();                     // create root
 			if (!oneTimeConfig()) return;     // configure startup settings
 			setup();                          // setup context
 
-			if (runNextSample()) mRoot->startRendering();    // start initial sample and enter render loop
+			// start initial sample and enter render loop
+			if (initialSample) runSample(initialSample);
+			mRoot->startRendering();
 
 			shutdown();                       // shutdown context
 			if (mRoot) OGRE_DELETE mRoot;     // destroy root
@@ -333,7 +284,7 @@ namespace OgreBites
 			{
 				// save current sample state and quit it
 				mCurrentSample->saveState(sampleState);
-				mCurrentSample->_quit();
+				mCurrentSample->_shutdown();
 				lastSample = mCurrentSample;
 				mCurrentSample = 0;            // very important because we want shutdown to ignore it
 			}
@@ -359,7 +310,7 @@ namespace OgreBites
 			{
 				// restart sample and restore its state
 				mCurrentSample = lastSample;
-				mCurrentSample->_start(mWindow, mKeyboard, mMouse);
+				mCurrentSample->_setup(mWindow, mKeyboard, mMouse);
 				mCurrentSample->restoreState(sampleState);
 			}
 		}
@@ -371,7 +322,7 @@ namespace OgreBites
 		{
 			if (mCurrentSample)
 			{
-				mCurrentSample->_quit();
+				mCurrentSample->_shutdown();
 				mCurrentSample = 0;
 			}
 
@@ -425,8 +376,8 @@ namespace OgreBites
 			if (mCurrentSample && !mCurrentSample->frameEnded(evt)) return false;
 			// quit if window was closed
 			if (mWindow->isClosed()) return false;
-			// quit if current sample has ended and cannot run the next one
-			if (mCurrentSample && mCurrentSample->isDone() && !runNextSample()) return false;
+			// go into idle mode if current sample has ended
+			if (mCurrentSample && mCurrentSample->isDone()) runSample(0);
 
 			return true;
 		}
@@ -475,7 +426,7 @@ namespace OgreBites
 		OIS::Mouse* mMouse;             // mouse device
 
 		Sample* mCurrentSample;         // currently running sample
-		SampleQueue mSampleQueue;       // queued samples
+		SampleList mSampleList;       // queued samples
 	};
 }
 
