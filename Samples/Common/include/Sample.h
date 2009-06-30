@@ -35,7 +35,7 @@ namespace OgreBites
 		| Tests to see if target machine meets any special requirements of
 		| this sample. Signal a failure by throwing an exception.
 		-----------------------------------------------------------------------------*/
-		virtual void testCapabilities() {}
+		virtual void testCapabilities(const Ogre::RenderSystemCapabilities* caps) {}
 
 		/*-----------------------------------------------------------------------------
 		| If this sample requires a specific render system to run, this method

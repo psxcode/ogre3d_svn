@@ -21,6 +21,13 @@ public:
 		mHeadSpeed = 0;
 	}
 
+	StringVector getRequiredPlugins()
+	{
+		StringVector rps;
+		rps.push_back("LOL");
+		return rps;
+	}
+
 protected:
 
 	void setupScene()

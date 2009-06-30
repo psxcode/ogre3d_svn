@@ -2,6 +2,7 @@
 #define __SampleContext_H__
 
 #include "Ogre.h"
+#include "OgrePlugin.h"
 #include "Sample.h"
 
 #define OIS_DYNAMIC_LIB
@@ -103,11 +104,50 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void runSample(Sample* s)
 		{
-			if (!s) return;
-
 			if (mCurrentSample) mCurrentSample->_quit();    // quit current sample
+
 			mWindow->removeAllViewports();                  // wipe viewports
-			s->_start(mWindow, mKeyboard, mMouse);          // start new sample
+
+			if (s)
+			{
+				// retrieve sample's required plugins and currently installed plugins
+				Ogre::Root::PluginInstanceList ips = mRoot->getInstalledPlugins();
+				Ogre::StringVector rps = s->getRequiredPlugins();
+
+				for (Ogre::StringVector::iterator rp = rps.begin(); rp != rps.end(); rp++)
+				{
+					bool found = false;
+					// try to find the required plugin in the current installed plugins
+					for (Ogre::Root::PluginInstanceList::iterator ip = ips.begin(); ip != ips.end(); ip++)
+					{
+						if ((*ip)->getName() == *rp)
+						{
+							found = true;
+							break;
+						}
+					}
+					if (!found)  // throw an exception if a plugin is not found
+					{
+						Ogre::String desc = "Missing required plugin: " + *rp;
+						Ogre::String src = "SampleContext::runSample";
+						OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED, desc, src);
+					}
+				}
+
+				// throw an exception if samples requires the use of another renderer
+				Ogre::String rrs = s->getRequiredRenderSystem();
+				if (!rrs.empty() && rrs != mRoot->getRenderSystem()->getName())
+				{
+					Ogre::String desc = "Not using required renderer: " + rrs;
+					Ogre::String src = "SampleContext::runSample";
+					OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE, desc, src);
+				}
+
+				// test system capabilities against sample requirements
+				s->testCapabilities(mRoot->getRenderSystem()->getCapabilities());
+
+				s->_start(mWindow, mKeyboard, mMouse);   // start new sample
+			}
 
 			mCurrentSample = s;
 		}
@@ -286,12 +326,17 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void reconfigure(const Ogre::String& rsName, Ogre::NameValuePairList& rsOptions)
 		{
-			// save current sample state and quit it
+			Sample* lastSample;
 			Ogre::NameValuePairList sampleState;
-			mCurrentSample->saveState(sampleState);
-			mCurrentSample->_quit();
-			Sample* lastSample = mCurrentSample;
-			mCurrentSample = 0;
+
+			if (mCurrentSample)
+			{
+				// save current sample state and quit it
+				mCurrentSample->saveState(sampleState);
+				mCurrentSample->_quit();
+				lastSample = mCurrentSample;
+				mCurrentSample = 0;            // very important because we want shutdown to ignore it
+			}
 
 			shutdown();
 			if (mRoot) OGRE_DELETE mRoot;
@@ -305,12 +350,18 @@ namespace OgreBites
 				mRoot->getRenderSystem()->setConfigOption(it->first, it->second);
 			}
 
+			mRoot->saveConfig();    // save configuration
+
 			setup();
 
-			// restart sample and restore its state
-			mCurrentSample = lastSample;
-			mCurrentSample->_start(mWindow, mKeyboard, mMouse);
-			mCurrentSample->restoreState(sampleState);
+
+			if (lastSample)
+			{
+				// restart sample and restore its state
+				mCurrentSample = lastSample;
+				mCurrentSample->_start(mWindow, mKeyboard, mMouse);
+				mCurrentSample->restoreState(sampleState);
+			}
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -372,11 +423,10 @@ namespace OgreBites
 		{
 			// manually call sample callback to ensure correct order
 			if (mCurrentSample && !mCurrentSample->frameEnded(evt)) return false;
-
 			// quit if window was closed
 			if (mWindow->isClosed()) return false;
 			// quit if current sample has ended and cannot run the next one
-			if (mCurrentSample->isDone() && !runNextSample()) return false;
+			if (mCurrentSample && mCurrentSample->isDone() && !runNextSample()) return false;
 
 			return true;
 		}
@@ -386,8 +436,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void captureInputDevices()
 		{
-			if (mKeyboard) mKeyboard->capture();
-			if (mMouse) mMouse->capture();
+			mKeyboard->capture();
+			mMouse->capture();
 		}
 
 		/*-----------------------------------------------------------------------------
