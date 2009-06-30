@@ -12,7 +12,7 @@ namespace OgreBites
 	| Base class responsible for everything specific to one sample.
 	| Designed to be subclassed for each sample.
 	=============================================================================*/
-	class Sample : public Ogre::FrameListener, Ogre::WindowEventListener
+	class Sample
     {
     public:
 
@@ -24,28 +24,18 @@ namespace OgreBites
         }
 
 		/*-----------------------------------------------------------------------------
-		| Returns name of the sample.
+		| Retrieves custom sample info.
 		-----------------------------------------------------------------------------*/
-		virtual Ogre::String getName()
+		Ogre::NameValuePairList& getInfo()
 		{
-			return "OGRE Sample";
-		}
-
-		/*-----------------------------------------------------------------------------
-		| Returns a description of the sample.
-		-----------------------------------------------------------------------------*/
-		virtual Ogre::String getDescription()
-		{
-			return "";
+			return mInfo;
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Tests to see if target machine meets any special requirements of
 		| this sample. Signal a failure by throwing an exception.
 		-----------------------------------------------------------------------------*/
-		virtual void testCapabilities()
-		{
-		}
+		virtual void testCapabilities() {}
 
 		/*-----------------------------------------------------------------------------
 		| If this sample requires a specific render system to run, this method
@@ -78,25 +68,21 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Starts a sample. Used by the SampleContext class. Do not call directly.
 		-----------------------------------------------------------------------------*/
-		virtual void start(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
+		virtual void _start(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
 		{
-			if (!mDone) return;    // sample already started
-
-			// save off objects provided by context
 			mWindow = window;
 			mKeyboard = keyboard;
 			mMouse = mouse;
 
 			locateResources();
 			loadResources();
+			preSceneSetup();
 			createSceneManager();
+			setupView();
 			setupScene();
+			postSceneSetup();
 
-			// add self as listener to process sample-specific events
-			Ogre::Root::getSingleton().addFrameListener(this);
-			Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
-
-			mDone = false;         // sample now started
+			mDone = false;  // sample now started
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -112,17 +98,11 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Ends a sample. Used by the SampleContext class. Do not call directly.
 		-----------------------------------------------------------------------------*/
-		virtual void quit()
+		virtual void _quit()
 		{
-			if (mDone) return;     // sample already ended
-
-			// remove self as listener
-			Ogre::Root::getSingleton().removeFrameListener(this);
-			Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
-			
-			Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);   // destroy the scene manager
-			
-			unloadResources();     // unload sample-specific resources
+			Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
+			unloadResources();
+			finalCleanup();
 
 			mDone = true;          // sample now ended
 		}
@@ -131,18 +111,28 @@ namespace OgreBites
 		| Saves the sample state to a string map.
 		| Optional. Used by SampleContext::reset.
 		-----------------------------------------------------------------------------*/
-		virtual void saveState(Ogre::NameValuePairList& state)
-		{
-		}
+		virtual void saveState(Ogre::NameValuePairList& state) {}
 
 		/*-----------------------------------------------------------------------------
 		| Restores the sample state from a string map.
 		| Optional. Used by SampleContext::reset.
 		-----------------------------------------------------------------------------*/
-		virtual void restoreState(const Ogre::NameValuePairList state)
-		{
-			state.find("BLAH");
-		}
+		virtual void restoreState(const Ogre::NameValuePairList state) {}
+
+		// callback interface copied from various listeners to be used by SampleContext
+		virtual bool frameStarted(const Ogre::FrameEvent& evt) { return true; }
+		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt) { return true; }
+		virtual bool frameEnded(const Ogre::FrameEvent& evt) { return true; }
+		virtual void windowMoved(Ogre::RenderWindow* rw) {}
+		virtual void windowResized(Ogre::RenderWindow* rw) {}
+		virtual bool windowClosing(Ogre::RenderWindow* rw) { return true; }
+		virtual void windowClosed(Ogre::RenderWindow* rw) {}
+		virtual void windowFocusChange(Ogre::RenderWindow* rw) {}
+		virtual bool keyPressed(const OIS::KeyEvent& evt) { return true; }
+		virtual bool keyReleased(const OIS::KeyEvent& evt) { return true; }
+		virtual bool mouseMoved(const OIS::MouseEvent& evt) { return true; }
+		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return true; }
+		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return true; }
 
     protected:
 
@@ -150,17 +140,18 @@ namespace OgreBites
 		| Finds sample-specific resources. No such effort is made for most samples,
 		| but this is useful for special samples with large, exclusive resources.
 		-----------------------------------------------------------------------------*/
-		virtual void locateResources()
-		{
-		}
+		virtual void locateResources() {}
 
 		/*-----------------------------------------------------------------------------
 		| Loads sample-specific resources. No such effort is made for most samples,
 		| but this is useful for special samples with large, exclusive resources.
 		-----------------------------------------------------------------------------*/
-		virtual void loadResources()
-		{
-		}
+		virtual void loadResources() {}
+
+		/*-----------------------------------------------------------------------------
+		| Handles any setup that must happen before setup of scene. Optional.
+		-----------------------------------------------------------------------------*/
+		virtual void preSceneSetup() {}
 
 		/*-----------------------------------------------------------------------------
 		| Creates a scene manager for the sample. A generic one is the default,
@@ -172,12 +163,19 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Sets up the scene. There is no default camera, so make your own.
-		| See the SDK samples for a camera utility clas and how to use it.
+		| Sets up viewport layout and camera.
 		-----------------------------------------------------------------------------*/
-		virtual void setupScene()
-		{
-		}
+		virtual void setupView() {}
+
+		/*-----------------------------------------------------------------------------
+		| Sets up the scene.
+		-----------------------------------------------------------------------------*/
+		virtual void setupScene() {}
+
+		/*-----------------------------------------------------------------------------
+		| Handles any setup that must happen after setup of scene. Optional.
+		-----------------------------------------------------------------------------*/
+		virtual void postSceneSetup() {}
 
 		/*-----------------------------------------------------------------------------
 		| Unloads sample-specific resources. My method here is simple and good
@@ -194,11 +192,17 @@ namespace OgreBites
 			}
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Performs any other necessary cleanup (like reverting special settings).
+		-----------------------------------------------------------------------------*/
+		virtual void finalCleanup() {}
+
 		Ogre::RenderWindow* mWindow;      // context render window
 		OIS::Keyboard* mKeyboard;         // context keyboard device
 		OIS::Mouse* mMouse;               // context mouse device
 
 		Ogre::SceneManager* mSceneMgr;    // scene manager for this sample
+		Ogre::NameValuePairList mInfo;    // custom sample info
 
 		bool mDone;                       // flag to mark the end of the sample
     };

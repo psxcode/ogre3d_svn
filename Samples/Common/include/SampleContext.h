@@ -38,7 +38,11 @@ namespace OgreBites
 	| May be subclassed for specific sample types (not specific samples).
 	| Allows one sample to run at a time, while maintaining a sample queue.
 	=============================================================================*/
-	class SampleContext : public Ogre::FrameListener, public Ogre::WindowEventListener
+	class SampleContext :
+		public Ogre::FrameListener,
+		public Ogre::WindowEventListener,
+		public OIS::KeyListener,
+		public OIS::MouseListener
 	{
 	public:
 
@@ -101,13 +105,9 @@ namespace OgreBites
 		{
 			if (!s) return;
 
-			if (mCurrentSample) mCurrentSample->quit();  // quit current sample
-
-			// reset viewport layout to default
-			mWindow->removeAllViewports();
-			mWindow->addViewport(0);
-
-			s->start(mWindow, mKeyboard, mMouse);        // start new sample
+			if (mCurrentSample) mCurrentSample->_quit();    // quit current sample
+			mWindow->removeAllViewports();                  // wipe viewports
+			s->_start(mWindow, mKeyboard, mMouse);          // start new sample
 
 			mCurrentSample = s;
 		}
@@ -135,9 +135,9 @@ namespace OgreBites
 		{
 			createRoot();                     // create root
 			if (!oneTimeConfig()) return;     // configure startup settings
-			if (!setup()) return;             // setup context
+			setup();                          // setup context
 
-			if (runNextSample()) mRoot->startRendering();  // start initial sample and enter render loop
+			if (runNextSample()) mRoot->startRendering();    // start initial sample and enter render loop
 
 			shutdown();                       // shutdown context
 			if (mRoot) OGRE_DELETE mRoot;     // destroy root
@@ -173,7 +173,7 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Sets up the context after configuration.
 		-----------------------------------------------------------------------------*/
-		virtual bool setup()
+		virtual void setup()
 		{
 			createWindow();
 			setupInput();
@@ -185,8 +185,6 @@ namespace OgreBites
 			// adds context as listener to process context-level (above the sample level) events
 			mRoot->addFrameListener(this);
 			Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
-
-			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -221,14 +219,17 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Creates the individual input devices. I only create unbuffered keyboard
-		| and mouse here because they are the most common, but you can override this
-		| method for other modes and devices.
+		| Creates the individual input devices. I only create a keyboard and mouse
+		| here because they are the most common, but you can override this method
+		| for other modes and devices.
 		-----------------------------------------------------------------------------*/
 		virtual void createInputDevices()
 		{
-			mKeyboard = static_cast<OIS::Keyboard*>(mInputMgr->createInputObject(OIS::OISKeyboard, false));
-			mMouse = static_cast<OIS::Mouse*>(mInputMgr->createInputObject(OIS::OISMouse, false));
+			mKeyboard = static_cast<OIS::Keyboard*>(mInputMgr->createInputObject(OIS::OISKeyboard, true));
+			mMouse = static_cast<OIS::Mouse*>(mInputMgr->createInputObject(OIS::OISMouse, true));
+
+			mKeyboard->setEventCallback(this);
+			mMouse->setEventCallback(this);
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -288,7 +289,9 @@ namespace OgreBites
 			// save current sample state and quit it
 			Ogre::NameValuePairList sampleState;
 			mCurrentSample->saveState(sampleState);
-			mCurrentSample->quit();
+			mCurrentSample->_quit();
+			Sample* lastSample = mCurrentSample;
+			mCurrentSample = 0;
 
 			shutdown();
 			if (mRoot) OGRE_DELETE mRoot;
@@ -305,7 +308,8 @@ namespace OgreBites
 			setup();
 
 			// restart sample and restore its state
-			mCurrentSample->start(mWindow, mKeyboard, mMouse);
+			mCurrentSample = lastSample;
+			mCurrentSample->_start(mWindow, mKeyboard, mMouse);
 			mCurrentSample->restoreState(sampleState);
 		}
 
@@ -314,16 +318,16 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void shutdown()
 		{
+			if (mCurrentSample)
+			{
+				mCurrentSample->_quit();
+				mCurrentSample = 0;
+			}
+
 			// remove window event listener before shutting down OIS
 			Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
 
 			shutdownInput();
-
-			if (mRoot) 
-			{
-				OGRE_DELETE mRoot;
-				mRoot = 0;
-			}
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -342,16 +346,37 @@ namespace OgreBites
 		}
 			
 		/*-----------------------------------------------------------------------------
-		| Processes frame events.
+		| Processes frame started events.
+		-----------------------------------------------------------------------------*/
+		virtual bool frameStarted(const Ogre::FrameEvent& evt)
+		{
+			captureInputDevices();      // capture input
+
+			// manually call sample callback to ensure correct order
+			return mCurrentSample ? mCurrentSample->frameStarted(evt) : true;
+		}
+			
+		/*-----------------------------------------------------------------------------
+		| Processes rendering queued events.
 		-----------------------------------------------------------------------------*/
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
+			// manually call sample callback to ensure correct order
+			return mCurrentSample ? mCurrentSample->frameRenderingQueued(evt) : true;
+		}
+			
+		/*-----------------------------------------------------------------------------
+		| Processes frame ended events.
+		-----------------------------------------------------------------------------*/
+		virtual bool frameEnded(const Ogre::FrameEvent& evt)
+		{
+			// manually call sample callback to ensure correct order
+			if (mCurrentSample && !mCurrentSample->frameEnded(evt)) return false;
+
 			// quit if window was closed
 			if (mWindow->isClosed()) return false;
 			// quit if current sample has ended and cannot run the next one
 			if (mCurrentSample->isDone() && !runNextSample()) return false;
-
-			captureInputDevices();
 
 			return true;
 		}
@@ -361,8 +386,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void captureInputDevices()
 		{
-			mKeyboard->capture();
-			mMouse->capture();
+			if (mKeyboard) mKeyboard->capture();
+			if (mMouse) mMouse->capture();
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -371,10 +396,26 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void windowResized(Ogre::RenderWindow* rw)
 		{
+			// manually call sample callback to ensure correct order
+			if (mCurrentSample) mCurrentSample->windowResized(rw);
+
 			const OIS::MouseState& ms = mMouse->getMouseState();
 			ms.width = rw->getWidth();
 			ms.height = rw->getHeight();
 		}
+
+		// window event callbacks which manually call their respective sample callbacks to ensure correct order
+		virtual void windowMoved(Ogre::RenderWindow* rw) { if (mCurrentSample) mCurrentSample->windowMoved(rw); }
+		virtual bool windowClosing(Ogre::RenderWindow* rw) { return mCurrentSample ? mCurrentSample->windowClosing(rw) : true; }
+		virtual void windowClosed(Ogre::RenderWindow* rw) { if (mCurrentSample) mCurrentSample->windowClosed(rw); }
+		virtual void windowFocusChange(Ogre::RenderWindow* rw) { if (mCurrentSample) mCurrentSample->windowFocusChange(rw); }
+
+		// keyboard and mouse callbacks which manually call their respective sample callbacks to ensure correct order
+		virtual bool keyPressed(const OIS::KeyEvent& evt) { return mCurrentSample ? mCurrentSample->keyPressed(evt) : true; }
+		virtual bool keyReleased(const OIS::KeyEvent& evt) { return mCurrentSample ? mCurrentSample->keyReleased(evt) : true; }
+		virtual bool mouseMoved(const OIS::MouseEvent& evt) { return mCurrentSample ? mCurrentSample->mouseMoved(evt) : true; }
+		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return mCurrentSample ? mCurrentSample->mousePressed(evt, id) : true; }
+		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return mCurrentSample ? mCurrentSample->mouseReleased(evt, id) : true; }
 
 		Ogre::Root* mRoot;              // OGRE root
 		Ogre::RenderWindow* mWindow;    // render window
@@ -385,8 +426,6 @@ namespace OgreBites
 
 		Sample* mCurrentSample;         // currently running sample
 		SampleQueue mSampleQueue;       // queued samples
-
-		bool mConfigured;               // true if OGRE has already been configured
 	};
 }
 

@@ -1,6 +1,7 @@
 #ifndef __SamplePlugin_H__
 #define __SamplePlugin_H__
 
+#include "OgrePlugin.h"
 #include "Sample.h"
 
 namespace OgreBites
@@ -12,23 +13,28 @@ namespace OgreBites
     {
     public:
 
-		/*-----------------------------------------------------------------------------
-		| Must be implemented to provide a name.
-		-----------------------------------------------------------------------------*/
-		virtual const String& getName() const = 0;
+		SamplePlugin(const Ogre::String& name)
+		{
+			mName = name;
+		}
+
+		const Ogre::String& getName() const
+		{
+			return mName;
+		}
 		
-		virtual void install() 
-		{
-			// create and add your samples here
-		}
+		void install() {}
+		void uninstall() {}
+		void initialise() {}
+		void shutdown() {}
 
-		virtual void uninstall()
+		/*-----------------------------------------------------------------------------
+		| Adds a sample to the queue.
+		-----------------------------------------------------------------------------*/
+		void addSample(Sample* s)
 		{
-			// destroy your samples here
+			mSamples.push(s);
 		}
-
-		virtual void initialise() {}
-		virtual void shutdown() {}
 
 		/*-----------------------------------------------------------------------------
 		| Retrieves the queue of samples.
@@ -40,14 +46,7 @@ namespace OgreBites
 
 	protected:
 
-		/*-----------------------------------------------------------------------------
-		| Adds a sample to the queue.
-		-----------------------------------------------------------------------------*/
-		void addSample(Sample* s)
-		{
-			mSamples.push(s);
-		}
-
+		Ogre::String mName;
 		SampleQueue mSamples;
     };
 }
