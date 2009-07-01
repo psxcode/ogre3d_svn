@@ -14,6 +14,25 @@ namespace OgreBites
 	{
 	public:
 
+		/*-----------------------------------------------------------------------------
+		| Extends runSample to handle creation and destruction of dummy scene.
+		-----------------------------------------------------------------------------*/
+		virtual void runSample(Sample* s)
+		{
+			if (mCurrentSample)    // create dummy scene after quitting a sample
+			{
+				mCurrentSample->_shutdown();
+				mCurrentSample = 0;
+				createDummyScene();
+			}
+
+			if (s)       // destroy dummy scene before starting a sample
+			{
+				destroyDummyScene();
+				SampleContext::runSample(s);
+			}
+		}
+
 	protected:
 
 		/*-----------------------------------------------------------------------------
@@ -32,6 +51,7 @@ namespace OgreBites
 		{
 			SampleContext::setup();
 			loadSamples();
+			createDummyScene();
 			createMenu();
 		}
 		
@@ -115,11 +135,14 @@ namespace OgreBites
 					mSampleCategories.insert(info["Category"]);   // add sample category
 				}
 			}
+		}
 
-			for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
-			{
-				MessageBoxA(0, (*i)->getInfo()["Title"].c_str(), "LOL", 0);
-			}
+		/*-----------------------------------------------------------------------------
+		| Creates dummy scene to allow rendering GUI in viewport.
+		-----------------------------------------------------------------------------*/
+		virtual void createDummyScene()
+		{
+			mWindow->addViewport(mRoot->createSceneManager(Ogre::ST_GENERIC, "Dummy Scene")->createCamera("Dummy Camera"));
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -135,8 +158,18 @@ namespace OgreBites
 		virtual void shutdown()
 		{
 			destroyMenu();
+			destroyDummyScene();
 			SampleContext::shutdown();
 		}
+
+		/*-----------------------------------------------------------------------------
+		| Destroys dummy scene.
+		-----------------------------------------------------------------------------*/
+		virtual void destroyDummyScene()
+		{
+			mWindow->removeAllViewports();
+			mRoot->destroySceneManager(mRoot->getSceneManager("Dummy Scene"));
+		}	
 
 		/*-----------------------------------------------------------------------------
 		| Destroys the main browser menu.

@@ -15,8 +15,8 @@ extern "C" __declspec(dllexport) void dllStartPlugin()
 	// create and add samples
 	t1 = new Test1;
 	t2 = new Test2;
-	sp->addSample(t2);
 	sp->addSample(t1);
+	sp->addSample(t2);
 
 	Root::getSingleton().installPlugin(sp);   // install sample plugin
 }

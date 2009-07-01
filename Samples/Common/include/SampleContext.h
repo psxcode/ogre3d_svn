@@ -280,13 +280,10 @@ namespace OgreBites
 			Sample* lastSample;
 			Ogre::NameValuePairList sampleState;
 
-			if (mCurrentSample)
+			if (mCurrentSample)   // save current sample state
 			{
-				// save current sample state and quit it
 				mCurrentSample->saveState(sampleState);
-				mCurrentSample->_shutdown();
 				lastSample = mCurrentSample;
-				mCurrentSample = 0;            // very important because we want shutdown to ignore it
 			}
 
 			shutdown();

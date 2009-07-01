@@ -21,6 +21,11 @@ public:
 		mHeadSpeed = 0;
 	}
 
+	String getRequiredRenderSystem()
+	{
+		return "PENIS BOT";
+	}
+
 protected:
 
 	void setupScene()
