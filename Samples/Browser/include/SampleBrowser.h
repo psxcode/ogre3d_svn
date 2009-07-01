@@ -6,6 +6,10 @@
 
 namespace OgreBites
 {
+	/*=============================================================================
+	| The OGRE Sample Browser. Features a menu accessible from all samples,
+	| dynamic configuration, resource reloading, node labelling, and more.
+	=============================================================================*/
 	class SampleBrowser : public OgreBites::SampleContext
 	{
 	public:
@@ -28,6 +32,7 @@ namespace OgreBites
 		{
 			SampleContext::setup();
 			loadSamples();
+			createMenu();
 		}
 		
 		/*-----------------------------------------------------------------------------
@@ -75,11 +80,14 @@ namespace OgreBites
 				#endif
 			}
 
+			mLoadedSamples.clear();
+			mSampleCategories.clear();
+
 			// loop through all sample plugins...
-			for (Ogre::StringVector::iterator it = sampleList.begin(); it != sampleList.end(); it++)
+			for (Ogre::StringVector::iterator i = sampleList.begin(); i != sampleList.end(); i++)
 			{
 				// load the plugin and acquire the SamplePlugin instance
-				mRoot->loadPlugin(sampleDir + *it);
+				mRoot->loadPlugin(sampleDir + *i);
 				Ogre::Plugin* p = mRoot->getInstalledPlugins().back();
 				SamplePlugin* sp = dynamic_cast<SamplePlugin*>(p);
 
@@ -90,9 +98,55 @@ namespace OgreBites
 					OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, src); 
 				}
 
-				// TODO: store samples here
+				// go through every sample in the plugin...
+				SampleSet newSamples = sp->getSamples();
+				for (SampleSet::iterator j = newSamples.begin(); j != newSamples.end(); j++)
+				{
+					Ogre::NameValuePairList& info = (*j)->getInfo();   // acquire custom sample info
+					Ogre::NameValuePairList::iterator k;
+
+					// give sample default title and category if none found
+					k= info.find("Title");
+					if (k == info.end() || k->second.empty()) info["Title"] = "Untitled";
+					k = info.find("Category");
+					if (k == info.end() || k->second.empty()) info["Category"] = "Unsorted";
+
+					mLoadedSamples.insert(*j);                    // add sample only after ensuring title for sorting
+					mSampleCategories.insert(info["Category"]);   // add sample category
+				}
+			}
+
+			for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
+			{
+				MessageBoxA(0, (*i)->getInfo()["Title"].c_str(), "LOL", 0);
 			}
 		}
+
+		/*-----------------------------------------------------------------------------
+		| Creates the main browser menu.
+		-----------------------------------------------------------------------------*/
+		virtual void createMenu()
+		{
+		}		
+
+		/*-----------------------------------------------------------------------------
+		| Extends shutdown to include browser-specific procedures.
+		-----------------------------------------------------------------------------*/
+		virtual void shutdown()
+		{
+			destroyMenu();
+			SampleContext::shutdown();
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Destroys the main browser menu.
+		-----------------------------------------------------------------------------*/
+		virtual void destroyMenu()
+		{
+		}	
+
+		SampleSet mLoadedSamples;
+		std::set<Ogre::String> mSampleCategories;
 	};
 }
 

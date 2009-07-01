@@ -16,6 +16,21 @@ namespace OgreBites
     {
     public:
 
+		/*=============================================================================
+		| Utility comparison structure for sorting samples.
+		=============================================================================*/
+		struct Comparer
+		{
+			bool operator() (Sample* a, Sample* b)
+			{
+				Ogre::NameValuePairList::iterator aTitle = a->getInfo().find("Title");
+				Ogre::NameValuePairList::iterator bTitle = b->getInfo().find("Title");
+				
+				if (aTitle != a->getInfo().end() && bTitle != b->getInfo().end()) return aTitle->second.compare(bTitle->second) < 0;
+				else return false;
+			}
+		};
+
 		Sample()
         {
 			mWindow = 0;
@@ -207,7 +222,7 @@ namespace OgreBites
 		bool mDone;                       // flag to mark the end of the sample
     };
 
-	typedef std::vector<Sample*> SampleList;    // typedef for convenience
+	typedef std::set<Sample*, Sample::Comparer> SampleSet;
 }
 
 #endif

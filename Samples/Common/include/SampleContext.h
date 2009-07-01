@@ -76,16 +76,16 @@ namespace OgreBites
 			if (s)
 			{
 				// retrieve sample's required plugins and currently installed plugins
-				Ogre::Root::PluginInstanceList ips = mRoot->getInstalledPlugins();
-				Ogre::StringVector rps = s->getRequiredPlugins();
+				Ogre::Root::PluginInstanceList ip = mRoot->getInstalledPlugins();
+				Ogre::StringVector rp = s->getRequiredPlugins();
 
-				for (Ogre::StringVector::iterator rp = rps.begin(); rp != rps.end(); rp++)
+				for (Ogre::StringVector::iterator j = rp.begin(); j != rp.end(); j++)
 				{
 					bool found = false;
 					// try to find the required plugin in the current installed plugins
-					for (Ogre::Root::PluginInstanceList::iterator ip = ips.begin(); ip != ips.end(); ip++)
+					for (Ogre::Root::PluginInstanceList::iterator k = ip.begin(); k != ip.end(); k++)
 					{
-						if ((*ip)->getName() == *rp)
+						if ((*k)->getName() == *j)
 						{
 							found = true;
 							break;
@@ -93,7 +93,7 @@ namespace OgreBites
 					}
 					if (!found)  // throw an exception if a plugin is not found
 					{
-						Ogre::String desc = "Missing required plugin: " + *rp;
+						Ogre::String desc = "Sample requires plugin: " + *j;
 						Ogre::String src = "SampleContext::runSample";
 						OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED, desc, src);
 					}
@@ -103,7 +103,7 @@ namespace OgreBites
 				Ogre::String rrs = s->getRequiredRenderSystem();
 				if (!rrs.empty() && rrs != mRoot->getRenderSystem()->getName())
 				{
-					Ogre::String desc = "Not using required renderer: " + rrs;
+					Ogre::String desc = "Sample only runs with renderer: " + rrs;
 					Ogre::String src = "SampleContext::runSample";
 					OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE, desc, src);
 				}
@@ -426,7 +426,6 @@ namespace OgreBites
 		OIS::Mouse* mMouse;             // mouse device
 
 		Sample* mCurrentSample;         // currently running sample
-		SampleList mSampleList;       // queued samples
 	};
 }
 

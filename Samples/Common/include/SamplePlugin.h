@@ -7,7 +7,7 @@
 namespace OgreBites
 {
 	/*=============================================================================
-	| Utility class used to hold a queue of samples in an OGRE plugin.
+	| Utility class used to hold a set of samples in an OGRE plugin.
 	=============================================================================*/
 	class SamplePlugin : public Ogre::Plugin
     {
@@ -33,13 +33,13 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void addSample(Sample* s)
 		{
-			mSamples.push_back(s);
+			mSamples.insert(s);
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Retrieves the queue of samples.
 		-----------------------------------------------------------------------------*/
-		const SampleList& getSamples()
+		const SampleSet& getSamples()
 		{
 			return mSamples;
 		}
@@ -47,7 +47,7 @@ namespace OgreBites
 	protected:
 
 		Ogre::String mName;
-		SampleList mSamples;
+		SampleSet mSamples;
     };
 }
 
