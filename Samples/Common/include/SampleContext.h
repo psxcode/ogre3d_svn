@@ -52,14 +52,17 @@ namespace OgreBites
 			mRoot = 0;
 			mWindow = 0;
 			mCurrentSample = 0;
+			mSamplePaused = false;
 		}
 
-		Ogre::RenderWindow* getRenderWindow()
+		virtual ~SampleContext() {}
+
+		virtual Ogre::RenderWindow* getRenderWindow()
 		{
 			return mWindow;
 		}
 
-		Sample* getCurrentSample()
+		virtual Sample* getCurrentSample()
 		{
 			return mCurrentSample;
 		}
@@ -69,7 +72,11 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void runSample(Sample* s)
 		{
-			if (mCurrentSample) mCurrentSample->_shutdown();    // quit current sample
+			if (mCurrentSample)
+			{
+				mCurrentSample->_shutdown();    // quit current sample
+				mSamplePaused = false;          // don't pause the next sample
+			}
 
 			mWindow->removeAllViewports();                  // wipe viewports
 
@@ -134,6 +141,134 @@ namespace OgreBites
 			if (mRoot) OGRE_DELETE mRoot;     // destroy root
 		}
 
+		virtual bool isCurrentSamplePaused()
+		{
+			if (mCurrentSample) return mSamplePaused;
+			return false;
+		}
+
+		virtual void pauseCurrentSample()
+		{
+			if (mCurrentSample && !mSamplePaused)
+			{
+				mSamplePaused = true;
+				mCurrentSample->paused();
+			}
+		}
+
+		virtual void unpauseCurrentSample()
+		{
+			if (mCurrentSample && mSamplePaused)
+			{
+				mSamplePaused = false;
+				mCurrentSample->unpaused();
+			}
+		}
+			
+		/*-----------------------------------------------------------------------------
+		| Processes frame started events.
+		-----------------------------------------------------------------------------*/
+		virtual bool frameStarted(const Ogre::FrameEvent& evt)
+		{
+			captureInputDevices();      // capture input
+
+			// manually call sample callback to ensure correct order
+			return (mCurrentSample && !mSamplePaused) ? mCurrentSample->frameStarted(evt) : true;
+		}
+			
+		/*-----------------------------------------------------------------------------
+		| Processes rendering queued events.
+		-----------------------------------------------------------------------------*/
+		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
+		{
+			// manually call sample callback to ensure correct order
+			return (mCurrentSample && !mSamplePaused) ? mCurrentSample->frameRenderingQueued(evt) : true;
+		}
+			
+		/*-----------------------------------------------------------------------------
+		| Processes frame ended events.
+		-----------------------------------------------------------------------------*/
+		virtual bool frameEnded(const Ogre::FrameEvent& evt)
+		{
+			// manually call sample callback to ensure correct order
+			if (mCurrentSample && !mSamplePaused && !mCurrentSample->frameEnded(evt)) return false;
+			// quit if window was closed
+			if (mWindow->isClosed()) return false;
+			// go into idle mode if current sample has ended
+			if (mCurrentSample && mCurrentSample->isDone()) runSample(0);
+
+			return true;
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Processes window size change event. Adjusts mouse's region to match that
+		| of the window. You could also override this method to prevent resizing.
+		-----------------------------------------------------------------------------*/
+		virtual void windowResized(Ogre::RenderWindow* rw)
+		{
+			// manually call sample callback to ensure correct order
+			if (mCurrentSample && !mSamplePaused) mCurrentSample->windowResized(rw);
+
+			const OIS::MouseState& ms = mMouse->getMouseState();
+			ms.width = rw->getWidth();
+			ms.height = rw->getHeight();
+		}
+
+		// window event callbacks which manually call their respective sample callbacks to ensure correct order
+
+		virtual void windowMoved(Ogre::RenderWindow* rw)
+		{
+			if (mCurrentSample && !mSamplePaused) mCurrentSample->windowMoved(rw);
+		}
+
+		virtual bool windowClosing(Ogre::RenderWindow* rw)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->windowClosing(rw);
+			return true;
+		}
+
+		virtual void windowClosed(Ogre::RenderWindow* rw)
+		{
+			if (mCurrentSample && !mSamplePaused) mCurrentSample->windowClosed(rw);
+		}
+
+		virtual void windowFocusChange(Ogre::RenderWindow* rw)
+		{
+			if (mCurrentSample && !mSamplePaused) mCurrentSample->windowFocusChange(rw);
+		}
+
+		// keyboard and mouse callbacks which manually call their respective sample callbacks to ensure correct order
+
+		virtual bool keyPressed(const OIS::KeyEvent& evt)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->keyPressed(evt);
+			return true;
+		}
+
+		virtual bool keyReleased(const OIS::KeyEvent& evt)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->keyReleased(evt);
+			return true;
+		}
+
+		virtual bool mouseMoved(const OIS::MouseEvent& evt)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->mouseMoved(evt);
+			return true;
+		}
+
+		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->mousePressed(evt, id);
+			return true;
+		}
+
+		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->mouseReleased(evt, id);
+			return true;
+		}
+
 	protected:
 
 		/*-----------------------------------------------------------------------------
@@ -142,7 +277,7 @@ namespace OgreBites
 		virtual void createRoot()
 		{
 			// get platform-specific working directory
-			Ogre::String workDir = "";
+			Ogre::String workDir = Ogre::StringUtil::BLANK;
 			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 			workDir = macBundlePath() + "/Contents/Resources/";
 			#endif
@@ -153,7 +288,7 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Configures the startup settings for OGRE. I use the config dialog here,
 		| but you can also restore from a config file. Note that this only happens
-		| the first time you start the context.
+		| when you start the context, and not when you reset it.
 		-----------------------------------------------------------------------------*/
 		virtual bool oneTimeConfig()
 		{
@@ -343,41 +478,6 @@ namespace OgreBites
 				mInputMgr = 0;
 			}
 		}
-			
-		/*-----------------------------------------------------------------------------
-		| Processes frame started events.
-		-----------------------------------------------------------------------------*/
-		virtual bool frameStarted(const Ogre::FrameEvent& evt)
-		{
-			captureInputDevices();      // capture input
-
-			// manually call sample callback to ensure correct order
-			return mCurrentSample ? mCurrentSample->frameStarted(evt) : true;
-		}
-			
-		/*-----------------------------------------------------------------------------
-		| Processes rendering queued events.
-		-----------------------------------------------------------------------------*/
-		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
-		{
-			// manually call sample callback to ensure correct order
-			return mCurrentSample ? mCurrentSample->frameRenderingQueued(evt) : true;
-		}
-			
-		/*-----------------------------------------------------------------------------
-		| Processes frame ended events.
-		-----------------------------------------------------------------------------*/
-		virtual bool frameEnded(const Ogre::FrameEvent& evt)
-		{
-			// manually call sample callback to ensure correct order
-			if (mCurrentSample && !mCurrentSample->frameEnded(evt)) return false;
-			// quit if window was closed
-			if (mWindow->isClosed()) return false;
-			// go into idle mode if current sample has ended
-			if (mCurrentSample && mCurrentSample->isDone()) runSample(0);
-
-			return true;
-		}
 
 		/*-----------------------------------------------------------------------------
 		| Captures input device states.
@@ -388,41 +488,13 @@ namespace OgreBites
 			mMouse->capture();
 		}
 
-		/*-----------------------------------------------------------------------------
-		| Processes window size change event. Adjusts mouse's region to match that
-		| of the window. You could also override this method to prevent resizing.
-		-----------------------------------------------------------------------------*/
-		virtual void windowResized(Ogre::RenderWindow* rw)
-		{
-			// manually call sample callback to ensure correct order
-			if (mCurrentSample) mCurrentSample->windowResized(rw);
-
-			const OIS::MouseState& ms = mMouse->getMouseState();
-			ms.width = rw->getWidth();
-			ms.height = rw->getHeight();
-		}
-
-		// window event callbacks which manually call their respective sample callbacks to ensure correct order
-		virtual void windowMoved(Ogre::RenderWindow* rw) { if (mCurrentSample) mCurrentSample->windowMoved(rw); }
-		virtual bool windowClosing(Ogre::RenderWindow* rw) { return mCurrentSample ? mCurrentSample->windowClosing(rw) : true; }
-		virtual void windowClosed(Ogre::RenderWindow* rw) { if (mCurrentSample) mCurrentSample->windowClosed(rw); }
-		virtual void windowFocusChange(Ogre::RenderWindow* rw) { if (mCurrentSample) mCurrentSample->windowFocusChange(rw); }
-
-		// keyboard and mouse callbacks which manually call their respective sample callbacks to ensure correct order
-		virtual bool keyPressed(const OIS::KeyEvent& evt) { return mCurrentSample ? mCurrentSample->keyPressed(evt) : true; }
-		virtual bool keyReleased(const OIS::KeyEvent& evt) { return mCurrentSample ? mCurrentSample->keyReleased(evt) : true; }
-		virtual bool mouseMoved(const OIS::MouseEvent& evt) { return mCurrentSample ? mCurrentSample->mouseMoved(evt) : true; }
-		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return mCurrentSample ? mCurrentSample->mousePressed(evt, id) : true; }
-		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return mCurrentSample ? mCurrentSample->mouseReleased(evt, id) : true; }
-
 		Ogre::Root* mRoot;              // OGRE root
 		Ogre::RenderWindow* mWindow;    // render window
-
 		OIS::InputManager* mInputMgr;   // OIS input manager
 		OIS::Keyboard* mKeyboard;       // keyboard device
 		OIS::Mouse* mMouse;             // mouse device
-
 		Sample* mCurrentSample;         // currently running sample
+		bool mSamplePaused;             // whether current sample is paused
 	};
 }
 

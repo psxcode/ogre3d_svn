@@ -17,7 +17,7 @@ namespace OgreBites
     public:
 
 		/*=============================================================================
-		| Utility comparison structure for sorting samples.
+		| Utility comparison structure for sorting samples using SampleSet.
 		=============================================================================*/
 		struct Comparer
 		{
@@ -37,6 +37,8 @@ namespace OgreBites
 			mSceneMgr = 0;
 			mDone = true;       // sample has not started
         }
+
+		virtual ~Sample() {}
 
 		/*-----------------------------------------------------------------------------
 		| Retrieves custom sample info.
@@ -123,6 +125,18 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
+		| Actions to perform when the context stops sending frame listener events
+		| and input device events to this sample.
+		-----------------------------------------------------------------------------*/
+		virtual void paused() {}
+
+		/*-----------------------------------------------------------------------------
+		| Actions to perform when the context continues sending frame listener
+		| events and input device events to this sample.
+		-----------------------------------------------------------------------------*/
+		virtual void unpaused() {}
+
+		/*-----------------------------------------------------------------------------
 		| Saves the sample state to a string map.
 		| Optional. Used by SampleContext::reset.
 		-----------------------------------------------------------------------------*/
@@ -135,6 +149,7 @@ namespace OgreBites
 		virtual void restoreState(const Ogre::NameValuePairList state) {}
 
 		// callback interface copied from various listeners to be used by SampleContext
+
 		virtual bool frameStarted(const Ogre::FrameEvent& evt) { return true; }
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt) { return true; }
 		virtual bool frameEnded(const Ogre::FrameEvent& evt) { return true; }
@@ -215,10 +230,8 @@ namespace OgreBites
 		Ogre::RenderWindow* mWindow;      // context render window
 		OIS::Keyboard* mKeyboard;         // context keyboard device
 		OIS::Mouse* mMouse;               // context mouse device
-
 		Ogre::SceneManager* mSceneMgr;    // scene manager for this sample
 		Ogre::NameValuePairList mInfo;    // custom sample info
-
 		bool mDone;                       // flag to mark the end of the sample
     };
 
