@@ -36,7 +36,7 @@ namespace OgreBites
 
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
-			//mCameraMan->frameRenderingQueued(evt);
+			mTrayMgr->frameRenderingQueued(evt);
 			return true;
 		}
 
@@ -52,11 +52,6 @@ namespace OgreBites
 
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
-			if (evt.key == OIS::KC_TAB)    // toggle tray interface
-			{
-				if (mTrayMgr->isCursorVisible()) mTrayMgr->hideCursor();
-				else mTrayMgr->showCursor();
-			}
 			return true;
 		}
 
@@ -86,7 +81,10 @@ namespace OgreBites
 
 		virtual void _setup(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
 		{
-			mTrayMgr = new SdkTrayManager("SampleControls", mouse, this);
+			mTrayMgr = new SdkTrayManager("SampleControls", window, mouse, this);
+			mTrayMgr->showStats(TL_BOTTOMLEFT);
+			mTrayMgr->showLogo(TL_BOTTOMRIGHT);
+
 			Sample::_setup(window, keyboard, mouse);
 		}
 
@@ -113,7 +111,7 @@ namespace OgreBites
 
 	private:
 
-		bool mCursorHiddenByPause;    // for internal use only
+		bool mCursorHiddenByPause;   // for internal use only
     };
 }
 

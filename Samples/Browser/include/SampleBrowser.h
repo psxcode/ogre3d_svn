@@ -31,7 +31,7 @@ namespace OgreBites
 				mCurrentSample = 0;
 				mSamplePaused = false;     // don't pause next sample
 				createDummyScene();
-				mTrayMgr->showBackdrop("SdkTrays/Backdrops/Bands");
+				mTrayMgr->showBackdrop("SdkTrays/BandsBackdrop");
 				mTrayMgr->showAll();
 				mTrayMgr->destroyWidget(mTrayMgr->getWidget("Quit"));
 			}
@@ -39,7 +39,7 @@ namespace OgreBites
 			if (s)    // destroy dummy scene before starting a sample
 			{
 				mTrayMgr->createButton(TL_CENTER, "Quit", "Quit Sample");
-				mTrayMgr->showBackdrop("SdkTrays/Backdrops/Shade");
+				mTrayMgr->showBackdrop("SdkTrays/ShadeBackdrop");
 				mTrayMgr->hideAll();
 				destroyDummyScene();
 				SampleContext::runSample(s);
@@ -47,9 +47,18 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
+		| Process frame events. Updates frame statistics widget set.
+		-----------------------------------------------------------------------------*/
+		bool frameRenderingQueued(const Ogre::FrameEvent& evt)
+		{
+			mTrayMgr->frameRenderingQueued(evt);
+			return SampleContext::frameRenderingQueued(evt);
+		}
+
+		/*-----------------------------------------------------------------------------
 		| Handles button widget events.
 		-----------------------------------------------------------------------------*/
-		virtual void buttonPushed(Button* b)
+		virtual void buttonHit(Button* b)
 		{
 			if (Ogre::StringUtil::startsWith(b->getName(), "Sample", false))   // if this is a sample button...
 			{
@@ -57,14 +66,14 @@ namespace OgreBites
 				{
 					// create a description box and start button
 					mTrayMgr->createLabel(TL_CENTER, "SampleLabel", "");
-					mTrayMgr->createTextBox(TL_CENTER, "SampleDesc", "", 250, 180);
+					mTrayMgr->createTextBox(TL_CENTER, "SampleDesc", "Description", 250, 230);
 					mTrayMgr->createButton(TL_CENTER, "Start", "Run Sample");
 				}
 
 				// show sample description
 				mSelectedSample = Ogre::any_cast<Sample*>(b->getOverlayElement()->getUserAny());
 				((TextBox*)mTrayMgr->getWidget("SampleDesc"))->setText(mSelectedSample->getInfo()["Description"]);
-				((Label*)mTrayMgr->getWidget("SampleLabel"))->setText(mSelectedSample->getInfo()["Title"]);
+				((Label*)mTrayMgr->getWidget("SampleLabel"))->setCaption(mSelectedSample->getInfo()["Title"]);
 			}
 			else if (b->getName() == "Start") runSample(mSelectedSample);  // start button pressed
 			else if (b->getName() == "Exit") mRoot->queueEndRendering();   // quit button pressed
@@ -234,7 +243,6 @@ namespace OgreBites
 			Ogre::SceneManager* sm = mRoot->createSceneManager(Ogre::ST_GENERIC, "DummyScene");
 			Ogre::Camera* cam = sm->createCamera("DummyCamera");
 			Ogre::Viewport* vp = mWindow->addViewport(cam);
-			vp->setBackgroundColour(Ogre::ColourValue(0.5, 0.7, 0.5));
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -242,29 +250,13 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void createMenu()
 		{
-			mTrayMgr = new SdkTrayManager("BrowserControls", mMouse, this);
-			mTrayMgr->setTrayPadding(4);
-			mTrayMgr->showBackdrop("SdkTrays/Backdrops/Bands");
+			mTrayMgr = new SdkTrayManager("BrowserControls", mWindow, mMouse, this);
 
-			Ogre::StringVector sv;
-			sv.push_back("hay");
-			sv.push_back("too longggggggggggggggggg");
-			sv.push_back("hay again");
-			sv.push_back("omg lulz");
-			sv.push_back("hay2");
-			sv.push_back("hay guyz2");
-			sv.push_back("hay again2");
-			sv.push_back("omg lulz2");
-			sv.push_back("hay3");
-			sv.push_back("hay guyz3");
-			sv.push_back("hay again3");
-			sv.push_back("omg lulz3");
-
-			mTrayMgr->createLabel(TL_LEFT, "SamplesLabel", "Samples");
-			mTrayMgr->createSelectMenu(TL_LEFT, "SampleCategoryMenu", "Sample Category", 220, 5)->setItems(sv);
-			mTrayMgr->createSeparator(TL_LEFT, "SampleSeparator");
+			mTrayMgr->showBackdrop("SdkTrays/BandsBackdrop");
 
 			mTrayMgr->setTrayWidgetAlignment(TL_LEFT, Ogre::GHA_CENTER);
+
+			mTrayMgr->createLabel(TL_LEFT, "SamplesLabel", "Samples");
 
 			int j = 0;
 			for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
@@ -273,7 +265,7 @@ namespace OgreBites
 				b->getOverlayElement()->setUserAny(Ogre::Any(*i));
 			}
 
-			mTrayMgr->createButton(TL_TOPRIGHT, "Exit", "Exit", 60);
+			mTrayMgr->createButton(TL_TOPRIGHT, "Exit", "Exit");
 		}
 
 		/*-----------------------------------------------------------------------------

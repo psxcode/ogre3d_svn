@@ -31,13 +31,7 @@ protected:
 
 		Entity* ent = mSceneMgr->createEntity("OgreHead", "ogrehead.mesh");
 		
-		SubEntity* sub;/*
-			mTrayMgr->createButton(TL_BOTTOMLEFT, "+TP", "+ Tray Padding", 130);
-			mTrayMgr->createButton(TL_BOTTOMLEFT, "-TP", "- Tray Padding", 130);
-			mTrayMgr->createButton(TL_BOTTOM, "+WP", "+ Widget Padding", 150);
-			mTrayMgr->createButton(TL_BOTTOM, "-WP", "- Widget Padding", 150);
-			mTrayMgr->createButton(TL_BOTTOMRIGHT, "+WS", "+ Widget Spacing", 150);
-			mTrayMgr->createButton(TL_BOTTOMRIGHT, "-WS", "- Widget Spacing", 150);*/
+		SubEntity* sub;
 
         sub = ent->getSubEntity(0);
         sub->setMaterialName("Examples/CelShading");
@@ -93,6 +87,11 @@ protected:
 		ParticleSystem* fw = mSceneMgr->createParticleSystem("Fireworks", "Examples/Fireworks");
 		mSceneMgr->getRootSceneNode()->attachObject(fw);
 	}
+
+	virtual void postSceneSetup()
+	{
+		mTrayMgr->showLogo(TL_BOTTOMLEFT);
+	}
 };
 
 class Test3 : public SdkSample
@@ -101,13 +100,14 @@ public:
 
 	Test3()
 	{
-		std::stringstream desc;
+		std::ostringstream desc;
 		desc << "An ogre (feminine: ogress) is a large, cruel and hideous "
 			 << "humanoid monster, featured in mythology, folklore and fiction. Ogres are often "
 			 << "depicted in fairy tales and folklore as feeding on human beings, and have appeared "
 			 << "in many classic works of literature. In art, ogres are often depicted with a large head, "
 			 << "abundant hair and beard, a voracious appetite, and a strong body. The term is often applied "
-			 << "in a metaphorical sense to disgusting persons who exploit, brutalize or devour their victims.";
+			 << "in a metaphorical sense to disgusting persons who exploit, brutalize or devour their victims."
+			 << "\nBLAH:\tBLAH\nBLAH2:\tLULZHA";
 
 		mInfo["Title"] = "Big Bad Ogre";
 		mInfo["Description"] = desc.str();
@@ -140,7 +140,7 @@ protected:
 		mTrayMgr->createButton(TL_BOTTOM, "Wire", "Toggle Wireframe");
 	}
 
-	void buttonPushed(Button* b)
+	void buttonHit(Button* b)
 	{
 		if (b->getName() == "Wire")
 		{
@@ -181,6 +181,12 @@ protected:
 		mHeadNode->attachObject(ent);       
 	}
 
+	virtual void postSceneSetup()
+	{
+		mTrayMgr->showStats(TL_TOPLEFT);
+		mTrayMgr->showLogo(TL_TOPRIGHT);
+	}
+
 	bool frameRenderingQueued(const FrameEvent& evt)
 	{
 		mHeadNode->yaw(Radian(evt.timeSinceLastFrame));
@@ -190,6 +196,23 @@ protected:
 	SceneNode* mHeadNode;
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class Test5 : public SdkSample
 {
 public:
@@ -197,60 +220,28 @@ public:
 	Test5()
 	{
 		mInfo["Title"] = "Trays";
-		mInfo["Description"] = "Demonstrates some of the SDK tray manager's features.";
+		mInfo["Description"] = "More trays!";
 	}
 
 protected:
 
-	virtual void setupScene()
+	void postSceneSetup()
 	{
-        mSceneMgr->setSkyBox(true, "Examples/MorningSkyBox");
+		mTrayMgr->createCheckBox(TL_CENTER, "1", "Show Logo", true);
 	}
 
-	virtual void postSceneSetup()
+	void boxChecked(CheckBox* cb)
 	{
-		mTrayMgr->createLabel(TL_LEFT, "SettingsLabel", "Settings");
-		mTrayMgr->createButton(TL_LEFT, "+TP", "+ Tray Padding");
-		mTrayMgr->createButton(TL_LEFT, "-TP", "- Tray Padding");
-		mTrayMgr->createSeparator(TL_LEFT, "Sep1");
-		mTrayMgr->createButton(TL_LEFT, "+WP", "+ Widget Padding");
-		mTrayMgr->createButton(TL_LEFT, "-WP", "- Widget Padding");
-		mTrayMgr->createSeparator(TL_LEFT, "Sep2");
-		mTrayMgr->createButton(TL_LEFT, "+WS", "+ Widget Spacing");
-		mTrayMgr->createButton(TL_LEFT, "-WS", "- Widget Spacing");
-
-		mTrayMgr->createLabel(TL_CENTER, "SpeechLabel", "Speech");
-		mTrayMgr->createTextBox(TL_CENTER, "SpeechBox", "", 200, 140);
-		mTrayMgr->createButton(TL_CENTER, "Clear", "Clear");
-
-		mTrayMgr->createLabel(TL_RIGHT, "AnimalLabel", "Animals");
-		mTrayMgr->createButton(TL_RIGHT, "CowSay", "Cow says?");
-		mTrayMgr->createButton(TL_RIGHT, "CatSay", "Cat says?");
-		mTrayMgr->createButton(TL_RIGHT, "DogSay", "Dog says?");
-		mTrayMgr->createButton(TL_RIGHT, "ScouterSay", "Scouter says?");
-
-		mTrayMgr->createButton(TL_TOPLEFT, "TopLeft", "Top Left");
-		mTrayMgr->createButton(TL_TOP, "Top", "Top");
-		mTrayMgr->createButton(TL_TOPRIGHT, "TopRight", "Top Right");
-		mTrayMgr->createButton(TL_BOTTOMLEFT, "BottomLeft", "Bottom Left");
-		mTrayMgr->createButton(TL_BOTTOM, "Bottom", "Bottom");
-		mTrayMgr->createButton(TL_BOTTOMRIGHT, "BottomRight", "Bottom Right");
+		mTrayMgr->showLogo(TL_BOTTOMRIGHT);
 	}
 
-	virtual void buttonPushed(Button* b)
+	void boxUnchecked(CheckBox* cb)
 	{
-		if (b->getName() == "+TP") mTrayMgr->setTrayPadding(mTrayMgr->getTrayPadding() + 2);
-		else if (b->getName() == "-TP") mTrayMgr->setTrayPadding(mTrayMgr->getTrayPadding() - 2);
-		else if (b->getName() == "+WP") mTrayMgr->setWidgetPadding(mTrayMgr->getWidgetPadding() + 2);
-		else if (b->getName() == "-WP") mTrayMgr->setWidgetPadding(mTrayMgr->getWidgetPadding() - 2);
-		else if (b->getName() == "+WS") mTrayMgr->setWidgetSpacing(mTrayMgr->getWidgetSpacing() + 2);
-		else if (b->getName() == "-WS") mTrayMgr->setWidgetSpacing(mTrayMgr->getWidgetSpacing() - 2);
-		else if (b->getName() == "Clear") ((TextBox*)mTrayMgr->getWidget(TL_CENTER, 1))->clearText();
-		else if (b->getName() == "CowSay") ((TextBox*)mTrayMgr->getWidget(TL_CENTER, 1))->addText("Moooo! ");
-		else if (b->getName() == "CatSay") ((TextBox*)mTrayMgr->getWidget(TL_CENTER, 1))->addText("Meow! ");
-		else if (b->getName() == "DogSay") ((TextBox*)mTrayMgr->getWidget(TL_CENTER, 1))->addText("Woof woof! ");
-		else if (b->getName() == "ScouterSay") ((TextBox*)mTrayMgr->getWidget(TL_CENTER, 1))->addText("It's over NINE THOUSAAAAAND! ");
+		mTrayMgr->hideLogo();
 	}
 };
+
+
+
 
 #endif
