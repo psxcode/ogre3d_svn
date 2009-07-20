@@ -48,7 +48,7 @@ namespace OgreBites
 		virtual void buttonHit(Button* button) {}
 		virtual void itemSelected(SelectMenu* menu) {}
 		virtual void labelHit(Label* label) {}
-		virtual Ogre::DisplayString sliderMoved(Slider* slider) { return ""; }
+		virtual void sliderMoved(Slider* slider) {}
 		virtual void boxChecked(CheckBox* checkBox) {}
 		virtual void boxUnchecked(CheckBox* checkBox) {}
     };
@@ -753,7 +753,7 @@ namespace OgreBites
 					mExpandedBox->setLeft(mSmallBox->getLeft());
 
 					// if the expanded menu goes down off the screen, make it go up instead
-					if (mSmallBox->getTop() + idealHeight > windowSize.y)
+					if (mSmallBox->_getDerivedTop() * windowSize.y + idealHeight > windowSize.y)
 					{
 						mExpandedBox->setTop(mSmallBox->getTop() + mSmallBox->getHeight() - idealHeight);
 						mTextArea->hide();   // it'll conflict with our menu
@@ -1074,18 +1074,21 @@ namespace OgreBites
 			setCaption(caption);
 		}
 
-		const Ogre::DisplayString& getFormattedValue()
+		const Ogre::DisplayString& getValueCaption()
 		{
 			return mValueTextArea->getCaption();
+		}
+		
+		void setValueCaption(const Ogre::DisplayString& caption)
+		{
+			mValueTextArea->setCaption(caption);
 		}
 
 		void setValue(Ogre::Real value)
 		{
 			mValue = Ogre::Math::Clamp<Ogre::Real>(value, mMinValue, mMaxValue);
-			Ogre::DisplayString caption;
-			if (mListener) caption = mListener->sliderMoved(this);
-			if (caption == "") mValueTextArea->setCaption(Ogre::StringConverter::toString(mValue));
-			else mValueTextArea->setCaption(caption);
+			mValueTextArea->setCaption(Ogre::StringConverter::toString(mValue));
+			if (mListener) mListener->sliderMoved(this);
 			if (!mDragging) mHandle->setLeft((int)(mValue / (mMaxValue - mMinValue) * (mTrack->getWidth() - mHandle->getWidth())));
 		}
 
@@ -1201,6 +1204,7 @@ namespace OgreBites
 			mNames = paramNames;
 			mValues.clear();
 			mValues.resize(mNames.size(), "");
+			mElement->setHeight(mNamesArea->getTop() * 2 + mNames.size() * mNamesArea->getCharHeight());
 			updateText();
 		}
 
