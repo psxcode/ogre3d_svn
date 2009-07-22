@@ -31,6 +31,7 @@ Torus Knot Software Ltd.
 #include "OgreCompositor.h"
 #include "OgreCompositorChain.h"
 #include "OgreCompositionPass.h"
+#include "OgreCustomCompositionPass.h"
 #include "OgreCompositionTargetPass.h"
 #include "OgreCompositionTechnique.h"
 #include "OgreRoot.h"
@@ -515,7 +516,6 @@ void CompositorManager::freePooledTextures(bool onlyIfUnreferenced)
 	}
 
 }
-
 //---------------------------------------------------------------------
 void CompositorManager::registerCompositorLogic(const String& name, CompositorLogic* logic)
 {	
@@ -545,5 +545,34 @@ CompositorLogic* CompositorManager::getCompositorLogic(const String& name)
 	}
 	return it->second;
 }
-
+//---------------------------------------------------------------------
+void CompositorManager::registerCustomCompositionPass(const String& name, CustomCompositionPass* logic)
+{	
+	if (name.empty()) 
+	{
+		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
+			"Custom composition pass name must not be empty.",
+			"CompositorManager::registerCustomCompositionPass");
+	}
+	if (mCustomCompositionPasses.find(name) != mCustomCompositionPasses.end())
+	{
+		OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM,
+			"Custom composition pass  '" + name + "' already exists.",
+			"CompositorManager::registerCustomCompositionPass");
+	}
+	mCustomCompositionPasses[name] = logic;
+}
+//---------------------------------------------------------------------
+CustomCompositionPass* CompositorManager::getCustomCompositionPass(const String& name)
+{
+	CustomCompositionPassMap::iterator it = mCustomCompositionPasses.find(name);
+	if (it == mCustomCompositionPasses.end())
+	{
+		OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
+			"Custom composition pass '" + name + "' not registered.",
+			"CompositorManager::getCustomCompositionPass");
+	}
+	return it->second;
+}
+//---------------------------------------------------------------------
 }

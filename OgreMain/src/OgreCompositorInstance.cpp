@@ -33,6 +33,7 @@ Torus Knot Software Ltd.
 #include "OgreCompositionTargetPass.h"
 #include "OgreCompositionPass.h"
 #include "OgreCompositionTechnique.h"
+#include "OgreCustomCompositionPass.h"
 #include "OgreTechnique.h"
 #include "OgrePass.h"
 #include "OgreTexture.h"
@@ -299,7 +300,7 @@ void CompositorInstance::collectPasses(TargetOperation &finalState, CompositionT
 			finalState.shadowsEnabled = target->getShadowsEnabled();
 
             break;
-        case CompositionPass::PT_RENDERQUAD:
+		case CompositionPass::PT_RENDERQUAD: {
             srcmat = pass->getMaterial();
 			if(srcmat.isNull())
             {
@@ -355,7 +356,13 @@ void CompositorInstance::collectPasses(TargetOperation &finalState, CompositionT
 			rsQuadOperation->setQuadFarCorners(pass->getQuadFarCorners(), pass->getQuadFarCornersViewSpace());
 			
 			queueRenderSystemOp(finalState,rsQuadOperation);
+			}
             break;
+		case CompositionPass::PT_RENDERCUSTOM:
+			RenderSystemOperation* customOperation = CompositorManager::getSingleton().
+				getCustomCompositionPass(pass->getCustomType())->createOperation(pass);
+			queueRenderSystemOp(finalState, customOperation);
+			break;
         }
     }
 }

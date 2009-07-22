@@ -57,7 +57,8 @@ namespace Ogre {
             PT_CLEAR,           // Clear target to one colour
 			PT_STENCIL,			// Set stencil operation
             PT_RENDERSCENE,     // Render the scene or part of it
-            PT_RENDERQUAD       // Render a full screen quad
+            PT_RENDERQUAD,      // Render a full screen quad
+			PT_RENDERCUSTOM		// Render a custom sequence
         };
         
         /** Set the type of composition pass */
@@ -275,6 +276,19 @@ namespace Ogre {
 			@note applies when PassType is RENDERQUAD 
 		*/
 		bool getQuadFarCornersViewSpace() const;
+
+		/** Set the type name of this custom composition pass.
+			@note applies when PassType is RENDERCUSTOM
+			@see CompositorManager::registerCustomCompositionPass
+		*/
+		void setCustomType(const String& customType);
+
+		/** Get the type name of this custom composition pass.
+			@note applies when PassType is RENDERCUSTOM
+			@see CompositorManager::registerCustomCompositionPass
+		*/
+		const String& getCustomType() const;
+
     private:
         /// Parent technique
         CompositionTargetPass *mParent;
@@ -317,6 +331,8 @@ namespace Ogre {
         Real mQuadBottom;
 
 		bool mQuadFarCorners, mQuadFarCornersViewSpace;
+		//The type name of the custom composition pass.
+		String mCustomType;
     };
 	/** @} */
 	/** @} */

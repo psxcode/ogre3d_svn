@@ -602,6 +602,11 @@ namespace Ogre {
             passType = CompositionPass::PT_RENDERSCENE;
             break;
 
+		case ID_RENDER_CUSTOM:
+			passType = CompositionPass::PT_RENDERCUSTOM;
+			mScriptContext.pass->setCustomType(getNextTokenLabel());
+			break;
+
         default:
             break;
         }

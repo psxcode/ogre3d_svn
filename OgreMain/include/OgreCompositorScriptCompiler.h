@@ -90,7 +90,7 @@ namespace Ogre {
 			// Targets
 			ID_PREVIOUS, ID_NONE,
 			// Passes
-			ID_RENDER_QUAD, ID_CLEAR, ID_STENCIL, ID_RENDER_SCENE,
+			ID_RENDER_QUAD, ID_CLEAR, ID_STENCIL, ID_RENDER_SCENE, ID_RENDER_CUSTOM,
 			// Clear section
 			ID_CLR_COLOUR, ID_CLR_DEPTH,
 			// Stencil section

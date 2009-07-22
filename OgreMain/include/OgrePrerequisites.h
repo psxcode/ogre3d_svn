@@ -395,6 +395,7 @@ namespace Ogre {
     class CompositionTechnique;
     class CompositionPass;
     class CompositionTargetPass;
+	class CustomCompositionPass;
 }
 
 /* Include all the standard header *after* all the configuration

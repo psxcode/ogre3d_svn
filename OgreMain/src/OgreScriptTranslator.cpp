@@ -5679,10 +5679,21 @@ namespace Ogre{
 			mPass->setType(CompositionPass::PT_RENDERQUAD);
 		else if(type == "render_scene")
 			mPass->setType(CompositionPass::PT_RENDERSCENE);
+		else if(type == "render_custom") {
+			mPass->setType(CompositionPass::PT_RENDERCUSTOM);
+			String customType;
+			//This is the ugly one liner for safe access to the second parameter.
+			if (obj->values.size() < 2 || !getString(*(obj->values.begin()++), &customType))
+			{
+				compiler->addError(ScriptCompiler::CE_STRINGEXPECTED, obj->file, obj->line);
+				return;
+			}
+			mPass->setCustomType(customType);
+		}
 		else
 		{
 			compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, obj->file, obj->line,
-				"pass types must be \"clear\", \"stencil\", \"render_quad\", or \"render_scene\".");
+				"pass types must be \"clear\", \"stencil\", \"render_quad\", \"render_scene\" or \"render_custom\".");
 			return;
 		}
 

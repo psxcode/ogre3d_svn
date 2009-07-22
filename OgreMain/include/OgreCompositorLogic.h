@@ -59,6 +59,9 @@ namespace Ogre {
 			The chain that contained the compositor is still alive during this call.
         */
 		virtual void compositorInstanceDestroyed(CompositorInstance* destroyedInstance) {}
+
+	protected:
+		virtual ~CompositorLogic() {}
 	};
 	/** @} */
 	/** @} */

@@ -285,7 +285,16 @@ bool CompositionPass::getQuadFarCornersViewSpace() const
 {
 	return mQuadFarCornersViewSpace;
 }
+		
+void CompositionPass::setCustomType(const String& customType)
+{
+	mCustomType = customType;
+}
 
+const String& CompositionPass::getCustomType() const
+{
+	return mCustomType;
+}
 //-----------------------------------------------------------------------
 bool CompositionPass::_isSupported(void)
 {

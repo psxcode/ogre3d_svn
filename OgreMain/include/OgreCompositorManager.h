@@ -149,6 +149,14 @@ namespace Ogre {
 		*/
 		CompositorLogic* getCompositorLogic(const String& name);
 
+		/** Register a custom composition pass.
+		*/
+		void registerCustomCompositionPass(const String& name, CustomCompositionPass* customPass);
+		
+		/** Get a custom composition pass by its name 
+		*/
+		CustomCompositionPass* getCustomCompositionPass(const String& name);
+
 		/** Override standard Singleton retrieval.
 		@remarks
 		Why do we do this? Well, it's because the Singleton
@@ -203,6 +211,10 @@ namespace Ogre {
 		/// Map of registered compositor logics
 		typedef map<String, CompositorLogic*>::type CompositorLogicMap;
 		CompositorLogicMap mCompositorLogics;
+
+		/// Map of registered custom composition passes
+		typedef map<String, CustomCompositionPass*>::type CustomCompositionPassMap;
+		CustomCompositionPassMap mCustomCompositionPasses;
 
 		typedef vector<TexturePtr>::type TextureList;
 		typedef VectorIterator<TextureList> TextureIterator;

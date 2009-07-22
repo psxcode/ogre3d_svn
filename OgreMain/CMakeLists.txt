@@ -53,6 +53,7 @@ set (HEADER_FILES
   include/OgreController.h
   include/OgreControllerManager.h
   include/OgreConvexBody.h
+  include/OgreCustomCompositionPass.h
   include/OgreDataStream.h
   include/OgreDDSCodec.h
   include/OgreDefaultHardwareBufferManager.h
