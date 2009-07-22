@@ -360,7 +360,7 @@ void CompositorInstance::collectPasses(TargetOperation &finalState, CompositionT
             break;
 		case CompositionPass::PT_RENDERCUSTOM:
 			RenderSystemOperation* customOperation = CompositorManager::getSingleton().
-				getCustomCompositionPass(pass->getCustomType())->createOperation(pass);
+				getCustomCompositionPass(pass->getCustomType())->createOperation(this, pass);
 			queueRenderSystemOp(finalState, customOperation);
 			break;
         }

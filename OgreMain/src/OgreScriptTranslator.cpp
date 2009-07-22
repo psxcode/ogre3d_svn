@@ -5683,7 +5683,7 @@ namespace Ogre{
 			mPass->setType(CompositionPass::PT_RENDERCUSTOM);
 			String customType;
 			//This is the ugly one liner for safe access to the second parameter.
-			if (obj->values.size() < 2 || !getString(*(obj->values.begin()++), &customType))
+			if (obj->values.size() < 2 || !getString(*(++(obj->values.begin())), &customType))
 			{
 				compiler->addError(ScriptCompiler::CE_STRINGEXPECTED, obj->file, obj->line);
 				return;

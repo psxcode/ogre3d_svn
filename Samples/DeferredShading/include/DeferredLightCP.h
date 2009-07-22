@@ -18,7 +18,10 @@ LGPL like the rest of the engine.
 #include "OgreCompositorInstance.h"
 #include "OgreCustomCompositionPass.h"
 
-class DeferredLightRenderOperation : public Ogre::CompositorInstance::RenderSystemOperation
+//Bad practice etc. This is a demo :)
+using namespace Ogre;
+
+class DeferredLightRenderOperation : public CompositorInstance::RenderSystemOperation
 {
 public:	
 	/// Set state to SceneManager and RenderSystem
@@ -33,8 +36,14 @@ public:
 class DeferredLightCompositionPass : public Ogre::CustomCompositionPass
 {
 public:
-	virtual Ogre::CompositorInstance::RenderSystemOperation* createOperation(const CompositionPass* pass)
+	virtual CompositorInstance::RenderSystemOperation* createOperation(
+		CompositorInstance* instance, const CompositionPass* pass)
 	{
+		const CompositionPass::InputTex& input0 = pass->getInput(0);
+		String texName0 = instance->getTextureInstanceName(input0.name, input0.mrtIndex);
+		const CompositionPass::InputTex& input1 = pass->getInput(1);
+		String texName1 = instance->getTextureInstanceName(input1.name, input1.mrtIndex);
+		//TODO : Use these textures to do something good...
 		return OGRE_NEW DeferredLightRenderOperation;
 	}
 

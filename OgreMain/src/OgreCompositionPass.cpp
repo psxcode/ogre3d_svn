@@ -104,7 +104,7 @@ void CompositionPass::setClearBuffers(uint32 val)
     mClearBuffers = val;
 }
 //-----------------------------------------------------------------------
-uint32 CompositionPass::getClearBuffers()
+uint32 CompositionPass::getClearBuffers() const
 {
     return mClearBuffers;
 }
@@ -114,7 +114,7 @@ void CompositionPass::setClearColour(ColourValue val)
     mClearColour = val;
 }
 //-----------------------------------------------------------------------
-const ColourValue &CompositionPass::getClearColour()
+const ColourValue &CompositionPass::getClearColour() const
 {
     return mClearColour;
 }
@@ -125,13 +125,13 @@ void CompositionPass::setInput(size_t id, const String &input, size_t mrtIndex)
     mInputs[id] = InputTex(input, mrtIndex);
 }
 //-----------------------------------------------------------------------
-const CompositionPass::InputTex &CompositionPass::getInput(size_t id)
+const CompositionPass::InputTex &CompositionPass::getInput(size_t id) const
 {
     assert(id<OGRE_MAX_TEXTURE_LAYERS);
     return mInputs[id];
 }
 //-----------------------------------------------------------------------
-size_t CompositionPass::getNumInputs()
+size_t CompositionPass::getNumInputs() const
 {
     size_t count = 0;
     for(size_t x=0; x<OGRE_MAX_TEXTURE_LAYERS; ++x)
@@ -160,7 +160,7 @@ void CompositionPass::setFirstRenderQueue(uint8 id)
 	mFirstRenderQueue = id;
 }
 //-----------------------------------------------------------------------
-uint8 CompositionPass::getFirstRenderQueue()
+uint8 CompositionPass::getFirstRenderQueue() const
 {
 	return mFirstRenderQueue;
 }
@@ -170,7 +170,7 @@ void CompositionPass::setLastRenderQueue(uint8 id)
 	mLastRenderQueue = id;
 }
 //-----------------------------------------------------------------------
-uint8 CompositionPass::getLastRenderQueue()
+uint8 CompositionPass::getLastRenderQueue() const
 {
 	return mLastRenderQueue;
 }
@@ -179,7 +179,7 @@ void CompositionPass::setClearDepth(Real depth)
 {
 	mClearDepth = depth;
 }
-Real CompositionPass::getClearDepth()
+Real CompositionPass::getClearDepth() const
 {
 	return mClearDepth;
 }
@@ -187,7 +187,7 @@ void CompositionPass::setClearStencil(uint32 value)
 {
 	mClearStencil = value;
 }
-uint32 CompositionPass::getClearStencil()
+uint32 CompositionPass::getClearStencil() const
 {
 	return mClearStencil;
 }
@@ -196,7 +196,7 @@ void CompositionPass::setStencilCheck(bool value)
 {
 	mStencilCheck = value;
 }
-bool CompositionPass::getStencilCheck()
+bool CompositionPass::getStencilCheck() const
 {
 	return mStencilCheck;
 }
@@ -204,7 +204,7 @@ void CompositionPass::setStencilFunc(CompareFunction value)
 {
 	mStencilFunc = value;
 }
-CompareFunction CompositionPass::getStencilFunc()
+CompareFunction CompositionPass::getStencilFunc() const
 {
 	return mStencilFunc;
 } 
@@ -212,7 +212,7 @@ void CompositionPass::setStencilRefValue(uint32 value)
 {
 	mStencilRefValue = value;
 }
-uint32 CompositionPass::getStencilRefValue()
+uint32 CompositionPass::getStencilRefValue() const
 {
 	return mStencilRefValue;
 }
@@ -220,7 +220,7 @@ void CompositionPass::setStencilMask(uint32 value)
 {
 	mStencilMask = value;
 }
-uint32 CompositionPass::getStencilMask()
+uint32 CompositionPass::getStencilMask() const
 {
 	return mStencilMask;
 }
@@ -228,7 +228,7 @@ void CompositionPass::setStencilFailOp(StencilOperation value)
 {
 	mStencilFailOp = value;
 }
-StencilOperation CompositionPass::getStencilFailOp()
+StencilOperation CompositionPass::getStencilFailOp() const
 {
 	return mStencilFailOp;
 }
@@ -236,7 +236,7 @@ void CompositionPass::setStencilDepthFailOp(StencilOperation value)
 {
 	mStencilDepthFailOp = value;
 }
-StencilOperation CompositionPass::getStencilDepthFailOp()
+StencilOperation CompositionPass::getStencilDepthFailOp() const
 {
 	return mStencilDepthFailOp;
 }
@@ -244,7 +244,7 @@ void CompositionPass::setStencilPassOp(StencilOperation value)
 {
 	mStencilPassOp = value;
 }
-StencilOperation CompositionPass::getStencilPassOp()
+StencilOperation CompositionPass::getStencilPassOp() const
 {
 	return mStencilPassOp;
 }
@@ -252,7 +252,7 @@ void CompositionPass::setStencilTwoSidedOperation(bool value)
 {
 	mStencilTwoSidedOperation = value;
 }
-bool CompositionPass::getStencilTwoSidedOperation()
+bool CompositionPass::getStencilTwoSidedOperation() const
 {
 	return mStencilTwoSidedOperation;
 }

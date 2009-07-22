@@ -91,7 +91,7 @@ namespace Ogre {
 		    between render queues like rendering a quad, clearing the frame buffer or 
 			setting stencil state.
 		*/
-		class RenderSystemOperation : public CompositorInstAlloc
+		class _OgreExport RenderSystemOperation : public CompositorInstAlloc
 		{
 		public:
 			virtual ~RenderSystemOperation();
