@@ -103,13 +103,17 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Resets a sample's state (not resources or listeners, etc.). I only reset
-		| the scene graph here, but you can override to reset any custom variables.
+		| Resets a sample (everything except resources).
 		-----------------------------------------------------------------------------*/
 		virtual void reset()
 		{
-			mSceneMgr->clearScene();
+			Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
+			finalCleanup();
+			preSceneSetup();
+			createSceneManager();
+			setupView();
 			setupScene();
+			postSceneSetup();
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -179,7 +183,8 @@ namespace OgreBites
 		virtual void loadResources() {}
 
 		/*-----------------------------------------------------------------------------
-		| Handles any setup that must happen before setup of scene. Optional.
+		| Handles any setup that must happen before setup of scene. Good for
+		| initialising paramaters and stuff. Optional.
 		-----------------------------------------------------------------------------*/
 		virtual void preSceneSetup() {}
 
@@ -203,7 +208,8 @@ namespace OgreBites
 		virtual void setupScene() {}
 
 		/*-----------------------------------------------------------------------------
-		| Handles any setup that must happen after setup of scene. Optional.
+		| Handles any setup that must happen after setup of scene. Good for
+		| setting up the user interface and stuff. Optional.
 		-----------------------------------------------------------------------------*/
 		virtual void postSceneSetup() {}
 

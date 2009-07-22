@@ -17,7 +17,7 @@ namespace OgreBites
 
 		SampleBrowser()
 		{
-			mSelectedSample = 0;
+			mTrayMgr = 0;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -30,6 +30,7 @@ namespace OgreBites
 				mCurrentSample->_shutdown();
 				mCurrentSample = 0;
 				mSamplePaused = false;     // don't pause next sample
+
 				createDummyScene();
 				mTrayMgr->showBackdrop("SdkTrays/BandsBackdrop");
 				mTrayMgr->showAll();
@@ -42,6 +43,7 @@ namespace OgreBites
 				mTrayMgr->showBackdrop("SdkTrays/ShadeBackdrop");
 				mTrayMgr->hideAll();
 				destroyDummyScene();
+
 				SampleContext::runSample(s);
 			}
 		}
@@ -60,24 +62,6 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void buttonHit(Button* b)
 		{
-			if (Ogre::StringUtil::startsWith(b->getName(), "Sample", false))   // if this is a sample button...
-			{
-				if (!mSelectedSample)   // if this is the first time selecting a sample...
-				{
-					// create a description box and start button
-					mTrayMgr->createLabel(TL_CENTER, "SampleLabel", "");
-					mTrayMgr->createTextBox(TL_CENTER, "SampleDesc", "Description", 250, 230);
-					mTrayMgr->createButton(TL_CENTER, "Start", "Run Sample");
-				}
-
-				// show sample description
-				mSelectedSample = Ogre::any_cast<Sample*>(b->getOverlayElement()->getUserAny());
-				((TextBox*)mTrayMgr->getWidget("SampleDesc"))->setText(mSelectedSample->getInfo()["Description"]);
-				((Label*)mTrayMgr->getWidget("SampleLabel"))->setCaption(mSelectedSample->getInfo()["Title"]);
-			}
-			else if (b->getName() == "Start") runSample(mSelectedSample);  // start button pressed
-			else if (b->getName() == "Exit") mRoot->queueEndRendering();   // quit button pressed
-			else if (b->getName() == "Quit") runSample(0);
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -142,16 +126,22 @@ namespace OgreBites
 		}		
 
 		/*-----------------------------------------------------------------------------
-		| Extends setup to include browser-specific procedures.
+		| Extends setup to create dummy scene and tray interface.
 		-----------------------------------------------------------------------------*/
 		virtual void setup()
 		{
 			SampleContext::setup();
+
 			loadSamples();
+
 			createDummyScene();
-			createMenu();
+
+			mTrayMgr = new SdkTrayManager("BrowserControls", mWindow, mMouse, this);
+			mTrayMgr->showBackdrop("SdkTrays/BandsBackdrop");
+
+			setupMainMenu();
 		}
-		
+
 		/*-----------------------------------------------------------------------------
 		| Overrides the default window title.
 		-----------------------------------------------------------------------------*/
@@ -246,34 +236,45 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Creates the main browser menu.
+		| Sets up main menu for browsing samples.
 		-----------------------------------------------------------------------------*/
-		virtual void createMenu()
+		virtual void setupMainMenu()
 		{
-			mTrayMgr = new SdkTrayManager("BrowserControls", mWindow, mMouse, this);
+			mTrayMgr->destroyAllWidgets();
 
-			mTrayMgr->showBackdrop("SdkTrays/BandsBackdrop");
+			Ogre::StringVector blah;
+			blah.push_back("Hello OMG LOL");
+			blah.push_back("Hello OMG LOL");
+			blah.push_back("Hello OMG LOL");
+			blah.push_back("Hello OMG LOL");
+			blah.push_back("Hello OMG LOL");
+			blah.push_back("Hello OMG LOL");
 
-			mTrayMgr->setTrayWidgetAlignment(TL_LEFT, Ogre::GHA_CENTER);
+			mTrayMgr->showLogo(TL_RIGHT);
+			mTrayMgr->createSeparator(TL_RIGHT, "LogoSep");
 
-			mTrayMgr->createLabel(TL_LEFT, "SamplesLabel", "Samples");
+			mTrayMgr->createButton(TL_RIGHT, "Start", "Start Sample");
+			mTrayMgr->createButton(TL_RIGHT, "Refresh", "Refresh Samples");
+			mTrayMgr->createButton(TL_RIGHT, "Configure", "Configure Settings");
+			mTrayMgr->createButton(TL_RIGHT, "Quit", "Quit Browser");
 
-			int j = 0;
-			for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
-			{
-				Button* b = mTrayMgr->createButton(TL_LEFT, "Sample" + Ogre::StringConverter::toString(j++), (*i)->getInfo()["Title"]);
-				b->getOverlayElement()->setUserAny(Ogre::Any(*i));
-			}
-
-			mTrayMgr->createButton(TL_TOPRIGHT, "Exit", "Exit");
+			mTrayMgr->createLabel(TL_LEFT, "TitleLabel", "Sample Title");
+			mTrayMgr->createTextBox(TL_LEFT, "SampleInfo", "Sample Info", 250, 132)->setText("abc def ghi jkl mno pqr stu vwx yz abc def ghi jkl mno pqr stu vwx yz abc def ghi jkl mno pqr stu vwx yz");
+			mTrayMgr->createThickSelectMenu(TL_LEFT, "CategoryMenu", "Select Category", 250, 10)->setItems(blah); 
+			mTrayMgr->createThickSelectMenu(TL_LEFT, "SampleMenu", "Select Sample", 250, 10)->setItems(blah);
+			mTrayMgr->createThickSlider(TL_LEFT, "SampleSlider", "Slide Samples", 250, 80, 0, 99, 100);
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Extends shutdown to include browser-specific procedures.
+		| Extends shutdown to destroy dummy scene and tray interface.
 		-----------------------------------------------------------------------------*/
 		virtual void shutdown()
 		{
-			destroyMenu();
+			if (mTrayMgr)
+			{
+				delete mTrayMgr;
+				mTrayMgr = 0;
+			}
 			if (!mCurrentSample) destroyDummyScene();
 			SampleContext::shutdown();
 		}
@@ -286,15 +287,6 @@ namespace OgreBites
 			mWindow->removeAllViewports();
 			mRoot->destroySceneManager(mRoot->getSceneManager("DummyScene"));
 		}	
-
-		/*-----------------------------------------------------------------------------
-		| Destroys the main browser menu.
-		-----------------------------------------------------------------------------*/
-		virtual void destroyMenu()
-		{
-			if (mTrayMgr) delete mTrayMgr;
-			mTrayMgr = 0;
-		}
 
 		/*-----------------------------------------------------------------------------
 		| Extend to temporarily hide a sample's overlays while in the pause menu.
@@ -328,13 +320,13 @@ namespace OgreBites
 			{
 				(*i)->show();
 			}
+
 			mHiddenOverlays.clear();
 		}
 
-		Sample* mSelectedSample;      // sample currently selected in the menu
 		SampleSet mLoadedSamples;                      // loaded samples
 		std::set<Ogre::String> mSampleCategories;      // sample categories
-		SdkTrayManager* mTrayMgr;
+		SdkTrayManager* mTrayMgr;                      // SDK tray interface
 		std::vector<Ogre::Overlay*> mHiddenOverlays;   // sample overlays hidden for pausing
 	};
 }

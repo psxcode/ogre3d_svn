@@ -227,17 +227,16 @@ protected:
 
 	void postSceneSetup()
 	{
-		mTrayMgr->createCheckBox(TL_CENTER, "1", "Show Logo", true);
-	}
-
-	void boxChecked(CheckBox* cb)
-	{
-		mTrayMgr->showLogo(TL_BOTTOMRIGHT);
-	}
-
-	void boxUnchecked(CheckBox* cb)
-	{
-		mTrayMgr->hideLogo();
+		StringVector choices;
+		choices.push_back("Hello");
+		choices.push_back("Hello");
+		choices.push_back("Hello");
+		choices.push_back("Hello");
+		choices.push_back("Hello");
+		choices.push_back("Hello");
+		choices.push_back("Hello");
+		choices.push_back("Hello");
+		mTrayMgr->createThickSelectMenu(TL_BOTTOM, "BLAH", "BLAH", 200, 8)->setItems(choices);
 	}
 };
 
