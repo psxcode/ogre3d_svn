@@ -12,6 +12,7 @@ set(HEADER_FILES
   include/GBufferSchemeHandler.h
   include/SharedData.h
   include/ListenerFactoryLogic.h
+  include/DeferredLightCP.h
 )
 set(SOURCE_FILES 
   src/AmbientLight.cpp

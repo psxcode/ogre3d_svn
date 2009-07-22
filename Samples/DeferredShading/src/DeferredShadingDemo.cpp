@@ -31,6 +31,7 @@ This demo source file is in the public domain.
 #endif
 
 #include "DeferredShading.h"
+#include "DeferredLightCP.h"
 #include "MLight.h"
 #include "GeomUtils.h"
 #include "DeferredShadingLogic.h"
@@ -206,6 +207,7 @@ protected:
 		MaterialManager::getSingleton().addListener(new GBufferSchemeHandler, "GBuffer");
 		CompositorManager::getSingleton().registerCompositorLogic("DeferredLogic", new DeferredShadingLogic);
 		CompositorManager::getSingleton().registerCompositorLogic("SSAOLogic", new SSAOLogic);
+		CompositorManager::getSingleton().registerCustomCompositionPass("DeferredLight", new DeferredLightCompositionPass);
 
 		// Prepare athene mesh for normalmapping
         MeshPtr pAthene = MeshManager::getSingleton().load("athene.mesh", 
