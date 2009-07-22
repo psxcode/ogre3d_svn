@@ -32,7 +32,7 @@ namespace OgreBites
 				mSamplePaused = false;     // don't pause next sample
 
 				createDummyScene();
-				mTrayMgr->showBackdrop("SdkTrays/BandsBackdrop");
+				mTrayMgr->showBackdrop("SdkTrays/Bands");
 				mTrayMgr->showAll();
 				mTrayMgr->destroyWidget(mTrayMgr->getWidget("Quit"));
 			}
@@ -40,7 +40,7 @@ namespace OgreBites
 			if (s)    // destroy dummy scene before starting a sample
 			{
 				mTrayMgr->createButton(TL_CENTER, "Quit", "Quit Sample");
-				mTrayMgr->showBackdrop("SdkTrays/ShadeBackdrop");
+				mTrayMgr->showBackdrop("SdkTrays/Shade");
 				mTrayMgr->hideAll();
 				destroyDummyScene();
 
@@ -132,12 +132,12 @@ namespace OgreBites
 		{
 			SampleContext::setup();
 
-			loadSamples();
-
 			createDummyScene();
 
 			mTrayMgr = new SdkTrayManager("BrowserControls", mWindow, mMouse, this);
-			mTrayMgr->showBackdrop("SdkTrays/BandsBackdrop");
+			mTrayMgr->showBackdrop("SdkTrays/Bands");
+
+			loadSamples();
 
 			setupMainMenu();
 		}
@@ -159,6 +159,17 @@ namespace OgreBites
 		{
 			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Essential");
 			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Popular");
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Creates dummy scene to allow rendering GUI in viewport.
+		-----------------------------------------------------------------------------*/
+		virtual void createDummyScene()
+		{
+			mWindow->removeAllViewports();
+			Ogre::SceneManager* sm = mRoot->createSceneManager(Ogre::ST_GENERIC, "DummyScene");
+			Ogre::Camera* cam = sm->createCamera("DummyCamera");
+			Ogre::Viewport* vp = mWindow->addViewport(cam);
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -225,43 +236,25 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Creates dummy scene to allow rendering GUI in viewport.
-		-----------------------------------------------------------------------------*/
-		virtual void createDummyScene()
-		{
-			mWindow->removeAllViewports();
-			Ogre::SceneManager* sm = mRoot->createSceneManager(Ogre::ST_GENERIC, "DummyScene");
-			Ogre::Camera* cam = sm->createCamera("DummyCamera");
-			Ogre::Viewport* vp = mWindow->addViewport(cam);
-		}
-
-		/*-----------------------------------------------------------------------------
 		| Sets up main menu for browsing samples.
 		-----------------------------------------------------------------------------*/
 		virtual void setupMainMenu()
 		{
 			mTrayMgr->destroyAllWidgets();
 
-			Ogre::StringVector blah;
-			blah.push_back("Hello OMG LOL");
-			blah.push_back("Hello OMG LOL");
-			blah.push_back("Hello OMG LOL");
-			blah.push_back("Hello OMG LOL");
-			blah.push_back("Hello OMG LOL");
-			blah.push_back("Hello OMG LOL");
-
+			// create main navigation tray
 			mTrayMgr->showLogo(TL_RIGHT);
 			mTrayMgr->createSeparator(TL_RIGHT, "LogoSep");
-
 			mTrayMgr->createButton(TL_RIGHT, "Start", "Start Sample");
 			mTrayMgr->createButton(TL_RIGHT, "Refresh", "Refresh Samples");
-			mTrayMgr->createButton(TL_RIGHT, "Configure", "Configure Settings");
-			mTrayMgr->createButton(TL_RIGHT, "Quit", "Quit Browser");
+			mTrayMgr->createButton(TL_RIGHT, "Configure", "Configure");
+			mTrayMgr->createButton(TL_RIGHT, "Quit", "Quit");
 
-			mTrayMgr->createLabel(TL_LEFT, "TitleLabel", "Sample Title");
-			mTrayMgr->createTextBox(TL_LEFT, "SampleInfo", "Sample Info", 250, 132)->setText("abc def ghi jkl mno pqr stu vwx yz abc def ghi jkl mno pqr stu vwx yz abc def ghi jkl mno pqr stu vwx yz");
-			mTrayMgr->createThickSelectMenu(TL_LEFT, "CategoryMenu", "Select Category", 250, 10)->setItems(blah); 
-			mTrayMgr->createThickSelectMenu(TL_LEFT, "SampleMenu", "Select Sample", 250, 10)->setItems(blah);
+			// create sample viewing controls
+			mTrayMgr->createLabel(TL_LEFT, "SampleTitle", "Sample Title");
+			mTrayMgr->createTextBox(TL_LEFT, "SampleInfo", "Sample Info", 250, 132);
+			mTrayMgr->createThickSelectMenu(TL_LEFT, "CategoryMenu", "Select Category", 250, 10); 
+			mTrayMgr->createThickSelectMenu(TL_LEFT, "SampleMenu", "Select Sample", 250, 10);
 			mTrayMgr->createThickSlider(TL_LEFT, "SampleSlider", "Slide Samples", 250, 80, 0, 99, 100);
 		}
 

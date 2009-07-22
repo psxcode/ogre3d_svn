@@ -51,6 +51,8 @@ namespace OgreBites
 		virtual void sliderMoved(Slider* slider) {}
 		virtual void boxChecked(CheckBox* checkBox) {}
 		virtual void boxUnchecked(CheckBox* checkBox) {}
+		virtual void okDialogClosed(const Ogre::DisplayString& message) {}
+		virtual void yesNoDialogClosed(const Ogre::DisplayString& question, bool response) {}
     };
 
 	/*=============================================================================
@@ -1418,21 +1420,10 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Creates backdrop, cursor, and trays.
 		-----------------------------------------------------------------------------*/
-		SdkTrayManager(const Ogre::String& name, Ogre::RenderWindow* window, OIS::Mouse* mouse, SdkTrayListener* listener = 0)
+		SdkTrayManager(const Ogre::String& name, Ogre::RenderWindow* window, OIS::Mouse* mouse, SdkTrayListener* listener = 0) :
+		  mName(name), mWindow(window), mMouse(mouse), mListener(listener), mTrayPadding(0), mWidgetPadding(8), mWidgetSpacing(2),
+			  mTrayDrag(false), mExpandedMenu(0), mDialog(0), mOk(0), mYes(0), mNo(0), mFpsLabel(0), mStatsPanel(0), mLogo(0)
 		{
-			mName = name;
-			mWindow = window;
-			mMouse = mouse;
-			mListener = listener;
-			mTrayPadding = 0;
-			mWidgetPadding = 8;
-			mWidgetSpacing = 2;
-			mTrayDrag = false;
-			mExpandedMenu = 0;
-			mFpsLabel = 0;
-			mStatsPanel = 0;
-			mLogo = 0;
-
 			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
 
 			Ogre::String nameBase = mName + "_";
@@ -1455,6 +1446,10 @@ namespace OgreBites
 			mCursorLayer->add2D(mCursor);
 			mBackdrop = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "/Backdrop");
 			mBackdropLayer->add2D(mBackdrop);
+			mDialogShade = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "/DialogShade");
+			mDialogShade->setMaterialName("SdkTrays/Shade");
+			mDialogShade->hide();
+			mPriorityLayer->add2D(mDialogShade);
 
 			Ogre::String trayNames[] =
 			{ "TopLeft", "Top", "TopRight", "Left", "Center", "Right", "BottomLeft", "Bottom", "BottomRight" };
@@ -1476,6 +1471,7 @@ namespace OgreBites
 
 			// create the null tray for free-floating widgets
 			mTrays[9] = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "/NullTray");
+			mTrayWidgetAlign[9] = Ogre::GHA_LEFT;
 			mTraysLayer->add2D(mTrays[9]);
 
 			adjustTrays();
@@ -1504,8 +1500,20 @@ namespace OgreBites
 			om.destroy(mPriorityLayer);
 			om.destroy(mCursorLayer);
 
+			if (mDialog)
+			{
+				if (mOk) delete mOk;
+				else
+				{
+					delete mYes;
+					delete mNo;
+				}
+				delete mDialog;
+			}
+
 			Widget::nukeOverlayElement(mBackdrop);
 			Widget::nukeOverlayElement(mCursor);
+			Widget::nukeOverlayElement(mDialogShade);
 
 			for (unsigned int i = 0; i < 10; i++)
 			{
@@ -1643,8 +1651,6 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void setTrayWidgetAlignment(TrayLocation trayLoc, Ogre::GuiHorizontalAlignment gha)
 		{
-			if (trayLoc == TL_NONE) return;
-
 			mTrayWidgetAlign[trayLoc] = gha;
 
 			for (unsigned int i = 0; i < mWidgets[trayLoc].size(); i++)
@@ -1969,6 +1975,62 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
+		| Pops up a message dialog with an OK button.
+		-----------------------------------------------------------------------------*/
+		void showOkDialog(const Ogre::DisplayString& caption, const Ogre::DisplayString& message)
+		{
+			mDialogShade->show();
+
+			mDialog = new TextBox(mName + "/DialogBox", caption, 250, 132);
+			mDialog->setText(message);
+			Ogre::OverlayElement* e = mDialog->getOverlayElement();
+			mDialogShade->addChild(e);
+			e->setVerticalAlignment(Ogre::GVA_CENTER);
+			e->setLeft(-(e->getWidth() / 2));
+			e->setTop(-(e->getHeight() / 2));
+
+			mOk = new Button(mName + "/OkButton", "OK", 60);
+			mOk->_assignListener(this);
+			e = mOk->getOverlayElement();
+			mDialogShade->addChild(e);
+			e->setVerticalAlignment(Ogre::GVA_CENTER);
+			e->setLeft(-(e->getWidth() / 2));
+			e->setTop(mDialog->getOverlayElement()->getTop() + mDialog->getOverlayElement()->getHeight() + 5);
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Pops up a question dialog with Yes and No buttons.
+		-----------------------------------------------------------------------------*/
+		void showYesNoDialog(const Ogre::DisplayString& caption, const Ogre::DisplayString& question)
+		{
+			mDialogShade->show();
+
+			mDialog = new TextBox(mName + "/DialogBox", caption, 250, 132);
+			mDialog->setText(question);
+			Ogre::OverlayElement* e = mDialog->getOverlayElement();
+			mDialogShade->addChild(e);
+			e->setVerticalAlignment(Ogre::GVA_CENTER);
+			e->setLeft(-(e->getWidth() / 2));
+			e->setTop(-(e->getHeight() / 2));
+
+			mYes = new Button(mName + "/YesButton", "Yes", 58);
+			mYes->_assignListener(this);
+			e = mYes->getOverlayElement();
+			mDialogShade->addChild(e);
+			e->setVerticalAlignment(Ogre::GVA_CENTER);
+			e->setLeft(-(e->getWidth() + 2));
+			e->setTop(mDialog->getOverlayElement()->getTop() + mDialog->getOverlayElement()->getHeight() + 5);
+
+			mNo = new Button(mName + "/NoButton", "No", 50);
+			mNo->_assignListener(this);
+			e = mNo->getOverlayElement();
+			mDialogShade->addChild(e);
+			e->setVerticalAlignment(Ogre::GVA_CENTER);
+			e->setLeft(3);
+			e->setTop(mDialog->getOverlayElement()->getTop() + mDialog->getOverlayElement()->getHeight() + 5);
+		}
+
+		/*-----------------------------------------------------------------------------
 		| Gets a widget from a tray by place.
 		-----------------------------------------------------------------------------*/
 		Widget* getWidget(TrayLocation trayLoc, unsigned int place)
@@ -2239,6 +2301,31 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
+		| Destroys dialog widgets, notifies listener, and ends high priority session.
+		-----------------------------------------------------------------------------*/
+		void buttonHit(Button* button)
+		{
+			if (button == mOk)
+			{
+				if (mListener) mListener->okDialogClosed(mDialog->getText());
+				delete mOk;
+				mOk = 0;
+			}
+			else
+			{
+				if (mListener) mListener->yesNoDialogClosed(mDialog->getText(), button == mYes);
+				delete mYes;
+				delete mNo;
+				mYes = 0;
+				mNo = 0;
+			}
+
+			mDialogShade->hide();
+			delete mDialog;
+			mDialog = 0;
+		}
+
+		/*-----------------------------------------------------------------------------
 		| Processes mouse button down events. Returns false if the event was
 		| consumed and should not be passed on to other handlers.
 		-----------------------------------------------------------------------------*/
@@ -2262,6 +2349,18 @@ namespace OgreBites
 			{
 				mExpandedMenu->_cursorPressed(cursorPos, windowSize);
 				if (!mExpandedMenu->isExpanded()) setExpandedMenu(0);
+				return false;
+			}
+
+			if (mDialog)   // only check top priority widget until it passes on
+			{
+				mDialog->_cursorPressed(cursorPos, windowSize);
+				if (mOk) mOk->_cursorPressed(cursorPos, windowSize);
+				else
+				{
+					mYes->_cursorPressed(cursorPos, windowSize);
+					mNo->_cursorPressed(cursorPos, windowSize);
+				}
 				return false;
 			}
 
@@ -2325,18 +2424,29 @@ namespace OgreBites
 			// only process left button when stuff is visible
 			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible() || id != OIS::MB_Left) return true;
 
+			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
+			Ogre::Vector2 windowSize(evt.state.width, evt.state.height);
+
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
-				mExpandedMenu->_cursorReleased(Ogre::Vector2(mCursor->getLeft(), mCursor->getTop()),
-					Ogre::Vector2(evt.state.width, evt.state.height));
-				if (!mExpandedMenu->isExpanded()) setExpandedMenu(0);
+				mExpandedMenu->_cursorReleased(cursorPos, windowSize);
+				return false;
+			}
+
+			if (mDialog)   // only check top priority widget until it passes on
+			{
+				mDialog->_cursorReleased(cursorPos, windowSize);
+				if (mOk) mOk->_cursorReleased(cursorPos, windowSize);
+				else
+				{
+					mYes->_cursorReleased(cursorPos, windowSize);
+					// very important to check if second button still exists, because first button could've closed the popup
+					if (mNo) mNo->_cursorReleased(cursorPos, windowSize); 
+				}
 				return false;
 			}
 
 			if (!mTrayDrag) return true;    // this click did not originate in a tray, so don't process
-
-			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
-			Ogre::Vector2 windowSize(evt.state.width, evt.state.height);
 
 			Widget* w;
 
@@ -2349,13 +2459,6 @@ namespace OgreBites
 					w = mWidgets[i][j];
 					if (!w->getOverlayElement()->isVisible()) continue;
 					w->_cursorReleased(cursorPos, windowSize);    // send event to widget
-
-					SelectMenu* m = dynamic_cast<SelectMenu*>(w);
-					if (m && m->isExpanded())    // a menu has begun a top priority session
-					{
-						setExpandedMenu(m);
-						return false;
-					}
 				}
 			}
 
@@ -2386,7 +2489,18 @@ namespace OgreBites
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
 				mExpandedMenu->_cursorMoved(cursorPos, windowSize);
-				if (!mExpandedMenu->isExpanded()) setExpandedMenu(0);
+				return false;
+			}
+
+			if (mDialog)   // only check top priority widget until it passes on
+			{
+				mDialog->_cursorMoved(cursorPos, windowSize);
+				if (mOk) mOk->_cursorMoved(cursorPos, windowSize);
+				else
+				{
+					mYes->_cursorMoved(cursorPos, windowSize);
+					mNo->_cursorMoved(cursorPos, windowSize);
+				}
 				return false;
 			}
 
@@ -2401,13 +2515,6 @@ namespace OgreBites
 					w = mWidgets[i][j];
 					if (!w->getOverlayElement()->isVisible()) continue;
 					w->_cursorMoved(cursorPos, windowSize);    // send event to widget
-
-					SelectMenu* m = dynamic_cast<SelectMenu*>(w);
-					if (m && m->isExpanded())    // a menu has begun a top priority session
-					{
-						setExpandedMenu(m);
-						return false;
-					}
 				}
 			}
 
@@ -2434,7 +2541,7 @@ namespace OgreBites
 			}
 			else if(mExpandedMenu && !m)
 			{
-				Ogre::OverlayContainer* eb = mPriorityLayer->get2DElementsIterator().getNext();
+				Ogre::OverlayContainer* eb = mPriorityLayer->getChild(mExpandedMenu->getName() + "/MenuExpandedBox");
 				mPriorityLayer->remove2D(eb);
 				((Ogre::OverlayContainer*)mExpandedMenu->getOverlayElement())->addChild(eb);
 			}
@@ -2459,7 +2566,12 @@ namespace OgreBites
 		Ogre::Real mWidgetSpacing;            // widget spacing
 		Ogre::Real mTrayPadding;              // tray padding
 		bool mTrayDrag;                       // a mouse press was initiated on a tray
-		SelectMenu* mExpandedMenu;            // top priority widget
+		SelectMenu* mExpandedMenu;            // top priority expanded menu widget
+		TextBox* mDialog;                     // top priority dialog widget
+		Ogre::OverlayContainer* mDialogShade; // top priority dialog shade
+		Button* mOk;                          // top priority OK button
+		Button* mYes;                         // top priority Yes button
+		Button* mNo;                          // top priority No button
 		Label* mFpsLabel;                     // FPS label
 		ParamsPanel* mStatsPanel;             // frame stats panel
 		DecorWidget* mLogo;                   // logo
