@@ -78,11 +78,6 @@ public:
 	/** Activate or deactivate system
 	 */
 	void setActive(bool active);
-
-	/// Visibility mask for scene
-	static const Ogre::uint32 SceneVisibilityMask = 0x00000001;
-	/// Visibility mask for post-processing geometry (lights, unlit particles)
-	static const Ogre::uint32 PostVisibilityMask = 0x00000002;
 	
 protected:
 	Ogre::Viewport *mViewport;

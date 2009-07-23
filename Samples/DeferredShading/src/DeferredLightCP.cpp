@@ -47,12 +47,6 @@ DLight* DeferredLightRenderOperation::createDLight(Ogre::Light* light)
 	return rv;
 }
 
-void DeferredLightRenderOperation::destroyDLight(Ogre::Light* light)
-{
-	delete mLights[light];
-	mLights.erase(light);
-}
-
 void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 {
 	Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
@@ -86,5 +80,12 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 
 DeferredLightRenderOperation::~DeferredLightRenderOperation()
 {
-
+	for (LightsMap::iterator it = mLights.begin(); it != mLights.end(); ++it)
+	{
+		delete it->second;
+	}
+	mLights.clear();
+	
+	delete mAmbientLight;
+	delete mLightMaterialGenerator;
 }

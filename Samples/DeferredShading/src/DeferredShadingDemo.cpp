@@ -33,7 +33,6 @@ This demo source file is in the public domain.
 #include "DeferredShading.h"
 #include "DeferredLightCP.h"
 #include "GeomUtils.h"
-#include "DeferredShadingLogic.h"
 #include "SSAOLogic.h"
 #include "GbufferSchemeHandler.h"
 #include "SharedData.h"
@@ -204,7 +203,6 @@ protected:
 		//Hook up the compositor logic and scheme handlers.
 		//This can theoretically happen in a loaded plugin, but in this case the demo contains the code.
 		MaterialManager::getSingleton().addListener(new GBufferSchemeHandler, "GBuffer");
-		CompositorManager::getSingleton().registerCompositorLogic("DeferredLogic", new DeferredShadingLogic);
 		CompositorManager::getSingleton().registerCompositorLogic("SSAOLogic", new SSAOLogic);
 		CompositorManager::getSingleton().registerCustomCompositionPass("DeferredLight", new DeferredLightCompositionPass);
 

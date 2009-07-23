@@ -25,10 +25,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreStringConverter.h"
 #include "OgreException.h"
 
-#include "OgreHardwarePixelBuffer.h"
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
-#include "OgreMaterialManager.h"
 
 #include "OgreEntity.h"
 #include "OgreSubEntity.h"
@@ -38,12 +36,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreCompositorManager.h"
 #include "OgreCompositorChain.h"
 #include "OgreCompositorInstance.h"
-#include "OgreCompositionTechnique.h"
-#include "OgreCompositionPass.h"
-#include "OgreCompositionTargetPass.h"
-
-#include "OgreHighLevelGpuProgram.h"
-#include "OgreHighLevelGpuProgramManager.h"
 
 #include "OgreLogManager.h"
 

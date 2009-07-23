@@ -26,20 +26,16 @@ class DeferredLightRenderOperation : public Ogre::CompositorInstance::RenderSyst
 {
 public:
 	DeferredLightRenderOperation(Ogre::CompositorInstance* instance, const Ogre::CompositionPass* pass);
-	/// Set state to SceneManager and RenderSystem
+	
 	virtual void execute(Ogre::SceneManager *sm, Ogre::RenderSystem *rs);
 
 	virtual ~DeferredLightRenderOperation();
 private:
 
-	/** Create a new MiniLight 
+	/** Create a new deferred light
 	 */
 	DLight *createDLight(Ogre::Light* light);
-
-	/** Destroy a MiniLight
-	 */
-	void destroyDLight(Ogre::Light* light);
-
+	
 	Ogre::String mTexName0;
 	Ogre::String mTexName1;
 

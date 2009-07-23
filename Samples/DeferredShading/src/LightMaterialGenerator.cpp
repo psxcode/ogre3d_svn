@@ -31,7 +31,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreHighLevelGpuProgram.h"
 #include "OgreHighLevelGpuProgramManager.h"
 
-#include "MLight.h"
+#include "DLight.h"
 
 using namespace Ogre;
 
@@ -51,7 +51,7 @@ public:
 	virtual GpuProgramPtr generateVertexShader(Perm permutation)
 	{
 		String strUnifiedProgram;
-		if (permutation & MLight::MI_QUAD)
+		if (permutation & DLight::MI_QUAD)
 		{
 			strUnifiedProgram = "DeferredShading/post/vs";
 		}
@@ -71,7 +71,7 @@ public:
 	}
 	virtual MaterialPtr generateTemplateMaterial(Perm permutation)
 	{
-		if(permutation & MLight::MI_QUAD)
+		if(permutation & DLight::MI_QUAD)
 		{
 			return MaterialManager::getSingleton().getByName("DeferredShading/LightMaterialQuad");
 		}
@@ -86,7 +86,7 @@ public:
 		String getPPDefines(Perm permutation)
 		{
 			String strPPD;
-			if (permutation & MLight::MI_SPECULAR)
+			if (permutation & DLight::MI_SPECULAR)
 			{
 				strPPD += "IS_SPECULAR=1,";
 			}
@@ -94,7 +94,7 @@ public:
 			{
 				strPPD += "IS_SPECULAR=0,";
 			}
-			if (permutation & MLight::MI_ATTENUATED)
+			if (permutation & DLight::MI_ATTENUATED)
 			{
 				strPPD += "IS_ATTENUATED=1";
 			}
