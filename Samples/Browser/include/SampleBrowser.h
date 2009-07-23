@@ -25,21 +25,23 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void runSample(Sample* s)
 		{
-			if (mCurrentSample)    // create dummy scene after quitting a sample
+			if (mCurrentSample)  // sample quitting
 			{
 				mCurrentSample->_shutdown();
 				mCurrentSample = 0;
 				mSamplePaused = false;     // don't pause next sample
 
+				// create dummy scene and modify controls
 				createDummyScene();
 				mTrayMgr->showBackdrop("SdkTrays/Bands");
 				mTrayMgr->showAll();
-				mTrayMgr->destroyWidget(mTrayMgr->getWidget("Quit"));
+				((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Start Sample");
 			}
 
-			if (s)    // destroy dummy scene before starting a sample
+			if (s)  // sample starting
 			{
-				mTrayMgr->createButton(TL_CENTER, "Quit", "Quit Sample");
+				// destroy dummy scene and modify controls
+				((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Stop Sample");
 				mTrayMgr->showBackdrop("SdkTrays/Shade");
 				mTrayMgr->hideAll();
 				destroyDummyScene();
@@ -49,7 +51,7 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Process frame events. Updates frame statistics widget set.
+		| Extends frameRenderingQueued to update tray manager.
 		-----------------------------------------------------------------------------*/
 		bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
@@ -62,6 +64,28 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void buttonHit(Button* b)
 		{
+			if (b->getName() == "StartStop")   // start or stop sample
+			{
+			}
+			else if (b->getName() == "UnloadReload")   // unload or reload sample plugins and update controls
+			{
+				if (b->getCaption() == "Unload Samples")
+				{
+					unloadSamples();
+					populateMainMenu();
+					b->setCaption("Reload Samples");
+				}
+				else
+				{
+					loadSamples();
+					populateMainMenu();
+					b->setCaption("Unload Samples");
+				}
+			}
+			else if (b->getName() == "Configure")   // enter configuration screen
+			{
+			}
+			else mRoot->queueEndRendering();   // exit browser
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -69,9 +93,9 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
-			if (evt.key == OIS::KC_ESCAPE && mCurrentSample)    // pause menu
+			if (evt.key == OIS::KC_ESCAPE && mCurrentSample)    // pause or unpause sample
 			{
-				if (mTrayMgr->isCursorVisible())
+				if (mSamplePaused)
 				{
 					mTrayMgr->hideAll();
 					unpauseCurrentSample();
@@ -177,6 +201,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void loadSamples()
 		{
+			Ogre::StringVector unloadedSamplePlugins;
+
 			Ogre::ConfigFile cfg;
 			cfg.load("Samples.cfg");
 
@@ -198,23 +224,30 @@ namespace OgreBites
 				#endif
 			}
 
-			mLoadedSamples.clear();
-			mSampleCategories.clear();
-
 			// loop through all sample plugins...
 			for (Ogre::StringVector::iterator i = sampleList.begin(); i != sampleList.end(); i++)
 			{
-				// load the plugin and acquire the SamplePlugin instance
-				mRoot->loadPlugin(sampleDir + *i);
-				Ogre::Plugin* p = mRoot->getInstalledPlugins().back();
+				try   // try to load the plugin
+				{
+					mRoot->loadPlugin(sampleDir + *i);
+				}
+				catch (Ogre::Exception e)   // plugin couldn't be loaded
+				{
+					unloadedSamplePlugins.push_back(sampleDir + *i);
+					continue;
+				}
+
+				Ogre::Plugin* p = mRoot->getInstalledPlugins().back();   // acquire plugin instance
 				SamplePlugin* sp = dynamic_cast<SamplePlugin*>(p);
 
-				if (!sp)  // this is not a SamplePlugin
+				if (!sp)  // this is not a SamplePlugin, so unload it
 				{
-					Ogre::String desc = p->getName() + " is not a SamplePlugin!";
-					Ogre::String src = "SampleBrowser::loadSamples";
-					OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, src); 
+					unloadedSamplePlugins.push_back(sampleDir + *i); 
+					mRoot->unloadPlugin(sampleDir + *i);
+					continue;
 				}
+
+				mLoadedSamplePlugins.push_back(sampleDir + *i);   // add to records
 
 				// go through every sample in the plugin...
 				SampleSet newSamples = sp->getSamples();
@@ -233,6 +266,33 @@ namespace OgreBites
 					mSampleCategories.insert(info["Category"]);   // add sample category
 				}
 			}
+
+			if (!unloadedSamplePlugins.empty())   // show error message summarising missing or invalid plugins
+			{
+				Ogre::String message = "These requested sample plugins were either missing, corrupt or invalid:";
+
+				for (unsigned int i = 0; i < unloadedSamplePlugins.size(); i++)
+				{
+					message += "\n- " + unloadedSamplePlugins[i];
+				}
+
+				mTrayMgr->showOkDialog("Error!", message);
+			}
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Unloads any loaded sample plugins.
+		-----------------------------------------------------------------------------*/
+		virtual void unloadSamples()
+		{
+			for (unsigned int i = 0; i < mLoadedSamplePlugins.size(); i++)
+			{
+				mRoot->unloadPlugin(mLoadedSamplePlugins[i]);
+			}
+
+			mLoadedSamples.clear();
+			mLoadedSamplePlugins.clear();
+			mSampleCategories.clear();
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -245,10 +305,10 @@ namespace OgreBites
 			// create main navigation tray
 			mTrayMgr->showLogo(TL_RIGHT);
 			mTrayMgr->createSeparator(TL_RIGHT, "LogoSep");
-			mTrayMgr->createButton(TL_RIGHT, "Start", "Start Sample");
-			mTrayMgr->createButton(TL_RIGHT, "Refresh", "Refresh Samples");
+			mTrayMgr->createButton(TL_RIGHT, "StartStop", "Start Sample");
+			mTrayMgr->createButton(TL_RIGHT, "UnloadReload", "Unload Samples");
 			mTrayMgr->createButton(TL_RIGHT, "Configure", "Configure");
-			mTrayMgr->createButton(TL_RIGHT, "Quit", "Quit");
+			mTrayMgr->createButton(TL_RIGHT, "Quit", "Quit Browser");
 
 			// create sample viewing controls
 			mTrayMgr->createLabel(TL_LEFT, "SampleTitle", "Sample Title");
@@ -256,6 +316,15 @@ namespace OgreBites
 			mTrayMgr->createThickSelectMenu(TL_LEFT, "CategoryMenu", "Select Category", 250, 10); 
 			mTrayMgr->createThickSelectMenu(TL_LEFT, "SampleMenu", "Select Sample", 250, 10);
 			mTrayMgr->createThickSlider(TL_LEFT, "SampleSlider", "Slide Samples", 250, 80, 0, 99, 100);
+
+			populateMainMenu();
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Populates main menu with loaded samples.
+		-----------------------------------------------------------------------------*/
+		virtual void populateMainMenu()
+		{
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -268,7 +337,9 @@ namespace OgreBites
 				delete mTrayMgr;
 				mTrayMgr = 0;
 			}
+
 			if (!mCurrentSample) destroyDummyScene();
+
 			SampleContext::shutdown();
 		}
 
@@ -319,6 +390,7 @@ namespace OgreBites
 
 		SampleSet mLoadedSamples;                      // loaded samples
 		std::set<Ogre::String> mSampleCategories;      // sample categories
+		Ogre::StringVector mLoadedSamplePlugins;       // loaded sample plugins
 		SdkTrayManager* mTrayMgr;                      // SDK tray interface
 		std::vector<Ogre::Overlay*> mHiddenOverlays;   // sample overlays hidden for pausing
 	};

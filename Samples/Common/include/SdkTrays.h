@@ -382,7 +382,7 @@ namespace OgreBites
 			unsigned int lastSpace = 0;
 			unsigned int lineBegin = 0;
 			Ogre::Real lineWidth = 0;
-			Ogre::Real rightBoundary = mElement->getWidth() - 2 * mPadding + mScrollTrack->getLeft() + 5;
+			Ogre::Real rightBoundary = mElement->getWidth() - 2 * mPadding + mScrollTrack->getLeft() + 10;
 
 			for (unsigned int i = 0; i < current.length(); i++)
 			{
@@ -678,8 +678,8 @@ namespace OgreBites
 		{
 			if (index < 0 || index >= mItems.size())
 			{
-				Ogre::String desc = "Menu \"";
-				desc += getName() + "\" contains no item at position " + Ogre::StringConverter::toString(index) + ".";
+				Ogre::String desc = "Menu \"" + getName() + "\" contains no item at position " +
+					Ogre::StringConverter::toString(index) + ".";
 				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::selectItem");
 			}
 
@@ -700,8 +700,7 @@ namespace OgreBites
 				}
 			}
 
-			Ogre::String desc = "Menu \"";
-			desc += getName() + "\" contains no item \"" + item + "\".";
+			Ogre::String desc = "Menu \"" + getName() + "\" contains no item \"" + item + "\".";
 			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::selectItem");
 		}
 
@@ -709,8 +708,7 @@ namespace OgreBites
 		{
 			if (mSelectionIndex == -1)
 			{
-				Ogre::String desc = "Menu \"";
-				desc += getName() + "\" has no item selected.";
+				Ogre::String desc = "Menu \"" + getName() + "\" has no item selected.";
 				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::getSelectedItem");
 				return "";
 			}
@@ -1246,8 +1244,7 @@ namespace OgreBites
 				}
 			}
 
-			Ogre::String desc = "ParamsPanel \"";
-			desc += getName() + "\" has no parameter \"" + paramName.asUTF8() + "\".";
+			Ogre::String desc = "ParamsPanel \"" + getName() + "\" has no parameter \"" + paramName.asUTF8() + "\".";
 			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "ParamsPanel::getParamValue");
 		}
 
@@ -1258,8 +1255,7 @@ namespace OgreBites
 				if (mNames[i] == paramName.asUTF8()) return mValues[i];
 			}
 			
-			Ogre::String desc = "ParamsPanel \"";
-			desc += getName() + "\" has no parameter \"" + paramName.asUTF8() + "\".";
+			Ogre::String desc = "ParamsPanel \"" + getName() + "\" has no parameter \"" + paramName.asUTF8() + "\".";
 			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "ParamsPanel::getParamValue");
 			return "";
 		}
@@ -1979,15 +1975,45 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void showOkDialog(const Ogre::DisplayString& caption, const Ogre::DisplayString& message)
 		{
-			mDialogShade->show();
+			Ogre::OverlayElement* e;
 
-			mDialog = new TextBox(mName + "/DialogBox", caption, 250, 132);
-			mDialog->setText(message);
-			Ogre::OverlayElement* e = mDialog->getOverlayElement();
-			mDialogShade->addChild(e);
-			e->setVerticalAlignment(Ogre::GVA_CENTER);
-			e->setLeft(-(e->getWidth() / 2));
-			e->setTop(-(e->getHeight() / 2));
+			if (mDialog)
+			{
+				mDialog->setCaption(caption);
+				mDialog->setText(message);
+
+				if (mOk) return;
+				else
+				{
+					mYes->cleanup();
+					mNo->cleanup();
+					delete mYes;
+					delete mNo;
+					mYes = 0;
+					mNo = 0;
+				}
+			}
+			else
+			{
+				// give widgets a chance to reset in case they're in the middle of something
+				for (unsigned int i = 0; i < 10; i++)
+				{
+					for (unsigned int j = 0; j < mWidgets[i].size(); j++)
+					{
+						mWidgets[i][j]->_focusLost();
+					}
+				}
+
+				mDialogShade->show();
+
+				mDialog = new TextBox(mName + "/DialogBox", caption, 300, 208);
+				mDialog->setText(message);
+				e = mDialog->getOverlayElement();
+				mDialogShade->addChild(e);
+				e->setVerticalAlignment(Ogre::GVA_CENTER);
+				e->setLeft(-(e->getWidth() / 2));
+				e->setTop(-(e->getHeight() / 2));
+			}
 
 			mOk = new Button(mName + "/OkButton", "OK", 60);
 			mOk->_assignListener(this);
@@ -2003,15 +2029,42 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void showYesNoDialog(const Ogre::DisplayString& caption, const Ogre::DisplayString& question)
 		{
-			mDialogShade->show();
+			Ogre::OverlayElement* e;
 
-			mDialog = new TextBox(mName + "/DialogBox", caption, 250, 132);
-			mDialog->setText(question);
-			Ogre::OverlayElement* e = mDialog->getOverlayElement();
-			mDialogShade->addChild(e);
-			e->setVerticalAlignment(Ogre::GVA_CENTER);
-			e->setLeft(-(e->getWidth() / 2));
-			e->setTop(-(e->getHeight() / 2));
+			if (mDialog)
+			{
+				mDialog->setCaption(caption);
+				mDialog->setText(question);
+
+				if (mOk)
+				{
+					mOk->cleanup();
+					delete mOk;
+					mOk = 0;
+				}
+				else return;
+			}
+			else
+			{
+				// give widgets a chance to reset in case they're in the middle of something
+				for (unsigned int i = 0; i < 10; i++)
+				{
+					for (unsigned int j = 0; j < mWidgets[i].size(); j++)
+					{
+						mWidgets[i][j]->_focusLost();
+					}
+				}
+
+				mDialogShade->show();
+
+				mDialog = new TextBox(mName + "/DialogBox", caption, 300, 208);
+				mDialog->setText(question);
+				e = mDialog->getOverlayElement();
+				mDialogShade->addChild(e);
+				e->setVerticalAlignment(Ogre::GVA_CENTER);
+				e->setLeft(-(e->getWidth() / 2));
+				e->setTop(-(e->getHeight() / 2));
+			}
 
 			mYes = new Button(mName + "/YesButton", "Yes", 58);
 			mYes->_assignListener(this);
@@ -2039,8 +2092,7 @@ namespace OgreBites
 
 			Ogre::String trayNames[] =
 			{ "TopLeft", "Top", "TopRight", "Left", "Center", "Right", "BottomLeft", "Bottom", "BottomRight" };
-			Ogre::String desc = "No widget in tray \"";
-			desc += trayNames[trayLoc] + "\" at index " + Ogre::StringConverter::toString(place);
+			Ogre::String desc = "No widget in tray \"" + trayNames[trayLoc] + "\" at index " + Ogre::StringConverter::toString(place);
 			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "TrayManager::getWidget");
 			return 0;
 		}
@@ -2057,8 +2109,7 @@ namespace OgreBites
 
 			Ogre::String trayNames[] =
 			{ "TopLeft", "Top", "TopRight", "Left", "Center", "Right", "BottomLeft", "Bottom", "BottomRight" };
-			Ogre::String desc = "No widget in tray \"";
-			desc += trayNames[trayLoc] + "\" named \"" + name + "\"";
+			Ogre::String desc = "No widget in tray \"" + trayNames[trayLoc] + "\" named \"" + name + "\"";
 			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "TrayManager::getWidget");
 			return 0;
 		}
@@ -2078,8 +2129,7 @@ namespace OgreBites
 				catch (Ogre::Exception&) {}
 			}
 
-			Ogre::String desc = "No widget named \"";
-			desc += name + "\"";
+			Ogre::String desc = "No widget named \"" + name + "\"";
 			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "TrayManager::getWidget");
 			return 0;
 		}
@@ -2118,6 +2168,11 @@ namespace OgreBites
 		void destroyWidget(Widget* widget)
 		{
 			if (!widget) OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Widget does not exist.", "TrayManager::destroyWidget");
+
+			// in case special widgets are destroyed manually, set them to 0
+			if (widget == mLogo) mLogo = 0;
+			else if (widget == mStatsPanel) mStatsPanel = 0;
+			else if (widget == mFpsLabel) mFpsLabel = 0;
 
 			mTrays[widget->getTrayLocation()]->removeChild(widget->getName());
 
@@ -2228,10 +2283,17 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Process frame events. Updates frame statistics widget set.
+		| Process frame events. Updates frame statistics widget set and deletes
+		| all widgets queued for destruction.
 		-----------------------------------------------------------------------------*/
 		bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
+			for (unsigned int i = 0; i < mWidgetDeathRow.size(); i++)
+			{
+				delete mWidgetDeathRow[i];
+			}
+			mWidgetDeathRow.clear();
+
 			Ogre::RenderTarget::FrameStats stats = mWindow->getStatistics();
 
 			if (areStatsVisible())
@@ -2308,12 +2370,17 @@ namespace OgreBites
 			if (button == mOk)
 			{
 				if (mListener) mListener->okDialogClosed(mDialog->getText());
+
+				mOk->cleanup();
 				delete mOk;
 				mOk = 0;
 			}
 			else
 			{
 				if (mListener) mListener->yesNoDialogClosed(mDialog->getText(), button == mYes);
+
+				mYes->cleanup();
+				mNo->cleanup();
 				delete mYes;
 				delete mNo;
 				mYes = 0;
@@ -2321,6 +2388,7 @@ namespace OgreBites
 			}
 
 			mDialogShade->hide();
+			mDialog->cleanup();
 			delete mDialog;
 			mDialog = 0;
 		}
@@ -2331,12 +2399,6 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			for (unsigned int i = 0; i < mWidgetDeathRow.size(); i++)   // delete widgets queued for destruction
-			{
-				delete mWidgetDeathRow[i];
-			}
-			mWidgetDeathRow.clear();
-
 			// only process left button when stuff is visible
 			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible() || id != OIS::MB_Left) return true;
 
@@ -2415,12 +2477,6 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			for (unsigned int i = 0; i < mWidgetDeathRow.size(); i++)   // delete widgets queued for destruction
-			{
-				delete mWidgetDeathRow[i];
-			}
-			mWidgetDeathRow.clear();
-
 			// only process left button when stuff is visible
 			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible() || id != OIS::MB_Left) return true;
 
@@ -2472,12 +2528,6 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		bool mouseMoved(const OIS::MouseEvent& evt)
 		{
-			for (unsigned int i = 0; i < mWidgetDeathRow.size(); i++)   // delete widgets queued for destruction
-			{
-				delete mWidgetDeathRow[i];
-			}
-			mWidgetDeathRow.clear();
-
 			// don't process if cursor layer is invisible
 			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible()) return true;
 
