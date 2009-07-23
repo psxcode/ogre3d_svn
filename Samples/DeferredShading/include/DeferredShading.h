@@ -47,10 +47,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreMaterial.h"
 #include "OgreRenderTargetListener.h"
 
-class MLight;
-class AmbientLight;
-class MaterialGenerator;
-
 /** System to manage Deferred Shading for a camera/render target.
  */
 class DeferredShadingSystem : public Ogre::RenderTargetListener
@@ -83,24 +79,11 @@ public:
 	 */
 	void setActive(bool active);
 
-	/** Create a new MiniLight 
-	 */
-	MLight *createMLight();
-
-	/** Destroy a MiniLight
-	 */
-	void destroyMLight(MLight *m);
-
 	/// Visibility mask for scene
 	static const Ogre::uint32 SceneVisibilityMask = 0x00000001;
 	/// Visibility mask for post-processing geometry (lights, unlit particles)
 	static const Ogre::uint32 PostVisibilityMask = 0x00000002;
-
-	// when you enable the compositor, if the compositor is the lit mode, we have to set up the light materials 
-	// to that of the mrt
-	void setupLightMaterials();
-
-	void setLightTextures(const Ogre::String& texName0, const Ogre::String& texName1);
+	
 protected:
 	Ogre::Viewport *mViewport;
 	Ogre::SceneManager *mSceneMgr;
@@ -115,27 +98,8 @@ protected:
 	DSMode mCurrentMode;
 	bool mSSAO;
 
-	typedef Ogre::set<MLight*>::type LightList;
-
-	LightList mLights;
+	void createResources();
 	
-	MaterialGenerator *mLightMaterialGenerator;
-
-	void createAmbientLight(void);
-	void setUpAmbientLightMaterial(void);
-	AmbientLight* mAmbientLight;
-
-    void createResources();
-	void initialiseLightGeometry();
-
-	Ogre::String mTexName0;
-	Ogre::String mTexName1;
-
-	// sets up the materials' pass' texture units 0 and 1 to texName0 and texName1
-	void setupMaterial(const Ogre::MaterialPtr &mat
-		, const Ogre::String& texName0
-		, const Ogre::String& texName1);
-
 	void logCurrentMode(void);
 };
 

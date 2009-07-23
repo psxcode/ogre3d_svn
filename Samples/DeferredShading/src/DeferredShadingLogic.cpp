@@ -15,7 +15,7 @@ public:
 		String mrt0 = mInstance->getTextureInstanceName("mrt_output", 0);
 		String mrt1 = mInstance->getTextureInstanceName("mrt_output", 1);
 
-		SharedData::getSingleton().iSystem->setLightTextures(mrt0, mrt1);
+		//SharedData::getSingleton().iSystem->setLightTextures(mrt0, mrt1);
 	}
 
 private:

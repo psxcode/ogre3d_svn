@@ -51,7 +51,7 @@ compositor DeferredShading/ShowLit
 				last_render_queue  5			
 			}
 						
-			// just the lights and their meshes
+			// Render the minilight indicators
 			pass render_scene
 			{
 				first_render_queue 20

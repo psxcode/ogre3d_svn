@@ -16,7 +16,6 @@ LGPL like the rest of the engine.
 #define __SHAREDDATA_H
 
 #include <Ogre.h>
-#include "MLight.h"
 #include "DeferredShading.h"
 
 class SharedData : public Ogre::Singleton<SharedData> {
@@ -51,7 +50,7 @@ public:
 		// Animation state for light swarm
 		Ogre::AnimationState* mMLAnimState;
 
-		MLight *iMainLight;
+		Ogre::Light *iMainLight;
 
 		Ogre::vector<Ogre::Node*>::type mLightNodes;
 
