@@ -41,6 +41,8 @@ This demo source file is in the public domain.
 
 template<> SharedData* Singleton<SharedData>::ms_Singleton = 0;
 
+//#define OLD
+
 class RenderToTextureFrameListener : public ExampleFrameListener
 {
 protected:
@@ -302,9 +304,14 @@ protected:
 		mSystem->initialize();
 
 		// Create main, moving light
+#ifdef OLD
 		MLight* l1 = mSystem->createMLight();//"MainLight");
+#else
+		Light* l1 = mSceneMgr->createLight();
+#endif
         l1->setDiffuseColour(0.75f, 0.7f, 0.8f);
 		l1->setSpecularColour(0.85f, 0.9f, 1.0f);
+
 		
 		SceneNode *lightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		lightNode->attachObject(l1);
@@ -331,7 +338,11 @@ protected:
         SharedData::getSingleton().mAnimState->setEnabled(true);
 
 		// Create some happy little lights
-		createSampleLights();
+#ifdef OLD
+		createSampleLightsOLD();
+#else
+		createSampleLightsNEW();
+#endif
 
 		// safely setup application's (not postfilter!) shared data
 		SharedData::getSingleton().iCamera = mCamera;
@@ -339,8 +350,9 @@ protected:
 		SharedData::getSingleton().iWindow = mWindow;
 		SharedData::getSingleton().iActivate = true;
 		SharedData::getSingleton().iGlobalActivate = true;
-		
+#ifdef OLD
 		SharedData::getSingleton().iMainLight = l1;
+#endif
 	}
 
     void createFrameListener(void)
@@ -351,7 +363,7 @@ protected:
         mRoot->addFrameListener(mFrameListener);
     }
 
-	void createSampleLights()
+	void createSampleLightsOLD()
 	{
 		// Create some lights		
 		vector<MLight*>::type lights;
@@ -439,6 +451,148 @@ protected:
 			ent->setMaterialName(matname);
 			ent->setRenderQueueGroup(light->getRenderQueueGroup());
 			static_cast<SceneNode*>(light->getParentNode())->attachObject(ent);
+		}		
+
+		// Store nodes for hiding/showing
+		SharedData::getSingleton().mLightNodes = nodes;
+
+		// Do some animation for node a-f
+		// Generate helix structure
+		float seconds_per_station = 1.0f;
+		float r=35;
+		//Vector3 base(0,-30,0);
+		Vector3 base(-100, -30, 85);
+
+		float h=120;
+		const size_t s_to_top = 16;
+		const size_t stations = s_to_top*2-1;
+		float ascend = h/((float)s_to_top);
+		float stations_per_revolution = 3.5f;
+		size_t skip = 2; // stations between lights
+		Vector3 station_pos[stations];
+		for(int x=0; x<s_to_top; ++x)
+		{
+			float theta = ((float)x/stations_per_revolution)*2.0f*Math::PI;
+			station_pos[x] = base+Vector3(Math::Sin(theta)*r, ascend*x, Math::Cos(theta)*r);
+		}
+		for(int x=s_to_top; x<stations; ++x)
+		{
+			float theta = ((float)x/stations_per_revolution)*2.0f*Math::PI;
+			station_pos[x] = base+Vector3(Math::Sin(theta)*r, h-ascend*(x-s_to_top), Math::Cos(theta)*r);
+		}
+		// Create a track for the light swarm
+		Animation* anim = mSceneMgr->createAnimation("LightSwarmTrack", stations*seconds_per_station);
+		// Spline it for nice curves
+		anim->setInterpolationMode(Animation::IM_SPLINE);
+		for(unsigned int x=0; x<nodes.size(); ++x)
+		{
+			// Create a track to animate the camera's node
+			NodeAnimationTrack* track = anim->createNodeTrack(x, nodes[x]);
+			for(int y=0; y<=stations; ++y)
+			{
+				// Setup keyframes
+				TransformKeyFrame* key = track->createNodeKeyFrame(y*seconds_per_station); // A start position
+				key->setTranslate(station_pos[(x*skip+y)%stations]);
+				// Make sure size of light doesn't change
+				key->setScale(nodes[x]->getScale());
+			}
+		}
+		// Create a new animation state to track this
+		SharedData::getSingleton().mMLAnimState = mSceneMgr->createAnimationState("LightSwarmTrack");
+		SharedData::getSingleton().mMLAnimState->setEnabled(true);
+	}
+
+
+	void createSampleLightsNEW()
+	{
+		// Create some lights		
+		vector<Light*>::type lights;
+		SceneNode *parentNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("LightsParent");
+		// Create light nodes
+		vector<Node*>::type nodes;
+
+		Light *a = mSceneMgr->createLight();
+		SceneNode *an = parentNode->createChildSceneNode();
+		an->attachObject(a);
+		a->setAttenuation(1000, 1.0f, 0.001f, 0.002f);
+		//a->setAttenuation(1.0f, 0.000f, 0.000f);
+		an->setPosition(0,0,25);
+		a->setDiffuseColour(1,0,0);
+		//a->setSpecularColour(0.5,0,0);
+		lights.push_back(a);
+		nodes.push_back(an);
+
+		Light *b = mSceneMgr->createLight();
+		SceneNode *bn = parentNode->createChildSceneNode();
+		bn->attachObject(b);
+		b->setAttenuation(1000, 1.0f, 0.001f, 0.003f);
+		bn->setPosition(25,0,0);
+		b->setDiffuseColour(1,1,0);
+		//b->setSpecularColour(0.5,0.5,0);
+		lights.push_back(b);
+		nodes.push_back(bn);
+
+		Light *c = mSceneMgr->createLight();
+		SceneNode *cn = parentNode->createChildSceneNode();
+		cn->attachObject(c);
+		c->setAttenuation(1000, 1.0f, 0.001f, 0.004f);
+		cn->setPosition(0,0,-25);
+		c->setDiffuseColour(0,1,1);
+		c->setSpecularColour(0.25,1.0,1.0); // Cyan light has specular component
+		lights.push_back(c);
+		nodes.push_back(cn);
+
+		Light *d = mSceneMgr->createLight();
+		SceneNode *dn = parentNode->createChildSceneNode();
+		dn->attachObject(d);
+		d->setAttenuation(1000, 1.0f, 0.002f, 0.002f);
+		dn->setPosition(-25,0,0);
+		d->setDiffuseColour(1,0,1);
+		d->setSpecularColour(0.0,0,0.0);
+		lights.push_back(d);
+		nodes.push_back(dn);
+
+		Light *e = mSceneMgr->createLight();
+		SceneNode *en = parentNode->createChildSceneNode();
+		en->attachObject(e);
+		e->setAttenuation(1000, 1.0f, 0.002f, 0.0025f);
+		en->setPosition(25,0,25);
+		e->setDiffuseColour(0,0,1);
+		e->setSpecularColour(0,0,0);
+		lights.push_back(e);
+		nodes.push_back(en);
+		
+		Light *f = mSceneMgr->createLight();
+		SceneNode *fn = parentNode->createChildSceneNode();
+		fn->attachObject(f);
+		f->setAttenuation(1000, 1.0f, 0.0015f, 0.0021f);
+		fn->setPosition(-25,0,-25);
+		f->setDiffuseColour(0,1,0);
+		f->setSpecularColour(0,0.0,0.0);
+		lights.push_back(f);
+		nodes.push_back(fn);
+
+		// Create marker meshes to show user where the lights are
+		Entity *ent;
+		GeomUtils::createSphere("PointLightMesh", 1.0f, 5, 5, true, true);
+		for(vector<Light*>::type::iterator i=lights.begin(); i!=lights.end(); ++i)
+		{
+			Light* light = *i;
+			ent = mSceneMgr->createEntity(light->getName()+"v", "PointLightMesh");
+			String matname = light->getName()+"m";
+			// Create coloured material
+			MaterialPtr mat = MaterialManager::getSingleton().create(matname,
+                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            Pass* pass = mat->getTechnique(0)->getPass(0);
+            pass->setDiffuse(0.0f,0.0f,0.0f,1.0f);
+			pass->setAmbient(0.0f,0.0f,0.0f);
+			pass->setSelfIllumination(light->getDiffuseColour());
+
+			ent->setMaterialName(matname);
+			//ent->setRenderQueueGroup(light->getRenderQueueGroup());
+			ent->setRenderQueueGroup(RENDER_QUEUE_2 + 1);
+			static_cast<SceneNode*>(light->getParentNode())->attachObject(ent);
+			ent->setVisible(true);
 		}		
 
 		// Store nodes for hiding/showing

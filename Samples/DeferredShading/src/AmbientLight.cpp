@@ -63,3 +63,8 @@ const MaterialPtr& AmbientLight::getMaterial(void) const
 {
 	return mMatPtr;
 }
+
+void AmbientLight::getWorldTransforms(Ogre::Matrix4* xform) const
+{
+	*xform = Matrix4::IDENTITY;
+}

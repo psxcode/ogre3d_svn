@@ -18,33 +18,45 @@ LGPL like the rest of the engine.
 #include "OgreCompositorInstance.h"
 #include "OgreCustomCompositionPass.h"
 
-//Bad practice etc. This is a demo :)
-using namespace Ogre;
+#include "DLight.h"
+#include "MaterialGenerator.h"
+#include "AmbientLight.h"
 
-class DeferredLightRenderOperation : public CompositorInstance::RenderSystemOperation
+class DeferredLightRenderOperation : public Ogre::CompositorInstance::RenderSystemOperation
 {
-public:	
+public:
+	DeferredLightRenderOperation(Ogre::CompositorInstance* instance, const Ogre::CompositionPass* pass);
 	/// Set state to SceneManager and RenderSystem
-	virtual void execute(SceneManager *sm, RenderSystem *rs) 
-	{
-		bool debug = true;
-	}
+	virtual void execute(Ogre::SceneManager *sm, Ogre::RenderSystem *rs);
 
-	virtual ~DeferredLightRenderOperation() {}
+	virtual ~DeferredLightRenderOperation();
+private:
+
+	/** Create a new MiniLight 
+	 */
+	DLight *createDLight(Ogre::Light* light);
+
+	/** Destroy a MiniLight
+	 */
+	void destroyDLight(Ogre::Light* light);
+
+	Ogre::String mTexName0;
+	Ogre::String mTexName1;
+
+	MaterialGenerator* mLightMaterialGenerator;
+
+	typedef std::map<Ogre::Light*, DLight*> LightsMap;
+	LightsMap mLights;
+	AmbientLight* mAmbientLight;
 };
 
 class DeferredLightCompositionPass : public Ogre::CustomCompositionPass
 {
 public:
-	virtual CompositorInstance::RenderSystemOperation* createOperation(
-		CompositorInstance* instance, const CompositionPass* pass)
+	virtual Ogre::CompositorInstance::RenderSystemOperation* createOperation(
+		Ogre::CompositorInstance* instance, const Ogre::CompositionPass* pass)
 	{
-		const CompositionPass::InputTex& input0 = pass->getInput(0);
-		String texName0 = instance->getTextureInstanceName(input0.name, input0.mrtIndex);
-		const CompositionPass::InputTex& input1 = pass->getInput(1);
-		String texName1 = instance->getTextureInstanceName(input1.name, input1.mrtIndex);
-		//TODO : Use these textures to do something good...
-		return OGRE_NEW DeferredLightRenderOperation;
+		return OGRE_NEW DeferredLightRenderOperation(instance, pass);
 	}
 
 protected:
