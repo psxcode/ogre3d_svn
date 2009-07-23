@@ -24,14 +24,15 @@ LGPL like the rest of the engine.
 class ListenerFactoryLogic : public Ogre::CompositorLogic
 {
 public:
-
+	/** @copydoc CompositorLogic::compositorInstanceCreated */
 	virtual void compositorInstanceCreated(Ogre::CompositorInstance* newInstance) 
 	{
 		Ogre::CompositorInstance::Listener* listener = createListener(newInstance);
 		newInstance->addListener(listener);
 		mListeners[newInstance] = listener;
 	}
-
+	
+	/** @copydoc CompositorLogic::compositorInstanceDestroyed */
 	virtual void compositorInstanceDestroyed(Ogre::CompositorInstance* destroyedInstance)
 	{
 		delete mListeners[destroyedInstance];
@@ -39,6 +40,7 @@ public:
 	}
 
 protected:
+	//This is the method that implementers will need to create
 	virtual Ogre::CompositorInstance::Listener* createListener(Ogre::CompositorInstance* instance) = 0;
 private:
 	typedef std::map<Ogre::CompositorInstance*, Ogre::CompositorInstance::Listener*> ListenerMap;

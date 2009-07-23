@@ -20,6 +20,7 @@ LGPL like the rest of the engine.
 class GBufferSchemeHandler : public Ogre::MaterialManager::Listener
 {
 public:
+	/** @copydoc MaterialManager::Listener::handleSchemeNotFound */
 	virtual Ogre::Technique* handleSchemeNotFound(unsigned short schemeIndex, 
 		const Ogre::String& schemeName, Ogre::Material* originalMaterial, unsigned short lodIndex, 
 		const Ogre::Renderable* rend);

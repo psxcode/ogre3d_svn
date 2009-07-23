@@ -88,18 +88,6 @@ void DLight::setSpecularColour(const ColourValue &col)
 		
 }
 //-----------------------------------------------------------------------
-ColourValue DLight::getDiffuseColour()
-{
-	Vector4 val = getCustomParameter(1);
-	return ColourValue(val[0], val[1], val[2], val[3]);
-}
-//-----------------------------------------------------------------------
-ColourValue DLight::getSpecularColour()
-{
-	Vector4 val = getCustomParameter(2);
-	return ColourValue(val[0], val[1], val[2], val[3]);
-}
-//-----------------------------------------------------------------------
 void DLight::rebuildGeometry(float radius)
 {
 	// Scale node to radius
@@ -182,14 +170,16 @@ const MaterialPtr& DLight::getMaterial(void) const
 {
 	return mGenerator->getMaterial(mPermutation);
 }
+//-----------------------------------------------------------------------
 void DLight::getWorldTransforms(Matrix4* xform) const
 {
 	xform->makeTransform(mParentLight->getDerivedPosition(),
 		Vector3::UNIT_SCALE, Quaternion::IDENTITY);
 }
+//-----------------------------------------------------------------------
 void DLight::updateFromParent()
 {
-	//TODO : Don't do this unless needed
+	//TODO : Don't do this unless something changed
 	setAttenuation(mParentLight->getAttenuationConstant(), 
 		mParentLight->getAttenuationLinear(), mParentLight->getAttenuationQuadric());	
 	setDiffuseColour(mParentLight->getDiffuseColour());

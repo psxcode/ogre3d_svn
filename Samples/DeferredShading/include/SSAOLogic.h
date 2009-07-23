@@ -20,6 +20,7 @@ LGPL like the rest of the engine.
 class SSAOLogic : public ListenerFactoryLogic
 {
 protected:
+	/** @copydoc ListenerFactoryLogic::createListener */
 	virtual Ogre::CompositorInstance::Listener* createListener(Ogre::CompositorInstance* instance);
 };
 

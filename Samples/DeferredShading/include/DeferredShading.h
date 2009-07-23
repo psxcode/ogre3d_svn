@@ -48,6 +48,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreRenderTargetListener.h"
 
 /** System to manage Deferred Shading for a camera/render target.
+ *  @note With the changes to the compositor framework, this class just
+ *		selects which compositors to enable.
  */
 class DeferredShadingSystem : public Ogre::RenderTargetListener
 {
@@ -72,9 +74,12 @@ public:
 
 	DSMode getMode(void) const;
 
+	/** Set screen space ambient occlusion mode
+	 */
 	void setSSAO(bool ssao);
 	
 	bool getSSAO() const;
+
 	/** Activate or deactivate system
 	 */
 	void setActive(bool active);

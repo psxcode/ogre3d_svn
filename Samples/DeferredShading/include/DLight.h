@@ -26,8 +26,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreSimpleRenderable.h"
 #include "MaterialGenerator.h"
 
-/** Renderable minilight. Do not create this directly, but use 
-	DeferredShadingSystem::createDLight.
+/** Deferred light geometry. Each instance matches a normal light.
+	Should not be created by the user.
 	XXX support other types of light other than point lights.
  */
 class DLight: public Ogre::SimpleRenderable
@@ -45,35 +45,9 @@ public:
 		MI_SPECULAR		= 0x4  // Specular component is calculated
 	};
 
+	/** Update the information from the light that matches this one 
+	 */
 	void updateFromParent();
-
-	/** Set constant, linear, quadratic Attenuation terms 
-	 */
-	void setAttenuation(float c, float b, float a);
-
-	/** Set the diffuse colour 
-	 */
-	void setDiffuseColour(const Ogre::ColourValue &col);
-	void setDiffuseColour(float r=1.0f, float g=1.0f, float b=1.0f, float a=1.0f)
-	{
-		setDiffuseColour(Ogre::ColourValue(r,g,b,a));
-	}
-
-	/** Set the specular colour
-	 */
-	void setSpecularColour(const Ogre::ColourValue &col);
-	void setSpecularColour(float r=1.0f, float g=1.0f, float b=1.0f, float a=1.0f)
-	{
-		setSpecularColour(Ogre::ColourValue(r,g,b,a));
-	}
-
-	/** Get diffuse colour.
-	*/
-	Ogre::ColourValue getDiffuseColour();
-
-	/** Get specular colour. 
-	*/
-	Ogre::ColourValue getSpecularColour();
 
 	/** Create geometry for this light.
 	*/
@@ -93,9 +67,22 @@ public:
 	virtual Ogre::Real getSquaredViewDepth(const Ogre::Camera*) const;
 	/** @copydoc Renderable::getMaterial */
 	virtual const Ogre::MaterialPtr& getMaterial(void) const;
-	
+	/** @copydoc Renderable::getBoundingRadius */
 	virtual void getWorldTransforms(Ogre::Matrix4* xform) const;
 protected:
+
+	/** Set constant, linear, quadratic Attenuation terms 
+	 */
+	void setAttenuation(float c, float b, float a);
+
+	/** Set the diffuse colour 
+	 */
+	void setDiffuseColour(const Ogre::ColourValue &col);
+
+	/** Set the specular colour
+	 */
+	void setSpecularColour(const Ogre::ColourValue &col);
+
 	/// The light that this DLight renders
 	Ogre::Light* mParentLight;
 	/// Mode to ignore world orientation/position

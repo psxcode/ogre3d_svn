@@ -4,10 +4,11 @@
 using namespace Ogre;
 
 #include "LightMaterialGenerator.h"
-
+//-----------------------------------------------------------------------
 DeferredLightRenderOperation::DeferredLightRenderOperation(
 	CompositorInstance* instance, const CompositionPass* pass)
 {
+	//Get the names of the GBuffer textures
 	const CompositionPass::InputTex& input0 = pass->getInput(0);
 	mTexName0 = instance->getTextureInstanceName(input0.name, input0.mrtIndex);
 	const CompositionPass::InputTex& input1 = pass->getInput(1);
@@ -19,6 +20,7 @@ DeferredLightRenderOperation::DeferredLightRenderOperation(
 	else
 		mLightMaterialGenerator = new LightMaterialGenerator("hlsl");
 
+	// Create the ambient light
 	mAmbientLight = new AmbientLight();
 	const MaterialPtr& mat = mAmbientLight->getMaterial();
 	mat->load();
@@ -29,7 +31,7 @@ DeferredLightRenderOperation::DeferredLightRenderOperation(
 		pass->getTextureUnitState(1)->setTextureName(mTexName1);
 	}
 }
-	
+//-----------------------------------------------------------------------
 DLight* DeferredLightRenderOperation::createDLight(Ogre::Light* light)
 {
 	DLight *rv = new DLight(mLightMaterialGenerator,light);
@@ -46,7 +48,7 @@ DLight* DeferredLightRenderOperation::createDLight(Ogre::Light* light)
 	mat->compile();
 	return rv;
 }
-
+//-----------------------------------------------------------------------
 void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 {
 	Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
@@ -77,7 +79,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 		}
 	}
 }
-
+//-----------------------------------------------------------------------
 DeferredLightRenderOperation::~DeferredLightRenderOperation()
 {
 	for (LightsMap::iterator it = mLights.begin(); it != mLights.end(); ++it)
@@ -89,3 +91,4 @@ DeferredLightRenderOperation::~DeferredLightRenderOperation()
 	delete mAmbientLight;
 	delete mLightMaterialGenerator;
 }
+//-----------------------------------------------------------------------
