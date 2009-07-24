@@ -36,6 +36,7 @@ LGPL like the rest of the engine.
 
 #include "Compositor.h"
 #include "CompositorDemo_FrameListener.h"
+#include "HelperLogics.h"
 
 /**********************************************************************
 OS X Specific Resource Location Finding
@@ -237,7 +238,13 @@ void CompositorDemo::createViewports(void)
 	{
 		// Initialise, parse all scripts etc
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-
+		
+		// Register the compositor logics
+		// See comment in beginning of HelperLogics.h for explanation
+		Ogre::CompositorManager& compMgr = Ogre::CompositorManager::getSingleton();
+		compMgr.registerCompositorLogic("GaussianBlur", new GaussianBlurLogic);
+		compMgr.registerCompositorLogic("HDR", new HDRLogic);
+		compMgr.registerCompositorLogic("HeatVision", new HeatVisionLogic);
 	}
 
 //-----------------------------------------------------------------------------------
@@ -480,6 +487,7 @@ void CompositorDemo::createViewports(void)
 			);
 		{
 			Ogre::CompositionTechnique *t = comp4->createTechnique();
+			t->setCompositorLogicName("HeatVision");
 			{
 				Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("scene");
 				def->width = 256;

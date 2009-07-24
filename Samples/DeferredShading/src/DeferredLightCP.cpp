@@ -70,6 +70,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 		else 
 		{
 			dLight = dLightIt->second;
+			dLight->updateFromParent();
 		}
 		
 		tech = dLight->getMaterial()->getBestTechnique();

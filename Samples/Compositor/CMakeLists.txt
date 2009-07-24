@@ -4,11 +4,13 @@ set(HEADER_FILES
   include/Compositor.h
   include/CompositorDemo_FrameListener.h
   include/ItemSelectorViewManager.h
+  include/HelperLogics.h
 )
 set(SOURCE_FILES 
   src/Compositor.cpp
   src/CompositorDemo_FrameListener.cpp
   src/ItemSelectorViewManager.cpp
+  src/HelperLogics.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../Common/CEGUIRenderer/include)
