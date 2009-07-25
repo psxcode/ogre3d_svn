@@ -757,6 +757,14 @@ namespace Ogre {
         /// Internal method for preparing shadow textures ready for use in a regular render
         virtual void prepareShadowTextures(Camera* cam, Viewport* vp);
 
+	public:
+		virtual void _prepareShadowTexturesPerLight(Camera* cam, Viewport* vp, Light* light);
+
+		struct RenderContext;
+		RenderContext* _pauseRendering();
+		void _resumeRendering(RenderContext* context);
+
+	protected:
         /** Internal method for rendering all the objects for a given light into the 
             stencil buffer.
         @param light The light source
@@ -3193,6 +3201,7 @@ namespace Ogre {
 		virtual bool _areShadowsSuppressed(void) const
 		{ return mSuppressShadows; }
 
+		
 		/** Render the objects in a given queue group 
 		@remarks You should only call this from a RenderQueueInvocation implementation
 		*/

@@ -6014,6 +6014,179 @@ void SceneManager::prepareShadowTextures(Camera* cam, Viewport* vp)
 
 }
 //---------------------------------------------------------------------
+void SceneManager::_prepareShadowTexturesPerLight(Camera* cam, Viewport* vp, Light* light)
+{
+	if (!light->getCastShadows()) 
+	{
+		return;
+	}
+	// create shadow textures if needed
+	ensureShadowTexturesCreated();
+
+    // Set the illumination stage, prevents recursive calls
+    IlluminationRenderStage savedStage = mIlluminationStage;
+    mIlluminationStage = IRS_RENDER_TO_TEXTURE;
+
+	try
+	{
+		
+		// Determine far shadow distance
+		Real shadowDist = mDefaultShadowFarDist;
+		if (!shadowDist)
+		{
+			// need a shadow distance, make one up
+			shadowDist = cam->getNearClipDistance() * 300;
+		}
+		Real shadowOffset = shadowDist * mShadowTextureOffset;
+		// Precalculate fading info
+		Real shadowEnd = shadowDist + shadowOffset;
+		Real fadeStart = shadowEnd * mShadowTextureFadeStart;
+		Real fadeEnd = shadowEnd * mShadowTextureFadeEnd;
+		// Additive lighting should not use fogging, since it will overbrighten; use border clamp
+		if (!isShadowTechniqueAdditive())
+		{
+			// set fogging to hide the shadow edge 
+			mShadowReceiverPass->setFog(true, FOG_LINEAR, ColourValue::White, 
+				0, fadeStart, fadeEnd);
+		}
+		else
+		{
+			// disable fogging explicitly
+			mShadowReceiverPass->setFog(true, FOG_NONE);
+		}
+
+		// Iterate over the lights we've found, max out at the limit of light textures
+		// Note that the light sorting must now place shadow casting lights at the
+		// start of the light list, therefore we do not need to deal with potential
+		// mismatches in the light<->shadow texture list any more
+
+		ShadowTextureList::iterator si, siend;
+		ShadowTextureCameraList::iterator ci;
+		si = mShadowTextures.begin();
+		siend = mShadowTextures.end();
+		ci = mShadowTextureCameras.begin();
+		mShadowTextureIndexLightList.clear();
+		size_t shadowTextureIndex = 0;
+		
+		if (mShadowTextureCurrentCasterLightList.empty())
+			mShadowTextureCurrentCasterLightList.push_back(light);
+		else
+			mShadowTextureCurrentCasterLightList[0] = light;
+
+
+		// texture iteration per light.
+		size_t textureCountPerLight = mShadowTextureCountPerType[light->getType()];
+		for (size_t j = 0; j < textureCountPerLight && si != siend; ++j)
+		{
+			TexturePtr &shadowTex = *si;
+			RenderTarget *shadowRTT = shadowTex->getBuffer()->getRenderTarget();
+			Viewport *shadowView = shadowRTT->getViewport(0);
+			Camera *texCam = *ci;
+			// rebind camera, incase another SM in use which has switched to its cam
+			shadowView->setCamera(texCam);
+
+			// Associate main view camera as LOD camera
+			texCam->setLodCamera(cam);
+			// set base
+			if (light->getType() != Light::LT_POINT)
+				texCam->setDirection(light->getDerivedDirection());
+			if (light->getType() != Light::LT_DIRECTIONAL)
+				texCam->setPosition(light->getDerivedPosition());
+
+			// update shadow cam - light mapping
+			ShadowCamLightMapping::iterator camLightIt = mShadowCamLightMapping.find( texCam );
+			assert(camLightIt != mShadowCamLightMapping.end());
+			camLightIt->second = light;
+
+			if (light->getCustomShadowCameraSetup().isNull())
+				mDefaultShadowCameraSetup->getShadowCamera(this, cam, vp, light, texCam, j);
+			else
+				light->getCustomShadowCameraSetup()->getShadowCamera(this, cam, vp, light, texCam, j);
+
+			// Setup background colour
+			shadowView->setBackgroundColour(ColourValue::White);
+
+			// Fire shadow caster update, callee can alter camera settings
+			fireShadowTexturesPreCaster(light, texCam, j);
+
+			// Update target
+			shadowRTT->update();
+
+			++si; // next shadow texture
+			++ci; // next camera
+		}
+
+		// set the first shadow texture index for this light.
+		mShadowTextureIndexLightList.push_back(shadowTextureIndex);
+		shadowTextureIndex += textureCountPerLight;
+	}
+	
+	catch (Exception& e) 
+	{
+		// we must reset the illumination stage if an exception occurs
+		mIlluminationStage = savedStage;
+		throw e;
+	}
+    // Set the illumination stage, prevents recursive calls
+    mIlluminationStage = savedStage;
+
+	fireShadowTexturesUpdated(
+		std::min(mLightsAffectingFrustum.size(), mShadowTextures.size()));
+
+	ShadowTextureManager::getSingleton().clearUnused();
+
+}
+//---------------------------------------------------------------------
+struct SceneManager::RenderContext {
+	RenderQueue* renderQueue;
+	Viewport* viewport;
+	Camera* camera;
+};
+
+SceneManager::RenderContext* SceneManager::_pauseRendering()
+{
+	RenderContext* context = new RenderContext;
+	context->renderQueue = mRenderQueue;
+	context->viewport = mCurrentViewport;
+	context->camera = mCameraInProgress;
+	
+	mDestRenderSystem->_endFrame();
+	mRenderQueue = 0;
+	return context;
+}
+//---------------------------------------------------------------------
+void SceneManager::_resumeRendering(SceneManager::RenderContext* context) 
+{
+	if (mRenderQueue != 0) 
+	{
+		delete mRenderQueue;
+	}
+	mRenderQueue = context->renderQueue;
+
+	setViewport(context->viewport);
+	mCameraInProgress = context->camera;
+	mDestRenderSystem->_beginFrame();
+
+	// Set rasterisation mode
+    mDestRenderSystem->_setPolygonMode(mCameraInProgress->getPolygonMode());
+
+	// Set initial camera state
+	mDestRenderSystem->_setProjectionMatrix(mCameraInProgress->getProjectionMatrixRS());
+	
+	mCachedViewMatrix = mCameraInProgress->getViewMatrix(true);
+
+	if (mCameraRelativeRendering)
+	{
+		mCachedViewMatrix.setTrans(Vector3::ZERO);
+		mCameraRelativePosition = mCameraInProgress->getDerivedPosition();
+	}
+	mDestRenderSystem->_setTextureProjectionRelativeTo(mCameraRelativeRendering, mCameraInProgress->getDerivedPosition());
+
+	
+	setViewMatrix(mCachedViewMatrix);
+	delete context;
+}
+//---------------------------------------------------------------------
 StaticGeometry* SceneManager::createStaticGeometry(const String& name)
 {
 	// Check not existing
