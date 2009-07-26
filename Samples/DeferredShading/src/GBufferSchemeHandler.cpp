@@ -167,6 +167,3 @@ void GBufferSchemeHandler::fillPass(
 		texUnitIndex++;
 	}
 }
-
-
-

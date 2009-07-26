@@ -25,7 +25,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 {
 	Ogre::StringStream ss;
 	
-	ss << "void DefferedVP(" << std::endl;
+	ss << "void DeferredVP(" << std::endl;
 	ss << "	float4 iPosition : POSITION," << std::endl;
 	ss << "	float3 iNormal   : NORMAL," << std::endl;
 
@@ -52,7 +52,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 	
 	ss << "{" << std::endl;
 	ss << "	oPosition = mul(cWorldViewProj, iPosition);" << std::endl;
-	ss << "	oNormal = mul(cWorldView, iNormal).xyz;" << std::endl;
+	ss << "	oNormal = mul(cWorldView, float4(iNormal,1)).xyz;" << std::endl;
 	ss << "	oDepth = oPosition.w;" << std::endl;
 
 	for (Ogre::uint32 i=0; i<numTexCoords; i++) {
@@ -62,14 +62,16 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 	ss << "}" << std::endl;
 	
 	Ogre::String programSource = ss.str();
-	Ogre::String programName = "DefferedShading/GBuffer/VP_" + Ogre::StringConverter::toString(permutation);
+	Ogre::String programName = "DeferredShading/GBuffer/VP_" + Ogre::StringConverter::toString(permutation);
+
+	Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
 
 	// Create shader object
 	Ogre::HighLevelGpuProgramPtr ptrProgram = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
 		programName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		"cg", Ogre::GPT_VERTEX_PROGRAM);
 	ptrProgram->setSource(programSource);
-	ptrProgram->setParameter("entry_point","DefferedVP");
+	ptrProgram->setParameter("entry_point","DeferredVP");
 	ptrProgram->setParameter("profiles","vs_1_1 arbvp1");
 
 	const Ogre::GpuProgramParametersSharedPtr& params = ptrProgram->getDefaultParameters();
@@ -83,7 +85,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 {
 	Ogre::StringStream ss;
 	
-	ss << "void DefferedFP(" << std::endl;
+	ss << "void DeferredFP(" << std::endl;
 	ss << "	float1 iDepth : TEXCOORD0," << std::endl;
 	ss << "	float3 iNormal   : TEXCOORD1," << std::endl;
 
@@ -111,22 +113,29 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	{
 		ss << "	oColor0.rgb = tex2D(sTex0, iUV0);" << std::endl;
 	}
+	else
+	{
+		//TODO !
+		ss << "	oColor0.rgb = float3(0,0,0);" << std::endl;
+	}
 	
-	ss << "	oColor1.a = cSpecularity;" << std::endl;
+	ss << "	oColor0.a = cSpecularity;" << std::endl;
 	ss << "	oColor1.rgb = iNormal;" << std::endl;
 	ss << "	oColor1.a = iDepth;" << std::endl;
 
 	ss << "}" << std::endl;
 	
 	Ogre::String programSource = ss.str();
-	Ogre::String programName = "DefferedShading/GBuffer/FP_" + Ogre::StringConverter::toString(permutation);
+	Ogre::String programName = "DeferredShading/GBuffer/FP_" + Ogre::StringConverter::toString(permutation);
+
+	Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
 
 	// Create shader object
 	Ogre::HighLevelGpuProgramPtr ptrProgram = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
 		programName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		"cg", Ogre::GPT_FRAGMENT_PROGRAM);
 	ptrProgram->setSource(programSource);
-	ptrProgram->setParameter("entry_point","DefferedFP");
+	ptrProgram->setParameter("entry_point","DeferredFP");
 	ptrProgram->setParameter("profiles","ps_2_0 arbfp1");
 
 	const Ogre::GpuProgramParametersSharedPtr& params = ptrProgram->getDefaultParameters();
@@ -137,7 +146,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 
 Ogre::MaterialPtr GBufferMaterialGeneratorImpl::generateTemplateMaterial(MaterialGenerator::Perm permutation)
 {
-	Ogre::String matName = "DefferedShading/GBuffer/Mat_" + Ogre::StringConverter::toString(permutation);
+	Ogre::String matName = "DeferredShading/GBuffer/Mat_" + Ogre::StringConverter::toString(permutation);
 
 	Ogre::MaterialPtr matPtr = Ogre::MaterialManager::getSingleton().create
 		(matName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);

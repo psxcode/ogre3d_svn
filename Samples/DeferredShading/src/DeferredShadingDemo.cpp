@@ -284,7 +284,6 @@ protected:
 			cloneEnt = knotEnt->clone(cloneName);
 			// Attach to new node
 			node->attachObject(cloneEnt);
-
 		}
 
         mCamera->setPosition(-50, 100, 500);
