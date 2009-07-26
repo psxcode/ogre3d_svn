@@ -143,6 +143,10 @@ Ogre::MaterialPtr GBufferMaterialGeneratorImpl::generateTemplateMaterial(Materia
 		(matName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::Pass* pass = matPtr->getTechnique(0)->getPass(0);
 
+	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP)
+	{
+		pass->createTextureUnitState();
+	}
 	Ogre::uint32 numTextures = permutation & GBufferMaterialGenerator::GBP_TEXTURE_MASK;
 	for (Ogre::uint32 i=0; i<numTextures; i++)
 	{

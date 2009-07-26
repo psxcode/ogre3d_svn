@@ -26,6 +26,8 @@ public:
 		const Ogre::String& schemeName, Ogre::Material* originalMaterial, unsigned short lodIndex, 
 		const Ogre::Renderable* rend);
 protected:
+	GBufferMaterialGenerator mMaterialGenerator;
+
 	static const Ogre::String NORMAL_MAP_PATTERN;
 	struct MaterialProperties {
 		MaterialProperties() : normalMap(0), isSkinned(false), vertexColourType(0) {}
@@ -37,7 +39,7 @@ protected:
 
 	MaterialProperties inspectMaterial(Ogre::Material* material, unsigned short lodIndex, const Ogre::Renderable* rend);
 	MaterialGenerator::Perm getPermutation(const MaterialProperties& props);
-	void fillPass(Ogre::Pass* gBufferPass, Ogre::Pass* originalPass, const MaterialProperties& props);
+	void fillPass(Ogre::Pass* gBufferPass, const MaterialProperties& props);
 	bool checkNormalMap(Ogre::TextureUnitState* tus, MaterialProperties& props);
 	
 	

@@ -11,32 +11,18 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 		const String& schemeName, Material* originalMaterial, unsigned short lodIndex, 
 		const Renderable* rend)
 {
-	String deferredMaterialName = "DeferredDemo/" + originalMaterial->getName();
-	MaterialManager& matMgr = MaterialManager::getSingleton();
-	const MaterialPtr& deferredMaterial = 
-		matMgr.getByName(deferredMaterialName);
-	
-	Technique* newTechnique = originalMaterial->createTechnique();
-		
-	if (!deferredMaterial.isNull()) 
-	{
-		deferredMaterial->load();
-		String curSchemeName = schemeName;
-		matMgr.setActiveScheme(MaterialManager::DEFAULT_SCHEME_NAME);
-		Technique* gBufferTechnique = deferredMaterial->getBestTechnique(lodIndex, rend);
-		matMgr.setActiveScheme(curSchemeName);
-		//Copy technique details from deferred material
-		*newTechnique = *gBufferTechnique;
-	}
-	else 
-	{
-		//This material doesn't have a GBuffer alternative, so don't render it in this scheme
-		newTechnique->removeAllPasses();
-	}
+	MaterialProperties props = inspectMaterial(originalMaterial, lodIndex, rend);
 
-	newTechnique->setSchemeName(schemeName);
+	MaterialGenerator::Perm perm = getPermutation(props);
 
-	return newTechnique;
+	const Ogre::MaterialPtr& templateMat = mMaterialGenerator.getMaterial(perm);
+
+	Technique* newTech = originalMaterial->createTechnique();
+	*newTech = *(templateMat->getTechnique(0));
+	newTech->setSchemeName(schemeName);
+	fillPass(newTech->getPass(0), props);
+
+	return newTech;
 }
 
 bool GBufferSchemeHandler::checkNormalMap(
@@ -166,9 +152,20 @@ MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const MaterialPrope
 }
 
 void GBufferSchemeHandler::fillPass(
-	Pass* gBufferPass, Pass* originalPass, const MaterialProperties& props)
+	Pass* gBufferPass, const MaterialProperties& props)
 {
-
+	//Reference the correct textures. Normal map first!
+	int texUnitIndex = 0;
+	if (props.normalMap != 0)
+	{
+		*(gBufferPass->getTextureUnitState(texUnitIndex)) = *(props.normalMap);
+		texUnitIndex++;
+	}
+	for (size_t i=0; i<props.regularTextures.size(); i++)
+	{
+		*(gBufferPass->getTextureUnitState(texUnitIndex)) = *(props.regularTextures[i]);
+		texUnitIndex++;
+	}
 }
 
 
