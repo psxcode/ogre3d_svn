@@ -16,6 +16,7 @@ LGPL like the rest of the engine.
 #define _GBUFFERSCHEMEHANDLER_H
 
 #include <OgreMaterialManager.h>
+#include "GBufferMaterialGenerator.h"
 
 class GBufferSchemeHandler : public Ogre::MaterialManager::Listener
 {
@@ -24,6 +25,22 @@ public:
 	virtual Ogre::Technique* handleSchemeNotFound(unsigned short schemeIndex, 
 		const Ogre::String& schemeName, Ogre::Material* originalMaterial, unsigned short lodIndex, 
 		const Ogre::Renderable* rend);
+protected:
+	static const Ogre::String NORMAL_MAP_PATTERN;
+	struct MaterialProperties {
+		MaterialProperties() : normalMap(0), isSkinned(false), vertexColourType(0) {}
+		Ogre::vector<Ogre::TextureUnitState*>::type regularTextures;
+		Ogre::TextureUnitState* normalMap;
+		bool isSkinned;
+		Ogre::TrackVertexColourType vertexColourType;
+	};
+
+	MaterialProperties inspectMaterial(Ogre::Material* material, unsigned short lodIndex, const Ogre::Renderable* rend);
+	MaterialGenerator::Perm getPermutation(const MaterialProperties& props);
+	void fillPass(Ogre::Pass* gBufferPass, Ogre::Pass* originalPass, const MaterialProperties& props);
+	bool checkNormalMap(Ogre::TextureUnitState* tus, MaterialProperties& props);
+	
+	
 };
 
 #endif
