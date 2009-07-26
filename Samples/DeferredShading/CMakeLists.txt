@@ -13,6 +13,7 @@ set(HEADER_FILES
   include/SharedData.h
   include/ListenerFactoryLogic.h
   include/DeferredLightCP.h
+  include/GBufferMaterialGenerator.h
 )
 set(SOURCE_FILES 
   src/AmbientLight.cpp
@@ -25,6 +26,7 @@ set(SOURCE_FILES
   src/DeferredShadingLogic.cpp
   src/SSAOLogic.cpp
   src/GBufferSchemeHandler.cpp
+  src/GBufferMaterialGenerator.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
