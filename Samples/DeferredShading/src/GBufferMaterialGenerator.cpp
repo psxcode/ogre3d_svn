@@ -6,6 +6,7 @@
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreTechnique.h"
 
+//This is the concrete implementation of the material generator.
 class GBufferMaterialGeneratorImpl : public MaterialGenerator::Impl
 {
 public:
@@ -89,7 +90,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 	Ogre::String programSource = ss.str();
 	Ogre::String programName = mBaseName + "VP_" + Ogre::StringConverter::toString(permutation);
 
-	Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
+	//Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
 
 	// Create shader object
 	Ogre::HighLevelGpuProgramPtr ptrProgram = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
@@ -179,7 +180,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	Ogre::String programSource = ss.str();
 	Ogre::String programName = mBaseName + "FP_" + Ogre::StringConverter::toString(permutation);
 
-	Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
+	//Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
 
 	// Create shader object
 	Ogre::HighLevelGpuProgramPtr ptrProgram = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(

@@ -17,7 +17,7 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 	Technique* originalTechnique = originalMaterial->getBestTechnique(lodIndex, rend);
 	matMgr.setActiveScheme(curSchemeName);
 
-	MaterialProperties props = inspectMaterial(originalTechnique, lodIndex, rend);
+	TechniqueProperties props = inspectTechnique(originalTechnique, lodIndex, rend);
 
 	MaterialGenerator::Perm perm = getPermutation(props);
 
@@ -32,7 +32,7 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 }
 
 bool GBufferSchemeHandler::checkNormalMap(
-	TextureUnitState* tus, GBufferSchemeHandler::MaterialProperties& props)
+	TextureUnitState* tus, GBufferSchemeHandler::TechniqueProperties& props)
 {
 	bool isNormal = false;
 	Ogre::String lowerCaseAlias = tus->getTextureNameAlias();
@@ -61,25 +61,24 @@ bool GBufferSchemeHandler::checkNormalMap(
 		{
 			OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM,
 				"Multiple normal map patterns matches",
-				"GBufferSchemeHandler::inspectMaterial");
+				"GBufferSchemeHandler::inspectTechnique");
 		}
 	}
 	return isNormal;
 }
 
-GBufferSchemeHandler::MaterialProperties GBufferSchemeHandler::inspectMaterial(
+GBufferSchemeHandler::TechniqueProperties GBufferSchemeHandler::inspectTechnique(
 	Technique* originalTechnique, unsigned short lodIndex, const Renderable* rend)
 {
-	MaterialProperties props;
+	TechniqueProperties props;
 
 	if (originalTechnique->getNumPasses() != 1) {
 		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
 			"Can not generate G-Buffer materials for multi-pass objects",
-			"GBufferSchemeHandler::inspectMaterial");
+			"GBufferSchemeHandler::inspectTechnique");
 	}
 
 	Pass* pass = originalTechnique->getPass(0);
-	props.vertexColourType = pass->getVertexColourTracking();
 	
 	//TODO : Use renderable to indicate wether this has skinning.
 	//Probably use same const cast that renderSingleObject uses.
@@ -105,16 +104,14 @@ GBufferSchemeHandler::MaterialProperties GBufferSchemeHandler::inspectMaterial(
 	return props;
 }
 
-MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const MaterialProperties& props)
+MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const TechniqueProperties& props)
 {
 	MaterialGenerator::Perm perm = 0;
 	switch (props.regularTextures.size())
 	{
 	case 0:
-		//No texture, use vertex colors
 		perm |= GBufferMaterialGenerator::GBP_NO_TEXTURES;
-		//TODO
-
+		
 		if (props.normalMap != 0)
 		{
 			perm |= GBufferMaterialGenerator::GBP_ONE_TEXCOORD;
@@ -132,17 +129,15 @@ MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const MaterialPrope
 		perm |= GBufferMaterialGenerator::GBP_TWO_TEXTURES;
 		//TODO : When do we use two texcoords?
 		perm |= GBufferMaterialGenerator::GBP_ONE_TEXCOORD;
-		//perm |= GBufferMaterialGenerator::GBP_TWO_TEXCOORDS;
 		break;
 	case 3:
 		perm |= GBufferMaterialGenerator::GBP_THREE_TEXTURES;
 		perm |= GBufferMaterialGenerator::GBP_ONE_TEXCOORD;
-		//perm |= GBufferMaterialGenerator::GBP_THREE_TEXCOORDS;
 		break;
 	default:
 		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
 			"Can not generate G-Buffer materials for '>3 regular-texture' objects",
-			"GBufferSchemeHandler::inspectMaterial");
+			"GBufferSchemeHandler::inspectTechnique");
 	}
 
 	if (props.isSkinned)
@@ -159,7 +154,7 @@ MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const MaterialPrope
 }
 
 void GBufferSchemeHandler::fillPass(
-	Pass* gBufferPass, Pass* originalPass, const MaterialProperties& props)
+	Pass* gBufferPass, Pass* originalPass, const TechniqueProperties& props)
 {
 	//Reference the correct textures. Normal map first!
 	int texUnitIndex = 0;
