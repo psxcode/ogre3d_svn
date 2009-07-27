@@ -62,7 +62,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 	
 	ss << "{" << std::endl;
 	ss << "	oPosition = mul(cWorldViewProj, iPosition);" << std::endl;
-	ss << "	oNormal = mul(cWorldView, float4(iNormal,1)).xyz;" << std::endl;
+	ss << "	oNormal = mul(cWorldView, float4(iNormal,0)).xyz;" << std::endl;
 	ss << "	oDepth = oPosition.w;" << std::endl;
 
 	for (Ogre::uint32 i=0; i<numTexCoords; i++) {
@@ -135,7 +135,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	}
 	
 	ss << "	oColor0.a = cSpecularity;" << std::endl;
-	ss << "	oColor1.rgb = iNormal;" << std::endl;
+	ss << "	oColor1.rgb = normalize(iNormal);" << std::endl;
 	ss << "	oColor1.a = iDepth;" << std::endl;
 
 	ss << "}" << std::endl;
