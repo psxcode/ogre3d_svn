@@ -176,5 +176,5 @@ void GBufferSchemeHandler::fillPass(
 	gBufferPass->setAmbient(originalPass->getAmbient());
 	gBufferPass->setDiffuse(originalPass->getDiffuse());
 	gBufferPass->setSpecular(originalPass->getSpecular());
-	
+	gBufferPass->setShininess(originalPass->getShininess());
 }
