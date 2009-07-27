@@ -44,9 +44,10 @@ MaterialGenerator::~MaterialGenerator()
 const MaterialPtr &MaterialGenerator::getMaterial(Perm permutation)
 {
 	/// Check input validity
+	// TODO GSOC: Do we want this?
 	size_t totalBits = bitNames.size();
 	size_t totalPerms = 1<<totalBits;
-	assert(permutation < totalPerms);
+	//assert(permutation < totalPerms);
 
 	/// Check if material/shader permutation already was generated
 	MaterialMap::iterator i = mMaterials.find(permutation);
