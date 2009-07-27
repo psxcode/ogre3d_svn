@@ -37,9 +37,9 @@ protected:
 		Ogre::TrackVertexColourType vertexColourType;
 	};
 
-	MaterialProperties inspectMaterial(Ogre::Material* material, unsigned short lodIndex, const Ogre::Renderable* rend);
+	MaterialProperties inspectMaterial(Ogre::Technique* technique, unsigned short lodIndex, const Ogre::Renderable* rend);
 	MaterialGenerator::Perm getPermutation(const MaterialProperties& props);
-	void fillPass(Ogre::Pass* gBufferPass, const MaterialProperties& props);
+	void fillPass(Ogre::Pass* gBufferPass, Ogre::Pass* originalPass, const MaterialProperties& props);
 	bool checkNormalMap(Ogre::TextureUnitState* tus, MaterialProperties& props);
 	
 	

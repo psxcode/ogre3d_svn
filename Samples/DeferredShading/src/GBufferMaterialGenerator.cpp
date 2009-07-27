@@ -40,16 +40,26 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 		ss << "	float2 iUV" << i << " : TEXCOORD" << i << ',' << std::endl;
 	}
 
+	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP)
+	{
+		ss << "	float3 iTangent : TANGENT0," << std::endl;
+	}
+
 	//TODO : Skinning inputs
 	ss << std::endl;
 	
 
+
 	ss << "	out float4 oPosition : POSITION," << std::endl;
 	ss << "	out float oDepth : TEXCOORD0," << std::endl;
 	ss << "	out float3 oNormal : TEXCOORD1," << std::endl;
-
+	int texCoordNum = 2;
+	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP) {
+		ss << "	out float3 oTangent : TEXCOORD" << texCoordNum++ << ',' << std::endl;
+		ss << "	out float3 oBiNormal : TEXCOORD" << texCoordNum++ << ',' << std::endl;
+	}
 	for (Ogre::uint32 i=0; i<numTexCoords; i++) {
-		ss << "	out float2 oUV" << i << " : TEXCOORD" << i+2 << ',' << std::endl;
+		ss << "	out float2 oUV" << i << " : TEXCOORD" << texCoordNum++ << ',' << std::endl;
 	}
 
 	ss << std::endl;
@@ -63,6 +73,11 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 	ss << "{" << std::endl;
 	ss << "	oPosition = mul(cWorldViewProj, iPosition);" << std::endl;
 	ss << "	oNormal = mul(cWorldView, float4(iNormal,0)).xyz;" << std::endl;
+	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP)
+	{
+		ss << "	oTangent = mul(cWorldView, float4(iTangent,0)).xyz;" << std::endl;
+		ss << "	oBiNormal = cross(oNormal, oTangent);" << std::endl;
+	}
 	ss << "	oDepth = oPosition.w;" << std::endl;
 
 	for (Ogre::uint32 i=0; i<numTexCoords; i++) {
@@ -100,9 +115,15 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	ss << "	float1 iDepth : TEXCOORD0," << std::endl;
 	ss << "	float3 iNormal   : TEXCOORD1," << std::endl;
 
+	int texCoordNum = 2;
+	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP) {
+		ss << "	float3 iTangent : TEXCOORD" << texCoordNum++ << ',' << std::endl;
+		ss << "	float3 iBiNormal : TEXCOORD" << texCoordNum++ << ',' << std::endl;
+	}
+
 	Ogre::uint32 numTexCoords = (permutation & GBufferMaterialGenerator::GBP_TEXCOORD_MASK) >> 8;
 	for (Ogre::uint32 i=0; i<numTexCoords; i++) {
-		ss << "	float2 iUV" << i << " : TEXCOORD" << i+2 << ',' << std::endl;
+		ss << "	float2 iUV" << i << " : TEXCOORD" << texCoordNum++ << ',' << std::endl;
 	}
 
 	ss << std::endl;
@@ -112,10 +133,20 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 
 	ss << std::endl;
 
+	int samplerNum = 0;
+	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP)
+	{
+		ss << "	uniform sampler sNormalMap : register(s" << samplerNum++ << ")," << std::endl;
+	}
 	Ogre::uint32 numTextures = permutation & GBufferMaterialGenerator::GBP_TEXTURE_MASK;
 	for (Ogre::uint32 i=0; i<numTextures; i++) {
-		ss << "	uniform sampler sTex" << i << " : register(s" << i << ")," << std::endl;
+		ss << "	uniform sampler sTex" << i << " : register(s" << samplerNum++ << ")," << std::endl;
 	}
+	if (numTextures == 0)
+	{
+		ss << "	uniform float3 cDiffuseColour," << std::endl;
+	}
+	
 	
 	ss << "	uniform float cSpecularity" << std::endl;
 
@@ -130,14 +161,19 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	}
 	else
 	{
-		//TODO !
-		ss << "	oColor0.rgb = float3(0,0,0);" << std::endl;
+		ss << "	oColor0.rgb = cDiffuseColour;" << std::endl;
 	}
 	
 	ss << "	oColor0.a = cSpecularity;" << std::endl;
-	ss << "	oColor1.rgb = normalize(iNormal);" << std::endl;
-	ss << "	oColor1.a = iDepth;" << std::endl;
+	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP) {
+		ss << "	float3 texNormal = (tex2D(sNormalMap, iUV0)-0.5)*2;" << std::endl;
+		ss << "	float3x3 normalRotation = float3x3(iTangent, iBiNormal, iNormal);" << std::endl;
+		ss << "	oColor1.rgb = normalize(mul(texNormal, normalRotation));" << std::endl;
+	} else {
+		ss << "	oColor1.rgb = normalize(iNormal);" << std::endl;
+	}
 
+	ss << "	oColor1.a = iDepth;" << std::endl;
 	ss << "}" << std::endl;
 	
 	Ogre::String programSource = ss.str();
@@ -155,7 +191,10 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 
 	const Ogre::GpuProgramParametersSharedPtr& params = ptrProgram->getDefaultParameters();
 	params->setNamedAutoConstant("cSpecularity", Ogre::GpuProgramParameters::ACT_SURFACE_SHININESS);
-
+	if (numTextures == 0) 
+	{
+		params->setNamedAutoConstant("cDiffuseColour", Ogre::GpuProgramParameters::ACT_SURFACE_DIFFUSE_COLOUR);
+	}
 	ptrProgram->load();
 	return ptrProgram;
 }
@@ -168,6 +207,7 @@ Ogre::MaterialPtr GBufferMaterialGeneratorImpl::generateTemplateMaterial(Materia
 		(matName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::Pass* pass = matPtr->getTechnique(0)->getPass(0);
 	pass->setName(mBaseName + "Pass_" + Ogre::StringConverter::toString(permutation));
+	pass->setLightingEnabled(false);
 	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP)
 	{
 		pass->createTextureUnitState();

@@ -11,7 +11,13 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 		const String& schemeName, Material* originalMaterial, unsigned short lodIndex, 
 		const Renderable* rend)
 {
-	MaterialProperties props = inspectMaterial(originalMaterial, lodIndex, rend);
+	Ogre::MaterialManager& matMgr = Ogre::MaterialManager::getSingleton();
+	String curSchemeName = matMgr.getActiveScheme();
+	matMgr.setActiveScheme(MaterialManager::DEFAULT_SCHEME_NAME);
+	Technique* originalTechnique = originalMaterial->getBestTechnique(lodIndex, rend);
+	matMgr.setActiveScheme(curSchemeName);
+
+	MaterialProperties props = inspectMaterial(originalTechnique, lodIndex, rend);
 
 	MaterialGenerator::Perm perm = getPermutation(props);
 
@@ -20,7 +26,7 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 	Technique* newTech = originalMaterial->createTechnique();
 	*newTech = *(templateMat->getTechnique(0));
 	newTech->setSchemeName(schemeName);
-	fillPass(newTech->getPass(0), props);
+	fillPass(newTech->getPass(0), originalTechnique->getPass(0), props);
 
 	return newTech;
 }
@@ -29,13 +35,20 @@ bool GBufferSchemeHandler::checkNormalMap(
 	TextureUnitState* tus, GBufferSchemeHandler::MaterialProperties& props)
 {
 	bool isNormal = false;
-	if (Ogre::StringUtil::match(tus->getTextureNameAlias(), NORMAL_MAP_PATTERN, false))
+	Ogre::String lowerCaseAlias = tus->getTextureNameAlias();
+	Ogre::StringUtil::toLowerCase(lowerCaseAlias);
+	if (lowerCaseAlias.find(NORMAL_MAP_PATTERN) != Ogre::String::npos)
 	{
 		isNormal = true;
 	}
-	else if (Ogre::StringUtil::match(tus->getTextureName(), NORMAL_MAP_PATTERN, false))
+	else 
 	{
-		isNormal = true;
+		Ogre::String lowerCaseName = tus->getTextureName();
+		Ogre::StringUtil::toLowerCase(lowerCaseName);
+		if (lowerCaseName.find(NORMAL_MAP_PATTERN) != Ogre::String::npos)
+		{
+			isNormal = true;
+		}
 	}
 
 	if (isNormal)
@@ -55,15 +68,9 @@ bool GBufferSchemeHandler::checkNormalMap(
 }
 
 GBufferSchemeHandler::MaterialProperties GBufferSchemeHandler::inspectMaterial(
-	Material* material, unsigned short lodIndex, const Renderable* rend)
+	Technique* originalTechnique, unsigned short lodIndex, const Renderable* rend)
 {
 	MaterialProperties props;
-
-	Ogre::MaterialManager& matMgr = Ogre::MaterialManager::getSingleton();
-	String curSchemeName = matMgr.getActiveScheme();
-	matMgr.setActiveScheme(MaterialManager::DEFAULT_SCHEME_NAME);
-	Technique* originalTechnique = material->getBestTechnique(lodIndex, rend);
-	matMgr.setActiveScheme(curSchemeName);
 
 	if (originalTechnique->getNumPasses() != 1) {
 		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
@@ -152,7 +159,7 @@ MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const MaterialPrope
 }
 
 void GBufferSchemeHandler::fillPass(
-	Pass* gBufferPass, const MaterialProperties& props)
+	Pass* gBufferPass, Pass* originalPass, const MaterialProperties& props)
 {
 	//Reference the correct textures. Normal map first!
 	int texUnitIndex = 0;
@@ -166,4 +173,8 @@ void GBufferSchemeHandler::fillPass(
 		*(gBufferPass->getTextureUnitState(texUnitIndex)) = *(props.regularTextures[i]);
 		texUnitIndex++;
 	}
+	gBufferPass->setAmbient(originalPass->getAmbient());
+	gBufferPass->setDiffuse(originalPass->getDiffuse());
+	gBufferPass->setSpecular(originalPass->getSpecular());
+	
 }
