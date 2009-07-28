@@ -5,41 +5,37 @@ using namespace Ogre;
 using namespace OgreBites;
 
 SamplePlugin* sp;
-Test1* t1;
-Test2* t2;
-Test3* t3;
-Test4* t4;
-Test5* t5;
+SdkSample* tests[8];
 
 extern "C" __declspec(dllexport) void dllStartPlugin()
 {
-	sp = OGRE_NEW SamplePlugin("Sample Test");   // create sample plugin
+	sp = OGRE_NEW SamplePlugin("Sample Test");
 
-	// create and add samples
-	t1 = new Test1;
-	sp->addSample(t1);
-	t2 = new Test2;
-	sp->addSample(t2);
-	t3 = new Test3;
-	sp->addSample(t3);
-	t4 = new Test4;
-	sp->addSample(t4);
-	t5 = new Test5;
-	sp->addSample(t5);
+	tests[0] = new Test1;
+	tests[1] = new Test2;
+	tests[2] = new Test3;
+	tests[3] = new Test4;
+	tests[4] = new Test5;
+	tests[5] = new Test6;
+	tests[6] = new Test7;
+	tests[7] = new Test8;
 
-	Root::getSingleton().installPlugin(sp);   // install sample plugin
+	for (int i = 0; i < 8; i++)
+	{
+		sp->addSample(tests[i]);
+	}
+
+	Root::getSingleton().installPlugin(sp);
 }
 
 extern "C" __declspec(dllexport) void dllStopPlugin()
 {
-	Root::getSingleton().uninstallPlugin(sp);   // uninstall sample plugin  
+	Root::getSingleton().uninstallPlugin(sp); 
 
-	// destroy samples
-	delete t1;
-	delete t2;
-	delete t3;
-	delete t4;
-	delete t5;
+	for (int i = 0; i < 8; i++)
+	{
+		delete tests[i];
+	}
 
-	OGRE_DELETE sp;   // destroy sample plugin  
+	OGRE_DELETE sp;
 }

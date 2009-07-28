@@ -18,6 +18,9 @@ namespace OgreBites
 		SampleBrowser()
 		{
 			mTrayMgr = 0;
+			mLastViewCategory = 0;
+			mLastViewTitle = 0;
+			mLastSampleIndex = -1;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -51,12 +54,59 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Extends frameRenderingQueued to update tray manager.
+		| Extends frameRenderingQueued to update tray manager and carousel.
 		-----------------------------------------------------------------------------*/
 		bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
+			// don't do all these calculations when sample's running or when in configuration screen
+			if (mTitleLabel->getTrayLocation() != TL_NONE && (!mCurrentSample || mSamplePaused))
+			{
+				// makes the carousel spin smoothly toward its right position
+				Ogre::Real carouselOffset = mSampleMenu->getSelectionIndex() - mCarouselPlace;
+				if (carouselOffset <= 0.001 && carouselOffset >= -0.001) mCarouselPlace = mSampleMenu->getSelectionIndex();
+				else mCarouselPlace += carouselOffset * Ogre::Math::Clamp<Ogre::Real>(evt.timeSinceLastFrame * 15, -1, 1);
+
+				// update the thumbnail positions based on carousel state
+				for (unsigned int i = 0; i < mThumbs.size(); i++)
+				{
+					Ogre::Real thumbOffset = mCarouselPlace - i;
+					Ogre::Real phase = thumbOffset / 2 - 2.8;
+
+					if (thumbOffset < -5 || thumbOffset > 4)    // prevent thumbnails from wrapping around in a circle
+					{
+						mThumbs[i]->hide();
+						continue;
+					}
+					else mThumbs[i]->show();
+
+					Ogre::Real left = Ogre::Math::Cos(phase) * 200;
+					Ogre::Real top = Ogre::Math::Sin(phase) * 200;
+					Ogre::Real scale = 1 / Ogre::Math::Pow((Ogre::Math::Abs(thumbOffset) + 1), 0.75);
+
+					Ogre::BorderPanelOverlayElement* frame =
+						(Ogre::BorderPanelOverlayElement*)mThumbs[i]->getChildIterator().getNext();
+
+					mThumbs[i]->setDimensions(128 * scale, 96 * scale);
+					frame->setDimensions(mThumbs[i]->getWidth() + 16,mThumbs[i]->getHeight() + 16);
+					mThumbs[i]->setPosition((int)(left - 80 - mThumbs[i]->getWidth() / 2),
+						(int)(top - 5 - mThumbs[i]->getHeight() / 2));;
+
+					if (i == mSampleMenu->getSelectionIndex()) frame->setBorderMaterialName("SdkTrays/Frame/Over");
+					else frame->setBorderMaterialName("SdkTrays/Frame");
+				}
+			}
+
 			mTrayMgr->frameRenderingQueued(evt);
 			return SampleContext::frameRenderingQueued(evt);
+		}
+
+		virtual void yesNoDialogClosed(const Ogre::DisplayString& question, bool yesHit)
+		{
+			if (question.substr(0, 14) == "This will stop" && yesHit)
+			{
+				runSample(0);
+				buttonHit((Button*)mTrayMgr->getWidget("UnloadReload"));
+			}
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -66,26 +116,297 @@ namespace OgreBites
 		{
 			if (b->getName() == "StartStop")   // start or stop sample
 			{
+				if (mCurrentSample)
+				{
+					runSample(0);
+					b->setCaption("Start Sample");
+				}
+				else
+				{
+					if (mLoadedSamples.empty()) mTrayMgr->showOkDialog("Error!", "No sample selected!");
+					else
+					{
+						runSample(Ogre::any_cast<Sample*>(mThumbs[mSampleMenu->getSelectionIndex()]->getUserAny()));
+						b->setCaption("Stop Sample");
+					}
+				}
 			}
 			else if (b->getName() == "UnloadReload")   // unload or reload sample plugins and update controls
 			{
 				if (b->getCaption() == "Unload Samples")
 				{
-					unloadSamples();
-					populateMainMenu();
-					b->setCaption("Reload Samples");
+					if (mCurrentSample) mTrayMgr->showYesNoDialog("Warning!", "This will stop the current sample. Unload anyway?");
+					else
+					{
+						// save off current view and try to restore it on the next reload
+						mLastViewTitle = mSampleMenu->getSelectionIndex();
+						mLastViewCategory = mCategoryMenu->getSelectionIndex();
+
+						unloadSamples();
+						populateSampleMenus();
+						b->setCaption("Reload Samples");
+					}
 				}
 				else
 				{
 					loadSamples();
-					populateMainMenu();
-					b->setCaption("Unload Samples");
+					populateSampleMenus();
+					if (!mLoadedSamples.empty()) b->setCaption("Unload Samples");
+
+					try  // attempt to restore the last view before unloading samples
+					{
+						mCategoryMenu->selectItem(mLastViewCategory);
+						mSampleMenu->selectItem(mLastViewTitle);
+					}
+					catch (Ogre::Exception e) {}
 				}
 			}
 			else if (b->getName() == "Configure")   // enter configuration screen
 			{
+				mTrayMgr->removeWidgetFromTray("StartStop");
+				mTrayMgr->removeWidgetFromTray("UnloadReload");
+				mTrayMgr->removeWidgetFromTray("Configure");
+				mTrayMgr->removeWidgetFromTray("Quit");
+				mTrayMgr->moveWidgetToTray("Apply", TL_RIGHT);
+				mTrayMgr->moveWidgetToTray("Back", TL_RIGHT);
+
+				for (unsigned int i = 0; i < mThumbs.size(); i++)
+				{
+					mThumbs[i]->hide();
+				}
+
+				while (mTrayMgr->getTrayContainer(TL_CENTER)->isVisible())
+				{
+					mTrayMgr->removeWidgetFromTray(TL_CENTER, 0);
+				}
+
+				while (mTrayMgr->getTrayContainer(TL_LEFT)->isVisible())
+				{
+					mTrayMgr->removeWidgetFromTray(TL_LEFT, 0);
+				}
+
+				mTrayMgr->moveWidgetToTray("ConfigLabel", TL_LEFT);
+				mTrayMgr->moveWidgetToTray(mRendererMenu, TL_LEFT);
+				mTrayMgr->moveWidgetToTray(mResolutionMenu, TL_LEFT);
+				mTrayMgr->moveWidgetToTray(mFSCheckBox, TL_LEFT);
+				mTrayMgr->moveWidgetToTray(mVSyncCheckBox, TL_LEFT);
+				mTrayMgr->moveWidgetToTray(mFSAASlider, TL_LEFT);
+
+				mRendererMenu->selectItem(mRoot->getRenderSystem()->getName());
+
+				windowResized(mWindow);
+			}
+			else if (b->getName() == "Back")   // leave configuration screen
+			{
+				mTrayMgr->moveWidgetToTray("StartStop", TL_RIGHT);
+				mTrayMgr->moveWidgetToTray("UnloadReload", TL_RIGHT);
+				mTrayMgr->moveWidgetToTray("Configure", TL_RIGHT);
+				mTrayMgr->moveWidgetToTray("Quit", TL_RIGHT);
+
+				while (mTrayMgr->getNumWidgets(TL_NONE) != 0)
+				{
+					mTrayMgr->moveWidgetToTray(TL_NONE, 0, TL_LEFT);
+				}
+
+				mTrayMgr->removeWidgetFromTray("Apply");
+				mTrayMgr->removeWidgetFromTray("Back");
+				mTrayMgr->removeWidgetFromTray("ConfigLabel");
+				mTrayMgr->removeWidgetFromTray(mRendererMenu);
+				mTrayMgr->removeWidgetFromTray(mResolutionMenu);
+				mTrayMgr->removeWidgetFromTray(mFSCheckBox);
+				mTrayMgr->removeWidgetFromTray(mVSyncCheckBox);
+				mTrayMgr->removeWidgetFromTray(mFSAASlider);
+
+				windowResized(mWindow);
+			}
+			else if (b->getName() == "Apply")
+			{
+				bool needsReset = false;
+				Ogre::ConfigOptionMap& options =
+					mRoot->getRenderSystemByName(mRendererMenu->getSelectedItem())->getConfigOptions();
+				Ogre::String value;
+
+				// first determine if a reset is required to apply settings
+				if (mRendererMenu->getSelectedItem() != mRoot->getRenderSystem()->getName()) needsReset = true;
+				else
+				{
+					if ((options["VSync"].currentValue == "Yes") != mVSyncCheckBox->isChecked()) needsReset = true;
+					if (options.find("FSAA") != options.end()) value = options["FSAA"].currentValue;
+					else value = options["Anti aliasing"].currentValue;
+					if (value != mFSAASlider->getValueCaption().asUTF8()) needsReset = true;
+				}
+
+				if (needsReset)  // turns out we do need a full system reset, so do that
+				{
+					Ogre::NameValuePairList newOptions;
+
+					// collect all required settings
+					for (Ogre::ConfigOptionMap::iterator i = options.begin(); i != options.end(); i++)
+					{
+						if (i->first == "VSync") value = mVSyncCheckBox->isChecked() ? "Yes" : "No";
+						else if (i->first == "FSAA" || i->first == "Anti aliasing") value = mFSAASlider->getValueCaption();
+						else value = i->second.currentValue;
+	
+						newOptions.insert(std::make_pair(i->first, value));
+					}
+
+					reconfigure(mRendererMenu->getSelectedItem(), newOptions);   // queue it up!
+				}
 			}
 			else mRoot->queueEndRendering();   // exit browser
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Handles menu item selection changes.
+		-----------------------------------------------------------------------------*/
+		virtual void itemSelected(SelectMenu* menu)
+		{
+			if (menu == mCategoryMenu)      // category changed, so update the sample menu, carousel, and slider
+			{
+				for (unsigned int i = 0; i < mThumbs.size(); i++)    // destroy all thumbnails in carousel
+				{
+					Ogre::MaterialManager::getSingleton().remove(mThumbs[i]->getName());
+					Widget::nukeOverlayElement(mThumbs[i]);
+				}
+				mThumbs.clear();
+
+				Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
+				Ogre::String selectedCategory;
+
+				if (menu->getSelectionIndex() != -1) selectedCategory = menu->getSelectedItem();
+				else
+				{
+					mTitleLabel->setCaption("");
+					mDescBox->setText("");
+				}
+
+				bool all = selectedCategory == "All";
+				Ogre::StringVector sampleTitles;
+				Ogre::MaterialPtr templateMat = Ogre::MaterialManager::getSingleton().getByName("SampleThumbnail");
+
+				// populate the sample menu and carousel with filtered samples
+				for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
+				{
+					Ogre::NameValuePairList& info = (*i)->getInfo();
+
+					if (all || info["Category"] == selectedCategory)
+					{
+						Ogre::String name = "SampleThumb" + Ogre::StringConverter::toString(sampleTitles.size() + 1);
+
+						// clone a new material for sample thumbnail
+						Ogre::MaterialPtr newMat = templateMat->clone(name);
+
+						Ogre::TextureUnitState* tus = newMat->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+						if (Ogre::ResourceGroupManager::getSingleton().resourceExists("Essential", info["Thumbnail"]))
+							tus->setTextureName(info["Thumbnail"]);
+						else tus->setTextureName("thumb_error.jpg");
+
+						// create sample thumbnail overlay
+						Ogre::BorderPanelOverlayElement* bp = (Ogre::BorderPanelOverlayElement*)
+							om.createOverlayElementFromTemplate("SdkTrays/Picture", "BorderPanel", name);
+						bp->setHorizontalAlignment(Ogre::GHA_RIGHT);
+						bp->setVerticalAlignment(Ogre::GVA_CENTER);
+						bp->setMaterialName(name);
+						bp->setUserAny(Ogre::Any(*i));
+						mTrayMgr->getTraysLayer()->add2D(bp);
+
+						// add sample thumbnail and title
+						mThumbs.push_back(bp);
+						sampleTitles.push_back((*i)->getInfo()["Title"]);
+					}
+				}
+
+				mCarouselPlace = 0;  // reset carousel
+
+				mSampleMenu->setItems(sampleTitles);
+				/* By default, select menus only notify their listeners of a CHANGE in item, so we manually call
+				the callback here to update sample information as well. */
+				if (mSampleMenu->getSelectionIndex() != -1) itemSelected(mSampleMenu);
+
+				mSampleSlider->setRange(1, sampleTitles.size(), sampleTitles.size());
+			}
+			else if (menu == mSampleMenu)    // sample changed, so update slider, label and description
+			{
+				if (mSampleSlider->getValue() != menu->getSelectionIndex() + 1)
+					mSampleSlider->setValue(menu->getSelectionIndex() + 1); 
+
+				Sample* s = Ogre::any_cast<Sample*>(mThumbs[menu->getSelectionIndex()]->getUserAny());
+				mTitleLabel->setCaption(menu->getSelectedItem()); 
+				mDescBox->setText("Category: " + s->getInfo()["Category"] + "\nDescription: " + s->getInfo()["Description"]);
+			}
+			else if (menu == mRendererMenu)    // renderer selected, so update all settings
+			{
+				Ogre::ConfigOptionMap& options = mRoot->getRenderSystemByName(menu->getSelectedItem())->getConfigOptions();
+				Ogre::StringVector items;
+				std::set<Ogre::String> usedValues;
+				Ogre::String value;
+
+				// populate video modes
+				Ogre::ConfigOption option = options["Video Mode"];
+				for (unsigned int i = 0; i < option.possibleValues.size(); i++)
+				{
+					value = option.possibleValues[i];
+					if (value.find("@") != -1) value = value.substr(0, value.find("@") - 1);
+					if (usedValues.find(value) == usedValues.end())
+					{
+						usedValues.insert(value);
+						items.push_back(value);
+					}
+				}
+				mResolutionMenu->setItems(items);
+
+				// select current resolution
+				if (option.currentValue.find("@") != -1)
+					mResolutionMenu->selectItem(option.currentValue.substr(0, option.currentValue.find("@") - 1));
+				else mResolutionMenu->selectItem(option.currentValue);
+
+				// populate anti aliasing values
+				unsigned int numFSAAOptions;
+				if (options.find("FSAA") != options.end()) option = options["FSAA"];
+				else option = options["Anti aliasing"];
+				numFSAAOptions = option.possibleValues.size();
+				mFSAASlider->setRange(0, numFSAAOptions - 1, numFSAAOptions);
+
+				// slide to current anti aliasing level
+				for (unsigned int i = 0; i < option.possibleValues.size(); i++)
+				{
+					if (option.possibleValues[i] == option.currentValue)
+					{
+						mFSAASlider->setValue(i);
+						break;
+					}
+				}
+
+				// check current full screen and vertical sync
+				mFSCheckBox->setChecked(mWindow->isFullScreen());
+				mVSyncCheckBox->setChecked(options["VSync"].currentValue == "Yes");
+			}
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Handles slider value changes.
+		-----------------------------------------------------------------------------*/
+		virtual void sliderMoved(Slider* slider)
+		{
+			if (slider == mSampleSlider)   // sample changed
+			{
+				// format the caption to be fraction style
+				Ogre::String denom = "/" + Ogre::StringConverter::toString(mSampleMenu->getNumItems());
+				slider->setValueCaption(slider->getValueCaption() + denom);
+
+				// tell the sample menu to change if it hasn't already
+				if (mSampleMenu->getSelectionIndex() != -1 && mSampleMenu->getSelectionIndex() != slider->getValue() - 1)
+					mSampleMenu->selectItem(slider->getValue() - 1);
+			}
+			else if (slider == mFSAASlider)    // anti aliasing changed
+			{
+				if (mRendererMenu->getNumItems() == 0) return;
+				Ogre::ConfigOptionMap& options =
+					mRoot->getRenderSystemByName(mRendererMenu->getSelectedItem())->getConfigOptions();
+				if (options.find("FSAA") != options.end())
+					slider->setValueCaption(options["FSAA"].possibleValues[(int)slider->getValue()]);
+				else slider->setValueCaption(options["Anti aliasing"].possibleValues[(int)slider->getValue()]);
+			}
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -93,7 +414,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
-			if (evt.key == OIS::KC_ESCAPE && mCurrentSample)    // pause or unpause sample
+			// if there's a sample running and we're not in the configuration screen, toggle pause menu
+			if (evt.key == OIS::KC_ESCAPE && mCurrentSample && mTitleLabel->getTrayLocation() != TL_NONE)
 			{
 				if (mSamplePaused)
 				{
@@ -111,11 +433,25 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Extends mousePressed to inject mouse press into tray manager.
+		| Extends mousePressed to inject mouse press into tray manager, and to check
+		| for thumbnail clicks, just because we can.
 		-----------------------------------------------------------------------------*/
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (!mTrayMgr->mousePressed(evt, id)) return false;
+
+			for (unsigned int i = 0; i < mThumbs.size(); i++)
+			{
+				if (mThumbs[i]->isVisible() &&
+					Widget::isCursorOver(mThumbs[i],
+					Ogre::Vector2(mTrayMgr->getCursorContainer()->getLeft(), mTrayMgr->getCursorContainer()->getTop()),
+					Ogre::Vector2(mWindow->getWidth(), mWindow->getHeight()), 0))
+				{
+					mSampleMenu->selectItem(i);
+					break;
+				}
+			}
+
 			return SampleContext::mousePressed(evt, id);
 		}
 
@@ -135,6 +471,36 @@ namespace OgreBites
 		{
 			if (!mTrayMgr->mouseMoved(evt)) return false;
 			return SampleContext::mouseMoved(evt);
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Extends windowResized to best fit menus on screen. We basically move the
+		| menu tray to the left for higher resolutions and move it to the center
+		| for lower resolutions.
+		-----------------------------------------------------------------------------*/
+		virtual void windowResized(Ogre::RenderWindow* rw)
+		{
+			if (!mTrayMgr) return;
+
+			Ogre::OverlayContainer* center = mTrayMgr->getTrayContainer(TL_CENTER);
+			Ogre::OverlayContainer* left = mTrayMgr->getTrayContainer(TL_LEFT);
+
+			if (center->isVisible() && rw->getWidth() < 1280 - center->getWidth())
+			{
+				while (center->isVisible())
+				{
+					mTrayMgr->moveWidgetToTray(mTrayMgr->getWidget(TL_CENTER, 0), TL_LEFT);
+				}
+			}
+			else if (left->isVisible() && rw->getWidth() >= 1280 - left->getWidth())
+			{
+				while (left->isVisible())
+				{
+					mTrayMgr->moveWidgetToTray(mTrayMgr->getWidget(TL_LEFT, 0), TL_CENTER);
+				}
+			}
+
+			SampleContext::windowResized(rw);
 		}
 
 	protected:
@@ -160,10 +526,16 @@ namespace OgreBites
 
 			mTrayMgr = new SdkTrayManager("BrowserControls", mWindow, mMouse, this);
 			mTrayMgr->showBackdrop("SdkTrays/Bands");
+			mTrayMgr->getTrayContainer(TL_NONE)->hide();
 
 			loadSamples();
 
-			setupMainMenu();
+			// create template material for sample thumbnails
+			Ogre::MaterialPtr thumbMat = Ogre::MaterialManager::getSingleton().create("SampleThumbnail", "Essential");
+			thumbMat->getTechnique(0)->getPass(0)->createTextureUnitState();
+
+			setupWidgets();
+			windowResized(mWindow);   // adjust menus for resolution
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -183,6 +555,7 @@ namespace OgreBites
 		{
 			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Essential");
 			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Popular");
+			Ogre::ResourceGroupManager::getSingleton().loadResourceGroup("Essential");
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -261,11 +634,15 @@ namespace OgreBites
 					if (k == info.end() || k->second.empty()) info["Title"] = "Untitled";
 					k = info.find("Category");
 					if (k == info.end() || k->second.empty()) info["Category"] = "Unsorted";
+					k = info.find("Thumbnail");
+					if (k == info.end() || k->second.empty()) info["Thumbnail"] = "thumb_error.jpg";
 
 					mLoadedSamples.insert(*j);                    // add sample only after ensuring title for sorting
 					mSampleCategories.insert(info["Category"]);   // add sample category
 				}
 			}
+
+			if (!mLoadedSamples.empty()) mSampleCategories.insert("All");   // insert a category for all samples
 
 			if (!unloadedSamplePlugins.empty())   // show error message summarising missing or invalid plugins
 			{
@@ -296,9 +673,9 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Sets up main menu for browsing samples.
+		| Sets up main page for browsing samples.
 		-----------------------------------------------------------------------------*/
-		virtual void setupMainMenu()
+		virtual void setupWidgets()
 		{
 			mTrayMgr->destroyAllWidgets();
 
@@ -306,25 +683,120 @@ namespace OgreBites
 			mTrayMgr->showLogo(TL_RIGHT);
 			mTrayMgr->createSeparator(TL_RIGHT, "LogoSep");
 			mTrayMgr->createButton(TL_RIGHT, "StartStop", "Start Sample");
-			mTrayMgr->createButton(TL_RIGHT, "UnloadReload", "Unload Samples");
+			mTrayMgr->createButton(TL_RIGHT, "UnloadReload", mLoadedSamples.empty() ? "Reload Samples" : "Unload Samples");
 			mTrayMgr->createButton(TL_RIGHT, "Configure", "Configure");
-			mTrayMgr->createButton(TL_RIGHT, "Quit", "Quit Browser");
+			mTrayMgr->createButton(TL_RIGHT, "Quit", "Quit");
 
 			// create sample viewing controls
-			mTrayMgr->createLabel(TL_LEFT, "SampleTitle", "Sample Title");
-			mTrayMgr->createTextBox(TL_LEFT, "SampleInfo", "Sample Info", 250, 132);
-			mTrayMgr->createThickSelectMenu(TL_LEFT, "CategoryMenu", "Select Category", 250, 10); 
-			mTrayMgr->createThickSelectMenu(TL_LEFT, "SampleMenu", "Select Sample", 250, 10);
-			mTrayMgr->createThickSlider(TL_LEFT, "SampleSlider", "Slide Samples", 250, 80, 0, 99, 100);
+			mTitleLabel = mTrayMgr->createLabel(TL_LEFT, "SampleTitle", "");
+			mDescBox = mTrayMgr->createTextBox(TL_LEFT, "SampleInfo", "Sample Info", 250, 132);
+			mCategoryMenu = mTrayMgr->createThickSelectMenu(TL_LEFT, "CategoryMenu", "Select Category", 250, 10); 
+			mSampleMenu = mTrayMgr->createThickSelectMenu(TL_LEFT, "SampleMenu", "Select Sample", 250, 10);
+			mSampleSlider = mTrayMgr->createThickSlider(TL_LEFT, "SampleSlider", "Slide Samples", 250, 80, 0, 0, 0);
 
-			populateMainMenu();
+			/* Sliders do not notify their listeners on creation, so we manually call the callback here
+			to format the slider value correctly. */
+			sliderMoved(mSampleSlider);
+
+			// create configuration screen button tray
+			mTrayMgr->createButton(TL_NONE, "Apply", "Apply Changes");
+			mTrayMgr->createButton(TL_NONE, "Back", "Go Back");
+
+			// create configuration screen controls
+			mTrayMgr->createLabel(TL_NONE, "ConfigLabel", "Configuration");
+			mRendererMenu = mTrayMgr->createThickSelectMenu(TL_NONE, "RendererMenu", "Select Renderer", 250, 10);
+			mResolutionMenu = mTrayMgr->createThickSelectMenu(TL_NONE, "ResolutionMenu", "Select Resolution", 150, 10);
+			mFSCheckBox = mTrayMgr->createCheckBox(TL_NONE, "FullScreen", "Full Screen", 150);
+			mVSyncCheckBox = mTrayMgr->createCheckBox(TL_NONE, "VSync", "Vertical Sync", 150);
+			mFSAASlider = mTrayMgr->createThickSlider(TL_NONE, "FSAA", "Anti Aliasing", 250, 130, 0, 0, 0);
+
+			// populate render system names
+			Ogre::StringVector rsNames;
+			Ogre::RenderSystemList* rsList = mRoot->getAvailableRenderers();
+			for (unsigned int i = 0; i < rsList->size(); i++)
+			{
+				rsNames.push_back((*rsList)[i]->getName());
+			}
+
+			/* By default, select menus only notify their listeners of a CHANGE in item, so we manually call
+			the callback here to populate the rest of the configuration controls as well. */
+			mRendererMenu->setItems(rsNames);
+			mRendererMenu->selectItem(mRoot->getRenderSystem()->getName());
+			itemSelected(mRendererMenu);
+
+			populateSampleMenus();
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Populates main menu with loaded samples.
+		| Populates home menus with loaded samples.
 		-----------------------------------------------------------------------------*/
-		virtual void populateMainMenu()
+		virtual void populateSampleMenus()
 		{
+			Ogre::StringVector categories;
+
+			for (std::set<Ogre::String>::iterator i = mSampleCategories.begin(); i != mSampleCategories.end(); i++)
+			{
+				categories.push_back(*i);
+			}
+
+			mCategoryMenu->setItems(categories);
+
+			/* By default, select menus only notify their listeners of a CHANGE in item, so we manually call
+			the callback here to populate the sample menu as well. */
+			itemSelected(mCategoryMenu);
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Overrides to recover by last sample's index instead.
+		-----------------------------------------------------------------------------*/
+		virtual void recoverLastSample()
+		{
+			// restore the view while we're at it too
+			mCategoryMenu->selectItem(mLastViewCategory);
+			mSampleMenu->selectItem(mLastViewTitle);
+
+			if (mLastSampleIndex == -1) return;
+
+			unsigned int index = -1;
+			for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
+			{
+				index++;
+				if (index == mLastSampleIndex)
+				{
+					runSample(*i);
+					(*i)->restoreState(mLastSampleState);
+					mLastSample = 0;
+					mLastSampleIndex = -1;
+					mLastSampleState.clear();
+				}
+			}
+
+			pauseCurrentSample();
+			mTrayMgr->showAll();
+			buttonHit((Button*)mTrayMgr->getWidget("Configure"));
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Extends reconfigure to save the view and the index of last sample run.
+		-----------------------------------------------------------------------------*/
+		virtual void reconfigure(const Ogre::String& renderer, Ogre::NameValuePairList& options)
+		{
+			mLastViewCategory = mCategoryMenu->getSelectionIndex();
+			mLastViewTitle = mSampleMenu->getSelectionIndex();
+
+			mLastSampleIndex = -1;
+			unsigned int index = -1;
+			for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
+			{
+				index++;
+				if (*i == mCurrentSample)
+				{
+					mLastSampleIndex = index;
+					break;
+				}
+			}
+
+			SampleContext::reconfigure(renderer, options);
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -340,7 +812,23 @@ namespace OgreBites
 
 			if (!mCurrentSample) destroyDummyScene();
 
+			mCategoryMenu = 0;
+			mSampleMenu = 0;
+			mSampleSlider = 0;
+			mTitleLabel = 0;
+			mDescBox = 0;
+			mFSAASlider = 0;
+			mRendererMenu = 0;
+			mResolutionMenu = 0;
+			mFSCheckBox = 0;
+			mVSyncCheckBox = 0;
+			mHiddenOverlays.clear();
+			mThumbs.clear();
+			mCarouselPlace = 0;
+
 			SampleContext::shutdown();
+
+			unloadSamples();
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -388,11 +876,26 @@ namespace OgreBites
 			mHiddenOverlays.clear();
 		}
 
-		SampleSet mLoadedSamples;                      // loaded samples
-		std::set<Ogre::String> mSampleCategories;      // sample categories
-		Ogre::StringVector mLoadedSamplePlugins;       // loaded sample plugins
 		SdkTrayManager* mTrayMgr;                      // SDK tray interface
+		Ogre::StringVector mLoadedSamplePlugins;       // loaded sample plugins
+		std::set<Ogre::String> mSampleCategories;      // sample categories
+		SampleSet mLoadedSamples;                      // loaded samples
+		SelectMenu* mCategoryMenu;                     // sample category select menu
+		SelectMenu* mSampleMenu;                       // sample select menu
+		Slider* mSampleSlider;                         // sample slider bar
+		Label* mTitleLabel;                            // sample title label
+		TextBox* mDescBox;                             // sample description box
+		Slider* mFSAASlider;                           // anti aliasing slider
+		SelectMenu* mRendererMenu;                     // render system selection menu
+		SelectMenu* mResolutionMenu;                   // resolution selection menu
+		CheckBox* mFSCheckBox;                         // full screen check box
+		CheckBox* mVSyncCheckBox;                      // vertical sync check box
 		std::vector<Ogre::Overlay*> mHiddenOverlays;   // sample overlays hidden for pausing
+		std::vector<Ogre::OverlayContainer*> mThumbs;  // sample thumbnails
+		Ogre::Real mCarouselPlace;                     // current state of carousel
+		int mLastViewTitle;                            // last sample title viewed
+		int mLastViewCategory;                         // last sample category viewed
+		int mLastSampleIndex;                          // index of last sample running
 	};
 }
 

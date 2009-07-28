@@ -14,6 +14,8 @@ namespace OgreBites
     {
     public:
 
+		virtual ~SdkSample() {}
+
 		virtual void paused()
 		{
 			if (mTrayMgr->isCursorVisible())  // hide the cursor on pause if necessary

@@ -53,6 +53,8 @@ namespace OgreBites
 			mWindow = 0;
 			mCurrentSample = 0;
 			mSamplePaused = false;
+			mLastRun = false;
+			mLastSample = 0;
 		}
 
 		virtual ~SampleContext() {}
@@ -129,16 +131,48 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void go(Sample* initialSample = 0)
 		{
-			createRoot();                     // create root
-			if (!oneTimeConfig()) return;     // configure startup settings
-			setup();                          // setup context
+			bool firstRun = true;
 
-			// start initial sample and enter render loop
-			if (initialSample) runSample(initialSample);
-			mRoot->startRendering();
+			while (!mLastRun)
+			{
+				mLastRun = true;  // assume this is our last run
 
-			shutdown();                       // shutdown context
-			if (mRoot) OGRE_DELETE mRoot;     // destroy root
+				createRoot();                     // create root
+				if (!oneTimeConfig()) return;     // configure startup settings
+				setup();                          // setup context
+
+				// we just reconfigured so restore the last sample if there was one
+				if (!firstRun) recoverLastSample();
+				else if (initialSample) runSample(initialSample);   // start initial sample and enter render loop
+
+				mRoot->startRendering();
+
+				firstRun = false;
+
+				if (!mLastRun)    // if there's a request for reconfiguration, respect it!
+				{
+					mRoot->setRenderSystem(mRoot->getRenderSystemByName(mNextRenderer));
+					mRoot->saveConfig();
+				}
+
+				shutdown();                       // shutdown context
+				if (mRoot) OGRE_DELETE mRoot;     // destroy root
+
+				initialSample = 0;    // don't run the initial sample again
+			}
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Recovers the last sample after a reset. You can override in the case that
+		| the last sample is destroyed in the process of resetting, and you have to
+		| recover it through another means.
+		-----------------------------------------------------------------------------*/
+		virtual void recoverLastSample()
+		{
+			runSample(mLastSample);
+			mLastSample->restoreState(mLastSampleState);
+			mLastSample = 0;
+			mLastSampleState.clear();
 		}
 
 		virtual bool isCurrentSamplePaused()
@@ -407,44 +441,25 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Reconfigures the context with a specific render system and options.
-		| Attempts to preserve the current sample state.
+		| Reconfigures the context. Attempts to preserve the current sample state.
 		-----------------------------------------------------------------------------*/
-		virtual void reconfigure(const Ogre::String& rsName, Ogre::NameValuePairList& rsOptions)
+		virtual void reconfigure(const Ogre::String& renderer, Ogre::NameValuePairList& options)
 		{
-			Sample* lastSample;
-			Ogre::NameValuePairList sampleState;
+			// save current sample state
+			mLastSample = mCurrentSample;
+			if (mCurrentSample) mCurrentSample->saveState(mLastSampleState);
 
-			if (mCurrentSample)   // save current sample state
-			{
-				mCurrentSample->saveState(sampleState);
-				lastSample = mCurrentSample;
-			}
-
-			shutdown();
-			if (mRoot) OGRE_DELETE mRoot;
-			createRoot();
-
-			mRoot->setRenderSystem(mRoot->getRenderSystemByName(rsName));   // set new render system
+			mNextRenderer = renderer;
+			Ogre::RenderSystem* rs = mRoot->getRenderSystemByName(renderer);
 
 			// set all given render system options
-			for (Ogre::NameValuePairList::iterator it = rsOptions.begin(); it != rsOptions.end(); it++)
+			for (Ogre::NameValuePairList::iterator it = options.begin(); it != options.end(); it++)
 			{
-				mRoot->getRenderSystem()->setConfigOption(it->first, it->second);
+				rs->setConfigOption(it->first, it->second);
 			}
 
-			mRoot->saveConfig();    // save configuration
-
-			setup();
-
-
-			if (lastSample)
-			{
-				// restart sample and restore its state
-				mCurrentSample = lastSample;
-				mCurrentSample->_setup(mWindow, mKeyboard, mMouse);
-				mCurrentSample->restoreState(sampleState);
-			}
+			mLastRun = false;             // we want to go again with the new settings
+			mRoot->queueEndRendering();   // break from render loop
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -495,6 +510,10 @@ namespace OgreBites
 		OIS::Mouse* mMouse;             // mouse device
 		Sample* mCurrentSample;         // currently running sample
 		bool mSamplePaused;             // whether current sample is paused
+		bool mLastRun;                  // whether or not this is the final run
+		Ogre::String mNextRenderer;     // name of renderer used for next run
+		Sample* mLastSample;            // last sample run before reconfiguration
+		Ogre::NameValuePairList mLastSampleState;     // state of last sample
 	};
 }
 

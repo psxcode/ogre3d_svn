@@ -45,6 +45,7 @@ namespace OgreBites
     {
     public:
 
+		virtual ~SdkTrayListener() {}
 		virtual void buttonHit(Button* button) {}
 		virtual void itemSelected(SelectMenu* menu) {}
 		virtual void labelHit(Label* label) {}
@@ -52,7 +53,7 @@ namespace OgreBites
 		virtual void boxChecked(CheckBox* checkBox) {}
 		virtual void boxUnchecked(CheckBox* checkBox) {}
 		virtual void okDialogClosed(const Ogre::DisplayString& message) {}
-		virtual void yesNoDialogClosed(const Ogre::DisplayString& question, bool response) {}
+		virtual void yesNoDialogClosed(const Ogre::DisplayString& question, bool yesHit) {}
     };
 
 	/*=============================================================================
@@ -656,15 +657,17 @@ namespace OgreBites
 			return mItems;
 		}
 
+		unsigned int getNumItems()
+		{
+			return mItems.size();
+		}
+
 		void setItems(const Ogre::StringVector& items)
 		{
 			mItems = items;
-			if (!items.empty())
-			{
-				mSelectionIndex = 0;
-				selectItem(0, false);
-			}
-			else mSelectionIndex = -1;
+			mSelectionIndex = -1;
+			if (!items.empty()) selectItem(0, false);
+			else mSmallTextArea->setCaption("");
 		}
 
 		void clearItems()
@@ -682,6 +685,8 @@ namespace OgreBites
 					Ogre::StringConverter::toString(index) + ".";
 				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::selectItem");
 			}
+
+			if (index == mSelectionIndex) return;    // do not do anything if an item's already selected
 
 			mSelectionIndex = index;
 			fitCaptionToArea(mItems[index], mSmallTextArea, mSmallBox->getWidth() - mSmallTextArea->getLeft() * 2);
@@ -715,7 +720,7 @@ namespace OgreBites
 			else return mItems[mSelectionIndex];
 		}
 
-		unsigned int getSelectionIndex()
+		int getSelectionIndex()
 		{
 			return mSelectionIndex;
 		}
@@ -810,7 +815,7 @@ namespace OgreBites
 					{
 						mScrollHandle->show();
 						Ogre::Real lowerBoundary = mScrollTrack->getHeight() - mScrollHandle->getHeight();
-						mScrollHandle->setTop((unsigned int)(mDisplayIndex * lowerBoundary / (mItems.size() - mItemElements.size())));
+						mScrollHandle->setTop((int)(mDisplayIndex * lowerBoundary / (mItems.size() - mItemElements.size())));
 					}
 					else mScrollHandle->hide();
 				}
@@ -834,7 +839,7 @@ namespace OgreBites
 					mScrollHandle->setTop(Ogre::Math::Clamp<int>(newTop, 0, lowerBoundary));
 
 					Ogre::Real scrollPercentage = Ogre::Math::Clamp<Ogre::Real>(newTop / lowerBoundary, 0, 1);
-					unsigned int newIndex = scrollPercentage * (mItems.size() - mItemElements.size()) + 0.5;
+					int newIndex = scrollPercentage * (mItems.size() - mItemElements.size()) + 0.5;
 					if (newIndex != mDisplayIndex) setDisplayIndex(newIndex);
 					return;
 				}
@@ -847,7 +852,7 @@ namespace OgreBites
 
 				if (cursorPos.x >= l && cursorPos.x <= r && cursorPos.y >= t && cursorPos.y <= b)
 				{
-					unsigned int newIndex = mDisplayIndex + (cursorPos.y - t) / (b - t) * mItemElements.size();
+					int newIndex = mDisplayIndex + (cursorPos.y - t) / (b - t) * mItemElements.size();
 					if (mHighlightIndex != newIndex)
 					{
 						mHighlightIndex = newIndex;
@@ -920,6 +925,7 @@ namespace OgreBites
 			mDragging = false;
 			mExpanded = false;
 			mExpandedBox->hide();
+			mTextArea->show();
 			mSmallBox->show();
 			mSmallBox->setMaterialName("SdkTrays/MiniTextBox");
 			mSmallBox->setBorderMaterialName("SdkTrays/MiniTextBox");
@@ -944,9 +950,9 @@ namespace OgreBites
 		bool mFitToContents;
 		bool mDragging;
 		Ogre::StringVector mItems;
-		unsigned int mSelectionIndex;
-		unsigned int mHighlightIndex;
-		unsigned int mDisplayIndex;
+		int mSelectionIndex;
+		int mHighlightIndex;
+		int mDisplayIndex;
 		Ogre::Real mDragOffset;
 	};
 
@@ -1039,7 +1045,6 @@ namespace OgreBites
 		{
 			mDragging = false;
 			mFitToContents = false;
-			setRange(minValue, maxValue, snaps);
 			mElement = Ogre::OverlayManager::getSingleton().createOverlayElementFromTemplate
 				("SdkTrays/Slider", "BorderPanel", name);
 			mElement->setWidth(width);
@@ -1069,17 +1074,32 @@ namespace OgreBites
 			}
 
 			setCaption(caption);
+			setRange(minValue, maxValue, snaps, false);
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Sets the minimum value, maximum value, and the number of snapping points.
 		-----------------------------------------------------------------------------*/
-		void setRange(Ogre::Real minValue, Ogre::Real maxValue, unsigned int snaps)
+		void setRange(Ogre::Real minValue, Ogre::Real maxValue, unsigned int snaps, bool notifyListener = true)
 		{
 			mMinValue = minValue;
 			mMaxValue = maxValue;
-			if (snaps < 2) mInterval = 0;
-			else mInterval = (maxValue - minValue) / (snaps - 1);
+
+			if (snaps < 2 || mMinValue >= mMaxValue)
+			{
+				mMinValue = 0;
+				mMaxValue = 1;
+				mInterval = 0;
+				mHandle->hide();
+				mValue = 0;
+				mValueTextArea->setCaption("");
+			}
+			else
+			{
+				mHandle->show();
+				mInterval = (maxValue - minValue) / (snaps - 1);
+				setValue(minValue, notifyListener);
+			}
 		}
 
 		const Ogre::DisplayString& getValueCaption()
@@ -1095,12 +1115,13 @@ namespace OgreBites
 			mValueTextArea->setCaption(caption);
 		}
 
-		void setValue(Ogre::Real value)
+		void setValue(Ogre::Real value, bool notifyListener = true)
 		{
 			mValue = Ogre::Math::Clamp<Ogre::Real>(value, mMinValue, mMaxValue);
 			setValueCaption(Ogre::StringConverter::toString(mValue));
-			if (mListener) mListener->sliderMoved(this);
-			if (!mDragging) mHandle->setLeft((int)(mValue / (mMaxValue - mMinValue) * (mTrack->getWidth() - mHandle->getWidth())));
+			if (mListener && notifyListener) mListener->sliderMoved(this);
+			if (!mDragging) mHandle->setLeft((int)((mValue - mMinValue) / (mMaxValue - mMinValue) *
+				(mTrack->getWidth() - mHandle->getWidth())));
 		}
 
 		Ogre::Real getValue()
@@ -1143,7 +1164,8 @@ namespace OgreBites
 			if (mDragging)
 			{
 				mDragging = false;
-				mHandle->setLeft((int)(mValue / (mMaxValue - mMinValue) * (mTrack->getWidth() - mHandle->getWidth())));
+				mHandle->setLeft((int)((mValue - mMinValue) / (mMaxValue - mMinValue) *
+					(mTrack->getWidth() - mHandle->getWidth())));
 			}
 		}
 
@@ -1299,7 +1321,7 @@ namespace OgreBites
 	public:
 
 		// Do not instantiate any widgets directly. Use SdkTrayManager.
-		CheckBox(const Ogre::String& name, const Ogre::DisplayString& caption, Ogre::Real width, bool checked)
+		CheckBox(const Ogre::String& name, const Ogre::DisplayString& caption, Ogre::Real width)
 		{
 			mCursorOver = false;
 			mFitToContents = width <= 0;
@@ -1311,7 +1333,6 @@ namespace OgreBites
 			mX = mSquare->getChild(mSquare->getName() + "/CheckBoxX");
 			mElement->setWidth(width);
 			setCaption(caption);
-			setChecked(checked, false);
 		}
 
 		const Ogre::DisplayString& getCaption()
@@ -1342,6 +1363,21 @@ namespace OgreBites
 				if (checked) mListener->boxChecked(this);
 				else mListener->boxUnchecked(this);
 			}
+		}
+
+		void check()
+		{
+			setChecked(true);
+		}
+
+		void uncheck()
+		{
+			setChecked(false);
+		}
+
+		void toggle()
+		{
+			setChecked(!isChecked());
 		}
 
 		void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
@@ -1843,7 +1879,6 @@ namespace OgreBites
 			Slider* s = new Slider(name, caption, width, 0, valueBoxWidth, minValue, maxValue, snaps);
 			moveWidgetToTray(s, trayLoc);
 			s->_assignListener(mListener);
-			s->setValue(minValue);
 			return s;
 		}
 
@@ -1854,7 +1889,6 @@ namespace OgreBites
 			Slider* s = new Slider(name, caption, width, trackWidth, valueBoxWidth, minValue, maxValue, snaps);
 			moveWidgetToTray(s, trayLoc);
 			s->_assignListener(mListener);
-			s->setValue(minValue);
 			return s;
 		}
 
@@ -1881,17 +1915,12 @@ namespace OgreBites
 		}
 
 		CheckBox* createCheckBox(TrayLocation trayLoc, const Ogre::String& name, const Ogre::DisplayString& caption,
-			Ogre::Real width, bool checked = false)
+			Ogre::Real width = 0)
 		{
-			CheckBox* cb = new CheckBox(name, caption, width, checked);
+			CheckBox* cb = new CheckBox(name, caption, width);
 			moveWidgetToTray(cb, trayLoc);
 			cb->_assignListener(mListener);
 			return cb;
-		}
-
-		CheckBox* createCheckBox(TrayLocation trayLoc, const Ogre::String& name, const Ogre::DisplayString& caption, bool checked = false)
-		{
-			return createCheckBox(trayLoc, name, caption, 0, checked);
 		}
 
 		DecorWidget* createDecorWidget(TrayLocation trayLoc, const Ogre::String& name, const Ogre::String& typeName,
@@ -2135,6 +2164,21 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
+		| Gets the number of widgets in total.
+		-----------------------------------------------------------------------------*/
+		unsigned int getNumWidgets()
+		{
+			unsigned int total = 0;
+
+			for (unsigned int i = 0; i < 10; i++)
+			{
+				total += mWidgets[i].size();
+			}
+
+			return total;
+		}
+
+		/*-----------------------------------------------------------------------------
 		| Gets the number of widgets in a tray.
 		-----------------------------------------------------------------------------*/
 		unsigned int getNumWidgets(TrayLocation trayLoc)
@@ -2250,12 +2294,44 @@ namespace OgreBites
 			widget->_assignToTray(trayLoc);
 		}
 
+		void moveWidgetToTray(const Ogre::String& name, TrayLocation trayLoc, unsigned int place = -1)
+		{
+			moveWidgetToTray(getWidget(name), trayLoc, place);
+		}
+
+		void moveWidgetToTray(TrayLocation currentTrayLoc, const Ogre::String& name, TrayLocation targetTrayLoc,
+			unsigned int place = -1)
+		{
+			moveWidgetToTray(getWidget(currentTrayLoc, name), targetTrayLoc, place);
+		}
+
+		void moveWidgetToTray(TrayLocation currentTrayLoc, unsigned int currentPlace, TrayLocation targetTrayLoc,
+			unsigned int targetPlace = -1)
+		{
+			moveWidgetToTray(getWidget(currentTrayLoc, currentPlace), targetTrayLoc, targetPlace);
+		}
+
 		/*-----------------------------------------------------------------------------
 		| Removes a widget from its tray. Same as moving it to the null tray.
 		-----------------------------------------------------------------------------*/
 		void removeWidgetFromTray(Widget* widget)
 		{
 			moveWidgetToTray(widget, TL_NONE);
+		}
+
+		void removeWidgetFromTray(const Ogre::String& name)
+		{
+			removeWidgetFromTray(getWidget(name));
+		}
+
+		void removeWidgetFromTray(TrayLocation trayLoc, const Ogre::String& name)
+		{
+			removeWidgetFromTray(getWidget(trayLoc, name));
+		}
+
+		void removeWidgetFromTray(TrayLocation trayLoc, unsigned int place)
+		{
+			removeWidgetFromTray(getWidget(trayLoc, place));
 		}
 
 		/*-----------------------------------------------------------------------------
