@@ -6,6 +6,9 @@
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreTechnique.h"
 
+//Use this directive to control whether you are writing projective (regular) or linear depth.
+//#define WRITE_LINEAR_DEPTH
+
 //This is the concrete implementation of the material generator.
 class GBufferMaterialGeneratorImpl : public MaterialGenerator::Impl
 {
@@ -52,7 +55,11 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 
 
 	ss << "	out float4 oPosition : POSITION," << std::endl;
+#ifdef WRITE_LINEAR_DEPTH
+    ss << "	out float3 oViewPos : TEXCOORD0," << std::endl;
+#else
 	ss << "	out float oDepth : TEXCOORD0," << std::endl;
+#endif
 	ss << "	out float3 oNormal : TEXCOORD1," << std::endl;
 	int texCoordNum = 2;
 	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP) {
@@ -79,7 +86,12 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 		ss << "	oTangent = mul(cWorldView, float4(iTangent,0)).xyz;" << std::endl;
 		ss << "	oBiNormal = cross(oNormal, oTangent);" << std::endl;
 	}
+
+#ifdef WRITE_LINEAR_DEPTH
+    ss << "	oViewPos = mul(cWorldView, iPosition).xyz;" << std::endl;
+#else
 	ss << "	oDepth = oPosition.w;" << std::endl;
+#endif
 
 	for (Ogre::uint32 i=0; i<numTexCoords; i++) {
 		ss << "	oUV" << i << " = iUV" << i << ';' << std::endl;
@@ -115,7 +127,11 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	Ogre::StringStream ss;
 	
 	ss << "void DeferredFP(" << std::endl;
-	ss << "	float1 iDepth : TEXCOORD0," << std::endl;
+#ifdef WRITE_LINEAR_DEPTH
+    ss << "	float3 iViewPos : TEXCOORD0," << std::endl;
+#else
+    ss << "	float1 iDepth : TEXCOORD0," << std::endl;
+#endif
 	ss << "	float3 iNormal   : TEXCOORD1," << std::endl;
 
 	int texCoordNum = 2;
@@ -149,7 +165,10 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	{
 		ss << "	uniform float3 cDiffuseColour," << std::endl;
 	}
-	
+
+#ifdef WRITE_LINEAR_DEPTH
+    ss << "	uniform float cFarDistance," << std::endl;
+#endif
 	
 	ss << "	uniform float cSpecularity" << std::endl;
 
@@ -175,8 +194,12 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	} else {
 		ss << "	oColor1.rgb = normalize(iNormal);" << std::endl;
 	}
+#ifdef WRITE_LINEAR_DEPTH
+    ss << "	oColor1.a = length(iViewPos) / cFarDistance;" << std::endl;
+#else
+    ss << "	oColor1.a = iDepth;" << std::endl;
+#endif
 
-	ss << "	oColor1.a = iDepth;" << std::endl;
 	ss << "}" << std::endl;
 	
 	Ogre::String programSource = ss.str();
@@ -200,6 +223,12 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	{
 		params->setNamedAutoConstant("cDiffuseColour", Ogre::GpuProgramParameters::ACT_SURFACE_DIFFUSE_COLOUR);
 	}
+
+#ifdef WRITE_LINEAR_DEPTH
+    //TODO : This should be the distance to the far corner, not the far clip distance
+    params->setNamedAutoConstant("cFarDistance", Ogre::GpuProgramParameters::ACT_FAR_CLIP_DISTANCE);
+#endif
+
 	ptrProgram->load();
 	return ptrProgram;
 }
