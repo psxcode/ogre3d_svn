@@ -24,17 +24,29 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	Post shader: Light geometry material
 */
 
+float2 fixUV(float2 texCoord, float2 texSize)
+{
+	return texCoord;
+}
+
+//DirectX needs this to compensate for jitter
+vs_1_1 float2 fixUV(float2 texCoord, float2 texSize)
+{
+	return floor(texCoord * texSize)/texSize;
+}
+
 void main(
 	float4 Pos: POSITION,
 	
 	out float4 oPos: POSITION,
-	out float2 oTexCoord: TEXCOORD0,
-	out float3 oProjCoord: TEXCOORD1,
+	out float2 oTexCoord : TEXCOORD0,
+	out float3 oRay : TEXCOORD1,
 	
 	uniform float vpWidth,
 	uniform float vpHeight,
 	uniform float4x4 worldViewProj,
-	uniform float4x4 invProj
+	uniform float3 farCorner,
+	uniform float flip
 	)
 {
 	float4 projPos = mul(worldViewProj, Pos);
@@ -45,19 +57,12 @@ void main(
 	// done that could mess with our concept.
 	oPos = projPos;
 
-	//float3 position = mul(invProj, float4(projCoord, 0, 1))*distance; 
-	// Acquire view space position via inverse projection transformation
-	// Optimisation for perspective, symmetric view frustrums 
-	// These interpolate over the frustrum plane for w=1
-	oProjCoord = float3(projPos[0], projPos[1], 1)*float3(
-		invProj[0][0], // X vector component from X
-		invProj[1][1], // Y vector component from Y
-		invProj[2][3]  // Z vector component from W
-	);
+	oRay = float3(projPos.x, projPos.y * flip, 1) * farCorner;
+
+	// -1 is because generally +Y is down for textures but up for the screen
+    float2 uv = float2(projPos.x, projPos.y * -1 * flip) * 0.5 + 0.5;
 
 	// Texture coordinate magic, this compensates for jitter
 	float2 texCoord = float2(projPos[0]/2+0.5, -projPos[1]/2+0.5);
-	float2 texSize = float2(vpWidth, vpHeight);
-	texCoord = floor(texCoord * texSize)/texSize;
-	oTexCoord = texCoord;
+	oTexCoord = fixUV(texCoord, float2(vpWidth, vpHeight));
 }

@@ -26,7 +26,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 float4 main(
 	float2 texCoord: TEXCOORD0, 
-	float3 projCoord: TEXCOORD1,
+	float3 ray : TEXCOORD1,
 	
 	uniform sampler Tex0: register(s0),
 	uniform sampler Tex1: register(s1),
@@ -49,7 +49,7 @@ float4 main(
 	float3 normal = a1.xyz;
 
 	// Calculate position of texel in view space
-	float3 position = projCoord*distance;
+	float3 position = ray*distance;
 
 	// Extract position in view space from worldView matrix
 	float3 lightPos = float3(worldView[0][3],worldView[1][3],worldView[2][3]);

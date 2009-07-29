@@ -73,7 +73,6 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 	const LightList& lightList = sm->_getLightsAffectingFrustum();
 	for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
-        continue; //LIGHTING TEMPORARILY NOT WORKING
         Light* light = *it;
 		LightsMap::iterator dLightIt = mLights.find(light);
 		DLight* dLight = 0;
