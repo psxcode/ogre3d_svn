@@ -338,7 +338,7 @@ protected:
 		SharedData::getSingleton().iGlobalActivate = true;
 		SharedData::getSingleton().iMainLight = l1;
 
-        mCamera->setFarClipDistance(5000.0);
+        mCamera->setFarClipDistance(10000.0);
 	}
 
     void createFrameListener(void)

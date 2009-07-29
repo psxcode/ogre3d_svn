@@ -28,9 +28,10 @@ void main(
 	
 	out float4 oPos: POSITION,
 	out float2 oTexCoord: TEXCOORD0,
-	out float3 oProjCoord: TEXCOORD1,
 	
-	uniform float4x4 invProj
+	out float3 oRay : TEXCOORD1,
+	
+	uniform float3 farCorner
 	)
 {
 	// Clean up inaccuracies
@@ -42,16 +43,9 @@ void main(
 	oTexCoord.x = 0.5 * (1 + Pos.x);
 	oTexCoord.y = 0.5 * (1 - Pos.y);
 
-	// Projection coordinates
-	// Inverted projection matrix
-	// These interpolate over the frustrum plane for w=1
-	oProjCoord = float3(Pos.x, Pos.y, 1) *
-		float3(
-		invProj[0][0], // X vector component from X
-		invProj[1][1], // Y vector component from Y
-		invProj[2][3]  // Z vector component from W
-	);
-
+	// This ray will be interpolated and will be the ray from the camera
+	// to the far clip plane, per pixel
+	oRay = farCorner * float3(Pos.xy, 1);
 }
 
 

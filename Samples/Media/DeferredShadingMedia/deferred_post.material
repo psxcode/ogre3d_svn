@@ -42,7 +42,7 @@ material DeferredShading/AmbientLight
 		{
 			lighting off
 			
-			depth_write off
+			depth_write on
 			depth_check on
 			
 			vertex_program_ref DeferredShading/post/vs

@@ -47,18 +47,34 @@ DLight* DeferredLightRenderOperation::createDLight(Ogre::Light* light)
 	return rv;
 }
 //-----------------------------------------------------------------------
+void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const Vector3& farCorner)
+{
+    for(unsigned short i=0; i<tech->getNumPasses(); ++i)
+	{
+        Ogre::Pass* pass = tech->getPass(i);
+        // get the vertex shader parameters
+        Ogre::GpuProgramParametersSharedPtr params = pass->getVertexProgramParameters();
+        // set the camera's far-top-right corner
+        if (params->_findNamedConstantDefinition("farCorner"))
+            params->setNamedConstant("farCorner", farCorner);
+
+		sm->_injectRenderWithPass(pass, rend, false);
+	}
+}
 void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 {
-	Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
-	for(unsigned short i=0; i<tech->getNumPasses(); ++i)
-	{
-		sm->_injectRenderWithPass(tech->getPass(i), mAmbientLight, false);
-	}
+    // calculate the far-top-right corner in view-space
+    Ogre::Camera* cam = sm->getCurrentViewport()->getCamera();
+    Ogre::Vector3 farCorner = cam->getViewMatrix(true) * cam->getWorldSpaceCorners()[4];
+
+    Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
+	injectTechnique(sm, tech, mAmbientLight, farCorner);
 
 	const LightList& lightList = sm->_getLightsAffectingFrustum();
 	for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
-		Light* light = *it;
+        continue; //LIGHTING TEMPORARILY NOT WORKING
+        Light* light = *it;
 		LightsMap::iterator dLightIt = mLights.find(light);
 		DLight* dLight = 0;
 		if (dLightIt == mLights.end()) 
@@ -72,10 +88,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 		}
 		
 		tech = dLight->getMaterial()->getBestTechnique();
-		for(unsigned short i=0; i<tech->getNumPasses(); ++i)
-		{
-			sm->_injectRenderWithPass(tech->getPass(i), dLight, false);
-		}
+        injectTechnique(sm, tech, dLight, farCorner);
 	}
 }
 //-----------------------------------------------------------------------

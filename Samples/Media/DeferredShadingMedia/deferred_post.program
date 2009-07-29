@@ -158,7 +158,8 @@ vertex_program DeferredShading/post/vs cg
 	entry_point main
 	default_params
 	{
-		param_named_auto invProj inverse_projection_matrix
+		//param_named_auto invProj inverse_projection_matrix
+		param_named farCorner float3 1 1 1
 	}
 }
 fragment_program DeferredShading/post/SinglePass_ps cg
@@ -177,16 +178,5 @@ fragment_program DeferredShading/post/SinglePass_ps cg
 		param_named_auto lightPos1 light_position_view_space 1
 		param_named_auto lightDiffuseColor1 light_diffuse_colour 1
 		param_named_auto lightSpecularColor1 light_specular_colour 1
-	}
-}
-// cg
-vertex_program DeferredShading/post/vs cg
-{
-	source DeferredShading/post/vs.cg
-	profiles vs_1_1 arbvp1
-	entry_point main
-	default_params
-	{
-		param_named_auto invProj inverse_projection_matrix
 	}
 }

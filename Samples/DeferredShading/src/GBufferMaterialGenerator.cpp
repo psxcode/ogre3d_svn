@@ -7,7 +7,7 @@
 #include "OgreTechnique.h"
 
 //Use this directive to control whether you are writing projective (regular) or linear depth.
-//#define WRITE_LINEAR_DEPTH
+#define WRITE_LINEAR_DEPTH
 
 //This is the concrete implementation of the material generator.
 class GBufferMaterialGeneratorImpl : public MaterialGenerator::Impl
@@ -35,7 +35,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 {
 	Ogre::StringStream ss;
 	
-	ss << "void DeferredVP(" << std::endl;
+	ss << "void ToGBufferVP(" << std::endl;
 	ss << "	float4 iPosition : POSITION," << std::endl;
 	ss << "	float3 iNormal   : NORMAL," << std::endl;
 
@@ -111,7 +111,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 		programName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		"cg", Ogre::GPT_VERTEX_PROGRAM);
 	ptrProgram->setSource(programSource);
-	ptrProgram->setParameter("entry_point","DeferredVP");
+	ptrProgram->setParameter("entry_point","ToGBufferVP");
 	ptrProgram->setParameter("profiles","vs_1_1 arbvp1");
 
 	const Ogre::GpuProgramParametersSharedPtr& params = ptrProgram->getDefaultParameters();
@@ -126,7 +126,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 {
 	Ogre::StringStream ss;
 	
-	ss << "void DeferredFP(" << std::endl;
+	ss << "void ToGBufferFP(" << std::endl;
 #ifdef WRITE_LINEAR_DEPTH
     ss << "	float3 iViewPos : TEXCOORD0," << std::endl;
 #else
@@ -214,7 +214,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 		programName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		"cg", Ogre::GPT_FRAGMENT_PROGRAM);
 	ptrProgram->setSource(programSource);
-	ptrProgram->setParameter("entry_point","DeferredFP");
+	ptrProgram->setParameter("entry_point","ToGBufferFP");
 	ptrProgram->setParameter("profiles","ps_2_0 arbfp1");
 
 	const Ogre::GpuProgramParametersSharedPtr& params = ptrProgram->getDefaultParameters();
@@ -225,7 +225,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	}
 
 #ifdef WRITE_LINEAR_DEPTH
-    //TODO : This should be the distance to the far corner, not the far clip distance
+    //TODO : Should this be the distance to the far corner, not the far clip distance?
     params->setNamedAutoConstant("cFarDistance", Ogre::GpuProgramParameters::ACT_FAR_CLIP_DISTANCE);
 #endif
 
@@ -238,7 +238,7 @@ Ogre::MaterialPtr GBufferMaterialGeneratorImpl::generateTemplateMaterial(Materia
 	Ogre::String matName = mBaseName + "Mat_" + Ogre::StringConverter::toString(permutation);
 
 	Ogre::MaterialPtr matPtr = Ogre::MaterialManager::getSingleton().create
-		(matName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+		(matName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 	Ogre::Pass* pass = matPtr->getTechnique(0)->getPass(0);
 	pass->setName(mBaseName + "Pass_" + Ogre::StringConverter::toString(permutation));
 	pass->setLightingEnabled(false);

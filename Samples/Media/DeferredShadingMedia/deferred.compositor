@@ -40,7 +40,7 @@ compositor DeferredShading/ShowLit
 			
 			pass clear
 			{
-				
+				buffers colour
 			}
 			
 			// render skies
@@ -50,19 +50,19 @@ compositor DeferredShading/ShowLit
 				last_render_queue  5			
 			}
 			
+			//Render the lights and their meshes
+			pass render_custom DeferredLight
+			{
+				input 0 mrt_output 0
+				input 1 mrt_output 1
+			}		
+			
 			// Render the minilight indicators
 			pass render_scene
 			{
 				first_render_queue 20
 				last_render_queue 21
 			}
-			
-			//just the lights and their meshes
-			pass render_custom DeferredLight
-			{
-				input 0 mrt_output 0
-				input 1 mrt_output 1
-			}			
 			
 		}
 	}

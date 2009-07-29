@@ -25,21 +25,23 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 //GL and DX expect a different value
-float fixDepth(float depth)
+float finalDepth(float4 p)
 {
-	return depth;
+    // normally it's in [-1..1]
+    return p.z / p.w;
 }
 
-arbfp1 float fixDepth(float depth)
+arbfp1 float finalDepth(float4 p)
 {
-	return depth * 2.0;
+    // GL needs it in [0..1]
+    return (p.z / p.w) * 0.5 + 0.5;
 }
 
 
 
 void main(
 	float2 texCoord: TEXCOORD0, 
-	float3 projCoord: TEXCOORD1,
+	float3 ray : TEXCOORD1,
 	
 	out float4 oColour : COLOR,
 	out float oDepth : DEPTH,
@@ -60,5 +62,7 @@ void main(
 	oColour = float4( ambientColor*float4(a0.rgb ,0));
 
 	// Calculate depth of fragment;
-	oDepth = projCoord.z*proj[2][2] + proj[2][3]/fixDepth(a1.w);
+	float3 viewPos = ray * a1.w;
+	float4 projPos = mul( proj, float4(viewPos, 1) );
+	oDepth = finalDepth(projPos);
 }
