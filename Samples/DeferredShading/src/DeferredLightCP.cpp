@@ -57,6 +57,10 @@ void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const 
         // set the camera's far-top-right corner
         if (params->_findNamedConstantDefinition("farCorner"))
             params->setNamedConstant("farCorner", farCorner);
+        
+        params = pass->getFragmentProgramParameters();
+        if (params->_findNamedConstantDefinition("farCorner"))
+            params->setNamedConstant("farCorner", farCorner);
 
 		sm->_injectRenderWithPass(pass, rend, false);
 	}
@@ -71,7 +75,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 	injectTechnique(sm, tech, mAmbientLight, farCorner);
 
 	const LightList& lightList = sm->_getLightsAffectingFrustum();
-	for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
+    for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
         Light* light = *it;
 		LightsMap::iterator dLightIt = mLights.find(light);

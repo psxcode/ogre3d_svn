@@ -120,21 +120,17 @@ public:
 		String getPPDefines(Perm permutation)
 		{
 			String strPPD;
+            if (permutation & DLight::MI_QUAD)
+            {
+                strPPD += "-DIS_DIRECTIONAL ";
+            }
 			if (permutation & DLight::MI_SPECULAR)
 			{
-				strPPD += "-DIS_SPECULAR=1 ";
-			}
-			else
-			{
-				strPPD += "-DIS_SPECULAR=0 ";
+				strPPD += "-DIS_SPECULAR ";
 			}
 			if (permutation & DLight::MI_ATTENUATED)
 			{
-				strPPD += "-DIS_ATTENUATED=1";
-			}
-			else
-			{
-				strPPD += "-DIS_ATTENUATED=0";
+				strPPD += "-DIS_ATTENUATED";
 			}
 			return strPPD;
 		}
@@ -143,6 +139,14 @@ public:
 		{
 			assert(params.isNull()==false);
 
+            if (params->_findNamedConstantDefinition("vpWidth"))
+			{
+                params->setNamedAutoConstant("vpWidth", GpuProgramParameters::ACT_VIEWPORT_WIDTH);
+			}
+            if (params->_findNamedConstantDefinition("vpHeight"))
+			{
+                params->setNamedAutoConstant("vpHeight", GpuProgramParameters::ACT_VIEWPORT_HEIGHT);
+			}
 			if (params->_findNamedConstantDefinition("worldView"))
 			{
 				params->setNamedAutoConstant("worldView", GpuProgramParameters::ACT_WORLDVIEW_MATRIX);
@@ -150,6 +154,10 @@ public:
 			if (params->_findNamedConstantDefinition("invProj"))
 			{
 				params->setNamedAutoConstant("invProj", GpuProgramParameters::ACT_INVERSE_PROJECTION_MATRIX);
+			}
+            if (params->_findNamedConstantDefinition("flip"))
+			{
+				params->setNamedAutoConstant("flip", GpuProgramParameters::ACT_RENDER_TARGET_FLIPPING);
 			}
 			if (params->_findNamedConstantDefinition("lightDiffuseColor"))
 			{
@@ -163,6 +171,7 @@ public:
 			{
 				params->setNamedAutoConstant("lightFalloff", GpuProgramParameters::ACT_CUSTOM, 3);
 			}
+
 		}
 };
 
@@ -173,7 +182,7 @@ LightMaterialGenerator::LightMaterialGenerator()
 	bitNames.push_back("Specular");   // MI_SPECULAR
 
 	vsMask = 0x00000001;
-	fsMask = 0x00000006;
+	fsMask = 0x00000007;
 	matMask = 0x00000001;
 	
 	materialBaseName = "DeferredShading/LightMaterial/";

@@ -24,9 +24,26 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	Post shader: Light geometry material
 */
 
+//DirectX needs this to compensate for jitter
+ps_2_0 float2 fixUV(float2 texCoord, float2 texSize)
+{
+	return texCoord + (float2(0.5,0.5)/texSize);
+}
+
+float2 fixUV(float2 texCoord, float2 texSize)
+{
+	return texCoord;
+}
+
+
 float4 main(
-	float2 texCoord: TEXCOORD0, 
+
+#ifdef IS_DIRECTIONAL
+	float2 texCoord : TEXCOORD0, 
 	float3 ray : TEXCOORD1,
+#else
+	float4 projPos : TEXCOORD0,
+#endif
 	
 	uniform sampler Tex0: register(s0),
 	uniform sampler Tex1: register(s1),
@@ -37,8 +54,26 @@ float4 main(
 	uniform float4 lightDiffuseColor,
 	uniform float4 lightSpecularColor,
 	uniform float4 lightFalloff
+#ifndef IS_DIRECTIONAL
+	,
+	uniform float vpWidth,
+	uniform float vpHeight,
+	uniform float3 farCorner,
+	uniform float flip
+#endif
 	) : COLOR 
 {
+
+	//None directional lights have some calculations to do in the beginning of the pixel shader
+#ifndef IS_DIRECTIONAL
+	projPos /= projPos.w;
+	// -1 is because generally +Y is down for textures but up for the screen
+    float2 texCoord = float2(projPos.x, projPos.y * -1 * flip) * 0.5 + 0.5;
+	// Texture coordinate magic, this compensates for jitter
+	texCoord = fixUV(texCoord, float2(vpWidth, vpHeight));
+	float3 ray = float3(projPos.x, projPos.y * flip, 1) * farCorner;
+#endif
+	
 	float4 a0 = tex2D(Tex0, texCoord); // Attribute 0: Diffuse color+shininess
 	float4 a1 = tex2D(Tex1, texCoord); // Attribute 1: Normal+depth
 
