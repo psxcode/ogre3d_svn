@@ -35,44 +35,76 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using namespace Ogre;
 
-class LightMaterialGeneratorImpl : public MaterialGenerator::Impl
+//CG
+class LightMaterialGeneratorCG : public MaterialGenerator::Impl
 {
 public:
 	typedef MaterialGenerator::Perm Perm;
-	LightMaterialGeneratorImpl(const String &baseName):
-	mBaseName(baseName)
+	LightMaterialGeneratorCG(const String &baseName):
+	    mBaseName(baseName) 
 	{
 
 	}
-	virtual ~LightMaterialGeneratorImpl()
+	virtual ~LightMaterialGeneratorCG()
 	{
 
 	}
+
 	virtual GpuProgramPtr generateVertexShader(Perm permutation)
 	{
-		String strUnifiedProgram;
+        String programName = "DeferredShading/post/";
+
 		if (permutation & DLight::MI_QUAD)
 		{
-			strUnifiedProgram = "DeferredShading/post/vs";
+			programName += "vs";
 		}
 		else
 		{
-			strUnifiedProgram = "DeferredShading/post/LightMaterial_vs";
+			programName += "LightMaterial_vs";
 		}
-		GpuProgramPtr ptr = HighLevelGpuProgramManager::getSingleton().getByName(strUnifiedProgram);
-		assert(ptr->getLanguage()=="unified");
+
+		GpuProgramPtr ptr = HighLevelGpuProgramManager::getSingleton().getByName(programName);
+		assert(ptr->getLanguage()=="cg");
 		return ptr;
 	}
+
 	virtual GpuProgramPtr generateFragmentShader(Perm permutation)
 	{
-		assert(false && "Concrete Class must Implement!");
-		GpuProgramPtr ptr;
-		return ptr;
+		/// Create shader
+		if (mMasterSource.empty())
+		{
+			DataStreamPtr ptrMasterSource = ResourceGroupManager::getSingleton().openResource(
+				 "DeferredShading/post/LightMaterial_ps.cg"
+				, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+			assert(ptrMasterSource.isNull()==false);
+			mMasterSource = ptrMasterSource->getAsString();
+		}
+
+		assert(mMasterSource.empty()==false);
+
+		// Create name
+		String name = mBaseName+StringConverter::toString(permutation)+"_ps";		
+
+		// Create shader object
+		HighLevelGpuProgramPtr ptrProgram = HighLevelGpuProgramManager::getSingleton().createProgram(
+			name, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+			"cg", GPT_FRAGMENT_PROGRAM);
+		ptrProgram->setSource(mMasterSource);
+		ptrProgram->setParameter("entry_point","main");
+	    ptrProgram->setParameter("profiles","ps_2_0 arbfp1");
+		// set up the preprocessor defines
+		// Important to do this before any call to get parameters, i.e. before the program gets loaded
+		ptrProgram->setParameter("compile_arguments", getPPDefines(permutation));
+
+		setUpBaseParameters(ptrProgram->getDefaultParameters());
+
+		return GpuProgramPtr(ptrProgram);
 	}
+
 	virtual MaterialPtr generateTemplateMaterial(Perm permutation)
 	{
-		if(permutation & DLight::MI_QUAD)
-		{
+        if(permutation & DLight::MI_QUAD)
+		{   
 			return MaterialManager::getSingleton().getByName("DeferredShading/LightMaterialQuad");
 		}
 		else
@@ -80,30 +112,33 @@ public:
 			return MaterialManager::getSingleton().getByName("DeferredShading/LightMaterial");
 		}
 	}
+
 	protected:
 		String mBaseName;
+        String mMasterSource;
 		// Utility method
 		String getPPDefines(Perm permutation)
 		{
 			String strPPD;
 			if (permutation & DLight::MI_SPECULAR)
 			{
-				strPPD += "IS_SPECULAR=1,";
+				strPPD += "-DIS_SPECULAR=1 ";
 			}
 			else
 			{
-				strPPD += "IS_SPECULAR=0,";
+				strPPD += "-DIS_SPECULAR=0 ";
 			}
 			if (permutation & DLight::MI_ATTENUATED)
 			{
-				strPPD += "IS_ATTENUATED=1";
+				strPPD += "-DIS_ATTENUATED=1";
 			}
 			else
 			{
-				strPPD += "IS_ATTENUATED=0";
+				strPPD += "-DIS_ATTENUATED=0";
 			}
 			return strPPD;
 		}
+
 		void setUpBaseParameters(const GpuProgramParametersSharedPtr& params)
 		{
 			assert(params.isNull()==false);
@@ -131,116 +166,7 @@ public:
 		}
 };
 
-class LightMaterialGeneratorHLSL: public LightMaterialGeneratorImpl
-{
-public:
-	LightMaterialGeneratorHLSL(const String &baseName):
-	  LightMaterialGeneratorImpl(baseName)
-	  {
-
-	  }
-	  virtual ~LightMaterialGeneratorHLSL()
-	  {
-
-	  }
-
-	virtual GpuProgramPtr generateFragmentShader(Perm permutation)
-	{
-		
-		/// Create shader
-		if (mMasterSource.empty())
-		{
-			DataStreamPtr ptrMasterSource = ResourceGroupManager::getSingleton().openResource(
-				 "DeferredShading/post/hlsl/LightMaterial_ps.hlsl"
-				, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-			assert(ptrMasterSource.isNull()==false);
-			mMasterSource = ptrMasterSource->getAsString();
-		}
-
-		assert(mMasterSource.empty()==false);
-
-		// Create name
-		String name=mBaseName+StringConverter::toString(permutation)+"_ps";		
-
-		// Create shader object
-		HighLevelGpuProgramPtr ptrProgram = HighLevelGpuProgramManager::getSingleton().createProgram(
-			name, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			"hlsl", GPT_FRAGMENT_PROGRAM);
-		ptrProgram->setSource(mMasterSource);
-		ptrProgram->setParameter("target","ps_2_0");
-		ptrProgram->setParameter("entry_point","main");
-		
-		// set up the preprocessor defines
-		// Important to do this before any call to get parameters, i.e. before the program gets loaded
-		ptrProgram->setParameter("preprocessor_defines", getPPDefines(permutation));
-
-		setUpBaseParameters(ptrProgram->getDefaultParameters());
-
-		return GpuProgramPtr(ptrProgram);
-	}
-protected:
-
-	static String mMasterSource;
-};
-
-String LightMaterialGeneratorHLSL::mMasterSource = "";
-
-class LightMaterialGeneratorGLSL: public LightMaterialGeneratorImpl
-{
-public:
-	LightMaterialGeneratorGLSL(const String &baseName):
-	  LightMaterialGeneratorImpl(baseName)
-	  {
-
-	  }
-	  virtual ~LightMaterialGeneratorGLSL()
-	  {
-
-	  }
-
-	virtual GpuProgramPtr generateFragmentShader(Perm permutation)
-	{
-		/// Create shader
-		if (mMasterSource.empty())
-		{
-			DataStreamPtr ptrMasterSource = ResourceGroupManager::getSingleton().openResource(
-				 "DeferredShading/post/glsl/LightMaterial_ps.glsl"
-				, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-			assert(ptrMasterSource.isNull()==false);
-			mMasterSource = ptrMasterSource->getAsString();
-		}
-
-		assert(mMasterSource.empty()==false);
-
-		// Create name
-		String name=mBaseName+StringConverter::toString(permutation)+"_ps";		
-
-		// Create shader object
-		HighLevelGpuProgramPtr ptrProgram = HighLevelGpuProgramManager::getSingleton().createProgram(
-			name, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			"glsl", GPT_FRAGMENT_PROGRAM);
-		ptrProgram->setSource(mMasterSource);
-
-		// set up the preprocessor defines
-		// Important to do this before any call to get parameters, i.e. before the program gets loaded
-		ptrProgram->setParameter("preprocessor_defines", getPPDefines(permutation));
-
-		// set up common parameters
-		setUpBaseParameters(ptrProgram->getDefaultParameters());
-
-		// set up parameters specific to this implementation		
-		ptrProgram->getDefaultParameters()->setNamedConstant("tex0", 0);
-		ptrProgram->getDefaultParameters()->setNamedConstant("tex1", 1);
-
-		return GpuProgramPtr(ptrProgram);
-	}
-protected:
-	static String mMasterSource;
-};
-
-String LightMaterialGeneratorGLSL::mMasterSource = "";
-
-LightMaterialGenerator::LightMaterialGenerator(const String &language)
+LightMaterialGenerator::LightMaterialGenerator()
 {
 	bitNames.push_back("Quad");		  // MI_QUAD
 	bitNames.push_back("Attenuated"); // MI_ATTENUATED
@@ -251,11 +177,9 @@ LightMaterialGenerator::LightMaterialGenerator(const String &language)
 	matMask = 0x00000001;
 	
 	materialBaseName = "DeferredShading/LightMaterial/";
-	if(language=="hlsl")
-		mImpl = new LightMaterialGeneratorHLSL("DeferredShading/LightMaterial/hlsl/");
-	else
-		mImpl = new LightMaterialGeneratorGLSL("DeferredShading/LightMaterial/glsl/");
+    mImpl = new LightMaterialGeneratorCG("DeferredShading/LightMaterial/");
 }
+
 LightMaterialGenerator::~LightMaterialGenerator()
 {
 

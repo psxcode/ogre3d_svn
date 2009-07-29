@@ -16,6 +16,8 @@ LGPL like the rest of the engine.
 #include "AmbientLight.h"
 #include "GeomUtils.h"
 #include "OgreMaterialManager.h"
+#include "OgreRoot.h"
+#include "OgreRenderSystem.h"
 
 using namespace Ogre;
 
@@ -38,6 +40,12 @@ AmbientLight::AmbientLight()
 	mMatPtr = MaterialManager::getSingleton().getByName("DeferredShading/AmbientLight");
 	assert(mMatPtr.isNull()==false);
 	mMatPtr->load();
+
+    //This shader needs to be aware if its running under OpenGL or DirectX.
+    //Real depthFactor = (Root::getSingleton().getRenderSystem()->getName() ==
+    //    "OpenGL Rendering Subsystem") ? 2.0 : 1.0;
+    //mMatPtr->getTechnique(0)->getPass(0)->getFragmentProgramParameters()->setNamedConstant(
+    //        "depthFactor", depthFactor);
 }
 
 AmbientLight::~AmbientLight()

@@ -48,7 +48,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 class LightMaterialGenerator: public MaterialGenerator
 {
 public:
-	LightMaterialGenerator(const Ogre::String &language);
+	LightMaterialGenerator();
 	virtual ~LightMaterialGenerator();
 };
 

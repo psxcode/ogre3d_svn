@@ -90,7 +90,9 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateVertexShader(MaterialG
 	Ogre::String programSource = ss.str();
 	Ogre::String programName = mBaseName + "VP_" + Ogre::StringConverter::toString(permutation);
 
-	//Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
+#if OGRE_DEBUG_MODE
+	Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
+#endif
 
 	// Create shader object
 	Ogre::HighLevelGpuProgramPtr ptrProgram = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
@@ -180,7 +182,9 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	Ogre::String programSource = ss.str();
 	Ogre::String programName = mBaseName + "FP_" + Ogre::StringConverter::toString(permutation);
 
-	//Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
+#if OGRE_DEBUG_MODE
+	Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(programSource);
+#endif
 
 	// Create shader object
 	Ogre::HighLevelGpuProgramPtr ptrProgram = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(

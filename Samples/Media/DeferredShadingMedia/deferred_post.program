@@ -1,0 +1,192 @@
+fragment_program DeferredShading/post/Ambient_ps cg
+{
+	source DeferredShading/post/Ambient_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+	
+	default_params
+	{
+		param_named_auto ambientColor ambient_light_colour 0		
+		param_named_auto proj projection_matrix
+	}
+}
+
+fragment_program DeferredShading/post/ShowNormal_ps cg
+{
+	source DeferredShading/post/ShowNormal_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+}
+
+fragment_program DeferredShading/post/ShowDS_ps cg
+{
+	source DeferredShading/post/ShowDS_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+}
+
+fragment_program DeferredShading/post/ShowColour_ps cg
+{
+	source DeferredShading/post/ShowColour_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+}
+
+fragment_program DeferredShading/post/ShowNormal_ps cg
+{
+	source DeferredShading/post/ShowNormal_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+}
+fragment_program DeferredShading/post/ShowDS_ps cg
+{
+	source DeferredShading/post/ShowDS_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+}
+fragment_program DeferredShading/post/ShowColour_ps cg
+{
+	source DeferredShading/post/ShowColour_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+}
+
+// Auxilary lights
+vertex_program DeferredShading/post/LightMaterial_vs cg
+{
+	source DeferredShading/post/LightMaterial_vs.cg
+	profiles vs_1_1 arbvp1
+	entry_point main
+	default_params
+	{
+		param_named_auto worldViewProj worldviewproj_matrix
+		param_named_auto invProj inverse_projection_matrix
+		param_named_auto vpWidth viewport_width
+		param_named_auto vpHeight viewport_height
+	}
+}
+fragment_program DeferredShading/post/LightMaterial_ps cg
+{
+	source DeferredShading/post/LightMaterial_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+
+	default_params
+	{
+		param_named_auto worldView worldview_matrix
+		
+		param_named_auto lightDiffuseColor custom 1
+		//param_named_auto lightSpecularColor custom 2
+		param_named_auto lightFalloff custom 3
+	}
+}
+
+// Auxilary lights
+
+// N.B This is not used directly, since the mini light programs are set up in code.
+
+// cg
+vertex_program DeferredShading/post/LightMaterial_vs cg
+{
+	source DeferredShading/post/LightMaterial_vs.cg
+	profiles vs_1_1 arbvp1
+	entry_point main
+	default_params
+	{
+		param_named_auto worldViewProj worldviewproj_matrix
+		param_named_auto invProj inverse_projection_matrix
+		param_named_auto vpWidth viewport_width
+		param_named_auto vpHeight viewport_height
+	}
+}
+
+fragment_program DeferredShading/post/LightMaterial_ps cg
+{
+	source DeferredShading/post/LightMaterial_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+	compiler_options -DIS_ATTENUATED=1 -DIS_SPECULAR=1
+
+	default_params
+	{
+		param_named_auto worldView worldview_matrix
+		
+		param_named lightDiffuseColor float4 0.0 0.0 0.0 0.0
+		param_named lightSpecularColor float4 0.0 0.0 0.0 0.0
+		param_named lightFalloff float4 0.0 0.0 0.0 0.0
+
+		
+		//param_named_auto lightDiffuseColor custom 1
+		//param_named_auto lightSpecularColor custom 2
+		//param_named_auto lightFalloff custom 3
+	}
+}
+
+// Post processors
+fragment_program DeferredShading/post/Ambient_ps cg
+{
+	source DeferredShading/post/Ambient_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+	
+	default_params
+	{
+		param_named_auto ambientColor ambient_light_colour 0		
+		param_named_auto proj projection_matrix
+	}
+}
+fragment_program DeferredShading/post/GlobalLight_ps cg
+{
+	source DeferredShading/post/GlobalLight_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+	
+	default_params
+	{
+		//param_named_auto invProj inverse_projection_matrix	
+		
+		param_named_auto lightPos0 light_position_view_space 0
+		param_named_auto lightDiffuseColor0 light_diffuse_colour 0
+		param_named_auto lightSpecularColor0 light_specular_colour 0
+	}
+}
+// Post processors
+vertex_program DeferredShading/post/vs cg
+{
+	source DeferredShading/post/vs.cg
+	profiles vs_1_1 arbvp1
+	entry_point main
+	default_params
+	{
+		param_named_auto invProj inverse_projection_matrix
+	}
+}
+fragment_program DeferredShading/post/SinglePass_ps cg
+{
+	source DeferredShading/post/SinglePass_ps.cg
+	profiles ps_2_0 arbfp1
+	entry_point main
+	
+	default_params
+	{
+		param_named_auto proj projection_matrix
+		param_named_auto ambientColor ambient_light_colour 0
+		param_named_auto lightPos0 light_position_view_space 0
+		param_named_auto lightDiffuseColor0 light_diffuse_colour 0
+		param_named_auto lightSpecularColor0 light_specular_colour 0
+		param_named_auto lightPos1 light_position_view_space 1
+		param_named_auto lightDiffuseColor1 light_diffuse_colour 1
+		param_named_auto lightSpecularColor1 light_specular_colour 1
+	}
+}
+// cg
+vertex_program DeferredShading/post/vs cg
+{
+	source DeferredShading/post/vs.cg
+	profiles vs_1_1 arbvp1
+	entry_point main
+	default_params
+	{
+		param_named_auto invProj inverse_projection_matrix
+	}
+}

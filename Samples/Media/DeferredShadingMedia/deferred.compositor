@@ -5,7 +5,7 @@ compositor DeferredShading/GBuffer
 	technique
 	{
 		// temporary textures
-		texture mrt_output target_width target_height PF_FLOAT16_RGBA PF_FLOAT16_RGBA chain_scope shared
+		texture mrt_output target_width target_height PF_FLOAT16_RGBA PF_FLOAT16_RGBA chain_scope
 		
 		target mrt_output
         {
@@ -40,15 +40,16 @@ compositor DeferredShading/ShowLit
 			
 			pass clear
 			{
-			
+				
 			}
+			
 			// render skies
 			pass render_scene
 			{
 				first_render_queue 5
 				last_render_queue  5			
 			}
-						
+			
 			// Render the minilight indicators
 			pass render_scene
 			{
@@ -61,7 +62,7 @@ compositor DeferredShading/ShowLit
 			{
 				input 0 mrt_output 0
 				input 1 mrt_output 1
-			}
+			}			
 			
 		}
 	}

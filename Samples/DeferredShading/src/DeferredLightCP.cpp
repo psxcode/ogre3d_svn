@@ -4,6 +4,7 @@
 using namespace Ogre;
 
 #include "LightMaterialGenerator.h"
+
 //-----------------------------------------------------------------------
 DeferredLightRenderOperation::DeferredLightRenderOperation(
 	CompositorInstance* instance, const CompositionPass* pass)
@@ -15,11 +16,8 @@ DeferredLightRenderOperation::DeferredLightRenderOperation(
 	mTexName1 = instance->getTextureInstanceName(input1.name, input1.mrtIndex);
 
 	// Create lights material generator
-	if(Root::getSingleton().getRenderSystem()->getName() == "OpenGL Rendering Subsystem")
-		mLightMaterialGenerator = new LightMaterialGenerator("glsl");
-	else
-		mLightMaterialGenerator = new LightMaterialGenerator("hlsl");
-
+	mLightMaterialGenerator = new LightMaterialGenerator();
+	
 	// Create the ambient light
 	mAmbientLight = new AmbientLight();
 	const MaterialPtr& mat = mAmbientLight->getMaterial();
