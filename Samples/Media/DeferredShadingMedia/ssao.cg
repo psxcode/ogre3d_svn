@@ -107,7 +107,7 @@ float4 ssao_ps(
         nuv.xy /= nuv.w;
 
         // compute occlusion based on the (scaled) Z difference
-        float zd = saturate(far * (depth - TEX2DLOD(geomMap, nuv.xy).x));
+        float zd = saturate(far * (depth - TEX2DLOD(geomMap, nuv.xy).w));
         // this is a sample occlusion function, you can always play with
         // other ones, like 1.0 / (1.0 + zd * zd) and stuff
         occ += saturate(pow(1.0 - zd, 11) + zd);
