@@ -39,7 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "OgreLogManager.h"
 
+#include "DeferredLightCP.h"
+#include "SSAOLogic.h"
+#include "GbufferSchemeHandler.h"
+
 using namespace Ogre;
+
+const Ogre::uint8 DeferredShadingSystem::PRE_GBUFFER_RENDER_QUEUE = Ogre::RENDER_QUEUE_1;
+const Ogre::uint8 DeferredShadingSystem::POST_GBUFFER_RENDER_QUEUE = Ogre::RENDER_QUEUE_8;
 
 DeferredShadingSystem::DeferredShadingSystem(
 		Viewport *vp, SceneManager *sm,  Camera *cam
@@ -131,6 +138,12 @@ DeferredShadingSystem::DSMode DeferredShadingSystem::getMode(void) const
 void DeferredShadingSystem::createResources(void)
 {
 	CompositorManager &compMan = CompositorManager::getSingleton();
+
+	//Hook up the compositor logic and scheme handlers.
+	//This can theoretically happen in a loaded plugin, but in this case the demo contains the code.
+	MaterialManager::getSingleton().addListener(new GBufferSchemeHandler, "GBuffer");
+	compMan.registerCompositorLogic("SSAOLogic", new SSAOLogic);
+	compMan.registerCustomCompositionPass("DeferredLight", new DeferredLightCompositionPass);
 
 	// Create the main GBuffer compositor
 	mGBufferInstance = compMan.addCompositor(mViewport, "DeferredShading/GBuffer");

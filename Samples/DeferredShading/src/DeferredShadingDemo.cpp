@@ -31,10 +31,7 @@ This demo source file is in the public domain.
 #endif
 
 #include "DeferredShading.h"
-#include "DeferredLightCP.h"
 #include "GeomUtils.h"
-#include "SSAOLogic.h"
-#include "GbufferSchemeHandler.h"
 #include "SharedData.h"
 
 template<> SharedData* Singleton<SharedData>::ms_Singleton = 0;
@@ -199,12 +196,6 @@ protected:
                 "run this demo. Sorry!", 
                 "DeferredShading::createScene");
         }
-
-		//Hook up the compositor logic and scheme handlers.
-		//This can theoretically happen in a loaded plugin, but in this case the demo contains the code.
-		MaterialManager::getSingleton().addListener(new GBufferSchemeHandler, "GBuffer");
-		CompositorManager::getSingleton().registerCompositorLogic("SSAOLogic", new SSAOLogic);
-		CompositorManager::getSingleton().registerCustomCompositionPass("DeferredLight", new DeferredLightCompositionPass);
 
 		// Prepare athene mesh for normalmapping
         MeshPtr pAthene = MeshManager::getSingleton().load("athene.mesh", 
@@ -436,7 +427,7 @@ protected:
 
 			ent->setMaterialName(matname);
 			//ent->setRenderQueueGroup(light->getRenderQueueGroup());
-			ent->setRenderQueueGroup(RENDER_QUEUE_2 + 1);
+			ent->setRenderQueueGroup(DeferredShadingSystem::POST_GBUFFER_RENDER_QUEUE);
 			static_cast<SceneNode*>(light->getParentNode())->attachObject(ent);
 			ent->setVisible(true);
 		}		

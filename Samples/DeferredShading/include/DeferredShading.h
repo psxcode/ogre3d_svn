@@ -66,6 +66,14 @@ public:
 		DSM_COUNT = 4
 	};
 
+	//The first render queue that does get rendered into the GBuffer
+	//place objects (like skies) that should be before gbuffer before this one.
+	static const Ogre::uint8 PRE_GBUFFER_RENDER_QUEUE;
+	
+	//The first render queue that does not get rendered into the GBuffer
+	//place transparent (or other non gbuffer) objects after this one
+	static const Ogre::uint8 POST_GBUFFER_RENDER_QUEUE;
+
 	void initialize();
 
 	/** Set rendering mode (one of DSMode)

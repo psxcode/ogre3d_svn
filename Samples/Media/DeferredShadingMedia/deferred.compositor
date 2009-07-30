@@ -20,8 +20,9 @@ compositor DeferredShading/GBuffer
 			// could do this with something like a visibility mask too
 			pass render_scene
 			{
-				first_render_queue 22
-				last_render_queue  90	
+				//These values are synchronized with the code
+				first_render_queue 10
+				last_render_queue  79	
 			}
         }
 	}
@@ -43,11 +44,11 @@ compositor DeferredShading/ShowLit
 				
 			}
 			
-			// render skies
+			// render and other pre-gbuffer objects
 			pass render_scene
 			{
-				first_render_queue 5
-				last_render_queue  5			
+				first_render_queue 1
+				last_render_queue  9			
 			}
 			
 			//Render the lights and their meshes
@@ -57,11 +58,11 @@ compositor DeferredShading/ShowLit
 				input 1 mrt_output 1
 			}		
 			
-			// Render the minilight indicators
+			// Render the post-gbuffer objects
 			pass render_scene
 			{
-				first_render_queue 20
-				last_render_queue 21
+				//This value is synchronized with the code
+				first_render_queue 80
 			}
 			
 		}
