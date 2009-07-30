@@ -40,7 +40,7 @@ compositor DeferredShading/ShowLit
 			
 			pass clear
 			{
-				buffers colour
+				
 			}
 			
 			// render skies
