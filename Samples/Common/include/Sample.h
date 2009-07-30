@@ -26,7 +26,8 @@ namespace OgreBites
 				Ogre::NameValuePairList::iterator aTitle = a->getInfo().find("Title");
 				Ogre::NameValuePairList::iterator bTitle = b->getInfo().find("Title");
 				
-				if (aTitle != a->getInfo().end() && bTitle != b->getInfo().end()) return aTitle->second.compare(bTitle->second) < 0;
+				if (aTitle != a->getInfo().end() && bTitle != b->getInfo().end())
+					return aTitle->second.compare(bTitle->second) < 0;
 				else return false;
 			}
 		};

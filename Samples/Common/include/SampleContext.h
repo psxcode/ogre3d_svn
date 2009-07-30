@@ -137,28 +137,24 @@ namespace OgreBites
 			{
 				mLastRun = true;  // assume this is our last run
 
-				createRoot();                     // create root
-				if (!oneTimeConfig()) return;     // configure startup settings
-				setup();                          // setup context
+				createRoot();
+				if (!oneTimeConfig()) return;
 
-				// we just reconfigured so restore the last sample if there was one
+				// if the context was reconfigured, set requested renderer
+				if (!firstRun) mRoot->setRenderSystem(mRoot->getRenderSystemByName(mNextRenderer));
+
+				setup();
+
+				// restore the last sample if there was one or, if not, start initial sample
 				if (!firstRun) recoverLastSample();
-				else if (initialSample) runSample(initialSample);   // start initial sample and enter render loop
+				else if (initialSample) runSample(initialSample);
 
-				mRoot->startRendering();
+				mRoot->startRendering();    // start the render loop
 
+				mRoot->saveConfig();
+				shutdown();
+				if (mRoot) OGRE_DELETE mRoot;
 				firstRun = false;
-
-				if (!mLastRun)    // if there's a request for reconfiguration, respect it!
-				{
-					mRoot->setRenderSystem(mRoot->getRenderSystemByName(mNextRenderer));
-					mRoot->saveConfig();
-				}
-
-				shutdown();                       // shutdown context
-				if (mRoot) OGRE_DELETE mRoot;     // destroy root
-
-				initialSample = 0;    // don't run the initial sample again
 			}
 		}
 

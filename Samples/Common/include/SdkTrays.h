@@ -87,23 +87,35 @@ namespace OgreBites
 			Ogre::OverlayContainer* container = dynamic_cast<Ogre::OverlayContainer*>(element);
 			if (container)
 			{
+				std::vector<Ogre::OverlayElement*> toDelete;
+
 				Ogre::OverlayContainer::ChildIterator children = container->getChildIterator();
 				while (children.hasMoreElements())
 				{
-					nukeOverlayElement(children.getNext());
+					toDelete.push_back(children.getNext());
+				}
+
+				for (unsigned int i = 0; i < toDelete.size(); i++)
+				{
+					nukeOverlayElement(toDelete[i]);
 				}
 			}
-			if (element) Ogre::OverlayManager::getSingleton().destroyOverlayElement(element);
+			if (element)
+			{
+				Ogre::OverlayContainer* parent = element->getParent();
+				if (parent) parent->removeChild(element->getName());
+				Ogre::OverlayManager::getSingleton().destroyOverlayElement(element);
+			}
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Static utility method to check if the cursor is over an overlay element.
 		-----------------------------------------------------------------------------*/
-		static bool isCursorOver(Ogre::OverlayElement* element, const Ogre::Vector2& cursorPos,
-			const Ogre::Vector2& windowSize, Ogre::Real voidBorder = 0)
+		static bool isCursorOver(Ogre::OverlayElement* element, const Ogre::Vector2& cursorPos, Ogre::Real voidBorder = 0)
 		{
-			unsigned int l = element->_getDerivedLeft() * windowSize.x;
-			unsigned int t = element->_getDerivedTop() * windowSize.y;
+			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
+			unsigned int l = element->_getDerivedLeft() * om.getViewportWidth();
+			unsigned int t = element->_getDerivedTop() * om.getViewportHeight();
 			unsigned int r = l + element->getWidth();
 			unsigned int b = t + element->getHeight();
 
@@ -115,11 +127,11 @@ namespace OgreBites
 		| Static utility method used to get the cursor's offset from the center
 		| of an overlay element in pixels.
 		-----------------------------------------------------------------------------*/
-		static Ogre::Vector2 cursorOffset(Ogre::OverlayElement* element,
-			const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		static Ogre::Vector2 cursorOffset(Ogre::OverlayElement* element, const Ogre::Vector2& cursorPos)
 		{
-			return Ogre::Vector2(cursorPos.x - (element->_getDerivedLeft() * windowSize.x + element->getWidth() / 2),
-				cursorPos.y - (element->_getDerivedTop() * windowSize.y + element->getHeight() / 2));
+			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
+			return Ogre::Vector2(cursorPos.x - (element->_getDerivedLeft() * om.getViewportWidth() + element->getWidth() / 2),
+				cursorPos.y - (element->_getDerivedTop() * om.getViewportHeight() + element->getHeight() / 2));
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -191,9 +203,9 @@ namespace OgreBites
 
 		// callbacks
 
-		virtual void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize) {}
-		virtual void _cursorReleased(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize) {}
-		virtual void _cursorMoved(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize) {}
+		virtual void _cursorPressed(const Ogre::Vector2& cursorPos) {}
+		virtual void _cursorReleased(const Ogre::Vector2& cursorPos) {}
+		virtual void _cursorMoved(const Ogre::Vector2& cursorPos) {}
 		virtual void _focusLost() {}
 
 		// internal methods used by SdkTrayManager. do not call directly.
@@ -252,12 +264,12 @@ namespace OgreBites
 
 		const ButtonState& getState() { return mState; }
 
-		void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
-			if (isCursorOver(mElement, cursorPos, windowSize, 4)) setState(BS_DOWN);
+			if (isCursorOver(mElement, cursorPos, 4)) setState(BS_DOWN);
 		}
 
-		void _cursorReleased(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorReleased(const Ogre::Vector2& cursorPos)
 		{
 			if (mState == BS_DOWN)
 			{
@@ -266,9 +278,9 @@ namespace OgreBites
 			}
 		}
 
-		void _cursorMoved(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorMoved(const Ogre::Vector2& cursorPos)
 		{
-			if (isCursorOver(mElement, cursorPos, windowSize, 4))
+			if (isCursorOver(mElement, cursorPos, 4))
 			{
 				if (mState == BS_UP) setState(BS_OVER);
 			}
@@ -502,18 +514,18 @@ namespace OgreBites
 			return (mElement->getHeight() - 2 * mPadding - mCaptionBar->getHeight() + 5) / mTextArea->getCharHeight();
 		}
 
-		void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
 			if (!mScrollHandle->isVisible()) return;   // don't care about clicks if text not scrollable
 
-			Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos, windowSize);
+			Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos);
 
-			if (co.squaredLength() <= 100)
+			if (co.squaredLength() <= 81)
 			{
 				mDragging = true;
 				mDragOffset = co.y;
 			}
-			else if (Widget::isCursorOver(mScrollTrack, cursorPos, windowSize))
+			else if (Widget::isCursorOver(mScrollTrack, cursorPos))
 			{
 				Ogre::Real newTop = mScrollHandle->getTop() + co.y;
 				Ogre::Real lowerBoundary = mScrollTrack->getHeight() - mScrollHandle->getHeight();
@@ -525,16 +537,16 @@ namespace OgreBites
 			}
 		}
 
-		void _cursorReleased(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorReleased(const Ogre::Vector2& cursorPos)
 		{
 			mDragging = false;
 		}
 
-		void _cursorMoved(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorMoved(const Ogre::Vector2& cursorPos)
 		{
 			if (mDragging)
 			{
-				Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos, windowSize);
+				Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos);
 				Ogre::Real newTop = mScrollHandle->getTop() + co.y - mDragOffset;
 				Ogre::Real lowerBoundary = mScrollTrack->getHeight() - mScrollHandle->getHeight();
 				mScrollHandle->setTop(Ogre::Math::Clamp<int>(newTop, 0, lowerBoundary));
@@ -602,6 +614,7 @@ namespace OgreBites
 			mExpanded = false;
 			mDragging = false;
 			mMaxItemsShown = maxItemsShown;
+			mItemsShown = 0;
 			mElement = (Ogre::BorderPanelOverlayElement*)Ogre::OverlayManager::getSingleton().createOverlayElementFromTemplate
 				("SdkTrays/SelectMenu", "BorderPanel", name);
 			mTextArea = (Ogre::TextAreaOverlayElement*)((Ogre::OverlayContainer*)mElement)->getChild(name + "/MenuCaption");
@@ -624,7 +637,7 @@ namespace OgreBites
 			}
 						
 			mExpandedBox = (Ogre::BorderPanelOverlayElement*)((Ogre::OverlayContainer*)mElement)->getChild(name + "/MenuExpandedBox");
-			mExpandedBox->setWidth(mSmallBox->getWidth());
+			mExpandedBox->setWidth(mSmallBox->getWidth() + 10);
 			mExpandedBox->hide();
 			mScrollTrack = (Ogre::BorderPanelOverlayElement*)mExpandedBox->getChild(mExpandedBox->getName() + "/MenuScrollTrack");
 			mScrollHandle = (Ogre::PanelOverlayElement*)mScrollTrack->getChild(mScrollTrack->getName() + "/MenuScrollHandle");
@@ -666,8 +679,83 @@ namespace OgreBites
 		{
 			mItems = items;
 			mSelectionIndex = -1;
+
+			for (unsigned int i = 0; i < mItemElements.size(); i++)   // destroy all the item elements
+			{
+				nukeOverlayElement(mItemElements[i]);
+			}
+			mItemElements.clear();
+
+			mItemsShown = std::max<int>(2, std::min<int>(mMaxItemsShown, mItems.size()));
+
+			for (unsigned int i = 0; i < mItemsShown; i++)   // create all the item elements
+			{
+				Ogre::BorderPanelOverlayElement* e =
+					(Ogre::BorderPanelOverlayElement*)Ogre::OverlayManager::getSingleton().createOverlayElementFromTemplate
+					("SdkTrays/SelectMenuItem", "BorderPanel",
+					mExpandedBox->getName() + "/Item" + Ogre::StringConverter::toString(i + 1));
+
+				e->setTop(6 + i * (mSmallBox->getHeight() - 8));
+				e->setWidth(mExpandedBox->getWidth() - 32);
+
+				mExpandedBox->addChild(e);
+				mItemElements.push_back(e);
+			}
+
 			if (!items.empty()) selectItem(0, false);
 			else mSmallTextArea->setCaption("");
+		}
+
+		void addItem(const Ogre::DisplayString& item)
+		{
+			mItems.push_back(item);
+			setItems(mItems);
+		}
+
+		void removeItem(const Ogre::DisplayString& item)
+		{
+			Ogre::StringVector::iterator it;
+
+			for (it = mItems.begin(); it != mItems.end(); it++)
+			{
+				if (item == *it) break;
+			}
+
+			if (it != mItems.end())
+			{
+				mItems.erase(it);
+				if (mItems.size() < mItemsShown)
+				{
+					mItemsShown = mItems.size();
+					nukeOverlayElement(mItemElements.back());
+					mItemElements.pop_back();
+				}
+			}
+			else 
+			{
+				Ogre::String desc = "Menu \"" + getName() + "\" contains no item \"" + item + "\".";
+				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::removeItem");
+			}
+		}
+
+		void removeItem(unsigned int index)
+		{
+			Ogre::StringVector::iterator it;
+			unsigned int i = 0;
+
+			for (it = mItems.begin(); it != mItems.end(); it++)
+			{
+				if (i == index) break;
+				i++;
+			}
+
+			if (it != mItems.end()) mItems.erase(it);
+			else 
+			{
+				Ogre::String desc = "Menu \"" + getName() + "\" contains no item at position " +
+					Ogre::StringConverter::toString(index) + ".";
+				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::selectItem");
+			}
 		}
 
 		void clearItems()
@@ -725,21 +813,23 @@ namespace OgreBites
 			return mSelectionIndex;
 		}
 
-		void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
+			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
+
 			if (mExpanded)
 			{
 				if (mScrollHandle->isVisible())   // check for scrolling
 				{
-					Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos, windowSize);
+					Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos);
 
-					if (co.squaredLength() <= 100)
+					if (co.squaredLength() <= 81)
 					{
 						mDragging = true;
 						mDragOffset = co.y;
 						return;
 					}
-					else if (Widget::isCursorOver(mScrollTrack, cursorPos, windowSize))
+					else if (Widget::isCursorOver(mScrollTrack, cursorPos))
 					{
 						Ogre::Real newTop = mScrollHandle->getTop() + co.y;
 						Ogre::Real lowerBoundary = mScrollTrack->getHeight() - mScrollHandle->getHeight();
@@ -751,13 +841,13 @@ namespace OgreBites
 					}
 				}
 
-				if (!isCursorOver(mExpandedBox, cursorPos, windowSize, 3)) retract();
+				if (!isCursorOver(mExpandedBox, cursorPos, 3)) retract();
 				else
 				{
-					Ogre::Real l = mItemElements.front()->_getDerivedLeft() * windowSize.x + 5;
-					Ogre::Real t = mItemElements.front()->_getDerivedTop() * windowSize.y + 5;
+					Ogre::Real l = mItemElements.front()->_getDerivedLeft() * om.getViewportWidth() + 5;
+					Ogre::Real t = mItemElements.front()->_getDerivedTop() * om.getViewportHeight() + 5;
 					Ogre::Real r = l + mItemElements.back()->getWidth() - 10;
-					Ogre::Real b = mItemElements.back()->_getDerivedTop() * windowSize.y +
+					Ogre::Real b = mItemElements.back()->_getDerivedTop() * om.getViewportHeight() +
 						mItemElements.back()->getHeight() - 5;
 
 					if (cursorPos.x >= l && cursorPos.x <= r && cursorPos.y >= t && cursorPos.y <= b)
@@ -771,47 +861,32 @@ namespace OgreBites
 			{
 				if (mItems.size() < 2) return;   // don't waste time showing a menu if there's no choice
 
-				if (isCursorOver(mSmallBox, cursorPos, windowSize, 4))
+				if (isCursorOver(mSmallBox, cursorPos, 4))
 				{
 					mExpandedBox->show();
 					mSmallBox->hide();
 
 					// calculate how much vertical space we need
-					unsigned int numItemsShown = std::max<int>(2, std::min<int>(mMaxItemsShown, mItems.size()));
-					Ogre::Real idealHeight = numItemsShown * (mSmallBox->getHeight() - 8) + 20;
+					Ogre::Real idealHeight = mItemsShown * (mSmallBox->getHeight() - 8) + 20;
 					mExpandedBox->setHeight(idealHeight);
 					mScrollTrack->setHeight(mExpandedBox->getHeight() - 20);
 
-					mExpandedBox->setLeft(mSmallBox->getLeft());
+					mExpandedBox->setLeft(mSmallBox->getLeft() - 4);
 
 					// if the expanded menu goes down off the screen, make it go up instead
-					if (mSmallBox->_getDerivedTop() * windowSize.y + idealHeight > windowSize.y)
+					if (mSmallBox->_getDerivedTop() * om.getViewportHeight() + idealHeight > om.getViewportHeight())
 					{
-						mExpandedBox->setTop(mSmallBox->getTop() + mSmallBox->getHeight() - idealHeight);
-						mTextArea->hide();   // it'll conflict with our menu
+						mExpandedBox->setTop(mSmallBox->getTop() + mSmallBox->getHeight() - idealHeight + 3);
+						// if we're in thick style, hide the caption because it will interfere with the expanded menu
+						if (mTextArea->getHorizontalAlignment() == Ogre::GHA_CENTER) mTextArea->hide();
 					}
-					else mExpandedBox->setTop(mSmallBox->getTop());
-
-					Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
-
-					for (unsigned int i = 0; i < numItemsShown; i++)   // create all the item elements
-					{
-						Ogre::BorderPanelOverlayElement* e = (Ogre::BorderPanelOverlayElement*)om.createOverlayElementFromTemplate
-							("SdkTrays/SelectMenuItem", "BorderPanel",
-							mExpandedBox->getName() + "/Item" + Ogre::StringConverter::toString(i + 1));
-
-						e->setTop(6 + i * (mSmallBox->getHeight() - 8));
-						e->setWidth(mExpandedBox->getWidth() - 32);
-
-						mExpandedBox->addChild(e);
-						mItemElements.push_back(e);
-					}
+					else mExpandedBox->setTop(mSmallBox->getTop() + 3);
 
 					mExpanded = true;
 					mHighlightIndex = mSelectionIndex;
 					setDisplayIndex(mHighlightIndex);
 
-					if (numItemsShown < mItems.size())  // update scrollbar position
+					if (mItemsShown < mItems.size())  // update scrollbar position
 					{
 						mScrollHandle->show();
 						Ogre::Real lowerBoundary = mScrollTrack->getHeight() - mScrollHandle->getHeight();
@@ -822,18 +897,20 @@ namespace OgreBites
 			}
 		}
 
-		void _cursorReleased(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorReleased(const Ogre::Vector2& cursorPos)
 		{
 			mDragging = false;
 		}
 
-		void _cursorMoved(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorMoved(const Ogre::Vector2& cursorPos)
 		{
+			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
+
 			if (mExpanded)
 			{
 				if (mDragging)
 				{
-					Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos, windowSize);
+					Ogre::Vector2 co = Widget::cursorOffset(mScrollHandle, cursorPos);
 					Ogre::Real newTop = mScrollHandle->getTop() + co.y - mDragOffset;
 					Ogre::Real lowerBoundary = mScrollTrack->getHeight() - mScrollHandle->getHeight();
 					mScrollHandle->setTop(Ogre::Math::Clamp<int>(newTop, 0, lowerBoundary));
@@ -844,10 +921,10 @@ namespace OgreBites
 					return;
 				}
 
-				Ogre::Real l = mItemElements.front()->_getDerivedLeft() * windowSize.x + 5;
-				Ogre::Real t = mItemElements.front()->_getDerivedTop() * windowSize.y + 5;
+				Ogre::Real l = mItemElements.front()->_getDerivedLeft() * om.getViewportWidth() + 5;
+				Ogre::Real t = mItemElements.front()->_getDerivedTop() * om.getViewportHeight() + 5;
 				Ogre::Real r = l + mItemElements.back()->getWidth() - 10;
-				Ogre::Real b = mItemElements.back()->_getDerivedTop() * windowSize.y +
+				Ogre::Real b = mItemElements.back()->_getDerivedTop() * om.getViewportHeight() +
 					mItemElements.back()->getHeight() - 5;
 
 				if (cursorPos.x >= l && cursorPos.x <= r && cursorPos.y >= t && cursorPos.y <= b)
@@ -862,7 +939,7 @@ namespace OgreBites
 			}
 			else
 			{
-				if (isCursorOver(mSmallBox, cursorPos, windowSize, 4))
+				if (isCursorOver(mSmallBox, cursorPos, 4))
 				{
 					mSmallBox->setMaterialName("SdkTrays/MiniTextBox/Over");
 					mSmallBox->setBorderMaterialName("SdkTrays/MiniTextBox/Over");
@@ -882,7 +959,7 @@ namespace OgreBites
 
 		void _focusLost()
 		{
-			retract();
+			if (mExpandedBox->isVisible()) retract();
 		}
 
 	protected:
@@ -929,12 +1006,6 @@ namespace OgreBites
 			mSmallBox->show();
 			mSmallBox->setMaterialName("SdkTrays/MiniTextBox");
 			mSmallBox->setBorderMaterialName("SdkTrays/MiniTextBox");
-
-			for (unsigned int i = 0; i < mItemElements.size(); i++)   // destroy all the item elements
-			{
-				nukeOverlayElement(mItemElements[i]);
-			}
-			mItemElements.clear();
 		}
 
 		Ogre::BorderPanelOverlayElement* mSmallBox;
@@ -945,6 +1016,7 @@ namespace OgreBites
 		Ogre::PanelOverlayElement* mScrollHandle;
 		std::vector<Ogre::BorderPanelOverlayElement*> mItemElements;
 		unsigned int mMaxItemsShown;
+		unsigned int mItemsShown;
 		bool mCursorOver;
 		bool mExpanded;
 		bool mFitToContents;
@@ -987,9 +1059,9 @@ namespace OgreBites
 			mTextArea->setCaption(caption);
 		}
 
-		void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
-			if (mListener && isCursorOver(mElement, cursorPos, windowSize, 3)) mListener->labelHit(this);
+			if (mListener && isCursorOver(mElement, cursorPos, 3)) mListener->labelHit(this);
 		}
 
 		bool _isFitToTray()
@@ -1141,16 +1213,16 @@ namespace OgreBites
 				mValueTextArea->getParent()->getWidth() + mTrack->getWidth() + 26);
 		}
 
-		void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
-			Ogre::Vector2 co = Widget::cursorOffset(mHandle, cursorPos, windowSize);
+			Ogre::Vector2 co = Widget::cursorOffset(mHandle, cursorPos);
 
-			if (co.squaredLength() <= 100)
+			if (co.squaredLength() <= 81)
 			{
 				mDragging = true;
-				mDragOffset = co.y;
+				mDragOffset = co.x;
 			}
-			else if (Widget::isCursorOver(mTrack, cursorPos, windowSize))
+			else if (Widget::isCursorOver(mTrack, cursorPos))
 			{
 				Ogre::Real newLeft = mHandle->getLeft() + co.x;
 				Ogre::Real rightBoundary = mTrack->getWidth() - mHandle->getWidth();
@@ -1159,7 +1231,7 @@ namespace OgreBites
 			}
 		}
 
-		void _cursorReleased(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorReleased(const Ogre::Vector2& cursorPos)
 		{
 			if (mDragging)
 			{
@@ -1169,11 +1241,11 @@ namespace OgreBites
 			}
 		}
 
-		void _cursorMoved(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorMoved(const Ogre::Vector2& cursorPos)
 		{
 			if (mDragging)
 			{
-				Ogre::Vector2 co = Widget::cursorOffset(mHandle, cursorPos, windowSize);
+				Ogre::Vector2 co = Widget::cursorOffset(mHandle, cursorPos);
 				Ogre::Real newLeft = mHandle->getLeft() + co.x - mDragOffset;
 				Ogre::Real rightBoundary = mTrack->getWidth() - mHandle->getWidth();
 				mHandle->setLeft(Ogre::Math::Clamp<int>(newLeft, 0, rightBoundary));
@@ -1380,7 +1452,7 @@ namespace OgreBites
 			setChecked(!isChecked());
 		}
 
-		void _cursorPressed(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
 			if (mCursorOver && mListener)
 			{
@@ -1389,9 +1461,9 @@ namespace OgreBites
 			}
 		}
 
-		void _cursorMoved(const Ogre::Vector2& cursorPos, const Ogre::Vector2& windowSize)
+		void _cursorMoved(const Ogre::Vector2& cursorPos)
 		{
-			if (isCursorOver(mSquare, cursorPos, windowSize, 5))
+			if (isCursorOver(mSquare, cursorPos, 5))
 			{
 				if (!mCursorOver)
 				{
@@ -2150,12 +2222,10 @@ namespace OgreBites
 		{
 			for (unsigned int i = 0; i < 10; i++)
 			{
-				try
+				for (unsigned int j = 0; j < mWidgets[i].size(); j++)
 				{
-					Widget* w = getWidget((TrayLocation)i, name);
-					return w;
+					if (mWidgets[i][j]->getName() == name) return mWidgets[i][j];
 				}
-				catch (Ogre::Exception&) {}
 			}
 
 			Ogre::String desc = "No widget named \"" + name + "\"";
@@ -2479,32 +2549,31 @@ namespace OgreBites
 			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible() || id != OIS::MB_Left) return true;
 
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
-			Ogre::Vector2 windowSize(evt.state.width, evt.state.height);
 
 			mTrayDrag = false;
 
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
-				mExpandedMenu->_cursorPressed(cursorPos, windowSize);
+				mExpandedMenu->_cursorPressed(cursorPos);
 				if (!mExpandedMenu->isExpanded()) setExpandedMenu(0);
 				return false;
 			}
 
 			if (mDialog)   // only check top priority widget until it passes on
 			{
-				mDialog->_cursorPressed(cursorPos, windowSize);
-				if (mOk) mOk->_cursorPressed(cursorPos, windowSize);
+				mDialog->_cursorPressed(cursorPos);
+				if (mOk) mOk->_cursorPressed(cursorPos);
 				else
 				{
-					mYes->_cursorPressed(cursorPos, windowSize);
-					mNo->_cursorPressed(cursorPos, windowSize);
+					mYes->_cursorPressed(cursorPos);
+					mNo->_cursorPressed(cursorPos);
 				}
 				return false;
 			}
 
 			for (unsigned int i = 0; i < 9; i++)   // check if mouse is over a non-null tray
 			{
-				if (mTrays[i]->isVisible() && Widget::isCursorOver(mTrays[i], cursorPos, windowSize, 2))
+				if (mTrays[i]->isVisible() && Widget::isCursorOver(mTrays[i], cursorPos, 2))
 				{
 					mTrayDrag = true;   // initiate a drag that originates in a tray
 					break;
@@ -2514,7 +2583,7 @@ namespace OgreBites
 			for (unsigned int i = 0; i < mWidgets[9].size(); i++)  // check if mouse is over a non-null tray's widgets
 			{
 				if (mWidgets[9][i]->getOverlayElement()->isVisible() &&
-					Widget::isCursorOver(mWidgets[9][i]->getOverlayElement(), cursorPos, windowSize))
+					Widget::isCursorOver(mWidgets[9][i]->getOverlayElement(), cursorPos))
 				{
 					mTrayDrag = true;   // initiate a drag that originates in a tray
 					break;
@@ -2533,10 +2602,10 @@ namespace OgreBites
 				{
 					w = mWidgets[i][j];
 					if (!w->getOverlayElement()->isVisible()) continue;
-					w->_cursorPressed(cursorPos, windowSize);    // send event to widget
+					w->_cursorPressed(cursorPos);    // send event to widget
 
 					SelectMenu* m = dynamic_cast<SelectMenu*>(w);
-					if (m && m->isExpanded())    // a menu has begun a top priority session
+					if (m && m->isExpanded())       // a menu has begun a top priority session
 					{
 						setExpandedMenu(m);
 						return false;
@@ -2557,23 +2626,22 @@ namespace OgreBites
 			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible() || id != OIS::MB_Left) return true;
 
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
-			Ogre::Vector2 windowSize(evt.state.width, evt.state.height);
 
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
-				mExpandedMenu->_cursorReleased(cursorPos, windowSize);
+				mExpandedMenu->_cursorReleased(cursorPos);
 				return false;
 			}
 
 			if (mDialog)   // only check top priority widget until it passes on
 			{
-				mDialog->_cursorReleased(cursorPos, windowSize);
-				if (mOk) mOk->_cursorReleased(cursorPos, windowSize);
+				mDialog->_cursorReleased(cursorPos);
+				if (mOk) mOk->_cursorReleased(cursorPos);
 				else
 				{
-					mYes->_cursorReleased(cursorPos, windowSize);
+					mYes->_cursorReleased(cursorPos);
 					// very important to check if second button still exists, because first button could've closed the popup
-					if (mNo) mNo->_cursorReleased(cursorPos, windowSize); 
+					if (mNo) mNo->_cursorReleased(cursorPos); 
 				}
 				return false;
 			}
@@ -2590,7 +2658,7 @@ namespace OgreBites
 				{
 					w = mWidgets[i][j];
 					if (!w->getOverlayElement()->isVisible()) continue;
-					w->_cursorReleased(cursorPos, windowSize);    // send event to widget
+					w->_cursorReleased(cursorPos);    // send event to widget
 				}
 			}
 
@@ -2610,22 +2678,21 @@ namespace OgreBites
 			mCursor->setPosition(evt.state.X.abs, evt.state.Y.abs);
 
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
-			Ogre::Vector2 windowSize(evt.state.width, evt.state.height);
 
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
-				mExpandedMenu->_cursorMoved(cursorPos, windowSize);
+				mExpandedMenu->_cursorMoved(cursorPos);
 				return false;
 			}
 
 			if (mDialog)   // only check top priority widget until it passes on
 			{
-				mDialog->_cursorMoved(cursorPos, windowSize);
-				if (mOk) mOk->_cursorMoved(cursorPos, windowSize);
+				mDialog->_cursorMoved(cursorPos);
+				if (mOk) mOk->_cursorMoved(cursorPos);
 				else
 				{
-					mYes->_cursorMoved(cursorPos, windowSize);
-					mNo->_cursorMoved(cursorPos, windowSize);
+					mYes->_cursorMoved(cursorPos);
+					mNo->_cursorMoved(cursorPos);
 				}
 				return false;
 			}
@@ -2640,7 +2707,7 @@ namespace OgreBites
 				{
 					w = mWidgets[i][j];
 					if (!w->getOverlayElement()->isVisible()) continue;
-					w->_cursorMoved(cursorPos, windowSize);    // send event to widget
+					w->_cursorMoved(cursorPos);    // send event to widget
 				}
 			}
 
