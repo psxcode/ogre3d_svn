@@ -2017,9 +2017,9 @@ namespace OgreBites
 				stats.push_back("Triangles");
 				stats.push_back("Batches");
 
-				mFpsLabel = createLabel(TL_NONE, mName + "/FpsLabel", "FPS:", 200);
+				mFpsLabel = createLabel(TL_NONE, mName + "/FpsLabel", "FPS:", 180);
 				mFpsLabel->_assignListener(this);
-				mStatsPanel = createParamsPanel(TL_NONE, mName + "/StatsPanel", 200, stats);
+				mStatsPanel = createParamsPanel(TL_NONE, mName + "/StatsPanel", 180, stats);
 			}
 
 			moveWidgetToTray(mFpsLabel, trayLoc, place);
@@ -2503,7 +2503,7 @@ namespace OgreBites
 			else
 			{
 				mStatsPanel->getOverlayElement()->show();
-				mFpsLabel->getOverlayElement()->setWidth(200);
+				mFpsLabel->getOverlayElement()->setWidth(180);
 				moveWidgetToTray(mStatsPanel, mFpsLabel->getTrayLocation(), locateWidgetInTray(mFpsLabel) + 1);
 			}
 		}

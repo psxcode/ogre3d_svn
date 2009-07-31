@@ -49,7 +49,18 @@ namespace OgreBites
 				mTrayMgr->hideAll();
 				destroyDummyScene();
 
-				SampleContext::runSample(s);
+				try
+				{
+					SampleContext::runSample(s);
+				}
+				catch (Ogre::Exception e)   // if failed to start, show error and fall back to menu
+				{
+					createDummyScene();
+					mTrayMgr->showBackdrop("SdkTrays/Bands");
+					mTrayMgr->showAll();
+					((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Start Sample");
+					mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+				}
 			}
 		}
 
@@ -97,7 +108,18 @@ namespace OgreBites
 			}
 
 			mTrayMgr->frameRenderingQueued(evt);
-			return SampleContext::frameRenderingQueued(evt);
+			
+			try
+			{
+				return SampleContext::frameRenderingQueued(evt);
+			}
+			catch (Ogre::Exception e)   // show error and fall back to menu
+			{
+				runSample(0);
+				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+			}
+
+			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -129,6 +151,7 @@ namespace OgreBites
 					if (mLoadedSamples.empty()) mTrayMgr->showOkDialog("Error!", "No sample selected!");
 					else
 					{
+						// use the sample pointer we stored inside the thumbnail
 						runSample(Ogre::any_cast<Sample*>(mThumbs[mSampleMenu->getSelectionIndex()]->getUserAny()));
 						b->setCaption("Stop Sample");
 					}
@@ -397,7 +420,17 @@ namespace OgreBites
 				}
 			}
 
-			return SampleContext::keyPressed(evt);
+			try
+			{
+				return SampleContext::keyPressed(evt);
+			}
+			catch (Ogre::Exception e)   // show error and fall back to menu
+			{
+				runSample(0);
+				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+			}
+
+			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -418,7 +451,17 @@ namespace OgreBites
 				}
 			}
 
-			return SampleContext::mousePressed(evt, id);
+			try
+			{
+				return SampleContext::mousePressed(evt, id);
+			}
+			catch (Ogre::Exception e)   // show error and fall back to menu
+			{
+				runSample(0);
+				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+			}
+
+			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -427,7 +470,18 @@ namespace OgreBites
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (!mTrayMgr->mouseReleased(evt, id)) return false;
-			return SampleContext::mouseReleased(evt, id);
+
+			try
+			{
+				return SampleContext::mouseReleased(evt, id);
+			}
+			catch (Ogre::Exception e)   // show error and fall back to menu
+			{
+				runSample(0);
+				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+			}
+
+			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -436,7 +490,18 @@ namespace OgreBites
 		virtual bool mouseMoved(const OIS::MouseEvent& evt)
 		{
 			if (!mTrayMgr->mouseMoved(evt)) return false;
-			return SampleContext::mouseMoved(evt);
+
+			try
+			{
+				return SampleContext::mouseMoved(evt);
+			}
+			catch (Ogre::Exception e)   // show error and fall back to menu
+			{
+				runSample(0);
+				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+			}
+
+			return true;
 		}
 
 		/*-----------------------------------------------------------------------------

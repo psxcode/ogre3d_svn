@@ -16,22 +16,6 @@ namespace OgreBites
 
 		virtual ~SdkSample() {}
 
-		virtual void paused()
-		{
-			if (mTrayMgr->isCursorVisible())  // hide the cursor on pause if necessary
-			{
-				mCursorHiddenByPause = true;
-				mTrayMgr->hideCursor();
-			}
-			else mCursorHiddenByPause = false;
-		}
-
-		virtual void unpaused()
-		{
-			// unhide the cursor after unpausing if necessary
-			if (mCursorHiddenByPause) mTrayMgr->showCursor();
-		}
-
 		virtual void saveState(Ogre::NameValuePairList& state) {}
 
 		virtual void restoreState(const Ogre::NameValuePairList state) {}
@@ -79,8 +63,6 @@ namespace OgreBites
 			return mTrayMgr->mouseReleased(evt, id);
 		}
 
-    protected:
-
 		virtual void _setup(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
 		{
 			mTrayMgr = new SdkTrayManager("SampleControls", window, mouse, this);
@@ -96,6 +78,8 @@ namespace OgreBites
 			if (mTrayMgr) delete mTrayMgr;
 		}
 
+    protected:
+
 		virtual void setupView()
 		{
 			// setup default viewport layout and camera
@@ -110,10 +94,6 @@ namespace OgreBites
 		Ogre::Viewport* mViewport;   // main viewport
 		Ogre::Camera* mCamera;       // main camera
 		SdkCameraMan* mCameraMan;    // basic camera controller
-
-	private:
-
-		bool mCursorHiddenByPause;   // for internal use only
     };
 }
 
