@@ -1,37 +1,4 @@
 // Post processors
-material DeferredShading/Post/Single
-{
-    technique
-    {
-    	pass
-		{
-			cull_hardware none
-			cull_software none
-			depth_func always_pass
-			depth_write on
-			// Doesn't work for some reason
-			//depth_check off
-
-			fragment_program_ref DeferredShading/post/SinglePass_ps
-			{
-			}
-			vertex_program_ref DeferredShading/post/vs
-			{
-			}
-			texture_unit
-			{
-				tex_address_mode clamp
-				filtering none
-			}
-			texture_unit
-			{
-				tex_coord_set 1
-				tex_address_mode clamp
-				filtering none
-			}
-		}
-	}
-}
 
 //Ambient light
 material DeferredShading/AmbientLight
@@ -137,66 +104,6 @@ material DeferredShading/Post/ShowColour
 			cull_software none
 			depth_func always_pass
 			fragment_program_ref DeferredShading/post/ShowColour_ps
-			{
-			}
-			vertex_program_ref DeferredShading/post/vs
-			{
-			}
-			texture_unit
-			{
-				tex_address_mode clamp
-				filtering none
-			}
-			texture_unit
-			{
-				tex_coord_set 1
-				tex_address_mode clamp
-				filtering none
-			}
-		}
-	}
-}
-
-material DeferredShading/Post/Multi
-{
-    technique
-    {
-    	pass
-		{
-			// Ambient and depth write pass
-			cull_hardware none
-			cull_software none
-			//depth_check off
-			depth_write on
-
-			fragment_program_ref DeferredShading/post/Ambient_ps
-			{
-			}
-			vertex_program_ref DeferredShading/post/vs
-			{
-			}
-			texture_unit
-			{
-				tex_address_mode clamp
-				filtering none
-			}
-			texture_unit
-			{
-				tex_coord_set 1
-				tex_address_mode clamp
-				filtering none
-			}
-		}
-		pass
-		{
-			scene_blend add
-			cull_hardware none
-			cull_software none
-			iteration once_per_light
-			depth_write off
-			//depth_check off
-
-			fragment_program_ref DeferredShading/post/GlobalLight_ps
 			{
 			}
 			vertex_program_ref DeferredShading/post/vs
