@@ -47,7 +47,8 @@ DLight* DeferredLightRenderOperation::createDLight(Ogre::Light* light)
 	return rv;
 }
 //-----------------------------------------------------------------------
-void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const Vector3& farCorner)
+void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const Vector3& farCorner,
+					 Ogre::Light* light)
 {
     for(unsigned short i=0; i<tech->getNumPasses(); ++i)
 	{
@@ -62,7 +63,17 @@ void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const 
         if (params->_findNamedConstantDefinition("farCorner"))
             params->setNamedConstant("farCorner", farCorner);
 
-		sm->_injectRenderWithPass(pass, rend, false);
+		if (light != 0) 
+		{
+			Ogre::LightList list;
+			list.push_back(light);
+			sm->_injectRenderWithPass(pass, rend, false, false, &list);
+		} 
+		else
+		{
+			sm->_injectRenderWithPass(pass, rend, false);
+		}
+		
 	}
 }
 void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
@@ -72,12 +83,16 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
     Ogre::Vector3 farCorner = cam->getViewMatrix(true) * cam->getWorldSpaceCorners()[4];
 
     Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
-	injectTechnique(sm, tech, mAmbientLight, farCorner);
+	injectTechnique(sm, tech, mAmbientLight, farCorner, 0);
 
 	const LightList& lightList = sm->_getLightsAffectingFrustum();
     for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
         Light* light = *it;
+		//HACK
+		//if (light->getType() != Ogre::Light::LT_SPOTLIGHT)
+		//	continue;
+
 		LightsMap::iterator dLightIt = mLights.find(light);
 		DLight* dLight = 0;
 		if (dLightIt == mLights.end()) 
@@ -91,7 +106,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 		}
 		
 		tech = dLight->getMaterial()->getBestTechnique();
-        injectTechnique(sm, tech, dLight, farCorner);
+        injectTechnique(sm, tech, dLight, farCorner, light);
 	}
 }
 //-----------------------------------------------------------------------

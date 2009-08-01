@@ -479,6 +479,17 @@ protected:
 		// Create a new animation state to track this
 		SharedData::getSingleton().mMLAnimState = mSceneMgr->createAnimationState("LightSwarmTrack");
 		SharedData::getSingleton().mMLAnimState->setEnabled(true);
+
+		/*
+		Light* spotLight = mSceneMgr->createLight("Spotlight1");
+		spotLight->setType(Light::LT_SPOTLIGHT);
+		spotLight->setAttenuation(200, 1.0f, 0.0001000f, 0.00020f);
+		spotLight->setSpotlightOuterAngle(Ogre::Degree(45.0));
+		spotLight->setPosition(0,120,0);
+		spotLight->setDirection(0, -1, 0);
+		spotLight->setDiffuseColour(1,1,1);
+		spotLight->setSpecularColour(1,1,1);
+		*/
 	}
 
 };

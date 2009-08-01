@@ -6611,11 +6611,12 @@ void SceneManager::extractAllMovableObjectsByType(const String& typeName)
 	}
 }
 //---------------------------------------------------------------------
-void SceneManager::_injectRenderWithPass(Pass *pass, Renderable *rend, bool shadowDerivation )
+void SceneManager::_injectRenderWithPass(Pass *pass, Renderable *rend, bool shadowDerivation,
+	bool doLightIteration, const LightList* manualLightList)
 {
 	// render something as if it came from the current queue
     const Pass *usedPass = _setPass(pass, false, shadowDerivation);
-    renderSingleObject(rend, usedPass, false, false);
+    renderSingleObject(rend, usedPass, false, doLightIteration, manualLightList);
 }
 //---------------------------------------------------------------------
 RenderSystem *SceneManager::getDestinationRenderSystem()

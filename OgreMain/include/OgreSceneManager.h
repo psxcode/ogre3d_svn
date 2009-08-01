@@ -3140,7 +3140,8 @@ namespace Ogre {
 			@param rend		Renderable to render
 			@param shadowDerivation Whether passes should be replaced with shadow caster / receiver passes
 		 */
-		virtual void _injectRenderWithPass(Pass *pass, Renderable *rend, bool shadowDerivation = true);
+		virtual void _injectRenderWithPass(Pass *pass, Renderable *rend, bool shadowDerivation = true,
+			bool doLightIteration = false, const LightList* manualLightList = 0);
 
 		/** Indicates to the SceneManager whether it should suppress changing
 			the RenderSystem states when rendering objects.

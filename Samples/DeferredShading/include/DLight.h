@@ -55,11 +55,15 @@ public:
 
 	/** Create a sphere geometry.
 	*/
-	void createSphere(const float radius, const int nRings, const int nSegments);
+	void createSphere(float radius, int nRings, int nSegments);
 
 	/** Create a rectangle.
 	*/
 	void createRectangle2D();
+	
+	/** Create a cone.
+	*/
+	void createCone(float radius, float height, int nVerticesInBase);
 
 	/** @copydoc MovableObject::getBoundingRadius */
 	virtual Ogre::Real getBoundingRadius(void) const;

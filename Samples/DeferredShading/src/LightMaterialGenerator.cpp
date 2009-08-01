@@ -161,15 +161,15 @@ public:
 			}
 			if (params->_findNamedConstantDefinition("lightDiffuseColor"))
 			{
-				params->setNamedAutoConstant("lightDiffuseColor", GpuProgramParameters::ACT_CUSTOM, 1);
+				params->setNamedAutoConstant("lightDiffuseColor", GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR);
 			}
 			if (params->_findNamedConstantDefinition("lightSpecularColor"))
 			{
-				params->setNamedAutoConstant("lightSpecularColor", GpuProgramParameters::ACT_CUSTOM, 2);
+				params->setNamedAutoConstant("lightSpecularColor", GpuProgramParameters::ACT_LIGHT_SPECULAR_COLOUR);
 			}			
 			if(params->_findNamedConstantDefinition("lightFalloff"))
 			{
-				params->setNamedAutoConstant("lightFalloff", GpuProgramParameters::ACT_CUSTOM, 3);
+				params->setNamedAutoConstant("lightFalloff", GpuProgramParameters::ACT_LIGHT_ATTENUATION);
 			}
 
 		}

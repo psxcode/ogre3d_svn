@@ -51,7 +51,7 @@ DLight::~DLight()
 void DLight::setAttenuation(float c, float b, float a)
 {
 	// Set Attenuation parameter to shader
-	setCustomParameter(3, Vector4(c, b, a, 0));
+	//setCustomParameter(3, Vector4(c, b, a, 0));
 
 	/// There is attenuation? Set material accordingly
 	if(c != 1.0f || b != 0.0f || a != 0.0f)
@@ -73,12 +73,12 @@ void DLight::setAttenuation(float c, float b, float a)
 //-----------------------------------------------------------------------
 void DLight::setDiffuseColour(const ColourValue &col)
 {
-	setCustomParameter(1, Vector4(col.r, col.g, col.b, col.a));
+	//setCustomParameter(1, Vector4(col.r, col.g, col.b, col.a));
 }
 //-----------------------------------------------------------------------
 void DLight::setSpecularColour(const ColourValue &col)
 {
-	setCustomParameter(2, Vector4(col.r, col.g, col.b, col.a));
+	//setCustomParameter(2, Vector4(col.r, col.g, col.b, col.a));
 	/// There is a specular component? Set material accordingly
 	
 	if(col.r != 0.0f || col.g != 0.0f || col.b != 0.0f)
@@ -90,19 +90,33 @@ void DLight::setSpecularColour(const ColourValue &col)
 //-----------------------------------------------------------------------
 void DLight::rebuildGeometry(float radius)
 {
-	// Scale node to radius
-	
-	if(radius > 10000.0f)
+	switch (mParentLight->getType())
 	{
+	case Light::LT_DIRECTIONAL:
 		createRectangle2D();
 		mPermutation |= MI_QUAD;
-	}
-	else
-	{
+		break;
+	case Light::LT_POINT:
+		//HACK!
+		if (radius > 10000.0)
+		{
+			createRectangle2D();
+			mPermutation |= MI_QUAD;
+			break;
+		}
 		/// XXX some more intelligent expression for rings and segments
 		createSphere(radius, 5, 5);
 		mPermutation &= ~MI_QUAD;
-	}	
+		break;
+	case Light::LT_SPOTLIGHT:
+		Real height = mParentLight->getAttenuationRange();
+		Radian coneRadiusAngle = mParentLight->getSpotlightOuterAngle() / 2;
+		Real radius = Math::Sin(coneRadiusAngle) * height;
+		createCone(radius, height, 20);
+		mPermutation &= ~MI_QUAD;
+		break;
+	}
+		
 }
 //-----------------------------------------------------------------------
 void DLight::createRectangle2D()
@@ -126,7 +140,7 @@ void DLight::createRectangle2D()
 	bIgnoreWorld = true;
 }
 //-----------------------------------------------------------------------
-void DLight::createSphere(const float radius, const int nRings, const int nSegments)
+void DLight::createSphere(float radius, int nRings, int nSegments)
 {
 	delete mRenderOp.vertexData; 
 	delete mRenderOp.indexData;
@@ -146,7 +160,29 @@ void DLight::createSphere(const float radius, const int nRings, const int nSegme
 	setBoundingBox( AxisAlignedBox( Vector3(-radius, -radius, -radius), Vector3(radius, radius, radius) ) );
 	mRadius = radius;
 	bIgnoreWorld = false;
-}								 
+}
+//-----------------------------------------------------------------------
+void DLight::createCone(float radius, float height, int nVerticesInBase)
+{
+	delete mRenderOp.vertexData;
+	delete mRenderOp.indexData;
+	mRenderOp.operationType = RenderOperation::OT_TRIANGLE_LIST;
+	mRenderOp.indexData = new IndexData();
+	mRenderOp.vertexData = new VertexData();
+	mRenderOp.useIndexes = true;
+
+	GeomUtils::createCone(mRenderOp.vertexData, mRenderOp.indexData
+		, radius
+		, height, nVerticesInBase);
+
+	// Set bounding box and sphere
+	setBoundingBox( AxisAlignedBox( 
+			Vector3(-radius, 0, -radius), 
+			Vector3(radius, height, radius) ) );
+
+	mRadius = radius;
+	bIgnoreWorld = false;
+}
 //-----------------------------------------------------------------------
 Real DLight::getBoundingRadius(void) const
 {
