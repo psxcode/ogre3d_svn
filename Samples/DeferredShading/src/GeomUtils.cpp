@@ -228,26 +228,24 @@ void GeomUtils::createCone(Ogre::VertexData*& vertexData, Ogre::IndexData*& inde
 	{
 		float angle = i * fDeltaBaseAngle;
 		*pVertex++ = radius * cosf(angle);
-		*pVertex++ = -height;
+		*pVertex++ = height;
 		*pVertex++ = radius * sinf(angle);
 	}
 
-	//TODO : Should this be done with a triangle strip instead?
 	//Indices :
 	//Cone head to vertices
 	for (int i=0; i<nVerticesInBase; i++)
 	{
 		*pIndices++ = 0;
-		*pIndices++ = ((i+1)%nVerticesInBase) + 1;
 		*pIndices++ = (i%nVerticesInBase) + 1;
-		
+		*pIndices++ = ((i+1)%nVerticesInBase) + 1;
 	}
 	//Cone base
 	for (int i=0; i<nVerticesInBase-2; i++)
 	{
 		*pIndices++ = 1;
-		*pIndices++ = i + 2;
 		*pIndices++ = i + 3;
+		*pIndices++ = i + 2;
 	}
 
 	// Unlock

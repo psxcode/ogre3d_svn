@@ -216,8 +216,18 @@ const MaterialPtr& DLight::getMaterial(void) const
 //-----------------------------------------------------------------------
 void DLight::getWorldTransforms(Matrix4* xform) const
 {
-	xform->makeTransform(mParentLight->getDerivedPosition(),
-		Vector3::UNIT_SCALE, Quaternion::IDENTITY);
+	if (mParentLight->getType() ==  Light::LT_SPOTLIGHT)
+	{
+		Quaternion quat = Vector3::UNIT_Y.getRotationTo(mParentLight->getDerivedDirection());
+		xform->makeTransform(mParentLight->getDerivedPosition(),
+			Vector3::UNIT_SCALE, quat);
+	}
+	else
+	{
+		xform->makeTransform(mParentLight->getDerivedPosition(),
+			Vector3::UNIT_SCALE, Quaternion::IDENTITY);
+	}
+	
 }
 //-----------------------------------------------------------------------
 void DLight::updateFromParent()

@@ -38,7 +38,7 @@ public:
 		, bool bTexCoords);
 
 	// Create a cone Mesh with a given name, radius and number of vertices in base
-	// Created cone will have its head at 0,0,0, and will 'expand to' negative y
+	// Created cone will have its head at 0,0,0, and will 'expand to' positive y
 	static void createCone(const Ogre::String& strName
 		, float radius
 		, float height
