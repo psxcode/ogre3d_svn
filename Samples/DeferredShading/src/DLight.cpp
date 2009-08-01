@@ -25,6 +25,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreSceneNode.h"
 #include "OgreLight.h"
 #include "GeomUtils.h"
+#include "LightMaterialGenerator.h"
 
 using namespace Ogre;
 //-----------------------------------------------------------------------
@@ -55,9 +56,9 @@ void DLight::setAttenuation(float c, float b, float a)
 
 	/// There is attenuation? Set material accordingly
 	if(c != 1.0f || b != 0.0f || a != 0.0f)
-		mPermutation |= MI_ATTENUATED;
+		mPermutation |= LightMaterialGenerator::MI_ATTENUATED;
 	else
-		mPermutation &= ~MI_ATTENUATED;
+		mPermutation &= ~LightMaterialGenerator::MI_ATTENUATED;
 
 	// Calculate radius from Attenuation
 	int threshold_level = 15;// difference of 10-15 levels deemed unnoticeable
@@ -82,9 +83,9 @@ void DLight::setSpecularColour(const ColourValue &col)
 	/// There is a specular component? Set material accordingly
 	
 	if(col.r != 0.0f || col.g != 0.0f || col.b != 0.0f)
-		mPermutation |= MI_SPECULAR;
+		mPermutation |= LightMaterialGenerator::MI_SPECULAR;
 	else
-		mPermutation &= ~MI_SPECULAR;
+		mPermutation &= ~LightMaterialGenerator::MI_SPECULAR;
 		
 }
 //-----------------------------------------------------------------------
@@ -94,28 +95,34 @@ void DLight::rebuildGeometry(float radius)
 	{
 	case Light::LT_DIRECTIONAL:
 		createRectangle2D();
-		mPermutation |= MI_QUAD;
+		mPermutation |= LightMaterialGenerator::MI_QUAD;
+		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
 		break;
 	case Light::LT_POINT:
+		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
 		//HACK!
 		if (radius > 10000.0)
 		{
 			createRectangle2D();
-			mPermutation |= MI_QUAD;
+			mPermutation |= LightMaterialGenerator::MI_QUAD;
+			
 			break;
 		}
 		/// XXX some more intelligent expression for rings and segments
 		createSphere(radius, 5, 5);
-		mPermutation &= ~MI_QUAD;
+		mPermutation &= ~LightMaterialGenerator::MI_QUAD;
 		break;
 	case Light::LT_SPOTLIGHT:
 		Real height = mParentLight->getAttenuationRange();
 		Radian coneRadiusAngle = mParentLight->getSpotlightOuterAngle() / 2;
 		Real radius = Math::Sin(coneRadiusAngle) * height;
 		createCone(radius, height, 20);
-		mPermutation &= ~MI_QUAD;
+		mPermutation &= ~LightMaterialGenerator::MI_QUAD;
+		mPermutation |= LightMaterialGenerator::MI_SPOTLIGHT;
 		break;
 	}
+
+	
 		
 }
 //-----------------------------------------------------------------------

@@ -48,6 +48,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 class LightMaterialGenerator: public MaterialGenerator
 {
 public:
+	/** Permutation of light materials
+	 */
+	enum MaterialID
+	{
+		MI_QUAD			= 0x01, // Rendered as fullscreen quad
+		MI_ATTENUATED	= 0x02, // Rendered attenuated
+		MI_SPECULAR		= 0x04, // Specular component is calculated
+		MI_SPOTLIGHT	= 0x08  // Will generate shader for spotlight
+	};
+
 	LightMaterialGenerator();
 	virtual ~LightMaterialGenerator();
 };

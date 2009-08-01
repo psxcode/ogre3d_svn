@@ -89,14 +89,12 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
     for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
         Light* light = *it;
-		//HACK
-		//if (light->getType() != Ogre::Light::LT_SPOTLIGHT)
-		//	continue;
-
+		
 		LightsMap::iterator dLightIt = mLights.find(light);
 		DLight* dLight = 0;
 		if (dLightIt == mLights.end()) 
 		{
+
 			dLight = createDLight(light);
 		}
 		else 

@@ -36,15 +36,6 @@ public:
 	DLight(MaterialGenerator *gen, Ogre::Light* parentLight);
 	~DLight();
 
-	/** Permutation of light materials
-	 */
-	enum MaterialID
-	{
-		MI_QUAD			= 0x1, // Rendered as fullscreen quad
-		MI_ATTENUATED	= 0x2, // Rendered attenuated
-		MI_SPECULAR		= 0x4  // Specular component is calculated
-	};
-
 	/** Update the information from the light that matches this one 
 	 */
 	void updateFromParent();

@@ -238,8 +238,9 @@ void GeomUtils::createCone(Ogre::VertexData*& vertexData, Ogre::IndexData*& inde
 	for (int i=0; i<nVerticesInBase; i++)
 	{
 		*pIndices++ = 0;
-		*pIndices++ = (i%nVerticesInBase) + 1;
 		*pIndices++ = ((i+1)%nVerticesInBase) + 1;
+		*pIndices++ = (i%nVerticesInBase) + 1;
+		
 	}
 	//Cone base
 	for (int i=0; i<nVerticesInBase-2; i++)

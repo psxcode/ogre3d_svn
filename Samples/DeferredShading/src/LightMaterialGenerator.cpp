@@ -54,7 +54,7 @@ public:
 	{
         String programName = "DeferredShading/post/";
 
-		if (permutation & DLight::MI_QUAD)
+		if (permutation & LightMaterialGenerator::MI_QUAD)
 		{
 			programName += "vs";
 		}
@@ -103,7 +103,7 @@ public:
 
 	virtual MaterialPtr generateTemplateMaterial(Perm permutation)
 	{
-        if(permutation & DLight::MI_QUAD)
+        if(permutation & LightMaterialGenerator::MI_QUAD)
 		{   
 			return MaterialManager::getSingleton().getByName("DeferredShading/LightMaterialQuad");
 		}
@@ -120,17 +120,21 @@ public:
 		String getPPDefines(Perm permutation)
 		{
 			String strPPD;
-            if (permutation & DLight::MI_QUAD)
+            if (permutation & LightMaterialGenerator::MI_QUAD)
             {
                 strPPD += "-DIS_QUAD ";
             }
-			if (permutation & DLight::MI_SPECULAR)
+			if (permutation & LightMaterialGenerator::MI_SPECULAR)
 			{
 				strPPD += "-DIS_SPECULAR ";
 			}
-			if (permutation & DLight::MI_ATTENUATED)
+			if (permutation & LightMaterialGenerator::MI_ATTENUATED)
 			{
-				strPPD += "-DIS_ATTENUATED";
+				strPPD += "-DIS_ATTENUATED ";
+			}
+			if (permutation & LightMaterialGenerator::MI_SPOTLIGHT)
+			{
+				strPPD += "-DIS_SPOTLIGHT";
 			}
 			return strPPD;
 		}
@@ -171,6 +175,18 @@ public:
 			{
 				params->setNamedAutoConstant("lightFalloff", GpuProgramParameters::ACT_LIGHT_ATTENUATION);
 			}
+			if(params->_findNamedConstantDefinition("lightPos"))
+			{
+				params->setNamedAutoConstant("lightPos", GpuProgramParameters::ACT_LIGHT_POSITION_VIEW_SPACE);
+			}
+			if(params->_findNamedConstantDefinition("lightDir"))
+			{
+				params->setNamedAutoConstant("lightDir", GpuProgramParameters::ACT_LIGHT_DIRECTION_VIEW_SPACE);
+			}
+			if(params->_findNamedConstantDefinition("spotParams"))
+			{
+				params->setNamedAutoConstant("spotParams", GpuProgramParameters::ACT_SPOTLIGHT_PARAMS);
+			}
 
 		}
 };
@@ -180,9 +196,10 @@ LightMaterialGenerator::LightMaterialGenerator()
 	bitNames.push_back("Quad");		  // MI_QUAD
 	bitNames.push_back("Attenuated"); // MI_ATTENUATED
 	bitNames.push_back("Specular");   // MI_SPECULAR
+	bitNames.push_back("Spotlight");   // MI_SPOTLIGHT
 
 	vsMask = 0x00000001;
-	fsMask = 0x00000007;
+	fsMask = 0x0000000F;
 	matMask = 0x00000001;
 	
 	materialBaseName = "DeferredShading/LightMaterial/";
