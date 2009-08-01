@@ -122,7 +122,7 @@ public:
 			String strPPD;
             if (permutation & DLight::MI_QUAD)
             {
-                strPPD += "-DIS_DIRECTIONAL ";
+                strPPD += "-DIS_QUAD ";
             }
 			if (permutation & DLight::MI_SPECULAR)
 			{
