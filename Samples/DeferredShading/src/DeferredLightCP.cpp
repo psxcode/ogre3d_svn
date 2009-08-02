@@ -47,23 +47,12 @@ DLight* DeferredLightRenderOperation::createDLight(Ogre::Light* light)
 	return rv;
 }
 //-----------------------------------------------------------------------
-void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const Vector3& farCorner,
-					 Ogre::Light* light)
+void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, Ogre::Light* light)
 {
     for(unsigned short i=0; i<tech->getNumPasses(); ++i)
 	{
-        Ogre::Pass* pass = tech->getPass(i);
-        // get the vertex shader parameters
-        Ogre::GpuProgramParametersSharedPtr params = pass->getVertexProgramParameters();
-        // set the camera's far-top-right corner
-        if (params->_findNamedConstantDefinition("farCorner"))
-            params->setNamedConstant("farCorner", farCorner);
-        
-        params = pass->getFragmentProgramParameters();
-        if (params->_findNamedConstantDefinition("farCorner"))
-            params->setNamedConstant("farCorner", farCorner);
-
-		if (light != 0) 
+		Ogre::Pass* pass = tech->getPass(i);
+        if (light != 0) 
 		{
 			Ogre::LightList list;
 			list.push_back(light);
@@ -76,25 +65,27 @@ void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const 
 		
 	}
 }
+//-----------------------------------------------------------------------
 void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 {
-    // calculate the far-top-right corner in view-space
     Ogre::Camera* cam = sm->getCurrentViewport()->getCamera();
-    Ogre::Vector3 farCorner = cam->getViewMatrix(true) * cam->getWorldSpaceCorners()[4];
 
+	mAmbientLight->updateFromCamera(cam);
     Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
-	injectTechnique(sm, tech, mAmbientLight, farCorner, 0);
+	injectTechnique(sm, tech, mAmbientLight, 0);
 
+	//int i=0;
 	const LightList& lightList = sm->_getLightsAffectingFrustum();
     for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
         Light* light = *it;
 		
+		//if (++i != 1) continue;
+		
 		LightsMap::iterator dLightIt = mLights.find(light);
 		DLight* dLight = 0;
 		if (dLightIt == mLights.end()) 
 		{
-
 			dLight = createDLight(light);
 		}
 		else 
@@ -102,9 +93,11 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 			dLight = dLightIt->second;
 			dLight->updateFromParent();
 		}
+
+		dLight->updateFromCamera(cam);
 		
 		tech = dLight->getMaterial()->getBestTechnique();
-        injectTechnique(sm, tech, dLight, farCorner, light);
+        injectTechnique(sm, tech, dLight, light);
 	}
 }
 //-----------------------------------------------------------------------

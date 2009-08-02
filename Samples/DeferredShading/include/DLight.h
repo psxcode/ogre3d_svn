@@ -40,6 +40,23 @@ public:
 	 */
 	void updateFromParent();
 
+	/** Update the information that is related to the camera
+	 */
+	void updateFromCamera(Ogre::Camera* camera);
+	/** @copydoc MovableObject::getBoundingRadius */
+	virtual Ogre::Real getBoundingRadius(void) const;
+	/** @copydoc Renderable::getSquaredViewDepth */
+	virtual Ogre::Real getSquaredViewDepth(const Ogre::Camera*) const;
+	/** @copydoc Renderable::getMaterial */
+	virtual const Ogre::MaterialPtr& getMaterial(void) const;
+	/** @copydoc Renderable::getBoundingRadius */
+	virtual void getWorldTransforms(Ogre::Matrix4* xform) const;
+protected:
+
+	/** Check if the camera is inside a light
+	*/
+	bool isCameraInsideLight(Ogre::Camera* camera);
+
 	/** Create geometry for this light.
 	*/
 	void rebuildGeometry(float radius);
@@ -56,23 +73,9 @@ public:
 	*/
 	void createCone(float radius, float height, int nVerticesInBase);
 
-	/** @copydoc MovableObject::getBoundingRadius */
-	virtual Ogre::Real getBoundingRadius(void) const;
-	/** @copydoc Renderable::getSquaredViewDepth */
-	virtual Ogre::Real getSquaredViewDepth(const Ogre::Camera*) const;
-	/** @copydoc Renderable::getMaterial */
-	virtual const Ogre::MaterialPtr& getMaterial(void) const;
-	/** @copydoc Renderable::getBoundingRadius */
-	virtual void getWorldTransforms(Ogre::Matrix4* xform) const;
-protected:
-
 	/** Set constant, linear, quadratic Attenuation terms 
 	 */
 	void setAttenuation(float c, float b, float a);
-
-	/** Set the diffuse colour 
-	 */
-	void setDiffuseColour(const Ogre::ColourValue &col);
 
 	/** Set the specular colour
 	 */

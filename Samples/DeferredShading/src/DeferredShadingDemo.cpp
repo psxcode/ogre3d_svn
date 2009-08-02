@@ -292,7 +292,7 @@ protected:
 		Light* l1 = mSceneMgr->createLight();
         l1->setDiffuseColour(0.75f, 0.7f, 0.8f);
 		l1->setSpecularColour(0.85f, 0.9f, 1.0f);
-
+		l1->setAttenuation(5000, 1, 0, 0);
 		
 		SceneNode *lightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		lightNode->attachObject(l1);
