@@ -1,15 +1,3 @@
-material Examples/Sinbad
-{
-	technique
-	{
-		pass
-		{
-			diffuse 0.55 0.6 0.5 1
-			specular 0.4 0.4 0.4 30
-		}
-	}
-}
-
 material Examples/EnvMappedRustySteel
 {
 	technique
@@ -48,6 +36,7 @@ material Examples/OgreLogo
 		}
 	}
 }
+
 material Examples/DarkMaterial
 {
 	technique
@@ -63,6 +52,25 @@ material Examples/DarkMaterial
 		}
 	}
 }
+
+material Examples/TrippySkyBox
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+			depth_write off
+
+			texture_unit
+			{
+				cubic_texture nm.png separateUV
+				tex_address_mode clamp
+			}
+		}
+	}
+}
+
 material Examples/SpaceSkyBox
 {
 	technique
@@ -425,6 +433,7 @@ material Examples/TextureEffect3
 		}
 	}
 }
+
 material Examples/TextureEffect4
 {
 	technique
@@ -444,6 +453,7 @@ material Examples/TextureEffect4
 		}
 	}
 }
+
 material Examples/BumpyMetal
 {
 	technique
@@ -461,30 +471,34 @@ material Examples/BumpyMetal
 		}
 	}
 }
-material Examples/TransparentTest
+
+material Examples/WaterStream
 {
 	technique
 	{
 		pass
 		{
-			ambient 0.2 0.2 0.2
+			ambient 0.1 0.1 0.1
 			scene_blend add
 			depth_write off
+			cull_software none
+			cull_hardware none
 
 			texture_unit
 			{
 				texture Water01.jpg
-				scroll_anim 0.25 0
+				scroll_anim 0.125 0
 			}
 
 			texture_unit
 			{
 				texture Water01.jpg
-				wave_xform scroll_y sine 0 0.1 0 0.5
+				wave_xform scroll_y sine 0 0.1 0 0.25
 			}
 		}
 	}
 }
+
 material Examples/Flare
 {
 	technique
