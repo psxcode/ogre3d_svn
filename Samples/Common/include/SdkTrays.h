@@ -1157,7 +1157,7 @@ namespace OgreBites
 			mMinValue = minValue;
 			mMaxValue = maxValue;
 
-			if (snaps < 2 || mMinValue >= mMaxValue)
+			if (snaps < 1 || mMinValue > mMaxValue)
 			{
 				mMinValue = 0;
 				mMaxValue = 1;
@@ -1169,7 +1169,8 @@ namespace OgreBites
 			else
 			{
 				mHandle->show();
-				mInterval = (maxValue - minValue) / (snaps - 1);
+				if (snaps == 1) mInterval = 0;
+				else mInterval = (maxValue - minValue) / (snaps - 1);
 				setValue(minValue, notifyListener);
 			}
 		}
@@ -1215,6 +1216,8 @@ namespace OgreBites
 
 		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
+			if (!mHandle->isVisible()) return;
+
 			Ogre::Vector2 co = Widget::cursorOffset(mHandle, cursorPos);
 
 			if (co.squaredLength() <= 81)
@@ -1403,6 +1406,7 @@ namespace OgreBites
 			mTextArea = (Ogre::TextAreaOverlayElement*)c->getChild(getName() + "/CheckBoxCaption");
 			mSquare = (Ogre::BorderPanelOverlayElement*)c->getChild(getName() + "/CheckBoxSquare");
 			mX = mSquare->getChild(mSquare->getName() + "/CheckBoxX");
+			mX->hide();
 			mElement->setWidth(width);
 			setCaption(caption);
 		}
@@ -1420,13 +1424,11 @@ namespace OgreBites
 
 		bool isChecked()
 		{
-			return mChecked;
+			return mX->isVisible();
 		}
 
 		void setChecked(bool checked, bool notifyListener = true)
 		{
-			mChecked = checked;
-
 			if (checked) mX->show();
 			else mX->hide();
 
@@ -1454,11 +1456,7 @@ namespace OgreBites
 
 		void _cursorPressed(const Ogre::Vector2& cursorPos)
 		{
-			if (mCursorOver && mListener)
-			{
-				if (mChecked) setChecked(false);
-				else setChecked(true);
-			}
+			if (mCursorOver && mListener) toggle();
 		}
 
 		void _cursorMoved(const Ogre::Vector2& cursorPos)
@@ -1495,7 +1493,6 @@ namespace OgreBites
 		Ogre::TextAreaOverlayElement* mTextArea;
 		Ogre::BorderPanelOverlayElement* mSquare;
 		Ogre::OverlayElement* mX;
-		bool mChecked;
 		bool mFitToContents;
 		bool mCursorOver;
 	};
@@ -1530,15 +1527,15 @@ namespace OgreBites
 		{
 			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
 
-			Ogre::String nameBase = mName + "_";
+			Ogre::String nameBase = mName + "/";
 			std::replace(nameBase.begin(), nameBase.end(), ' ', '_');
 
 			// create overlay layers for everything
 
-			mBackdropLayer = om.create(nameBase + "/BackdropLayer");
-			mTraysLayer = om.create(nameBase + "/WidgetsLayer");
-			mPriorityLayer = om.create(nameBase + "/PriorityLayer");
-			mCursorLayer = om.create(nameBase + "/CursorLayer");
+			mBackdropLayer = om.create(nameBase + "BackdropLayer");
+			mTraysLayer = om.create(nameBase + "WidgetsLayer");
+			mPriorityLayer = om.create(nameBase + "PriorityLayer");
+			mCursorLayer = om.create(nameBase + "CursorLayer");
 			mBackdropLayer->setZOrder(100);
 			mTraysLayer->setZOrder(200);
 			mPriorityLayer->setZOrder(201);
@@ -1546,11 +1543,11 @@ namespace OgreBites
 
 			// make backdrop and cursor overlay containers
 
-			mCursor = (Ogre::OverlayContainer*)om.createOverlayElementFromTemplate("SdkTrays/Cursor", "Panel", nameBase + "/Cursor");
+			mCursor = (Ogre::OverlayContainer*)om.createOverlayElementFromTemplate("SdkTrays/Cursor", "Panel", nameBase + "Cursor");
 			mCursorLayer->add2D(mCursor);
-			mBackdrop = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "/Backdrop");
+			mBackdrop = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "Backdrop");
 			mBackdropLayer->add2D(mBackdrop);
-			mDialogShade = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "/DialogShade");
+			mDialogShade = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "DialogShade");
 			mDialogShade->setMaterialName("SdkTrays/Shade");
 			mDialogShade->hide();
 			mPriorityLayer->add2D(mDialogShade);
@@ -1561,7 +1558,7 @@ namespace OgreBites
 			for (unsigned int i = 0; i < 9; i++)    // make the real trays
 			{
 				mTrays[i] = (Ogre::OverlayContainer*)om.createOverlayElementFromTemplate
-					("SdkTrays/Tray", "BorderPanel", nameBase + "/" + trayNames[i] + "Tray");
+					("SdkTrays/Tray", "BorderPanel", nameBase + trayNames[i] + "Tray");
 				mTraysLayer->add2D(mTrays[i]);
 
 				mTrayWidgetAlign[i] = Ogre::GHA_CENTER;
@@ -1574,7 +1571,7 @@ namespace OgreBites
 			}
 
 			// create the null tray for free-floating widgets
-			mTrays[9] = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "/NullTray");
+			mTrays[9] = (Ogre::OverlayContainer*)om.createOverlayElement("Panel", nameBase + "NullTray");
 			mTrayWidgetAlign[9] = Ogre::GHA_LEFT;
 			mTraysLayer->add2D(mTrays[9]);
 
@@ -2043,6 +2040,14 @@ namespace OgreBites
 		bool areStatsVisible()
 		{
 			return mFpsLabel != 0;
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Toggles visibility of advanced statistics.
+		-----------------------------------------------------------------------------*/
+		void toggleAdvancedStats()
+		{
+			if (mFpsLabel) labelHit(mFpsLabel);
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -2727,8 +2732,9 @@ namespace OgreBites
 				Ogre::OverlayContainer* c = (Ogre::OverlayContainer*)m->getOverlayElement();
 				Ogre::OverlayContainer* eb = (Ogre::OverlayContainer*)c->getChild(m->getName() + "/MenuExpandedBox");
 				eb->_update();
-				eb->setPosition((unsigned int)(eb->_getDerivedLeft() * mMouse->getMouseState().width),
-					(unsigned int)(eb->_getDerivedTop() * mMouse->getMouseState().height));
+				eb->setPosition
+					((unsigned int)(eb->_getDerivedLeft() * Ogre::OverlayManager::getSingleton().getViewportWidth()),
+					(unsigned int)(eb->_getDerivedTop() * Ogre::OverlayManager::getSingleton().getViewportHeight()));
 				c->removeChild(eb->getName());
 				mPriorityLayer->add2D(eb);
 			}

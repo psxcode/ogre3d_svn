@@ -36,7 +36,9 @@ namespace OgreBites
         {
 			mWindow = 0;
 			mSceneMgr = 0;
-			mDone = true;       // sample has not started
+			mDone = true;
+			mResourcesLoaded = false;
+			mSceneCreated = false;
         }
 
 		virtual ~Sample() {}
@@ -94,27 +96,13 @@ namespace OgreBites
 
 			locateResources();
 			loadResources();
-			preSceneSetup();
+			mResourcesLoaded = true;
 			createSceneManager();
 			setupView();
 			setupScene();
-			postSceneSetup();
+			mSceneCreated = true;
 
-			mDone = false;  // sample now started
-		}
-
-		/*-----------------------------------------------------------------------------
-		| Resets a sample (everything except resources).
-		-----------------------------------------------------------------------------*/
-		virtual void reset()
-		{
-			Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
-			finalCleanup();
-			preSceneSetup();
-			createSceneManager();
-			setupView();
-			setupScene();
-			postSceneSetup();
+			mDone = false;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -122,11 +110,14 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void _shutdown()
 		{
-			Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
-			unloadResources();
-			finalCleanup();
+			if (mSceneCreated) cleanupScene();
+			if (mSceneMgr) Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
+			if (mResourcesLoaded) unloadResources();
 
-			mDone = true;          // sample now ended
+			mDone = true;
+			mResourcesLoaded = false;
+			mSceneCreated = false;
+			mSceneMgr = 0;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -142,16 +133,14 @@ namespace OgreBites
 		virtual void unpaused() {}
 
 		/*-----------------------------------------------------------------------------
-		| Saves the sample state to a string map.
-		| Optional. Used by SampleContext::reset.
+		| Saves the sample state. Optional. Used during reconfiguration.
 		-----------------------------------------------------------------------------*/
 		virtual void saveState(Ogre::NameValuePairList& state) {}
 
 		/*-----------------------------------------------------------------------------
-		| Restores the sample state from a string map.
-		| Optional. Used by SampleContext::reset.
+		| Restores the sample state. Optional. Used during reconfiguration.
 		-----------------------------------------------------------------------------*/
-		virtual void restoreState(const Ogre::NameValuePairList state) {}
+		virtual void restoreState(Ogre::NameValuePairList& state) {}
 
 		// callback interface copied from various listeners to be used by SampleContext
 
@@ -184,12 +173,6 @@ namespace OgreBites
 		virtual void loadResources() {}
 
 		/*-----------------------------------------------------------------------------
-		| Handles any setup that must happen before setup of scene. Good for
-		| initialising paramaters and stuff. Optional.
-		-----------------------------------------------------------------------------*/
-		virtual void preSceneSetup() {}
-
-		/*-----------------------------------------------------------------------------
 		| Creates a scene manager for the sample. A generic one is the default,
 		| but many samples require a special kind of scene manager.
 		-----------------------------------------------------------------------------*/
@@ -204,15 +187,14 @@ namespace OgreBites
 		virtual void setupView() {}
 
 		/*-----------------------------------------------------------------------------
-		| Sets up the scene.
+		| Sets up the scene (and anything else you want for the sample).
 		-----------------------------------------------------------------------------*/
 		virtual void setupScene() {}
 
 		/*-----------------------------------------------------------------------------
-		| Handles any setup that must happen after setup of scene. Good for
-		| setting up the user interface and stuff. Optional.
+		| Cleans up the scene (and anything else you used).
 		-----------------------------------------------------------------------------*/
-		virtual void postSceneSetup() {}
+		virtual void cleanupScene() {}
 
 		/*-----------------------------------------------------------------------------
 		| Unloads sample-specific resources. My method here is simple and good
@@ -229,17 +211,14 @@ namespace OgreBites
 			}
 		}
 
-		/*-----------------------------------------------------------------------------
-		| Performs any other necessary cleanup (like reverting special settings).
-		-----------------------------------------------------------------------------*/
-		virtual void finalCleanup() {}
-
 		Ogre::RenderWindow* mWindow;      // context render window
 		OIS::Keyboard* mKeyboard;         // context keyboard device
 		OIS::Mouse* mMouse;               // context mouse device
 		Ogre::SceneManager* mSceneMgr;    // scene manager for this sample
 		Ogre::NameValuePairList mInfo;    // custom sample info
 		bool mDone;                       // flag to mark the end of the sample
+		bool mResourcesLoaded;    // whether or not resources have been loaded
+		bool mSceneCreated;       // whether or not scene was created
     };
 
 	typedef std::set<Sample*, Sample::Comparer> SampleSet;

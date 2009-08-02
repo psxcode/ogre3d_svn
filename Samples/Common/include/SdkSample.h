@@ -8,74 +8,131 @@
 namespace OgreBites
 {
 	/*=============================================================================
-	| Base SDK sample class. Includes default player camera and SDK trays.
+	// Base SDK sample class. Includes default player camera and SDK trays.
 	=============================================================================*/
 	class SdkSample : public Sample, public SdkTrayListener
     {
     public:
 
+		SdkSample()
+		{
+			// so we don't have to worry about checking if these keys exist later
+			mInfo["Title"] = "Untitled";
+			mInfo["Description"] = "";
+			mInfo["Category"] = "Unsorted";
+			mInfo["Thumbnail"] = "";
+
+			mTrayMgr = 0;
+			mCameraMan = 0;
+		}
+
 		virtual ~SdkSample() {}
 
-		virtual void saveState(Ogre::NameValuePairList& state) {}
+		/*-----------------------------------------------------------------------------
+		| Automatically saves position and orientation for free-look cameras.
+		-----------------------------------------------------------------------------*/
+		virtual void saveState(Ogre::NameValuePairList& state)
+		{
+			if (mCameraMan->getStyle() == CS_FREELOOK)
+			{
+				state["CameraPosition"] = Ogre::StringConverter::toString(mCameraMan->getCameraNode()->getPosition());
+				state["CameraOrientation"] = Ogre::StringConverter::toString(mCameraMan->getCameraNode()->getOrientation());
+			}
+		}
 
-		virtual void restoreState(const Ogre::NameValuePairList state) {}
+		/*-----------------------------------------------------------------------------
+		| Automatically restores position and orientation for free-look cameras.
+		-----------------------------------------------------------------------------*/
+		virtual void restoreState(Ogre::NameValuePairList& state)
+		{
+			if (state.find("CameraPosition") != state.end() && state.find("CameraOrientation") != state.end())
+			{
+				mCameraMan->setStyle(CS_FREELOOK);
+				mCameraMan->getCameraNode()->setPosition(Ogre::StringConverter::parseVector3(state["CameraPosition"]));
+				mCameraMan->getCameraNode()->setOrientation(Ogre::StringConverter::parseQuaternion(state["CameraOrientation"]));
+			}
+		}
 
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			mTrayMgr->frameRenderingQueued(evt);
+			mCameraMan->frameRenderingQueued(evt);
 			return true;
 		}
-
-		virtual void windowMoved(Ogre::RenderWindow* rw) {}
-
-		virtual void windowResized(Ogre::RenderWindow* rw) {}
-
-		virtual bool windowClosing(Ogre::RenderWindow* rw) { return true; }
-
-		virtual void windowClosed(Ogre::RenderWindow* rw) {}
-
-		virtual void windowFocusChange(Ogre::RenderWindow* rw) {}
 
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
+			if (evt.key == OIS::KC_F) mTrayMgr->toggleAdvancedStats();   // toggle visibility of advanced stats
+
+			mCameraMan->keyPressed(evt);
+
 			return true;
 		}
 
-		virtual bool keyReleased(const OIS::KeyEvent& evt) { return true; }
+		virtual bool keyReleased(const OIS::KeyEvent& evt)
+		{
+			mCameraMan->keyReleased(evt);
+			return true;
+		}
 
 		/* IMPORTANT: When overriding these following handlers, remember to allow the tray manager
 		to filter out any interface-related mouse events before processing them in your scene.
-		You can do this by calling these parent versions or calling the tray manager's handler
-		yourself at the beginning of your handler. */
+		If the tray manager handler returns false, the event was meant for the trays, not you. */
 
 		virtual bool mouseMoved(const OIS::MouseEvent& evt)
 		{
-			return mTrayMgr->mouseMoved(evt);
+			if (!mTrayMgr->mouseMoved(evt)) return false;
+			mCameraMan->mouseMoved(evt);
+			return true;
 		}
 
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			return mTrayMgr->mousePressed(evt, id);
+			if (!mTrayMgr->mousePressed(evt, id)) return false;
+			mCameraMan->mousePressed(evt, id);
+			return true;
 		}
 
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			return mTrayMgr->mouseReleased(evt, id);
+			if (!mTrayMgr->mouseReleased(evt, id)) return false;
+			mCameraMan->mouseReleased(evt, id);
+			return true;
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Extendeded to setup a default tray interface and camera controller.
+		-----------------------------------------------------------------------------*/
 		virtual void _setup(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
 		{
+			mWindow = window;
+			mKeyboard = keyboard;
+			mMouse = mouse;
+
+			locateResources();
+			loadResources();
+			createSceneManager();
+			setupView();
+
+			// create a tray interface with stats panel and logo
 			mTrayMgr = new SdkTrayManager("SampleControls", window, mouse, this);
 			mTrayMgr->showStats(TL_BOTTOMLEFT);
 			mTrayMgr->showLogo(TL_BOTTOMRIGHT);
+			mTrayMgr->hideCursor();
 
-			Sample::_setup(window, keyboard, mouse);
+			mCameraMan = new SdkCameraMan(mCamera);   // create a default camera
+
+			setupScene();
+
+			mDone = false;
 		}
 
 		virtual void _shutdown()
 		{
-			Sample::_shutdown();
 			if (mTrayMgr) delete mTrayMgr;
+			if (mCameraMan) delete mCameraMan;
+
+			Sample::_shutdown();
 		}
 
     protected:
@@ -87,7 +144,8 @@ namespace OgreBites
 			mViewport = mWindow->addViewport(mCamera);
 			mCamera->setAspectRatio((Ogre::Real)mViewport->getActualWidth() / (Ogre::Real)mViewport->getActualHeight());
 			mCamera->setAutoAspectRatio(true);
-			mCamera->setPosition(0, 0, 200);
+			mCamera->setNearClipDistance(10);
+			mCamera->setFarClipDistance(10000);
 		}
 
 		SdkTrayManager* mTrayMgr;    // tray interface manager

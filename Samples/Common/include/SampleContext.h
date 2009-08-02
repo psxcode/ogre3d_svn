@@ -158,19 +158,6 @@ namespace OgreBites
 			}
 		}
 
-		/*-----------------------------------------------------------------------------
-		| Recovers the last sample after a reset. You can override in the case that
-		| the last sample is destroyed in the process of resetting, and you have to
-		| recover it through another means.
-		-----------------------------------------------------------------------------*/
-		virtual void recoverLastSample()
-		{
-			runSample(mLastSample);
-			mLastSample->restoreState(mLastSampleState);
-			mLastSample = 0;
-			mLastSampleState.clear();
-		}
-
 		virtual bool isCurrentSamplePaused()
 		{
 			if (mCurrentSample) return mSamplePaused;
@@ -456,6 +443,19 @@ namespace OgreBites
 
 			mLastRun = false;             // we want to go again with the new settings
 			mRoot->queueEndRendering();   // break from render loop
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Recovers the last sample after a reset. You can override in the case that
+		| the last sample is destroyed in the process of resetting, and you have to
+		| recover it through another means.
+		-----------------------------------------------------------------------------*/
+		virtual void recoverLastSample()
+		{
+			runSample(mLastSample);
+			mLastSample->restoreState(mLastSampleState);
+			mLastSample = 0;
+			mLastSampleState.clear();
 		}
 
 		/*-----------------------------------------------------------------------------

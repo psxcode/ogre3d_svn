@@ -55,11 +55,14 @@ namespace OgreBites
 				}
 				catch (Ogre::Exception e)   // if failed to start, show error and fall back to menu
 				{
+					s->_shutdown();
+
 					createDummyScene();
 					mTrayMgr->showBackdrop("SdkTrays/Bands");
 					mTrayMgr->showAll();
 					((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Start Sample");
-					mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+
+					mTrayMgr->showOkDialog("Error!", e.getDescription() + "\nSource: " + e.getSource());
 				}
 			}
 		}
@@ -116,7 +119,7 @@ namespace OgreBites
 			catch (Ogre::Exception e)   // show error and fall back to menu
 			{
 				runSample(0);
-				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+				mTrayMgr->showOkDialog("Error!", e.getDescription() + "\nSource: " + e.getSource());
 			}
 
 			return true;
@@ -141,20 +144,12 @@ namespace OgreBites
 		{
 			if (b->getName() == "StartStop")   // start or stop sample
 			{
-				if (mCurrentSample)
-				{
-					runSample(0);
-					b->setCaption("Start Sample");
-				}
+				if (mCurrentSample) runSample(0);
 				else
 				{
 					if (mLoadedSamples.empty()) mTrayMgr->showOkDialog("Error!", "No sample selected!");
-					else
-					{
-						// use the sample pointer we stored inside the thumbnail
-						runSample(Ogre::any_cast<Sample*>(mThumbs[mSampleMenu->getSelectionIndex()]->getUserAny()));
-						b->setCaption("Stop Sample");
-					}
+					// use the sample pointer we stored inside the thumbnail
+					else runSample(Ogre::any_cast<Sample*>(mThumbs[mSampleMenu->getSelectionIndex()]->getUserAny()));
 				}
 			}
 			else if (b->getName() == "UnloadReload")   // unload or reload sample plugins and update controls
@@ -316,7 +311,7 @@ namespace OgreBites
 						Ogre::TextureUnitState* tus = newMat->getTechnique(0)->getPass(0)->getTextureUnitState(0);
 						if (Ogre::ResourceGroupManager::getSingleton().resourceExists("Essential", info["Thumbnail"]))
 							tus->setTextureName(info["Thumbnail"]);
-						else tus->setTextureName("thumb_error.jpg");
+						else tus->setTextureName("thumb_error.png");
 
 						// create sample thumbnail overlay
 						Ogre::BorderPanelOverlayElement* bp = (Ogre::BorderPanelOverlayElement*)
@@ -405,19 +400,26 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
-			// if there's a sample running and we're not in the configuration screen, toggle pause menu
-			if (evt.key == OIS::KC_ESCAPE && mCurrentSample && mTitleLabel->getTrayLocation() != TL_NONE)
+			if (evt.key == OIS::KC_ESCAPE)
 			{
-				if (mSamplePaused)
+				if (mTitleLabel->getTrayLocation() != TL_NONE)
 				{
-					mTrayMgr->hideAll();
-					unpauseCurrentSample();
+					// if we're in the main screen and a sample's running, toggle sample pause state
+					if (mCurrentSample)
+					{
+						if (mSamplePaused)
+						{
+							mTrayMgr->hideAll();
+							unpauseCurrentSample();
+						}
+						else
+						{
+							pauseCurrentSample();
+							mTrayMgr->showAll();
+						}
+					}
 				}
-				else
-				{
-					pauseCurrentSample();
-					mTrayMgr->showAll();
-				}
+				else buttonHit((Button*)mTrayMgr->getWidget("Back"));  // if we're in config, just go back
 			}
 
 			try
@@ -427,7 +429,7 @@ namespace OgreBites
 			catch (Ogre::Exception e)   // show error and fall back to menu
 			{
 				runSample(0);
-				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+				mTrayMgr->showOkDialog("Error!", e.getDescription() + "\nSource: " + e.getSource());
 			}
 
 			return true;
@@ -439,15 +441,19 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (!mTrayMgr->mousePressed(evt, id)) return false;
+			if (!mTrayMgr->mousePressed(evt, id)) return true;
 
-			for (unsigned int i = 0; i < mThumbs.size(); i++)
+			if (mTitleLabel->getTrayLocation() != TL_NONE)
 			{
-				if (mThumbs[i]->isVisible() && Widget::isCursorOver(mThumbs[i],
-					Ogre::Vector2(mTrayMgr->getCursorContainer()->getLeft(), mTrayMgr->getCursorContainer()->getTop()), 0))
+				for (unsigned int i = 0; i < mThumbs.size(); i++)
 				{
-					mSampleMenu->selectItem(i);
-					break;
+					if (mThumbs[i]->isVisible() && Widget::isCursorOver(mThumbs[i],
+						Ogre::Vector2(mTrayMgr->getCursorContainer()->getLeft(),
+						mTrayMgr->getCursorContainer()->getTop()), 0))
+					{
+						mSampleMenu->selectItem(i);
+						break;
+					}
 				}
 			}
 
@@ -458,7 +464,7 @@ namespace OgreBites
 			catch (Ogre::Exception e)   // show error and fall back to menu
 			{
 				runSample(0);
-				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+				mTrayMgr->showOkDialog("Error!", e.getDescription() + "\nSource: " + e.getSource());
 			}
 
 			return true;
@@ -469,7 +475,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (!mTrayMgr->mouseReleased(evt, id)) return false;
+			if (!mTrayMgr->mouseReleased(evt, id)) return true;
 
 			try
 			{
@@ -478,18 +484,25 @@ namespace OgreBites
 			catch (Ogre::Exception e)   // show error and fall back to menu
 			{
 				runSample(0);
-				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+				mTrayMgr->showOkDialog("Error!", e.getDescription() + "\nSource: " + e.getSource());
 			}
 
 			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Extends mouseMoved to inject mouse position into tray manager.
+		| Extends mouseMoved to inject mouse position into tray manager, and checks
+		| for mouse wheel movements to slide the carousel, because we can.
 		-----------------------------------------------------------------------------*/
 		virtual bool mouseMoved(const OIS::MouseEvent& evt)
 		{
-			if (!mTrayMgr->mouseMoved(evt)) return false;
+			if (!mTrayMgr->mouseMoved(evt)) return true;
+
+			if (mTitleLabel->getTrayLocation() != TL_NONE && evt.state.Z.rel != 0 && mSampleMenu->getNumItems() != 0)
+			{
+				int newIndex = mSampleMenu->getSelectionIndex() - evt.state.Z.rel / Ogre::Math::Abs(evt.state.Z.rel);
+				mSampleMenu->selectItem(Ogre::Math::Clamp<int>(newIndex, 0, mSampleMenu->getNumItems() - 1));
+			}
 
 			try
 			{
@@ -498,7 +511,7 @@ namespace OgreBites
 			catch (Ogre::Exception e)   // show error and fall back to menu
 			{
 				runSample(0);
-				mTrayMgr->showOkDialog("Error!", e.getFullDescription());
+				mTrayMgr->showOkDialog("Error!", e.getDescription() + "\nSource: " + e.getSource());
 			}
 
 			return true;
@@ -665,7 +678,7 @@ namespace OgreBites
 					k = info.find("Category");
 					if (k == info.end() || k->second.empty()) info["Category"] = "Unsorted";
 					k = info.find("Thumbnail");
-					if (k == info.end() || k->second.empty()) info["Thumbnail"] = "thumb_error.jpg";
+					if (k == info.end() || k->second.empty()) info["Thumbnail"] = "thumb_error.png";
 
 					mLoadedSamples.insert(*j);                    // add sample only after ensuring title for sorting
 					mSampleCategories.insert(info["Category"]);   // add sample category
