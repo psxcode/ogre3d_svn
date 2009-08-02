@@ -1,5 +1,5 @@
 #include "SamplePlugin.h"
-#include "CelShading.h"
+#include "EnvMapping.h"
 
 using namespace Ogre;
 using namespace OgreBites;
@@ -9,7 +9,7 @@ Sample* s;
 
 extern "C" __declspec(dllexport) void dllStartPlugin()
 {
-	s = new CelShading;
+	s = new EnvMapping;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
 	sp->addSample(s);
 	Root::getSingleton().installPlugin(sp);
