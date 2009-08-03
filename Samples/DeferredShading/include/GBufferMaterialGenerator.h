@@ -39,6 +39,9 @@ public:
 		GBP_THREE_TEXTURES =		0x00000003,
 		GBP_TEXTURE_MASK =			0x0000000F,
 		
+        //Material properties
+        GBP_HAS_DIFFUSE_COLOUR =     0x00000010,
+
 		//The number of texture coordinate sets
 		GBP_NO_TEXCOORDS =			0x00000000,
 		GBP_ONE_TEXCOORD =			0x00000100,

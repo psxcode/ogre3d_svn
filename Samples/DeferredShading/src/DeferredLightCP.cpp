@@ -74,14 +74,15 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
     Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
 	injectTechnique(sm, tech, mAmbientLight, 0);
 
-	//int i=0;
+	int i=0;
 	const LightList& lightList = sm->_getLightsAffectingFrustum();
     for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
         Light* light = *it;
 		
-		//if (++i != 1) continue;
-		
+		//if (++i != 2) continue;
+        //if (light->getType() != Light::LT_DIRECTIONAL) continue;
+
 		LightsMap::iterator dLightIt = mLights.find(light);
 		DLight* dLight = 0;
 		if (dLightIt == mLights.end()) 

@@ -136,6 +136,10 @@ public:
 			{
 				strPPD += "-DIS_SPOTLIGHT";
 			}
+            if (permutation & LightMaterialGenerator::MI_DIRECTIONAL)
+			{
+				strPPD += "-DIS_DIRECTIONAL";
+			}
 			return strPPD;
 		}
 
@@ -197,9 +201,10 @@ LightMaterialGenerator::LightMaterialGenerator()
 	bitNames.push_back("Attenuated"); // MI_ATTENUATED
 	bitNames.push_back("Specular");   // MI_SPECULAR
 	bitNames.push_back("Spotlight");   // MI_SPOTLIGHT
+    bitNames.push_back("Directional");   // MI_DIRECTIONAL
 
 	vsMask = 0x00000001;
-	fsMask = 0x0000000F;
+	fsMask = 0x0000001F;
 	matMask = 0x00000001;
 	
 	materialBaseName = "DeferredShading/LightMaterial/";

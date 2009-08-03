@@ -101,6 +101,10 @@ GBufferSchemeHandler::TechniqueProperties GBufferSchemeHandler::inspectTechnique
 		
 	}
 
+    if (pass->getDiffuse() != ColourValue::White)
+    {
+        props.hasDiffuseColour = true;
+    }
 	return props;
 }
 
@@ -150,6 +154,10 @@ MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const TechniqueProp
 		perm |= GBufferMaterialGenerator::GBP_NORMAL_MAP;
 	}
 
+    if (props.hasDiffuseColour)
+    {
+        perm |= GBufferMaterialGenerator::GBP_HAS_DIFFUSE_COLOUR;
+    }
 	return perm;
 }
 
@@ -172,4 +180,5 @@ void GBufferSchemeHandler::fillPass(
 	gBufferPass->setDiffuse(originalPass->getDiffuse());
 	gBufferPass->setSpecular(originalPass->getSpecular());
 	gBufferPass->setShininess(originalPass->getShininess());
+    gBufferPass->setCullingMode(originalPass->getCullingMode());
 }

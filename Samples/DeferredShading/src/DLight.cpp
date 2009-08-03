@@ -59,20 +59,21 @@ void DLight::setAttenuation(float c, float b, float a)
 	if(c != 1.0f || b != 0.0f || a != 0.0f)
 	{
 		mPermutation |= LightMaterialGenerator::MI_ATTENUATED;
-		// Calculate radius from Attenuation
-		int threshold_level = 15;// difference of 10-15 levels deemed unnoticeable
-		float threshold = 1.0f/((float)threshold_level/256.0f); 
+		//// Calculate radius from Attenuation
+		//int threshold_level = 15;// difference of 10-15 levels deemed unnoticeable
+		//float threshold = 1.0f/((float)threshold_level/256.0f); 
 
-		// Use quadratic formula to determine outer radius
-		c = c-threshold;
-		float d=sqrt(b*b-4*a*c);
-		outerRadius = (-2*c)/(b+d);
+		//// Use quadratic formula to determine outer radius
+		//c = c-threshold;
+		//float d=sqrt(b*b-4*a*c);
+		//outerRadius = (-2*c)/(b+d);
 	}
 	else
 	{
 		mPermutation &= ~LightMaterialGenerator::MI_ATTENUATED;
-		outerRadius = mParentLight->getAttenuationRange();
+		
 	}
+    outerRadius = mParentLight->getAttenuationRange();
 
 	rebuildGeometry(outerRadius);
 	
@@ -96,14 +97,16 @@ void DLight::rebuildGeometry(float radius)
 	{
 	case Light::LT_DIRECTIONAL:
 		createRectangle2D();
+        mPermutation |= LightMaterialGenerator::MI_DIRECTIONAL;
 		mPermutation |= LightMaterialGenerator::MI_QUAD;
 		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
 		break;
 	case Light::LT_POINT:
 		/// XXX some more intelligent expression for rings and segments
-		createSphere(radius, 5, 5);
+		createSphere(radius, 10, 10);
 		mPermutation &= ~LightMaterialGenerator::MI_QUAD;
 		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
+        mPermutation &= ~LightMaterialGenerator::MI_DIRECTIONAL;
 		break;
 	case Light::LT_SPOTLIGHT:
 		Real height = mParentLight->getAttenuationRange();
@@ -112,6 +115,7 @@ void DLight::rebuildGeometry(float radius)
 		createCone(radius, height, 20);
 		mPermutation &= ~LightMaterialGenerator::MI_QUAD;
 		mPermutation |= LightMaterialGenerator::MI_SPOTLIGHT;
+        mPermutation &= ~LightMaterialGenerator::MI_DIRECTIONAL;
 		break;
 	}	
 }

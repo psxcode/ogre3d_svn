@@ -46,6 +46,7 @@ protected:
 		Ogre::vector<Ogre::TextureUnitState*>::type regularTextures;
 		Ogre::TextureUnitState* normalMap;
 		bool isSkinned;
+        bool hasDiffuseColour;
 		
 		//Example of possible extension : vertex colours
 		//Ogre::TrackVertexColourType vertexColourType;

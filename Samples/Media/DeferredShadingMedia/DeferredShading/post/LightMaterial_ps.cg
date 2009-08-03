@@ -51,7 +51,10 @@ float4 main(
 #ifdef IS_SPOTLIGHT
 	uniform float4 spotParams,
 	uniform float3 lightDir,
-#endif	
+#endif
+#ifdef IS_DIRECTIONAL
+	uniform float3 lightDir,
+#endif
 #ifndef IS_QUAD
 	uniform float vpWidth,
 	uniform float vpHeight,
@@ -90,15 +93,14 @@ float4 main(
 	float3 position = ray*distance;
 
 	// Calculate light direction and distance
+#ifdef IS_DIRECTIONAL
+	float3 objToLightDir = -lightDir.xyz;
+#else
 	float3 objToLightVec = lightPos - position;
 	float len_sq = dot(objToLightVec, objToLightVec);
 	float len = sqrt(len_sq);
-	
-#if IS_ATTENUATED
-	clip(lightFalloff.x - len);
-#endif
-
 	float3 objToLightDir = objToLightVec/len;
+#endif
 
 	// Calculate diffuse colour
 	float3 total_light_contrib;
@@ -114,13 +116,14 @@ float4 main(
 #endif
 
 #if IS_ATTENUATED
+	clip(lightFalloff.x - len);
 	// Calculate attenuation
 	float attenuation = dot(lightFalloff.yzw, float3(1.0, len, len_sq));
 	total_light_contrib /= attenuation;
 #endif
 
 #if IS_SPOTLIGHT
-	float spotlightAngle = saturate(dot(lightDir, -objToLightDir));
+	float spotlightAngle = saturate(dot(lightDir.xyz, -objToLightDir));
 	float spotFalloff = saturate((spotlightAngle - spotParams.x) / (spotParams.y - spotParams.x));
 	total_light_contrib *= (1-spotFalloff);
 #endif

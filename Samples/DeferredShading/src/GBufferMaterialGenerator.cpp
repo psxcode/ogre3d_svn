@@ -161,9 +161,9 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	for (Ogre::uint32 i=0; i<numTextures; i++) {
 		ss << "	uniform sampler sTex" << i << " : register(s" << samplerNum++ << ")," << std::endl;
 	}
-	if (numTextures == 0)
+    if (numTextures == 0 || permutation & GBufferMaterialGenerator::GBP_HAS_DIFFUSE_COLOUR)
 	{
-		ss << "	uniform float3 cDiffuseColour," << std::endl;
+		ss << "	uniform float4 cDiffuseColour," << std::endl;
 	}
 
 #ifdef WRITE_LINEAR_DEPTH
@@ -180,11 +180,16 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 	if (numTexCoords > 0 && numTextures > 0) 
 	{
 		ss << "	oColor0.rgb = tex2D(sTex0, iUV0);" << std::endl;
+        if (permutation & GBufferMaterialGenerator::GBP_HAS_DIFFUSE_COLOUR)
+        {
+            ss << "	oColor0.rgb *= cDiffuseColour.rgb;" << std::endl;
+        }
 	}
-	else
+    else
 	{
-		ss << "	oColor0.rgb = cDiffuseColour;" << std::endl;
+		ss << "	oColor0.rgb = cDiffuseColour.rgb;" << std::endl;
 	}
+    
 	
 	ss << "	oColor0.a = cSpecularity;" << std::endl;
 	if (permutation & GBufferMaterialGenerator::GBP_NORMAL_MAP) {
@@ -219,7 +224,7 @@ Ogre::GpuProgramPtr GBufferMaterialGeneratorImpl::generateFragmentShader(Materia
 
 	const Ogre::GpuProgramParametersSharedPtr& params = ptrProgram->getDefaultParameters();
 	params->setNamedAutoConstant("cSpecularity", Ogre::GpuProgramParameters::ACT_SURFACE_SHININESS);
-	if (numTextures == 0) 
+	if (numTextures == 0 || permutation & GBufferMaterialGenerator::GBP_HAS_DIFFUSE_COLOUR)
 	{
 		params->setNamedAutoConstant("cDiffuseColour", Ogre::GpuProgramParameters::ACT_SURFACE_DIFFUSE_COLOUR);
 	}

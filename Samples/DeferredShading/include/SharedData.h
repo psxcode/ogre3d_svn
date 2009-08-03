@@ -26,7 +26,6 @@ public:
 		: iRoot(0),
 		  iCamera(0),
 		  iWindow(0),
-		  mAnimState(0),
 		  mMLAnimState(0),
 		  iMainLight(0)
 	{
@@ -45,8 +44,6 @@ public:
 		bool iActivate;
 		bool iGlobalActivate;
 
-		// Animation state for big lights
-		Ogre::AnimationState* mAnimState;
 		// Animation state for light swarm
 		Ogre::AnimationState* mMLAnimState;
 
