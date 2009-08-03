@@ -108,7 +108,7 @@ void DLight::rebuildGeometry(float radius)
 	case Light::LT_SPOTLIGHT:
 		Real height = mParentLight->getAttenuationRange();
 		Radian coneRadiusAngle = mParentLight->getSpotlightOuterAngle() / 2;
-		Real radius = Math::Sin(coneRadiusAngle) * height;
+        Real radius = Math::Tan(coneRadiusAngle) * height;
 		createCone(radius, height, 20);
 		mPermutation &= ~LightMaterialGenerator::MI_QUAD;
 		mPermutation |= LightMaterialGenerator::MI_SPOTLIGHT;
@@ -290,8 +290,8 @@ void DLight::updateFromCamera(Ogre::Camera* camera)
 			}
 			else
 			{
-				pass->setCullingMode(Ogre::CULL_ANTICLOCKWISE);
-				pass->setDepthFunction(Ogre::CMPF_GREATER_EQUAL);
+				pass->setCullingMode(Ogre::CULL_CLOCKWISE);
+				pass->setDepthFunction(Ogre::CMPF_LESS_EQUAL);
 			}
 		}
 	}

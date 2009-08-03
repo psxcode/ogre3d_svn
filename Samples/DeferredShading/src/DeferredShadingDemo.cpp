@@ -483,7 +483,7 @@ protected:
 		Light* spotLight = mSceneMgr->createLight("Spotlight1");
 		spotLight->setType(Light::LT_SPOTLIGHT);
 		spotLight->setAttenuation(200, 1.0f, 0, 0);
-		spotLight->setSpotlightRange(Degree(30.0), Degree(55.0), 0.8);
+		spotLight->setSpotlightRange(Degree(30.0), Degree(45.0), 0.8);
 		spotLight->setPosition(0,120,0);
 		spotLight->setDirection(0, -1, 0);
 		spotLight->setDiffuseColour(1,1,1);
