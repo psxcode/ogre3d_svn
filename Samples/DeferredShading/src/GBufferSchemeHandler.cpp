@@ -15,24 +15,37 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 	String curSchemeName = matMgr.getActiveScheme();
 	matMgr.setActiveScheme(MaterialManager::DEFAULT_SCHEME_NAME);
 	Technique* originalTechnique = originalMaterial->getBestTechnique(lodIndex, rend);
-	matMgr.setActiveScheme(curSchemeName);
+    matMgr.setActiveScheme(curSchemeName);
 
-	TechniqueProperties props = inspectTechnique(originalTechnique, lodIndex, rend);
+    Technique* newTech = originalMaterial->createTechnique();
+    newTech->removeAllPasses();
 
-	MaterialGenerator::Perm perm = getPermutation(props);
+    for (unsigned short i=0; i<originalTechnique->getNumPasses(); i++)
+    {
+        Pass* originalPass = originalTechnique->getPass(i);
+        Pass* newPass = newTech->createPass();
+        PassProperties props = inspectPass(originalPass, lodIndex, rend);
 
-	const Ogre::MaterialPtr& templateMat = mMaterialGenerator.getMaterial(perm);
+        if (props.isTransparent)
+        {
+            //TODO : Generate different techinque for 'non-gbuffer' objects
+            continue;
+        }
+	    MaterialGenerator::Perm perm = getPermutation(props);
 
-	Technique* newTech = originalMaterial->createTechnique();
-	*newTech = *(templateMat->getTechnique(0));
-	newTech->setSchemeName(schemeName);
-	fillPass(newTech->getPass(0), originalTechnique->getPass(0), props);
+	    const Ogre::MaterialPtr& templateMat = mMaterialGenerator.getMaterial(perm);
+    	
+        //We assume that the GBuffer technique contains only one pass. But its true.
+	    *newPass = *(templateMat->getTechnique(0)->getPass(0));
+	    fillPass(newTech->getPass(0), originalTechnique->getPass(0), props);    
+    }
 
+    newTech->setSchemeName(schemeName);
 	return newTech;
 }
 
 bool GBufferSchemeHandler::checkNormalMap(
-	TextureUnitState* tus, GBufferSchemeHandler::TechniqueProperties& props)
+	TextureUnitState* tus, GBufferSchemeHandler::PassProperties& props)
 {
 	bool isNormal = false;
 	Ogre::String lowerCaseAlias = tus->getTextureNameAlias();
@@ -61,24 +74,16 @@ bool GBufferSchemeHandler::checkNormalMap(
 		{
 			OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM,
 				"Multiple normal map patterns matches",
-				"GBufferSchemeHandler::inspectTechnique");
+				"GBufferSchemeHandler::inspectPass");
 		}
 	}
 	return isNormal;
 }
 
-GBufferSchemeHandler::TechniqueProperties GBufferSchemeHandler::inspectTechnique(
-	Technique* originalTechnique, unsigned short lodIndex, const Renderable* rend)
+GBufferSchemeHandler::PassProperties GBufferSchemeHandler::inspectPass(
+	Pass* pass, unsigned short lodIndex, const Renderable* rend)
 {
-	TechniqueProperties props;
-
-	if (originalTechnique->getNumPasses() != 1) {
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
-			"Can not generate G-Buffer materials for multi-pass objects",
-			"GBufferSchemeHandler::inspectTechnique");
-	}
-
-	Pass* pass = originalTechnique->getPass(0);
+	PassProperties props;
 	
 	//TODO : Use renderable to indicate wether this has skinning.
 	//Probably use same const cast that renderSingleObject uses.
@@ -105,10 +110,17 @@ GBufferSchemeHandler::TechniqueProperties GBufferSchemeHandler::inspectTechnique
     {
         props.hasDiffuseColour = true;
     }
+
+    //Check transparency
+    if (pass->getDestBlendFactor() != Ogre::SBF_ZERO)
+    {
+        //TODO : Better ways to do this
+        props.isTransparent = true;
+    }
 	return props;
 }
 
-MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const TechniqueProperties& props)
+MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const PassProperties& props)
 {
 	MaterialGenerator::Perm perm = 0;
 	switch (props.regularTextures.size())
@@ -141,7 +153,7 @@ MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const TechniqueProp
 	default:
 		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
 			"Can not generate G-Buffer materials for '>3 regular-texture' objects",
-			"GBufferSchemeHandler::inspectTechnique");
+			"GBufferSchemeHandler::inspectPass");
 	}
 
 	if (props.isSkinned)
@@ -162,7 +174,7 @@ MaterialGenerator::Perm GBufferSchemeHandler::getPermutation(const TechniqueProp
 }
 
 void GBufferSchemeHandler::fillPass(
-	Pass* gBufferPass, Pass* originalPass, const TechniqueProperties& props)
+	Pass* gBufferPass, Pass* originalPass, const PassProperties& props)
 {
 	//Reference the correct textures. Normal map first!
 	int texUnitIndex = 0;

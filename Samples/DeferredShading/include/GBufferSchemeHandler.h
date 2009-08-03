@@ -41,29 +41,30 @@ protected:
 
 	//A structure for containing the properties of a material, relevant to GBuffer rendering
 	//You might need to expand this class to support more options
-	struct TechniqueProperties {
-		TechniqueProperties() : normalMap(0), isSkinned(false) {}
+	struct PassProperties {
+		PassProperties() : normalMap(0), isSkinned(false), isTransparent(false) {}
 		Ogre::vector<Ogre::TextureUnitState*>::type regularTextures;
 		Ogre::TextureUnitState* normalMap;
 		bool isSkinned;
         bool hasDiffuseColour;
-		
+		bool isTransparent;
+
 		//Example of possible extension : vertex colours
 		//Ogre::TrackVertexColourType vertexColourType;
 	};
 
 	//Inspect a technique and return its relevant properties
-	TechniqueProperties inspectTechnique(Ogre::Technique* technique, 
+	PassProperties inspectPass(Ogre::Pass* pass, 
 		unsigned short lodIndex, const Ogre::Renderable* rend);
 
 	//Get the permutation of material flags that fit a certain property sheet
-	MaterialGenerator::Perm getPermutation(const TechniqueProperties& props);
+	MaterialGenerator::Perm getPermutation(const PassProperties& props);
 
 	//Fill a pass with the specific data from the pass it is based on
-	void fillPass(Ogre::Pass* gBufferPass, Ogre::Pass* originalPass, const TechniqueProperties& props);
+	void fillPass(Ogre::Pass* gBufferPass, Ogre::Pass* originalPass, const PassProperties& props);
 
 	//Check if a texture is a normal map, and fill property sheet accordingly
-	bool checkNormalMap(Ogre::TextureUnitState* tus, TechniqueProperties& props);
+	bool checkNormalMap(Ogre::TextureUnitState* tus, PassProperties& props);
 };
 
 #endif
