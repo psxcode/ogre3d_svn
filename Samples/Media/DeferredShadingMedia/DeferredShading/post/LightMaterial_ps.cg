@@ -93,6 +93,11 @@ float4 main(
 	float3 objToLightVec = lightPos - position;
 	float len_sq = dot(objToLightVec, objToLightVec);
 	float len = sqrt(len_sq);
+	
+#if IS_ATTENUATED
+	clip(lightFalloff.x - len);
+#endif
+
 	float3 objToLightDir = objToLightVec/len;
 
 	// Calculate diffuse colour
@@ -120,7 +125,7 @@ float4 main(
 	total_light_contrib *= (1-spotFalloff);
 #endif
 
-	//float D = 1-spotFalloff;
+	//float D = 1/attenuation;
 	//return float4(D,D,D,0);
 	return float4(total_light_contrib*colour, 0.0);
 }
