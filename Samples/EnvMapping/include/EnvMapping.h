@@ -1,60 +1,46 @@
-/*
------------------------------------------------------------------------------
-This source file is part of OGRE
-    (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+#ifndef __EnvMapping_H__
+#define __EnvMapping_H__
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+#include "SdkSample.h"
 
-You may use this sample code for anything you like, it is not covered by the
-LGPL like the rest of the engine.
------------------------------------------------------------------------------
-*/
+using namespace Ogre;
+using namespace OgreBites;
 
-/**
-    \file 
-        EnvMapping.cpp
-    \brief
-        Specialisation of OGRE's framework application to show the
-        environment mapping feature.
-*/
+/* NOTE: This sample simply displays an object with an env-mapped material. The really relevant stuff
+is all in the material script itself. You won't find anything even vaguely related to env-mapping in
+this source code. Check out the Examples/EnvMappedRustySteel material in Examples.material. */
 
-#include "ExampleApplication.h"
-
-class EnvMapApplication : public ExampleApplication
+class EnvMapping : public SdkSample
 {
 public:
-    EnvMapApplication() {}
+
+	EnvMapping()
+	{
+		mInfo["Title"] = "Environment Mapping";
+		mInfo["Description"] = "Shows the environment mapping feature of materials.";
+		mInfo["Thumbnail"] = "thumb_envmap.png";
+		mInfo["Category"] = "Materials";
+	}
 
 protected:
 
-    // Just override the mandatory create scene method
-    void createScene(void)
-    {
-        // Set ambient light
-        mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
+	void setupScene()
+	{     
+		mViewport->setBackgroundColour(ColourValue::White);
 
-        // Create a point light
-        Light* l = mSceneMgr->createLight("MainLight");
-        // Accept default settings: point light, white diffuse, just set position
-        // NB I could attach the light to a SceneNode if I wanted it to move automatically with
-        //  other objects, but I don't
-        l->setPosition(20,80,50);
+		// setup some basic lighting for our scene
+		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
+        mSceneMgr->createLight("MainLight")->setPosition(20, 80, 50);
 
+		// set our camera to orbit around the origin and show cursor
+		mCameraMan->setStyle(CS_ORBIT);
+		mTrayMgr->showCursor();
 
-        Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
-
-
-        // Set material loaded from Example.material
-        ent->setMaterialName("Examples/EnvMappedRustySteel");
-
-        // Add entity to the root scene node
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-
-
-        
-
-    }
-
+		// create our model, give it the shader material, and place it at the origin
+        Entity *ent = mSceneMgr->createEntity("Head", "ogrehead.mesh");
+		ent->setMaterialName("Examples/EnvMappedRustySteel");
+		mSceneMgr->getRootSceneNode()->attachObject(ent);
+	}
 };
+
+#endif
