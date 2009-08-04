@@ -1695,12 +1695,11 @@ namespace OgreBites
 		void showCursor(const Ogre::String& materialName = Ogre::StringUtil::BLANK)
 		{
 			if (materialName != Ogre::StringUtil::BLANK) getCursorImage()->setMaterialName(materialName);
-			
+
 			if (!mCursorLayer->isVisible())
 			{
-				// cursor position may have changed while hidden, so update position based on unbuffered state
-				mCursor->setPosition(mMouse->getMouseState().X.abs, mMouse->getMouseState().Y.abs);
 				mCursorLayer->show();
+				refreshCursor();
 			}
 		}
 
@@ -1718,6 +1717,16 @@ namespace OgreBites
 			}
 
 			setExpandedMenu(0);
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Updates cursor position based on unbuffered mouse state. This is necessary
+		| because if the tray manager has been cut off from mouse events for a time,
+		| the cursor position will be out of date.
+		-----------------------------------------------------------------------------*/
+		void refreshCursor()
+		{
+			mCursor->setPosition(mMouse->getMouseState().X.abs, mMouse->getMouseState().Y.abs);
 		}
 
 		void showTrays()
@@ -2190,6 +2199,26 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
+		| Hides whatever dialog is currently showing.
+		-----------------------------------------------------------------------------*/
+		void closeDialog(bool yesHit = false)
+		{
+			if (mDialog)
+			{
+				if (mOk) buttonHit(mOk);
+				else buttonHit(yesHit ? mYes : mNo);
+			}
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Determines if any dialog is currently visible.
+		-----------------------------------------------------------------------------*/
+		bool isDialogVisible()
+		{
+			return mDialog != 0;
+		}
+
+		/*-----------------------------------------------------------------------------
 		| Gets a widget from a tray by place.
 		-----------------------------------------------------------------------------*/
 		Widget* getWidget(TrayLocation trayLoc, unsigned int place)
@@ -2545,13 +2574,13 @@ namespace OgreBites
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Processes mouse button down events. Returns false if the event was
+		| Processes mouse button down events. Returns true if the event was
 		| consumed and should not be passed on to other handlers.
 		-----------------------------------------------------------------------------*/
-		bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+		bool injectMouseDown(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			// only process left button when stuff is visible
-			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible() || id != OIS::MB_Left) return true;
+			if (!mCursorLayer->isVisible() || id != OIS::MB_Left) return false;
 
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
 
@@ -2561,7 +2590,7 @@ namespace OgreBites
 			{
 				mExpandedMenu->_cursorPressed(cursorPos);
 				if (!mExpandedMenu->isExpanded()) setExpandedMenu(0);
-				return false;
+				return true;
 			}
 
 			if (mDialog)   // only check top priority widget until it passes on
@@ -2573,7 +2602,7 @@ namespace OgreBites
 					mYes->_cursorPressed(cursorPos);
 					mNo->_cursorPressed(cursorPos);
 				}
-				return false;
+				return true;
 			}
 
 			for (unsigned int i = 0; i < 9; i++)   // check if mouse is over a non-null tray
@@ -2595,7 +2624,7 @@ namespace OgreBites
 				}
 			}
 
-			if (!mTrayDrag) return true;   // don't process if mouse press is not in tray
+			if (!mTrayDrag) return false;   // don't process if mouse press is not in tray
 
 			Widget* w;
 
@@ -2613,29 +2642,29 @@ namespace OgreBites
 					if (m && m->isExpanded())       // a menu has begun a top priority session
 					{
 						setExpandedMenu(m);
-						return false;
+						return true;
 					}
 				}
 			}
 
-			return false;   // a tray click is not to be handled by another party
+			return true;   // a tray click is not to be handled by another party
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Processes mouse button up events. Returns false if the event was
+		| Processes mouse button up events. Returns true if the event was
 		| consumed and should not be passed on to other handlers.
 		-----------------------------------------------------------------------------*/
-		bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+		bool injectMouseUp(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			// only process left button when stuff is visible
-			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible() || id != OIS::MB_Left) return true;
+			if (!mCursorLayer->isVisible() || id != OIS::MB_Left) return false;
 
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
 
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
 				mExpandedMenu->_cursorReleased(cursorPos);
-				return false;
+				return true;
 			}
 
 			if (mDialog)   // only check top priority widget until it passes on
@@ -2648,10 +2677,10 @@ namespace OgreBites
 					// very important to check if second button still exists, because first button could've closed the popup
 					if (mNo) mNo->_cursorReleased(cursorPos); 
 				}
-				return false;
+				return true;
 			}
 
-			if (!mTrayDrag) return true;    // this click did not originate in a tray, so don't process
+			if (!mTrayDrag) return false;    // this click did not originate in a tray, so don't process
 
 			Widget* w;
 
@@ -2668,17 +2697,16 @@ namespace OgreBites
 			}
 
 			mTrayDrag = false;   // stop this drag
-			return false;        // this click did originate in this tray, so don't pass it on
+			return true;         // this click did originate in this tray, so don't pass it on
 		}
 
 		/*-----------------------------------------------------------------------------
-		| Updates cursor position. Returns false if the event was
+		| Updates cursor position. Returns true if the event was
 		| consumed and should not be passed on to other handlers.
 		-----------------------------------------------------------------------------*/
-		bool mouseMoved(const OIS::MouseEvent& evt)
+		bool injectMouseMove(const OIS::MouseEvent& evt)
 		{
-			// don't process if cursor layer is invisible
-			if (!mCursorLayer->isVisible() || !mTraysLayer->isVisible()) return true;
+			if (!mCursorLayer->isVisible()) return false;   // don't process if cursor layer is invisible
 
 			mCursor->setPosition(evt.state.X.abs, evt.state.Y.abs);
 
@@ -2687,7 +2715,7 @@ namespace OgreBites
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
 				mExpandedMenu->_cursorMoved(cursorPos);
-				return false;
+				return true;
 			}
 
 			if (mDialog)   // only check top priority widget until it passes on
@@ -2699,7 +2727,7 @@ namespace OgreBites
 					mYes->_cursorMoved(cursorPos);
 					mNo->_cursorMoved(cursorPos);
 				}
-				return false;
+				return true;
 			}
 
 			Widget* w;
@@ -2716,8 +2744,8 @@ namespace OgreBites
 				}
 			}
 
-			if (mTrayDrag) return false;  // don't pass this event on if we're in the middle of a drag
-			return true;
+			if (mTrayDrag) return true;  // don't pass this event on if we're in the middle of a drag
+			return false;
 		}
 
     protected:

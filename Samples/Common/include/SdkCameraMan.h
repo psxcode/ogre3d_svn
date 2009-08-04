@@ -134,6 +134,21 @@ namespace OgreBites
 			return mStyle;
 		}
 
+		/*-----------------------------------------------------------------------------
+		| Manually stops the camera when in free-look mode.
+		-----------------------------------------------------------------------------*/
+		virtual void manualStop()
+		{
+			if (mStyle == CS_FREELOOK)
+			{
+				mGoingForward = false;
+				mGoingBack = false;
+				mGoingLeft = false;
+				mGoingRight = false;
+				mVelocity = Ogre::Vector3::ZERO;
+			}
+		}
+
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			if (mStyle == CS_FREELOOK)
@@ -172,7 +187,7 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Processes key presses for free-look style movement.
 		-----------------------------------------------------------------------------*/
-		virtual bool keyPressed(const OIS::KeyEvent& evt)
+		virtual void injectKeyDown(const OIS::KeyEvent& evt)
 		{
 			if (mStyle == CS_FREELOOK)
 			{
@@ -181,13 +196,12 @@ namespace OgreBites
 				else if (evt.key == OIS::KC_A) mGoingLeft = true;
 				else if (evt.key == OIS::KC_D) mGoingRight = true;
 			}
-			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Processes key releases for free-look style movement.
 		-----------------------------------------------------------------------------*/
-		virtual bool keyReleased(const OIS::KeyEvent& evt)
+		virtual void injectKeyUp(const OIS::KeyEvent& evt)
 		{
 			if (mStyle == CS_FREELOOK)
 			{
@@ -196,13 +210,12 @@ namespace OgreBites
 				else if (evt.key == OIS::KC_A) mGoingLeft = false;
 				else if (evt.key == OIS::KC_D) mGoingRight = false;
 			}
-			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Processes mouse movement differently for each style.
 		-----------------------------------------------------------------------------*/
-		virtual bool mouseMoved(const OIS::MouseEvent& evt)
+		virtual void injectMouseMove(const OIS::MouseEvent& evt)
 		{
 			if (mStyle == CS_ORBIT)
 			{
@@ -256,32 +269,32 @@ namespace OgreBites
 					else mCamNode->lookAt(mCamNode->getPosition() + Ogre::Vector3::UNIT_Y, Ogre::Node::TS_PARENT);
 				}
 			}
-
-			return true;
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Processes mouse presses. Only applies for orbit style.
 		| Left button is for orbiting, and right button is for zooming.
 		-----------------------------------------------------------------------------*/
-		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+		virtual void injectMouseDown(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (mStyle != CS_ORBIT) return true;
-			if (id == OIS::MB_Left) mOrbiting = true;
-			else if (id == OIS::MB_Right) mZooming = true;
-			return true;
+			if (mStyle == CS_ORBIT)
+			{
+				if (id == OIS::MB_Left) mOrbiting = true;
+				else if (id == OIS::MB_Right) mZooming = true;
+			}
 		}
 
 		/*-----------------------------------------------------------------------------
 		| Processes mouse releases. Only applies for orbit style.
 		| Left button is for orbiting, and right button is for zooming.
 		-----------------------------------------------------------------------------*/
-		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+		virtual void injectMouseUp(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (mStyle != CS_ORBIT) return true;
-			if (id == OIS::MB_Left) mOrbiting = false;
-			else if (id == OIS::MB_Right) mZooming = false;
-			return true;
+			if (mStyle == CS_ORBIT)
+			{
+				if (id == OIS::MB_Left) mOrbiting = false;
+				else if (id == OIS::MB_Right) mZooming = false;
+			}
 		}
 
     protected:

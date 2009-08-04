@@ -21,12 +21,21 @@ namespace OgreBites
 			mInfo["Description"] = "";
 			mInfo["Category"] = "Unsorted";
 			mInfo["Thumbnail"] = "";
+			mInfo["Help"] = "";
 
 			mTrayMgr = 0;
 			mCameraMan = 0;
 		}
 
 		virtual ~SdkSample() {}
+
+		/*-----------------------------------------------------------------------------
+		| Manually update the cursor position after being unpaused.
+		-----------------------------------------------------------------------------*/
+		virtual void unpaused()
+		{
+			mTrayMgr->refreshCursor();
+		}
 
 		/*-----------------------------------------------------------------------------
 		| Automatically saves position and orientation for free-look cameras.
@@ -56,47 +65,77 @@ namespace OgreBites
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			mTrayMgr->frameRenderingQueued(evt);
-			mCameraMan->frameRenderingQueued(evt);
+
+			if (!mTrayMgr->isDialogVisible()) mCameraMan->frameRenderingQueued(evt);  // don't move camera if dialog is up
+
 			return true;
+		}
+
+		virtual void okDialogClosed(const Ogre::DisplayString& message)
+		{
+			if (!mCursorWasVisible) mTrayMgr->hideCursor();  // re-hide the cursor when dialog is closed
 		}
 
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
-			if (evt.key == OIS::KC_F) mTrayMgr->toggleAdvancedStats();   // toggle visibility of advanced stats
+			if (evt.key == OIS::KC_H && mInfo["Help"] != "")   // toggle visibility of help dialog
+			{
+				if (mTrayMgr->isDialogVisible()) mTrayMgr->closeDialog();
+				else
+				{
+					mCursorWasVisible = mTrayMgr->isCursorVisible();
+					mTrayMgr->showCursor();
+					mTrayMgr->showOkDialog("Help", mInfo["Help"]);
+				}
+			}
 
-			mCameraMan->keyPressed(evt);
+			if (mTrayMgr->isDialogVisible()) return true;   // don't process any more keys if dialog is up
+
+			if (evt.key == OIS::KC_F)   // toggle visibility of advanced stats
+			{
+				mTrayMgr->toggleAdvancedStats();
+			}
+
+			mCameraMan->injectKeyDown(evt);
 
 			return true;
 		}
 
 		virtual bool keyReleased(const OIS::KeyEvent& evt)
 		{
-			mCameraMan->keyReleased(evt);
+			mCameraMan->injectKeyUp(evt);
+
 			return true;
 		}
 
 		/* IMPORTANT: When overriding these following handlers, remember to allow the tray manager
 		to filter out any interface-related mouse events before processing them in your scene.
-		If the tray manager handler returns false, the event was meant for the trays, not you. */
+		If the tray manager handler returns true, the event was meant for the trays, not you. */
 
 		virtual bool mouseMoved(const OIS::MouseEvent& evt)
 		{
-			if (!mTrayMgr->mouseMoved(evt)) return false;
-			mCameraMan->mouseMoved(evt);
+			if (mTrayMgr->injectMouseMove(evt)) return true;
+
+			mCameraMan->injectMouseMove(evt);
+
 			return true;
 		}
 
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (!mTrayMgr->mousePressed(evt, id)) return false;
-			mCameraMan->mousePressed(evt, id);
+			if (mTrayMgr->injectMouseDown(evt, id)) return true;
+
+			mCameraMan->injectMouseDown(evt, id);
+
 			return true;
 		}
 
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (!mTrayMgr->mouseReleased(evt, id)) return false;
-			mCameraMan->mouseReleased(evt, id);
+			if (mTrayMgr->injectMouseUp(evt, id)) return true;
+
+			mCameraMan->injectMouseUp(evt, id);
+
 			return true;
 		}
 
@@ -152,6 +191,10 @@ namespace OgreBites
 		Ogre::Viewport* mViewport;   // main viewport
 		Ogre::Camera* mCamera;       // main camera
 		SdkCameraMan* mCameraMan;    // basic camera controller
+
+	private:
+
+		bool mCursorWasVisible;      // was cursor visible before dialog appeared (for private use)
     };
 }
 
