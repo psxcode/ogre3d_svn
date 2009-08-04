@@ -147,49 +147,31 @@ public:
 		{
 			assert(params.isNull()==false);
 
-            if (params->_findNamedConstantDefinition("vpWidth"))
+			struct AutoParamPair { String name; GpuProgramParameters::AutoConstantType type; };	
+
+			//A list of auto params that might be present in the shaders generated
+			static const AutoParamPair AUTO_PARAMS[] = {
+				{ "vpWidth",			GpuProgramParameters::ACT_VIEWPORT_WIDTH },
+				{ "vpHeight",			GpuProgramParameters::ACT_VIEWPORT_HEIGHT },
+				{ "worldView",			GpuProgramParameters::ACT_WORLDVIEW_MATRIX },
+				{ "invProj",			GpuProgramParameters::ACT_INVERSE_PROJECTION_MATRIX },
+				{ "flip",				GpuProgramParameters::ACT_RENDER_TARGET_FLIPPING },
+				{ "lightDiffuseColor",	GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR },
+				{ "lightSpecularColor", GpuProgramParameters::ACT_LIGHT_SPECULAR_COLOUR },
+				{ "lightFalloff",		GpuProgramParameters::ACT_LIGHT_ATTENUATION },
+				{ "lightPos",			GpuProgramParameters::ACT_LIGHT_POSITION_VIEW_SPACE },
+				{ "lightDir",			GpuProgramParameters::ACT_LIGHT_DIRECTION_VIEW_SPACE },
+				{ "spotParams",			GpuProgramParameters::ACT_SPOTLIGHT_PARAMS },
+				{ "farClipDistance",	GpuProgramParameters::ACT_FAR_CLIP_DISTANCE }  
+			};
+			int numParams = sizeof(AUTO_PARAMS) / sizeof(AutoParamPair);
+
+			for (int i=0; i<numParams; i++)
 			{
-                params->setNamedAutoConstant("vpWidth", GpuProgramParameters::ACT_VIEWPORT_WIDTH);
-			}
-            if (params->_findNamedConstantDefinition("vpHeight"))
-			{
-                params->setNamedAutoConstant("vpHeight", GpuProgramParameters::ACT_VIEWPORT_HEIGHT);
-			}
-			if (params->_findNamedConstantDefinition("worldView"))
-			{
-				params->setNamedAutoConstant("worldView", GpuProgramParameters::ACT_WORLDVIEW_MATRIX);
-			}
-			if (params->_findNamedConstantDefinition("invProj"))
-			{
-				params->setNamedAutoConstant("invProj", GpuProgramParameters::ACT_INVERSE_PROJECTION_MATRIX);
-			}
-            if (params->_findNamedConstantDefinition("flip"))
-			{
-				params->setNamedAutoConstant("flip", GpuProgramParameters::ACT_RENDER_TARGET_FLIPPING);
-			}
-			if (params->_findNamedConstantDefinition("lightDiffuseColor"))
-			{
-				params->setNamedAutoConstant("lightDiffuseColor", GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR);
-			}
-			if (params->_findNamedConstantDefinition("lightSpecularColor"))
-			{
-				params->setNamedAutoConstant("lightSpecularColor", GpuProgramParameters::ACT_LIGHT_SPECULAR_COLOUR);
-			}			
-			if(params->_findNamedConstantDefinition("lightFalloff"))
-			{
-				params->setNamedAutoConstant("lightFalloff", GpuProgramParameters::ACT_LIGHT_ATTENUATION);
-			}
-			if(params->_findNamedConstantDefinition("lightPos"))
-			{
-				params->setNamedAutoConstant("lightPos", GpuProgramParameters::ACT_LIGHT_POSITION_VIEW_SPACE);
-			}
-			if(params->_findNamedConstantDefinition("lightDir"))
-			{
-				params->setNamedAutoConstant("lightDir", GpuProgramParameters::ACT_LIGHT_DIRECTION_VIEW_SPACE);
-			}
-			if(params->_findNamedConstantDefinition("spotParams"))
-			{
-				params->setNamedAutoConstant("spotParams", GpuProgramParameters::ACT_SPOTLIGHT_PARAMS);
+				if (params->_findNamedConstantDefinition(AUTO_PARAMS[i].name))
+				{
+					params->setNamedAutoConstant(AUTO_PARAMS[i].name, AUTO_PARAMS[i].type);
+				}
 			}
 
 		}

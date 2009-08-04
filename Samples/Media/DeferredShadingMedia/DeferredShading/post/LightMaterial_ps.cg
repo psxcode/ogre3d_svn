@@ -62,6 +62,7 @@ float4 main(
 	uniform float flip,
 #endif
 
+	uniform float farClipDistance,
 	// Attributes of light
 	uniform float4 lightDiffuseColor,
 	uniform float4 lightSpecularColor,
@@ -90,8 +91,7 @@ float4 main(
 	float3 normal = a1.xyz;
 
 	// Calculate position of texel in view space
-	// TODO : fix calculation using normalize and far clip here as well?
-	float3 position = ray*distance;
+	float3 position = normalize(ray)*distance*farClipDistance;
 
 	// Calculate light direction and distance
 #ifdef IS_DIRECTIONAL
