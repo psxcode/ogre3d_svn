@@ -35,6 +35,9 @@ This demo source file is in the public domain.
 #include "SharedData.h"
 
 template<> SharedData* Singleton<SharedData>::ms_Singleton = 0;
+const ColourValue SAMPLE_COLORS[] = 
+    {   ColourValue::Red, ColourValue::Green, ColourValue::Blue, 
+    ColourValue::White, ColourValue(1,1,0,1), ColourValue(1,0,1,1) };
 
 class RenderToTextureFrameListener : public ExampleFrameListener
 {
@@ -218,7 +221,7 @@ protected:
             pAthene->buildTangentVectors(VES_TANGENT, src, dest);
 
         // Set ambient light
-        mSceneMgr->setAmbientLight(ColourValue(0.2, 0.2, 0.15));
+        mSceneMgr->setAmbientLight(ColourValue(0.15, 0.00, 0.00));
         // Skybox
         mSceneMgr->setSkyBox(true, "DeferredDemo/SkyBox", 500);
 
@@ -231,22 +234,17 @@ protected:
         cathedralNode->attachObject(cathedralEnt);
         //cathedralNode->scale(10, 20, 20);
 		
-        // Create an entity from a model (will be loaded automatically)
-		//Entity* knotEnt = mSceneMgr->createEntity("Knot", "knot.mesh");
-		//knotEnt->setMaterialName("DeferredDemo/RockWall");
-		//knotEnt->setMeshLodBias(0.25f);
-
-		// Create an entity from a model (will be loaded automatically)
+        // Create ogre heads to decorate the wall
 		Entity* ogreHead = mSceneMgr->createEntity("Head", "ogrehead.mesh");
 		//rootNode->createChildSceneNode( "Head" )->attachObject( ogreHead );
-        Vector3 startPos[2] = { Vector3(25.25,11,3), Vector3(25.25,11,-3) };
-        Vector3 diff(-3.7,0,0);
+        Vector3 headStartPos[2] = { Vector3(25.25,11,3), Vector3(25.25,11,-3) };
+        Vector3 headDiff(-3.7,0,0);
         for (int i=0; i < 12; i++) 
         {
             char cloneName[16];
 			sprintf(cloneName, "OgreHead%d", i);
             Entity* cloneHead = ogreHead->clone(cloneName);
-            Vector3 clonePos = startPos[i%2] + diff*(i/2);
+            Vector3 clonePos = headStartPos[i%2] + headDiff*(i/2);
             if ((i/2) >= 4) clonePos.x -= 0.75;
 			SceneNode* cloneNode = rootNode->createChildSceneNode(clonePos);
             cloneNode->attachObject(cloneHead);
@@ -255,9 +253,54 @@ protected:
             {
                 cloneNode->yaw(Degree(180));
             }
-            
         }
 
+
+        // Create a pile of wood pallets
+        Entity* woodPallet = mSceneMgr->createEntity("Pallet", "WoodPallet.mesh");
+        Vector3 woodStartPos(10, 0.5, -5.5);
+        Vector3 woodDiff(0, 0.3, 0);
+        for (int i=0; i < 5; i++)
+        {
+            char cloneName[16];
+			sprintf(cloneName, "WoodPallet%d", i);
+            Entity* clonePallet = woodPallet->clone(cloneName);
+            Vector3 clonePos = woodStartPos + woodDiff*i;
+			SceneNode* cloneNode = rootNode->createChildSceneNode(clonePos);
+            cloneNode->attachObject(clonePallet);
+            setEntityHeight(clonePallet, 0.3);
+            cloneNode->yaw(Degree(i*20));
+        }
+
+        // Create a bunch of knots
+		Entity* knotEnt = mSceneMgr->createEntity("Knot", "knot.mesh");
+		knotEnt->setMaterialName("DeferredDemo/RockWall");
+		//knotEnt->setMeshLodBias(0.25f);
+        Vector3 knotStartPos(25.5, 2, 5.5);
+        Vector3 knotDiff(-3.7, 0, 0);
+        for (int i=0; i < 5; i++)
+        {
+            char cloneName[16];
+			sprintf(cloneName, "Knot%d", i);
+            Entity* cloneKnot = knotEnt->clone(cloneName);
+            Vector3 clonePos = knotStartPos + knotDiff*i;
+			SceneNode* cloneNode = rootNode->createChildSceneNode(clonePos);
+            cloneNode->attachObject(cloneKnot);
+            setEntityHeight(cloneKnot, 3);
+            cloneNode->yaw(Degree(i*17));
+            cloneNode->roll(Degree(i*31));
+
+            sprintf(cloneName, "KnotLight%d", i);
+            Light* knotLight = mSceneMgr->createLight(cloneName);
+            knotLight->setType(Light::LT_SPOTLIGHT);
+            knotLight->setDiffuseColour(SAMPLE_COLORS[i]);
+            knotLight->setSpecularColour(ColourValue::White);
+            knotLight->setPosition(clonePos + Vector3(0,3,0));
+            knotLight->setDirection(Vector3::NEGATIVE_UNIT_Y);
+            knotLight->setSpotlightRange(Degree(25), Degree(45), 1);
+            knotLight->setAttenuation(6, 1, 0.2, 0);
+        }
+		
 		// Add a whole bunch of extra entities to fill the scene a bit
 		//Entity *cloneEnt;
 		//int N=4;
@@ -298,7 +341,7 @@ protected:
         // Create main, static light
 		Light* l1 = mSceneMgr->createLight();
         l1->setType(Light::LT_DIRECTIONAL);
-        l1->setDiffuseColour(0.75f, 0.7f, 0.8f);
+        l1->setDiffuseColour(1.0f, 0.9f, 0.1f);
 		l1->setSpecularColour(0.85f, 0.9f, 1.0f);
 		l1->setDirection(1, -0.5, -0.5);
 		

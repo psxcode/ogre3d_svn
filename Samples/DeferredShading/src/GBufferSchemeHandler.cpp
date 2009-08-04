@@ -193,4 +193,5 @@ void GBufferSchemeHandler::fillPass(
 	gBufferPass->setSpecular(originalPass->getSpecular());
 	gBufferPass->setShininess(originalPass->getShininess());
     gBufferPass->setCullingMode(originalPass->getCullingMode());
+    gBufferPass->setLightingEnabled(false);
 }

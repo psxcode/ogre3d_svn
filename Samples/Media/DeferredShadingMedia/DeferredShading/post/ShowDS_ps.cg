@@ -34,6 +34,7 @@ float4 main(
 	float4 a0 = tex2D(Tex0, texCoord); // Attribute 0: Diffuse color+shininess
 	float4 a1 = tex2D(Tex1, texCoord); // Attribute 1: Normal+depth
 
-	return float4(a0.w, 0, a1.w/1000.0, 0);
+	//Get the 3rd root of the depth to show up-close differences
+	return float4(pow(a1.w,0.33), 0, a0.w, 0);
 }
 

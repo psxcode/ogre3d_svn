@@ -37,6 +37,7 @@ material DeferredDemo/RockWall
 	{
 		pass main
 		{
+			specular 0 0 0 1 0.6
 			texture_unit
 			{
 				texture rockwall.tga
