@@ -90,6 +90,7 @@ float4 main(
 	float3 normal = a1.xyz;
 
 	// Calculate position of texel in view space
+	// TODO : fix calculation using normalize and far clip here as well?
 	float3 position = ray*distance;
 
 	// Calculate light direction and distance
@@ -128,7 +129,7 @@ float4 main(
 	total_light_contrib *= (1-spotFalloff);
 #endif
 
-	//float D = 1/attenuation;
+	//float D = 0.3;//-spotFalloff;
 	//return float4(D,D,D,0);
 	return float4(total_light_contrib*colour, 0.0);
 }
