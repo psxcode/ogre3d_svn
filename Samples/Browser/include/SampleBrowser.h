@@ -421,6 +421,10 @@ namespace OgreBites
 				}
 				else buttonHit((Button*)mTrayMgr->getWidget("Back"));  // if we're in config, just go back
 			}
+			else if(evt.key == OIS::KC_F5)   // refresh all textures
+			{
+				Ogre::TextureManager::getSingleton().reloadAll();
+			}
 
 			try
 			{
@@ -441,7 +445,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (!mTrayMgr->mousePressed(evt, id)) return true;
+			if (mTrayMgr->injectMouseDown(evt, id)) return true;
 
 			if (mTitleLabel->getTrayLocation() != TL_NONE)
 			{
@@ -475,7 +479,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
-			if (!mTrayMgr->mouseReleased(evt, id)) return true;
+			if (mTrayMgr->injectMouseUp(evt, id)) return true;
 
 			try
 			{
@@ -496,7 +500,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool mouseMoved(const OIS::MouseEvent& evt)
 		{
-			if (!mTrayMgr->mouseMoved(evt)) return true;
+			if (mTrayMgr->injectMouseMove(evt)) return true;
 
 			if (mTitleLabel->getTrayLocation() != TL_NONE && evt.state.Z.rel != 0 && mSampleMenu->getNumItems() != 0)
 			{
