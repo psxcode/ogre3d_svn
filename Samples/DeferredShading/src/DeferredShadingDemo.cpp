@@ -224,6 +224,11 @@ protected:
         mSceneMgr->setAmbientLight(ColourValue(0.15, 0.00, 0.00));
         // Skybox
         mSceneMgr->setSkyBox(true, "DeferredDemo/SkyBox", 500);
+        // Create main, static light
+		Light* l1 = mSceneMgr->createLight();
+        l1->setType(Light::LT_DIRECTIONAL);
+        l1->setDiffuseColour(0.5f, 0.45f, 0.1f);
+		l1->setDirection(1, -0.5, -0.5);
 
 		// Create "root" node
 		SceneNode* rootNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -338,14 +343,7 @@ protected:
 		SharedData::getSingleton().iSystem = mSystem;
 		mSystem->initialize();
         
-        // Create main, static light
-		Light* l1 = mSceneMgr->createLight();
-        l1->setType(Light::LT_DIRECTIONAL);
-        l1->setDiffuseColour(1.0f, 0.9f, 0.1f);
-		l1->setSpecularColour(0.85f, 0.9f, 1.0f);
-		l1->setDirection(1, -0.5, -0.5);
-		
-		
+        
 		//// Create a track for the light
   //      Animation* anim = mSceneMgr->createAnimation("LightTrack", 16);
   //      // Spline it for nice curves
