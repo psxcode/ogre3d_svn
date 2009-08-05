@@ -102,7 +102,7 @@ float4 ssao_ps(
         float3 randomDir = reflect(RAND_SAMPLES[i], randN) + viewNorm;
 
         // move new view-space position back into texture space
-        #define RADIUS 2.125
+        #define RADIUS 0.2125
         float4 nuv = mul(ptMat, float4(viewPos.xyz + randomDir * RADIUS, 1));
         nuv.xy /= nuv.w;
 
