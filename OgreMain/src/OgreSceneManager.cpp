@@ -6163,7 +6163,37 @@ void SceneManager::_resumeRendering(SceneManager::RenderContext* context)
 	}
 	mRenderQueue = context->renderQueue;
 
-	setViewport(context->viewport);
+	Ogre::Viewport* vp = context->viewport;
+	Ogre::Camera* camera = context->camera;
+
+	// Tell params about viewport
+	mAutoParamDataSource->setCurrentViewport(vp);
+	// Set the viewport - this is deliberately after the shadow texture update
+	setViewport(vp);
+
+	// Tell params about camera
+	mAutoParamDataSource->setCurrentCamera(camera, mCameraRelativeRendering);
+	// Set autoparams for finite dir light extrusion
+	mAutoParamDataSource->setShadowDirLightExtrusionDistance(mShadowDirLightExtrudeDist);
+
+	// Tell params about current ambient light
+	mAutoParamDataSource->setAmbientLightColour(mAmbientLight);
+	// Tell rendersystem
+	mDestRenderSystem->setAmbientLight(mAmbientLight.r, mAmbientLight.g, mAmbientLight.b);
+
+	// Tell params about render target
+	mAutoParamDataSource->setCurrentRenderTarget(vp->getTarget());
+
+
+	// Set camera window clipping planes (if any)
+	if (mDestRenderSystem->getCapabilities()->hasCapability(RSC_USER_CLIP_PLANES))
+	{
+		mDestRenderSystem->resetClipPlanes();
+		if (camera->isWindowSet())  
+		{
+			mDestRenderSystem->setClipPlanes(camera->getWindowPlanes());
+		}
+	}
 	mCameraInProgress = context->camera;
 	mDestRenderSystem->_beginFrame();
 
