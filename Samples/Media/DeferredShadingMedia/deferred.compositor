@@ -20,6 +20,7 @@ compositor DeferredShading/GBuffer
 			// could do this with something like a visibility mask too
 			pass render_scene
 			{
+				//material_scheme GBuffer
 				//These values are synchronized with the code
 				first_render_queue 10
 				last_render_queue  79	
@@ -30,12 +31,14 @@ compositor DeferredShading/GBuffer
 
 compositor DeferredShading/ShowLit
 {
+
 	technique
 	{
+		texture rt0 target_width target_height PF_A8R8G8B8
 		//Reference the main Gbuffer texture
 		texture_ref mrt_output DeferredShading/GBuffer mrt_output
 		
-        target_output
+        target rt0
         {
 			input none
 			
@@ -44,7 +47,7 @@ compositor DeferredShading/ShowLit
 				
 			}
 			
-			// render and other pre-gbuffer objects
+			// render skies and other pre-gbuffer objects
 			pass render_scene
 			{
 				first_render_queue 1
@@ -56,15 +59,38 @@ compositor DeferredShading/ShowLit
 			{
 				input 0 mrt_output 0
 				input 1 mrt_output 1
-			}		
-			
-			// Render the post-gbuffer objects
+			}
+		}
+		
+		//Render the passes that did not get rendered to the GBuffer (transparent)
+		target rt0
+        {
+			material_scheme NoGBuffer
+			pass render_scene
+			{
+				first_render_queue 10
+				last_render_queue 79
+			}
+		}
+		
+		// Render the post-gbuffer objects
+		target rt0
+        {
 			pass render_scene
 			{
 				//This value is synchronized with the code
 				first_render_queue 80
 			}
-			
+		}
+		
+		target_output
+		{
+			input none
+			pass render_quad
+			{
+				material DeferredShading/Post/SimpleQuad
+				input 0 rt0
+			}
 		}
 	}
 }

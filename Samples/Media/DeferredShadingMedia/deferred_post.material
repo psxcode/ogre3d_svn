@@ -123,3 +123,22 @@ material DeferredShading/Post/ShowColour
 		}
 	}
 }
+
+material DeferredShading/Post/SimpleQuad
+{
+    technique
+    {
+        pass
+        {
+            lighting off
+			depth_write off
+			depth_check off
+			
+            texture_unit
+            {
+                texture white.bmp
+                filtering none
+            }
+		}
+	}
+}

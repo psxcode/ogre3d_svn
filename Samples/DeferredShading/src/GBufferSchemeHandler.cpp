@@ -17,31 +17,39 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 	Technique* originalTechnique = originalMaterial->getBestTechnique(lodIndex, rend);
     matMgr.setActiveScheme(curSchemeName);
 
-    Technique* newTech = originalMaterial->createTechnique();
-    newTech->removeAllPasses();
+    Technique* gBufferTech = originalMaterial->createTechnique();
+    gBufferTech->removeAllPasses();
+	gBufferTech->setSchemeName(schemeName);
+
+	Technique* noGBufferTech = originalMaterial->createTechnique();
+	noGBufferTech->removeAllPasses();
+	noGBufferTech->setSchemeName("NoGBuffer");
 
     for (unsigned short i=0; i<originalTechnique->getNumPasses(); i++)
     {
         Pass* originalPass = originalTechnique->getPass(i);
-        Pass* newPass = newTech->createPass();
         PassProperties props = inspectPass(originalPass, lodIndex, rend);
-
+		
         if (props.isTransparent)
         {
-            //TODO : Generate different techinque for 'non-gbuffer' objects
+            //Just copy the technique so it gets rendered regularly
+			Pass* clonePass = noGBufferTech->createPass();
+			*clonePass = *originalPass;
             continue;
         }
+
+		Pass* newPass = gBufferTech->createPass();
 	    MaterialGenerator::Perm perm = getPermutation(props);
 
 	    const Ogre::MaterialPtr& templateMat = mMaterialGenerator.getMaterial(perm);
     	
         //We assume that the GBuffer technique contains only one pass. But its true.
 	    *newPass = *(templateMat->getTechnique(0)->getPass(0));
-	    fillPass(newTech->getPass(0), originalTechnique->getPass(0), props);    
+	    fillPass(gBufferTech->getPass(0), originalTechnique->getPass(0), props);    
     }
 
-    newTech->setSchemeName(schemeName);
-	return newTech;
+    
+	return gBufferTech;
 }
 
 bool GBufferSchemeHandler::checkNormalMap(
