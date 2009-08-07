@@ -756,7 +756,10 @@ namespace Ogre
 		* several times per complete frame if multiple viewports exist.
 		*/
 		virtual void _beginFrame(void) = 0;
-
+		
+		struct RenderSystemContext { };
+		virtual RenderSystemContext* _pauseFrame(void);
+		virtual void _resumeFrame(RenderSystemContext* context);
 
 		/**
 		* Ends rendering of a frame to the current viewport.

@@ -9,6 +9,8 @@ using namespace Ogre;
 DeferredLightRenderOperation::DeferredLightRenderOperation(
 	CompositorInstance* instance, const CompositionPass* pass)
 {
+	mViewport = instance->getChain()->getViewport();
+	
 	//Get the names of the GBuffer textures
 	const CompositionPass::InputTex& input0 = pass->getInput(0);
 	mTexName0 = instance->getTextureInstanceName(input0.name, input0.mrtIndex);
@@ -68,7 +70,7 @@ void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, Ogre::
 //-----------------------------------------------------------------------
 void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 {
-    Ogre::Camera* cam = sm->getCurrentViewport()->getCamera();
+    Ogre::Camera* cam = mViewport->getCamera();
 
 	mAmbientLight->updateFromCamera(cam);
     Technique* tech = mAmbientLight->getMaterial()->getBestTechnique();
@@ -81,7 +83,8 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
         Light* light = *it;
 		
 		//if (++i != 2) continue;
-        //if (light->getType() != Light::LT_DIRECTIONAL) continue;
+        //if (light->getType() != Light::LT_SPOTLIGHT) continue;
+		//if (light->getDiffuseColour() != ColourValue::Red) continue;
 
 		LightsMap::iterator dLightIt = mLights.find(light);
 		DLight* dLight = 0;
@@ -94,10 +97,36 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 			dLight = dLightIt->second;
 			dLight->updateFromParent();
 		}
-
 		dLight->updateFromCamera(cam);
-		
 		tech = dLight->getMaterial()->getBestTechnique();
+
+		//Update shadow texture
+		bool castShadows = sm->isShadowTechniqueInUse() && light->getCastShadows() && 
+			light->getType() == Light::LT_SPOTLIGHT;
+		if (castShadows)
+		{
+			SceneManager::RenderContext* context = sm->_pauseRendering();
+			sm->_prepareShadowTexturesPerLight(cam, mViewport, light);
+			sm->_resumeRendering(context);
+			
+			//TODO : Organise this code?
+			Pass* pass = tech->getPass(0);
+			TextureUnitState* tus = pass->getTextureUnitState("ShadowMap");
+			if (tus == 0)
+			{
+				tus = pass->createTextureUnitState();
+				tus->setContentType(TextureUnitState::CONTENT_SHADOW);
+				tus->setName("ShadowMap");
+			}
+			const String& shadowTexName = sm->getShadowTexture(0)->getName();
+			if (tus->getTextureName() != shadowTexName)
+			{
+				tus->_setTexturePtr(sm->getShadowTexture(0));
+			}
+			
+		}
+		
+		
         injectTechnique(sm, tech, dLight, light);
 	}
 }

@@ -56,7 +56,8 @@ public:
 		MI_ATTENUATED	= 0x02, // Rendered attenuated
 		MI_SPECULAR		= 0x04, // Specular component is calculated
 		MI_SPOTLIGHT	= 0x08, // Will generate shader for spotlight
-        MI_DIRECTIONAL	= 0x10, // Will generate shader for spotlight
+        MI_DIRECTIONAL	= 0x10, // Will generate shader for directional light
+		MI_SHADOW_CASTER = 0x20,// Will cast shadows
 	};
 
 	LightMaterialGenerator();

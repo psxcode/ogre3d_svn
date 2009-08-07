@@ -6141,6 +6141,7 @@ struct SceneManager::RenderContext {
 	RenderQueue* renderQueue;
 	Viewport* viewport;
 	Camera* camera;
+	RenderSystem::RenderSystemContext* rsContext;
 };
 
 SceneManager::RenderContext* SceneManager::_pauseRendering()
@@ -6150,7 +6151,7 @@ SceneManager::RenderContext* SceneManager::_pauseRendering()
 	context->viewport = mCurrentViewport;
 	context->camera = mCameraInProgress;
 	
-	mDestRenderSystem->_endFrame();
+	context->rsContext = mDestRenderSystem->_pauseFrame();
 	mRenderQueue = 0;
 	return context;
 }
@@ -6195,7 +6196,7 @@ void SceneManager::_resumeRendering(SceneManager::RenderContext* context)
 		}
 	}
 	mCameraInProgress = context->camera;
-	mDestRenderSystem->_beginFrame();
+	mDestRenderSystem->_resumeFrame(context->rsContext);
 
 	// Set rasterisation mode
     mDestRenderSystem->_setPolygonMode(mCameraInProgress->getPolygonMode());

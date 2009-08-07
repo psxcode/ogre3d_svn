@@ -91,7 +91,7 @@ public:
 			"cg", GPT_FRAGMENT_PROGRAM);
 		ptrProgram->setSource(mMasterSource);
 		ptrProgram->setParameter("entry_point","main");
-	    ptrProgram->setParameter("profiles","ps_2_0 arbfp1");
+	    ptrProgram->setParameter("profiles","ps_2_x arbfp1");
 		// set up the preprocessor defines
 		// Important to do this before any call to get parameters, i.e. before the program gets loaded
 		ptrProgram->setParameter("compile_arguments", getPPDefines(permutation));
@@ -132,6 +132,11 @@ public:
 			{
 				strPPD += "-DIS_ATTENUATED ";
 			}
+			if (permutation & LightMaterialGenerator::MI_SHADOW_CASTER
+				&& permutation & LightMaterialGenerator::MI_SPOTLIGHT)
+			{
+				strPPD += "-DIS_SHADOW_CASTER ";
+			}
 			if (permutation & LightMaterialGenerator::MI_SPOTLIGHT)
 			{
 				strPPD += "-DIS_SPOTLIGHT";
@@ -155,6 +160,7 @@ public:
 				{ "vpHeight",			GpuProgramParameters::ACT_VIEWPORT_HEIGHT },
 				{ "worldView",			GpuProgramParameters::ACT_WORLDVIEW_MATRIX },
 				{ "invProj",			GpuProgramParameters::ACT_INVERSE_PROJECTION_MATRIX },
+				{ "invView",			GpuProgramParameters::ACT_INVERSE_VIEW_MATRIX },
 				{ "flip",				GpuProgramParameters::ACT_RENDER_TARGET_FLIPPING },
 				{ "lightDiffuseColor",	GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR },
 				{ "lightSpecularColor", GpuProgramParameters::ACT_LIGHT_SPECULAR_COLOUR },
@@ -162,7 +168,8 @@ public:
 				{ "lightPos",			GpuProgramParameters::ACT_LIGHT_POSITION_VIEW_SPACE },
 				{ "lightDir",			GpuProgramParameters::ACT_LIGHT_DIRECTION_VIEW_SPACE },
 				{ "spotParams",			GpuProgramParameters::ACT_SPOTLIGHT_PARAMS },
-				{ "farClipDistance",	GpuProgramParameters::ACT_FAR_CLIP_DISTANCE }  
+				{ "farClipDistance",	GpuProgramParameters::ACT_FAR_CLIP_DISTANCE },
+				{ "shadowViewProjMat",	GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX }
 			};
 			int numParams = sizeof(AUTO_PARAMS) / sizeof(AutoParamPair);
 
@@ -173,7 +180,6 @@ public:
 					params->setNamedAutoConstant(AUTO_PARAMS[i].name, AUTO_PARAMS[i].type);
 				}
 			}
-
 		}
 };
 
@@ -184,9 +190,9 @@ LightMaterialGenerator::LightMaterialGenerator()
 	bitNames.push_back("Specular");   // MI_SPECULAR
 	bitNames.push_back("Spotlight");   // MI_SPOTLIGHT
     bitNames.push_back("Directional");   // MI_DIRECTIONAL
-
+	bitNames.push_back("ShadowCaster");	//MI_SHADOW_CASTER
 	vsMask = 0x00000001;
-	fsMask = 0x0000001F;
+	fsMask = 0x0000003F;
 	matMask = 0x00000001;
 	
 	materialBaseName = "DeferredShading/LightMaterial/";

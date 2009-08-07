@@ -53,6 +53,9 @@ private:
 
 	//The ambient light used to render the scene
 	AmbientLight* mAmbientLight;
+
+	//The viewport that we are rendering to
+	Ogre::Viewport* mViewport;
 };
 
 //The custom composition pass that is used for rendering the light geometry

@@ -27,6 +27,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "GeomUtils.h"
 #include "LightMaterialGenerator.h"
 #include "OgreTechnique.h"
+#include "OgreSceneManager.h"
 
 using namespace Ogre;
 //-----------------------------------------------------------------------
@@ -230,6 +231,17 @@ void DLight::updateFromParent()
 	setAttenuation(mParentLight->getAttenuationConstant(), 
 		mParentLight->getAttenuationLinear(), mParentLight->getAttenuationQuadric());	
 	setSpecularColour(mParentLight->getSpecularColour());
+
+	bool castsShadows = mParentLight->_getManager()->isShadowTechniqueInUse() &&
+		mParentLight->getCastShadows();
+	if (castsShadows)
+	{
+		mPermutation |= LightMaterialGenerator::MI_SHADOW_CASTER;
+	}
+	else
+	{
+		mPermutation &= ~LightMaterialGenerator::MI_SHADOW_CASTER;
+	}
 }
 //-----------------------------------------------------------------------
 bool DLight::isCameraInsideLight(Ogre::Camera* camera)

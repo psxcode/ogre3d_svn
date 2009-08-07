@@ -14,6 +14,7 @@ compositor DeferredShading/GBuffer
 			{
 			}
 			
+			shadows off
 			material_scheme GBuffer
 			
 			// everything but the lights and their meshes
@@ -41,6 +42,8 @@ compositor DeferredShading/ShowLit
         target rt0
         {
 			input none
+			//We will dispatch the shadow texture rendering ourselves
+			shadows off
 			
 			pass clear
 			{
@@ -60,28 +63,34 @@ compositor DeferredShading/ShowLit
 				input 0 mrt_output 0
 				input 1 mrt_output 1
 			}
-		}
-		
-		//Render the passes that did not get rendered to the GBuffer (transparent)
-		target rt0
-        {
-			material_scheme NoGBuffer
-			pass render_scene
-			{
-				first_render_queue 10
-				last_render_queue 79
-			}
-		}
-		
-		// Render the post-gbuffer objects
-		target rt0
-        {
+			
 			pass render_scene
 			{
 				//This value is synchronized with the code
 				first_render_queue 80
 			}
 		}
+		
+		//Render the passes that did not get rendered to the GBuffer (transparent)
+		//target rt0
+        //{
+		//	//shadows off?
+		//	shadows off
+		//	material_scheme NoGBuffer
+		//	pass render_scene
+		//	{
+		//		first_render_queue 10
+		//		last_render_queue 79
+		//	}
+		//}
+		
+		// Render the post-gbuffer objects
+		//target rt0
+        //{
+		//	//shadows off?
+		//	shadows off
+		//	
+		//}
 		
 		target_output
 		{

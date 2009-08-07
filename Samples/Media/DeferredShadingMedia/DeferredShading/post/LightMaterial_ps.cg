@@ -25,7 +25,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 //DirectX needs this to compensate for jitter
-ps_2_0 float2 fixUV(float2 texCoord, float2 texSize)
+ps_2_x float2 fixUV(float2 texCoord, float2 texSize)
 {
 	return texCoord - (float2(0.5,0.5)/texSize);
 }
@@ -60,6 +60,12 @@ float4 main(
 	uniform float vpHeight,
 	uniform float3 farCorner,
 	uniform float flip,
+#endif
+
+#ifdef IS_SHADOW_CASTER
+	uniform float4x4 invView,
+	uniform float4x4 shadowViewProjMat,
+	uniform sampler ShadowTex : register(s2),
 #endif
 
 	uniform float farClipDistance,
@@ -103,6 +109,17 @@ float4 main(
 	float3 objToLightDir = objToLightVec/len;
 #endif
 
+#ifdef IS_SHADOW_CASTER
+	float3 worldPos = mul(invView, float4(position, 1)).xyz;
+	float4 shadowProjPos = mul(shadowViewProjMat, float4(worldPos,1));
+	shadowProjPos /= shadowProjPos.w;
+	//float2 shadowSampleTexCoord = float2(shadowProjPos.x, shadowProjPos.y * -1 * flip) * 0.5 + 0.5;
+	float2 shadowSampleTexCoord = shadowProjPos.xy;
+	float shadowDepth = tex2D(ShadowTex, shadowSampleTexCoord);
+	float shadowDistance = shadowDepth * lightFalloff.x;
+	clip(shadowDistance - len);
+#endif
+	
 	// Calculate diffuse colour
 	float3 total_light_contrib;
 	total_light_contrib = max(0.0,dot(objToLightDir, normal)) * lightDiffuseColor.rgb;
@@ -129,7 +146,10 @@ float4 main(
 	total_light_contrib *= (1-spotFalloff);
 #endif
 
-	//float D = 0.3;//-spotFalloff;
+	//if (shadowDepth == 1)
+	//	total_light_contrib += float4(0.5,0.5,0.5,0);
+		
+	//float D = shadowDepth;//-spotFalloff;
 	//return float4(D,D,D,0);
 	return float4(total_light_contrib*colour, 0.0);
 }

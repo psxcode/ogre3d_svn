@@ -738,6 +738,17 @@ namespace Ogre {
 		mTexProjRelativeOrigin = pos;
 
 	}
+	//---------------------------------------------------------------------
+	RenderSystem::RenderSystemContext* RenderSystem::_pauseFrame(void)
+	{
+		_endFrame();
+		return 0;
+	}
+	//---------------------------------------------------------------------
+	void RenderSystem::_resumeFrame(RenderSystemContext* context)
+	{
+		_beginFrame();
+	}
 
 }
 
