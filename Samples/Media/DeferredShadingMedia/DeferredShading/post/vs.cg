@@ -31,14 +31,16 @@ void main(
 	
 	out float3 oRay : TEXCOORD1,
 	
-	uniform float3 farCorner
+	uniform float3 farCorner,
+	uniform float flip
 	)
 {
 	// Clean up inaccuracies
 	Pos.xy = sign(Pos.xy);
-
+	
 	oPos = float4(Pos.xy, 0, 1);
-
+	oPos.y *= flip;
+	
 	// Image-space
 	oTexCoord.x = 0.5 * (1 + Pos.x);
 	oTexCoord.y = 0.5 * (1 - Pos.y);

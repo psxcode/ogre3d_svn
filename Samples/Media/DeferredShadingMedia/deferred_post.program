@@ -61,7 +61,7 @@ vertex_program DeferredShading/post/LightMaterial_vs cg
 	default_params
 	{
 		param_named_auto worldViewProj worldviewproj_matrix
-		param_named_auto flip requires_texture_flipping
+		param_named_auto flip render_target_flipping
 		param_named_auto vpWidth viewport_width
 		param_named_auto vpHeight viewport_height
 		//farCorner needs to be filled by shaders
@@ -148,6 +148,8 @@ vertex_program DeferredShading/post/vs cg
 	default_params
 	{
 		//param_named_auto invProj inverse_projection_matrix
+		param_named_auto flip render_target_flipping
+		param_named_auto worldViewProj worldviewproj_matrix
 		param_named farCorner float3 1 1 1
 	}
 }
