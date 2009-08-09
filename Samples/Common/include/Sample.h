@@ -34,6 +34,7 @@ namespace OgreBites
 
 		Sample()
         {
+			mRoot = Ogre::Root::getSingletonPtr();
 			mWindow = 0;
 			mSceneMgr = 0;
 			mDone = true;
@@ -211,6 +212,7 @@ namespace OgreBites
 			}
 		}
 
+		Ogre::Root* mRoot;                // OGRE root object
 		Ogre::RenderWindow* mWindow;      // context render window
 		OIS::Keyboard* mKeyboard;         // context keyboard device
 		OIS::Mouse* mMouse;               // context mouse device

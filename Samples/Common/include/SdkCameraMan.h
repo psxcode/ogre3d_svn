@@ -30,10 +30,10 @@ namespace OgreBites
 			mGoingBack = false;
 			mGoingLeft = false;
 			mGoingRight = false;
+			mGoingUp = false;
+			mGoingDown = false;
 			mVelocity = Ogre::Vector3::ZERO;
 
-			// create our camera's main control scene node and set our camera and style
-			mCamNode = cam->getSceneManager()->getRootSceneNode()->createChildSceneNode();
 			setCamera(cam);
 			setStyle(CS_FREELOOK);
 		}
@@ -45,9 +45,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void setCamera(Ogre::Camera* cam)
 		{
-			if (mCamera) mCamNode->detachObject(mCamera);
 			mCamera = cam;
-			if (mCamera) mCamNode->attachObject(mCamera);
 		}
 
 		virtual Ogre::Camera* getCamera()
@@ -55,25 +53,20 @@ namespace OgreBites
 			return mCamera;
 		}
 
-		virtual Ogre::SceneNode* getCameraNode()
-		{
-			return mCamNode;
-		}
-
 		/*-----------------------------------------------------------------------------
 		| Sets the target we will revolve around. Only applies for orbit style.
 		-----------------------------------------------------------------------------*/
-		virtual void setTarget(Ogre::Node* target)
+		virtual void setTarget(Ogre::SceneNode* target)
 		{
 			if (mStyle == CS_ORBIT)
 			{
-				mTarget->removeChild(mCamNode);
-				mTarget = target ? target : mCamNode->getCreator()->getRootSceneNode();
-				mTarget->addChild(mCamNode);
+				mTarget = target ? target : mCamera->getSceneManager()->getRootSceneNode();
+				setTargetOffset(Ogre::Degree(0), Ogre::Degree(15), 150);
+				mCamera->setAutoTracking(true, mTarget);
 			}
 		}
 
-		virtual Ogre::Node* getTarget()
+		virtual Ogre::SceneNode* getTarget()
 		{
 			return mTarget;
 		}
@@ -85,10 +78,11 @@ namespace OgreBites
 		{
 			if (mStyle == CS_ORBIT)
 			{
-				mCamNode->setPosition(0, 0, 0);
-				mCamNode->yaw(yaw, Ogre::Node::TS_PARENT);
-				mCamNode->pitch(-pitch, Ogre::Node::TS_LOCAL);
-				mCamNode->translate(0, 0, dist, Ogre::Node::TS_LOCAL);
+				mCamera->setPosition(mTarget->_getDerivedPosition());
+				mCamera->setOrientation(mTarget->_getDerivedOrientation());
+				mCamera->yaw(yaw);
+				mCamera->pitch(-pitch);
+				mCamera->moveRelative(Ogre::Vector3(0, 0, dist));
 			}
 		}
 
@@ -110,22 +104,23 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void setStyle(CameraStyle style)
 		{
-			mStyle = style;
-
-			// reset the camera's target if using orbit style
-			if (mStyle == CS_ORBIT) setTargetOffset(Ogre::Degree(0), Ogre::Degree(15), 150);
-			else
+			if (mStyle != CS_ORBIT && style == CS_ORBIT)
 			{
-				if (mTarget)   // unparent the camera node if not using orbit style
-				{
-					mTarget->removeChild(mCamNode);
-					mCamNode->getCreator()->getRootSceneNode()->addChild(mCamNode);
-				}
-
-				// reset camera position and set the target to the root
-				mTarget = mCamNode->getParent();
-				mCamNode->setPosition(Ogre::Vector3::ZERO);
-				mCamNode->setOrientation(Ogre::Quaternion::IDENTITY);
+				mStyle = CS_ORBIT;
+				setTarget(mTarget);
+				mCamera->setFixedYawAxis(true);
+			}
+			else if (mStyle != CS_FREELOOK && style == CS_FREELOOK)
+			{
+				mStyle = CS_FREELOOK;
+				mCamera->setAutoTracking(false);
+				mCamera->setFixedYawAxis(true);
+			}
+			else if (mStyle != CS_MANUAL && style == CS_MANUAL)
+			{
+				mStyle = CS_MANUAL;
+				mCamera->setAutoTracking(false);
+				mCamera->setFixedYawAxis(false);
 			}
 		}
 
@@ -145,6 +140,8 @@ namespace OgreBites
 				mGoingBack = false;
 				mGoingLeft = false;
 				mGoingRight = false;
+				mGoingUp = false;
+				mGoingDown = false;
 				mVelocity = Ogre::Vector3::ZERO;
 			}
 		}
@@ -155,10 +152,12 @@ namespace OgreBites
 			{
 				// build our acceleration vector based on keyboard input composite
 				Ogre::Vector3 accel = Ogre::Vector3::ZERO;
-				if (mGoingForward) accel -= mCamNode->getOrientation().zAxis();
-				if (mGoingBack) accel += mCamNode->getOrientation().zAxis();
-				if (mGoingRight) accel += mCamNode->getOrientation().xAxis();
-				if (mGoingLeft) accel -= mCamNode->getOrientation().xAxis();
+				if (mGoingForward) accel += mCamera->getDirection();
+				if (mGoingBack) accel -= mCamera->getDirection();
+				if (mGoingRight) accel += mCamera->getRight();
+				if (mGoingLeft) accel -= mCamera->getRight();
+				if (mGoingUp) accel += Ogre::Vector3::UNIT_Y;
+				if (mGoingDown) accel -= Ogre::Vector3::UNIT_Y;
 
 				// if accelerating, try to reach top speed in a certain time
 				if (accel.squaredLength() != 0)
@@ -177,8 +176,7 @@ namespace OgreBites
 				}
 				else if (mVelocity.squaredLength() < 0.1) mVelocity = Ogre::Vector3::ZERO;
 
-				if (mVelocity != Ogre::Vector3::ZERO)
-					mCamNode->translate(mVelocity * evt.timeSinceLastFrame);
+				if (mVelocity != Ogre::Vector3::ZERO) mCamera->move(mVelocity * evt.timeSinceLastFrame);
 			}
 
 			return true;
@@ -191,10 +189,12 @@ namespace OgreBites
 		{
 			if (mStyle == CS_FREELOOK)
 			{
-				if (evt.key == OIS::KC_W) mGoingForward = true;
-				else if (evt.key == OIS::KC_S) mGoingBack = true;
-				else if (evt.key == OIS::KC_A) mGoingLeft = true;
-				else if (evt.key == OIS::KC_D) mGoingRight = true;
+				if (evt.key == OIS::KC_W || evt.key == OIS::KC_UP) mGoingForward = true;
+				else if (evt.key == OIS::KC_S || evt.key == OIS::KC_DOWN) mGoingBack = true;
+				else if (evt.key == OIS::KC_A || evt.key == OIS::KC_LEFT) mGoingLeft = true;
+				else if (evt.key == OIS::KC_D || evt.key == OIS::KC_RIGHT) mGoingRight = true;
+				else if (evt.key == OIS::KC_PGUP) mGoingUp = true;
+				else if (evt.key == OIS::KC_PGDOWN) mGoingDown = true;
 			}
 		}
 
@@ -205,10 +205,12 @@ namespace OgreBites
 		{
 			if (mStyle == CS_FREELOOK)
 			{
-				if (evt.key == OIS::KC_W) mGoingForward = false;
-				else if (evt.key == OIS::KC_S) mGoingBack = false;
-				else if (evt.key == OIS::KC_A) mGoingLeft = false;
-				else if (evt.key == OIS::KC_D) mGoingRight = false;
+				if (evt.key == OIS::KC_W || evt.key == OIS::KC_UP) mGoingForward = false;
+				else if (evt.key == OIS::KC_S || evt.key == OIS::KC_DOWN) mGoingBack = false;
+				else if (evt.key == OIS::KC_A || evt.key == OIS::KC_LEFT) mGoingLeft = false;
+				else if (evt.key == OIS::KC_D || evt.key == OIS::KC_RIGHT) mGoingRight = false;
+				else if (evt.key == OIS::KC_PGUP) mGoingUp = false;
+				else if (evt.key == OIS::KC_PGDOWN) mGoingDown = false;
 			}
 		}
 
@@ -219,55 +221,34 @@ namespace OgreBites
 		{
 			if (mStyle == CS_ORBIT)
 			{
+				Ogre::Real dist = (mCamera->getPosition() - mTarget->_getDerivedPosition()).length();
+
 				if (mOrbiting)   // yaw around the target, and pitch locally
 				{
-					Ogre::Degree yaw(-evt.state.X.rel * 0.25f);
-					Ogre::Degree pitch(-evt.state.Y.rel * 0.25f);
+					mCamera->setPosition(mTarget->_getDerivedPosition());
 
-					Ogre::Real dist = mCamNode->getPosition().length();
+					mCamera->yaw(Ogre::Degree(-evt.state.X.rel * 0.25f));
+					mCamera->pitch(Ogre::Degree(-evt.state.Y.rel * 0.25f));
 
-					mCamNode->translate(0, 0, -dist, Ogre::Node::TS_LOCAL);
-					
-					mCamNode->yaw(yaw, Ogre::Node::TS_PARENT);
-					mCamNode->pitch(pitch);
-
-					mCamNode->translate(0, 0, dist, Ogre::Node::TS_LOCAL);
+					mCamera->moveRelative(Ogre::Vector3(0, 0, dist));
 
 					// don't let the camera go over the top or around the bottom of the target
-					if (mCamNode->getOrientation().yAxis().y < 0)
-					{
-						if (mCamNode->getOrientation().zAxis().y > 0) mCamNode->setPosition(0, dist, 0);
-						else mCamNode->setPosition(0, -dist, 0);
-						mCamNode->lookAt(Ogre::Vector3::ZERO, Ogre::Node::TS_PARENT);
-					}
 				}
 				else if (mZooming)  // move the camera toward or away from the target
 				{
 					// the further the camera is, the faster it moves
-					mCamNode->translate(0, 0, evt.state.Y.rel * 0.004f * mCamNode->getPosition().length(),
-						Ogre::Node::TS_LOCAL);
+					mCamera->moveRelative(Ogre::Vector3(0, 0, evt.state.Y.rel * 0.004f * dist));
 				}
 				else if (evt.state.Z.rel != 0)  // move the camera toward or away from the target
 				{
 					// the further the camera is, the faster it moves
-					mCamNode->translate(0, 0, -evt.state.Z.rel * 0.0008f * mCamNode->getPosition().length(),
-						Ogre::Node::TS_LOCAL);
+					mCamera->moveRelative(Ogre::Vector3(0, 0, -evt.state.Z.rel * 0.0008f * dist));
 				}
 			}
 			else if (mStyle == CS_FREELOOK)
 			{
-				Ogre::Degree yaw(-evt.state.X.rel * 0.15f);
-				Ogre::Degree pitch(-evt.state.Y.rel * 0.15f);
-
-				mCamNode->yaw(yaw, Ogre::Node::TS_PARENT);
-				mCamNode->pitch(pitch);
-
-				if (mCamNode->getOrientation().yAxis().y < 0)
-				{
-					if (mCamNode->getOrientation().zAxis().y > 0)
-						mCamNode->lookAt(mCamNode->getPosition() + Ogre::Vector3::NEGATIVE_UNIT_Y, Ogre::Node::TS_PARENT);
-					else mCamNode->lookAt(mCamNode->getPosition() + Ogre::Vector3::UNIT_Y, Ogre::Node::TS_PARENT);
-				}
+				mCamera->yaw(Ogre::Degree(-evt.state.X.rel * 0.15f));
+				mCamera->pitch(Ogre::Degree(-evt.state.Y.rel * 0.15f));
 			}
 		}
 
@@ -300,10 +281,9 @@ namespace OgreBites
     protected:
 
 		Ogre::Camera* mCamera;
-		Ogre::SceneNode* mCamNode;
 		Ogre::String mName;
 		CameraStyle mStyle;
-		Ogre::Node* mTarget;
+		Ogre::SceneNode* mTarget;
 		bool mOrbiting;
 		bool mZooming;
 		Ogre::Real mTopSpeed;
@@ -312,6 +292,8 @@ namespace OgreBites
 		bool mGoingBack;
 		bool mGoingLeft;
 		bool mGoingRight;
+		bool mGoingUp;
+		bool mGoingDown;
     };
 }
 

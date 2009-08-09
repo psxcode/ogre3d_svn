@@ -10,16 +10,17 @@ using namespace OgreBites;
 is all in the material script itself. You won't find anything even vaguely related to transparency in
 this source code. Check out the Examples/WaterStream material in Examples.material. */
 
-class Transparency : public SdkSample
+class TransparencySample : public SdkSample
 {
 public:
 
-	Transparency()
+	TransparencySample()
 	{
 		mInfo["Title"] = "Transparency";
 		mInfo["Description"] = "Demonstrates the use of transparent materials (or scene blending).";
 		mInfo["Thumbnail"] = "thumb_trans.png";
 		mInfo["Category"] = "Materials";
+		mInfo["Help"] = "Follow the fish!";
 	}
 
 	bool frameRenderingQueued(const FrameEvent& evt)
@@ -40,7 +41,7 @@ public:
 
 		mFishSwim->addTime(evt.timeSinceLastFrame * 5);   // update fishy's swimming animation
 
-		return SdkSample::frameRenderingQueued(evt);
+		return SdkSample::frameRenderingQueued(evt);   // don't forget the parent class updates!
 	}
 
 protected:
@@ -49,16 +50,16 @@ protected:
 	{     
 		mSceneMgr->setSkyBox(true, "Examples/TrippySkyBox");
 
-		mCameraMan->getCameraNode()->setPosition(0, 0, 200);
+		mCamera->setPosition(0, 0, 300);   // set camera's starting position
 
-        mSceneMgr->createLight("MainLight")->setPosition(20, 80, 50);   // add basic lighting
+        mSceneMgr->createLight()->setPosition(20, 80, 50);   // add basic point light
 
 		// create a torus knot model, give it the translucent texture, and attach it to the origin
 		Entity* ent = mSceneMgr->createEntity("Knot", "knot.mesh");
         ent->setMaterialName("Examples/WaterStream");
 		mSceneMgr->getRootSceneNode()->attachObject(ent);
 
-		// create a fishy, then save and enable its swimming animation
+		// create a fishy and enable its swimming animation
 		ent = mSceneMgr->createEntity("Fish", "fish.mesh");
 		mFishSwim = ent->getAnimationState("swim");
 		mFishSwim->setEnabled(true);

@@ -10,11 +10,11 @@ using namespace OgreBites;
 is all in the material script itself. You won't find anything even vaguely related to env-mapping in
 this source code. Check out the Examples/EnvMappedRustySteel material in Examples.material. */
 
-class EnvMapping : public SdkSample
+class EnvMappingSample : public SdkSample
 {
 public:
 
-	EnvMapping()
+	EnvMappingSample()
 	{
 		mInfo["Title"] = "Environment Mapping";
 		mInfo["Description"] = "Shows the environment mapping feature of materials.";
@@ -30,7 +30,7 @@ protected:
 
 		// setup some basic lighting for our scene
 		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
-        mSceneMgr->createLight("MainLight")->setPosition(20, 80, 50);
+        mSceneMgr->createLight()->setPosition(20, 80, 50);
 
 		// set our camera to orbit around the origin and show cursor
 		mCameraMan->setStyle(CS_ORBIT);

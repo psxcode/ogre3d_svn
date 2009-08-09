@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class CelShading : public SdkSample
+class CelShadingSample : public SdkSample
 {
 public:
 
-	CelShading()
+	CelShadingSample()
 	{
 		mInfo["Title"] = "Cel-shading";
 		mInfo["Description"] = "A demo of cel-shaded graphics using vertex & fragment programs.";
@@ -46,7 +46,7 @@ protected:
 		mTrayMgr->showCursor();
 
 		// create a basic point light with an offset
-		Light* light = mSceneMgr->createLight("MainLight");
+		Light* light = mSceneMgr->createLight();
 		light->setPosition(20, 40, 50);
 
 		// attach the light to a pivot node

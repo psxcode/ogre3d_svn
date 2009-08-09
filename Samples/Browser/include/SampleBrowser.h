@@ -421,10 +421,6 @@ namespace OgreBites
 				}
 				else buttonHit((Button*)mTrayMgr->getWidget("Back"));  // if we're in config, just go back
 			}
-			else if(evt.key == OIS::KC_F5)   // refresh all textures
-			{
-				Ogre::TextureManager::getSingleton().reloadAll();
-			}
 
 			try
 			{
@@ -502,7 +498,8 @@ namespace OgreBites
 		{
 			if (mTrayMgr->injectMouseMove(evt)) return true;
 
-			if (mTitleLabel->getTrayLocation() != TL_NONE && evt.state.Z.rel != 0 && mSampleMenu->getNumItems() != 0)
+			if (!(mCurrentSample && !mSamplePaused) && mTitleLabel->getTrayLocation() != TL_NONE &&
+				evt.state.Z.rel != 0 && mSampleMenu->getNumItems() != 0)
 			{
 				int newIndex = mSampleMenu->getSelectionIndex() - evt.state.Z.rel / Ogre::Math::Abs(evt.state.Z.rel);
 				mSampleMenu->selectItem(Ogre::Math::Clamp<int>(newIndex, 0, mSampleMenu->getNumItems() - 1));

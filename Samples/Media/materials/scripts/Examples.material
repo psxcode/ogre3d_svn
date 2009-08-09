@@ -37,7 +37,7 @@ material Examples/OgreLogo
 	}
 }
 
-material Examples/DarkMaterial
+material Examples/BeachStones
 {
 	technique
 	{
@@ -88,6 +88,7 @@ material Examples/SpaceSkyBox
 		}
 	}
 }
+
 material Examples/SceneSkyBox1
 {
 	technique
@@ -105,6 +106,7 @@ material Examples/SceneSkyBox1
 		}
 	}
 }
+
 material Examples/SceneCubeMap1
 {
 	technique
@@ -122,6 +124,7 @@ material Examples/SceneCubeMap1
 		}
 	}
 }
+
 material Examples/SceneSkyBox2
 {
 	technique
@@ -139,6 +142,7 @@ material Examples/SceneSkyBox2
 		}
 	}
 }
+
 material Examples/SceneCubeMap2
 {
 	technique
@@ -201,6 +205,7 @@ fragment_program Examples/MorningSkyBoxHDRfp cg
 	profiles ps_2_0 arbfp1
 
 }
+
 material Examples/MorningSkyBox
 {
 	technique
@@ -245,6 +250,7 @@ material Examples/MorningSkyBox
 		}
 	}
 }
+
 fragment_program Examples/MorningCubeMapHDRfp cg
 {
 	source hdr.cg
@@ -252,6 +258,7 @@ fragment_program Examples/MorningCubeMapHDRfp cg
 	profiles ps_2_0 arbfp1
 
 }
+
 material Examples/MorningCubeMap
 {
 	technique
@@ -290,7 +297,6 @@ material Examples/MorningCubeMap
 	}
 }
 
-
 material Examples/EveningSkyBox
 {
 	technique
@@ -326,13 +332,13 @@ material Examples/CloudySky
 		}
 	}
 }
+
 material Examples/RustySteel
 {
 	technique
 	{
 		pass
 		{
-
 			texture_unit
 			{
 				texture RustySteel.jpg
@@ -340,13 +346,13 @@ material Examples/RustySteel
 		}
 	}
 }
+
 material Examples/Chrome
 {
 	technique
 	{
 		pass
 		{
-
 			texture_unit
 			{
 				texture Chrome.jpg
@@ -355,6 +361,7 @@ material Examples/Chrome
 		}
 	}
 }
+
 material Examples/SpaceSkyPlane
 {
 	technique
@@ -363,7 +370,6 @@ material Examples/SpaceSkyPlane
 		{
 			lighting off
 			depth_write off
-			fog_override true none
 
 			texture_unit
 			{
@@ -372,6 +378,7 @@ material Examples/SpaceSkyPlane
 		}
 	}
 }
+
 material Examples/TextureEffect1
 {
 	technique
@@ -392,6 +399,7 @@ material Examples/TextureEffect1
 		}
 	}
 }
+
 material Examples/TextureEffect2
 {
 	technique
@@ -407,6 +415,7 @@ material Examples/TextureEffect2
 		}
 	}
 }
+
 material Examples/TextureEffect3
 {
 	technique
@@ -461,8 +470,6 @@ material Examples/BumpyMetal
 		pass
 		{
 			ambient 0.75 0.75 0.75
-			cull_hardware none
-			cull_software none
 
 			texture_unit
 			{
@@ -561,6 +568,7 @@ material Examples/Droplet
 	{
 		pass
 		{
+			emissive 0.3 0.3 0.3
 			scene_blend colour_blend
 			depth_write off
 

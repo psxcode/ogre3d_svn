@@ -50,8 +50,7 @@ namespace OgreBites
 		virtual void itemSelected(SelectMenu* menu) {}
 		virtual void labelHit(Label* label) {}
 		virtual void sliderMoved(Slider* slider) {}
-		virtual void boxChecked(CheckBox* checkBox) {}
-		virtual void boxUnchecked(CheckBox* checkBox) {}
+		virtual void checkBoxToggled(CheckBox* checkBox) {}
 		virtual void okDialogClosed(const Ogre::DisplayString& message) {}
 		virtual void yesNoDialogClosed(const Ogre::DisplayString& question, bool yesHit) {}
     };
@@ -199,6 +198,21 @@ namespace OgreBites
 		TrayLocation getTrayLocation()
 		{
 			return mTrayLoc;
+		}
+
+		void hide()
+		{
+			mElement->hide();
+		}
+
+		void show()
+		{
+			mElement->show();
+		}
+
+		bool isVisible()
+		{
+			return mElement->isVisible();
 		}
 
 		// callbacks
@@ -1342,7 +1356,20 @@ namespace OgreBites
 			}
 
 			Ogre::String desc = "ParamsPanel \"" + getName() + "\" has no parameter \"" + paramName.asUTF8() + "\".";
-			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "ParamsPanel::getParamValue");
+			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "ParamsPanel::setParamValue");
+		}
+
+		void setParamValue(unsigned int index, const Ogre::DisplayString& paramValue)
+		{
+			if (index < 0 || index >= mNames.size())
+			{
+				Ogre::String desc = "ParamsPanel \"" + getName() + "\" has no parameter at position " +
+					Ogre::StringConverter::toString(index) + ".";
+				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "ParamsPanel::setParamValue");
+			}
+
+			mValues[index] = paramValue.asUTF8();
+			updateText();
 		}
 
 		Ogre::DisplayString getParamValue(const Ogre::DisplayString& paramName)
@@ -1355,6 +1382,18 @@ namespace OgreBites
 			Ogre::String desc = "ParamsPanel \"" + getName() + "\" has no parameter \"" + paramName.asUTF8() + "\".";
 			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "ParamsPanel::getParamValue");
 			return "";
+		}
+
+		Ogre::DisplayString getParamValue(unsigned int index)
+		{
+			if (index < 0 || index >= mNames.size())
+			{
+				Ogre::String desc = "ParamsPanel \"" + getName() + "\" has no parameter at position " +
+					Ogre::StringConverter::toString(index) + ".";
+				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "ParamsPanel::getParamValue");
+			}
+			
+			return mValues[index];
 		}
 
 		const Ogre::StringVector& getAllParamValues()
@@ -1431,27 +1470,22 @@ namespace OgreBites
 		{
 			if (checked) mX->show();
 			else mX->hide();
-
-			if (mListener && notifyListener)
-			{
-				if (checked) mListener->boxChecked(this);
-				else mListener->boxUnchecked(this);
-			}
+			if (mListener && notifyListener) mListener->checkBoxToggled(this);
 		}
 
-		void check()
+		void check(bool notifyListener = true)
 		{
-			setChecked(true);
+			setChecked(true, notifyListener);
 		}
 
-		void uncheck()
+		void uncheck(bool notifyListener = true)
 		{
-			setChecked(false);
+			setChecked(false, notifyListener);
 		}
 
-		void toggle()
+		void toggle(bool notifyListener = true)
 		{
-			setChecked(!isChecked());
+			setChecked(!isChecked(), notifyListener);
 		}
 
 		void _cursorPressed(const Ogre::Vector2& cursorPos)
@@ -2012,9 +2046,9 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Shows frame statistics widget set in the specified location.
 		-----------------------------------------------------------------------------*/
-		void showStats(TrayLocation trayLoc, unsigned int place = -1)
+		void showFrameStats(TrayLocation trayLoc, unsigned int place = -1)
 		{
-			if (!areStatsVisible())
+			if (!areFrameStatsVisible())
 			{
 				Ogre::StringVector stats;
 				stats.push_back("Average FPS");
@@ -2035,9 +2069,9 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Hides frame statistics widget set.
 		-----------------------------------------------------------------------------*/
-		void hideStats()
+		void hideFrameStats()
 		{
-			if (areStatsVisible())
+			if (areFrameStatsVisible())
 			{
 				destroyWidget(mFpsLabel);
 				destroyWidget(mStatsPanel);
@@ -2046,7 +2080,7 @@ namespace OgreBites
 			}
 		}
 
-		bool areStatsVisible()
+		bool areFrameStatsVisible()
 		{
 			return mFpsLabel != 0;
 		}
@@ -2054,7 +2088,7 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Toggles visibility of advanced statistics.
 		-----------------------------------------------------------------------------*/
-		void toggleAdvancedStats()
+		void toggleAdvancedFrameStats()
 		{
 			if (mFpsLabel) labelHit(mFpsLabel);
 		}
@@ -2476,7 +2510,7 @@ namespace OgreBites
 
 			Ogre::RenderTarget::FrameStats stats = mWindow->getStatistics();
 
-			if (areStatsVisible())
+			if (areFrameStatsVisible())
 			{
 				std::ostringstream oss;
 				Ogre::String s;
