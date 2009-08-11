@@ -404,7 +404,7 @@ protected:
 		// Create light nodes
 		vector<Node*>::type nodes;
 
-        Vector4 attParams = Vector4(1.5,1,0,5);
+        Vector4 attParams = Vector4(3,1,0,5);
         Real lightRadius = 25;
 
 		Light *a = mSceneMgr->createLight();

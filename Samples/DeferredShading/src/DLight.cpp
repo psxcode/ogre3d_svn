@@ -72,7 +72,6 @@ void DLight::setAttenuation(float c, float b, float a)
 	else
 	{
 		mPermutation &= ~LightMaterialGenerator::MI_ATTENUATED;
-		
 	}
     outerRadius = mParentLight->getAttenuationRange();
 
@@ -99,13 +98,11 @@ void DLight::rebuildGeometry(float radius)
 	case Light::LT_DIRECTIONAL:
 		createRectangle2D();
         mPermutation |= LightMaterialGenerator::MI_DIRECTIONAL;
-		mPermutation |= LightMaterialGenerator::MI_QUAD;
 		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
 		break;
 	case Light::LT_POINT:
 		/// XXX some more intelligent expression for rings and segments
 		createSphere(radius, 10, 10);
-		mPermutation &= ~LightMaterialGenerator::MI_QUAD;
 		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
         mPermutation &= ~LightMaterialGenerator::MI_DIRECTIONAL;
 		break;
@@ -114,7 +111,6 @@ void DLight::rebuildGeometry(float radius)
 		Radian coneRadiusAngle = mParentLight->getSpotlightOuterAngle() / 2;
         Real radius = Math::Tan(coneRadiusAngle) * height;
 		createCone(radius, height, 20);
-		mPermutation &= ~LightMaterialGenerator::MI_QUAD;
 		mPermutation |= LightMaterialGenerator::MI_SPOTLIGHT;
         mPermutation &= ~LightMaterialGenerator::MI_DIRECTIONAL;
 		break;

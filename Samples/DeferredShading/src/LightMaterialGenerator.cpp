@@ -54,7 +54,7 @@ public:
 	{
         String programName = "DeferredShading/post/";
 
-		if (permutation & LightMaterialGenerator::MI_QUAD)
+		if (permutation & LightMaterialGenerator::MI_DIRECTIONAL)
 		{
 			programName += "vs";
 		}
@@ -103,7 +103,7 @@ public:
 
 	virtual MaterialPtr generateTemplateMaterial(Perm permutation)
 	{
-        if(permutation & LightMaterialGenerator::MI_QUAD)
+        if(permutation & LightMaterialGenerator::MI_DIRECTIONAL)
 		{   
 			return MaterialManager::getSingleton().getByName("DeferredShading/LightMaterialQuad");
 		}
@@ -120,11 +120,7 @@ public:
 		String getPPDefines(Perm permutation)
 		{
 			String strPPD;
-            if (permutation & LightMaterialGenerator::MI_QUAD)
-            {
-                strPPD += "-DIS_QUAD ";
-            }
-			if (permutation & LightMaterialGenerator::MI_SPECULAR)
+            if (permutation & LightMaterialGenerator::MI_SPECULAR)
 			{
 				strPPD += "-DIS_SPECULAR ";
 			}
@@ -185,13 +181,13 @@ public:
 
 LightMaterialGenerator::LightMaterialGenerator()
 {
-	bitNames.push_back("Quad");		  // MI_QUAD
+	//bitNames.push_back("Quad");		  // MI_QUAD
 	bitNames.push_back("Attenuated"); // MI_ATTENUATED
 	bitNames.push_back("Specular");   // MI_SPECULAR
 	bitNames.push_back("Spotlight");   // MI_SPOTLIGHT
     bitNames.push_back("Directional");   // MI_DIRECTIONAL
 	bitNames.push_back("ShadowCaster");	//MI_SHADOW_CASTER
-	vsMask = 0x00000001;
+	vsMask = 0x00000010;
 	fsMask = 0x0000003F;
 	matMask = 0x00000001;
 	

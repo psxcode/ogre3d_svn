@@ -38,7 +38,7 @@ float2 fixUV(float2 texCoord, float2 texSize)
 
 float4 main(
 
-#ifdef IS_QUAD
+#ifdef IS_DIRECTIONAL
 	float2 texCoord : TEXCOORD0, 
 	float3 ray : TEXCOORD1,
 #else
@@ -55,7 +55,7 @@ float4 main(
 #ifdef IS_DIRECTIONAL
 	uniform float3 lightDir,
 #endif
-#ifndef IS_QUAD
+#ifndef IS_DIRECTIONAL
 	uniform float vpWidth,
 	uniform float vpHeight,
 	uniform float3 farCorner,
@@ -78,7 +78,7 @@ float4 main(
 {
 
 	//None directional lights have some calculations to do in the beginning of the pixel shader
-#ifndef IS_QUAD
+#ifndef IS_DIRECTIONAL
 	projPos /= projPos.w;
 	// -1 is because generally +Y is down for textures but up for the screen
     float2 texCoord = float2(projPos.x, projPos.y * -1 * flip) * 0.5 + 0.5;
