@@ -28,6 +28,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LIGHT_SPOT			2
 #define LIGHT_DIRECTIONAL	3
 
+//////////////////////////////////////////////////////////////////////////////
+// Helper function section
+//////////////////////////////////////////////////////////////////////////////
 
 //DirectX needs this to compensate for jitter
 ps_2_x float2 fixUV(float2 texCoord, float2 texSize)
@@ -40,7 +43,27 @@ float2 fixUV(float2 texCoord, float2 texSize)
 	return texCoord;
 }
 
-
+void checkShadow(
+	sampler2D shadowMap,
+	float3 viewPos,
+	float4x4 invView,
+	float4x4 shadowViewProj,
+	float shadowFarClip,
+	float distanceFromLight)
+{
+	float3 worldPos = mul(invView, float4(viewPos, 1)).xyz;
+	float4 shadowProjPos = mul(shadowViewProj, float4(worldPos,1));
+	shadowProjPos /= shadowProjPos.w;
+	float2 shadowSampleTexCoord = shadowProjPos.xy;
+	float shadowDepth = tex2D(shadowMap, shadowSampleTexCoord).r;
+	float shadowDistance = shadowDepth * shadowFarClip;
+	clip(shadowDistance - distanceFromLight);
+}
+	
+//////////////////////////////////////////////////////////////////////////////
+// Main shader section
+//////////////////////////////////////////////////////////////////////////////	
+	
 float4 main(
 
 #if LIGHT_TYPE == LIGHT_DIRECTIONAL
@@ -53,12 +76,12 @@ float4 main(
 	uniform sampler Tex0: register(s0),
 	uniform sampler Tex1: register(s1),
 
-#if LIGHT_TYPE == LIGHT_SPOT
-	uniform float4 spotParams,
+#if LIGHT_TYPE != LIGHT_POINT
 	uniform float3 lightDir,
 #endif
-#if LIGHT_TYPE == LIGHT_DIRECTIONAL
-	uniform float3 lightDir,
+
+#if LIGHT_TYPE == LIGHT_SPOT
+	uniform float4 spotParams,
 #endif
 
 #if LIGHT_TYPE != LIGHT_DIRECTIONAL
@@ -116,14 +139,7 @@ float4 main(
 #endif
 
 #ifdef IS_SHADOW_CASTER
-	float3 worldPos = mul(invView, float4(position, 1)).xyz;
-	float4 shadowProjPos = mul(shadowViewProjMat, float4(worldPos,1));
-	shadowProjPos /= shadowProjPos.w;
-	//float2 shadowSampleTexCoord = float2(shadowProjPos.x, shadowProjPos.y * -1 * flip) * 0.5 + 0.5;
-	float2 shadowSampleTexCoord = shadowProjPos.xy;
-	float shadowDepth = tex2D(ShadowTex, shadowSampleTexCoord);
-	float shadowDistance = shadowDepth * lightFalloff.x;
-	clip(shadowDistance - len);
+	checkShadow(ShadowTex, position, invView,shadowViewProjMat, lightFalloff.x, len);
 #endif
 	
 	// Calculate diffuse colour
@@ -134,7 +150,7 @@ float4 main(
 	// Calculate specular component
 	float3 viewDir = -normalize(position);
 	float3 h = normalize(viewDir + objToLightDir);
-	float3 light_specular = pow(dot(normal, h),32.0) * lightSpecularColor;
+	float3 light_specular = pow(dot(normal, h),32.0) * lightSpecularColor.rgb;
 
 	total_light_contrib += specularity * light_specular;
 #endif
