@@ -29,6 +29,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "OgreTechnique.h"
 #include "OgreSceneManager.h"
 
+#define ENABLE_BIT(mask, flag) (mask) |= (flag)
+#define DISABLE_BIT(mask, flag) (mask) &= ~(flag)
+
 using namespace Ogre;
 //-----------------------------------------------------------------------
 DLight::DLight(MaterialGenerator *sys, Ogre::Light* parentLight):
@@ -59,7 +62,7 @@ void DLight::setAttenuation(float c, float b, float a)
 	/// There is attenuation? Set material accordingly
 	if(c != 1.0f || b != 0.0f || a != 0.0f)
 	{
-		mPermutation |= LightMaterialGenerator::MI_ATTENUATED;
+		ENABLE_BIT(mPermutation, LightMaterialGenerator::MI_ATTENUATED);
 		//// Calculate radius from Attenuation
 		//int threshold_level = 15;// difference of 10-15 levels deemed unnoticeable
 		//float threshold = 1.0f/((float)threshold_level/256.0f); 
@@ -71,7 +74,7 @@ void DLight::setAttenuation(float c, float b, float a)
 	}
 	else
 	{
-		mPermutation &= ~LightMaterialGenerator::MI_ATTENUATED;
+		DISABLE_BIT(mPermutation,LightMaterialGenerator::MI_ATTENUATED);
 	}
     outerRadius = mParentLight->getAttenuationRange();
 
@@ -85,34 +88,36 @@ void DLight::setSpecularColour(const ColourValue &col)
 	/// There is a specular component? Set material accordingly
 	
 	if(col.r != 0.0f || col.g != 0.0f || col.b != 0.0f)
-		mPermutation |= LightMaterialGenerator::MI_SPECULAR;
+		ENABLE_BIT(mPermutation,LightMaterialGenerator::MI_SPECULAR);
 	else
-		mPermutation &= ~LightMaterialGenerator::MI_SPECULAR;
+		DISABLE_BIT(mPermutation,LightMaterialGenerator::MI_SPECULAR);
 		
 }
 //-----------------------------------------------------------------------
 void DLight::rebuildGeometry(float radius)
 {
+	//Disable all 3 bits
+	DISABLE_BIT(mPermutation, LightMaterialGenerator::MI_POINT);
+	DISABLE_BIT(mPermutation, LightMaterialGenerator::MI_SPOTLIGHT);
+	DISABLE_BIT(mPermutation, LightMaterialGenerator::MI_DIRECTIONAL);
+
 	switch (mParentLight->getType())
 	{
 	case Light::LT_DIRECTIONAL:
 		createRectangle2D();
-        mPermutation |= LightMaterialGenerator::MI_DIRECTIONAL;
-		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
+        ENABLE_BIT(mPermutation,LightMaterialGenerator::MI_DIRECTIONAL);
 		break;
 	case Light::LT_POINT:
 		/// XXX some more intelligent expression for rings and segments
 		createSphere(radius, 10, 10);
-		mPermutation &= ~LightMaterialGenerator::MI_SPOTLIGHT;
-        mPermutation &= ~LightMaterialGenerator::MI_DIRECTIONAL;
+		ENABLE_BIT(mPermutation,LightMaterialGenerator::MI_POINT);
 		break;
 	case Light::LT_SPOTLIGHT:
 		Real height = mParentLight->getAttenuationRange();
 		Radian coneRadiusAngle = mParentLight->getSpotlightOuterAngle() / 2;
         Real radius = Math::Tan(coneRadiusAngle) * height;
 		createCone(radius, height, 20);
-		mPermutation |= LightMaterialGenerator::MI_SPOTLIGHT;
-        mPermutation &= ~LightMaterialGenerator::MI_DIRECTIONAL;
+		ENABLE_BIT(mPermutation,LightMaterialGenerator::MI_SPOTLIGHT);
 		break;
 	}	
 }
@@ -232,11 +237,11 @@ void DLight::updateFromParent()
 		mParentLight->getCastShadows();
 	if (castsShadows)
 	{
-		mPermutation |= LightMaterialGenerator::MI_SHADOW_CASTER;
+		ENABLE_BIT(mPermutation,LightMaterialGenerator::MI_SHADOW_CASTER);
 	}
 	else
 	{
-		mPermutation &= ~LightMaterialGenerator::MI_SHADOW_CASTER;
+		DISABLE_BIT(mPermutation, LightMaterialGenerator::MI_SHADOW_CASTER);
 	}
 }
 //-----------------------------------------------------------------------

@@ -120,6 +120,28 @@ public:
 		String getPPDefines(Perm permutation)
 		{
 			String strPPD;
+
+			//Get the type of light
+			String lightType;
+			if (permutation & LightMaterialGenerator::MI_POINT)
+			{
+				lightType = "POINT";
+			}
+			else if (permutation & LightMaterialGenerator::MI_SPOTLIGHT)
+			{
+				lightType = "SPOT";
+			}
+			else if (permutation & LightMaterialGenerator::MI_DIRECTIONAL)
+			{
+				lightType = "DIRECTIONAL";
+			}
+			else
+			{
+				assert(false && "Permutation must have a light type");
+			}
+			strPPD += "-DLIGHT_TYPE=LIGHT_" + lightType + " ";
+
+			//Optional parameters
             if (permutation & LightMaterialGenerator::MI_SPECULAR)
 			{
 				strPPD += "-DIS_SPECULAR ";
@@ -132,14 +154,6 @@ public:
 				&& permutation & LightMaterialGenerator::MI_SPOTLIGHT)
 			{
 				strPPD += "-DIS_SHADOW_CASTER ";
-			}
-			if (permutation & LightMaterialGenerator::MI_SPOTLIGHT)
-			{
-				strPPD += "-DIS_SPOTLIGHT";
-			}
-            if (permutation & LightMaterialGenerator::MI_DIRECTIONAL)
-			{
-				strPPD += "-DIS_DIRECTIONAL";
 			}
 			return strPPD;
 		}
@@ -181,13 +195,13 @@ public:
 
 LightMaterialGenerator::LightMaterialGenerator()
 {
-	//bitNames.push_back("Quad");		  // MI_QUAD
-	bitNames.push_back("Attenuated"); // MI_ATTENUATED
-	bitNames.push_back("Specular");   // MI_SPECULAR
-	bitNames.push_back("Spotlight");   // MI_SPOTLIGHT
-    bitNames.push_back("Directional");   // MI_DIRECTIONAL
-	bitNames.push_back("ShadowCaster");	//MI_SHADOW_CASTER
-	vsMask = 0x00000010;
+	bitNames.push_back("Point");		// MI_POINT
+	bitNames.push_back("Spotlight");	// MI_SPOTLIGHT
+	bitNames.push_back("Directional");	// MI_DIRECTIONAL
+	bitNames.push_back("Attenuated");	// MI_ATTENUATED
+    bitNames.push_back("Specular");		// MI_SPECULAR
+	bitNames.push_back("ShadowCaster");	// MI_SHADOW_CASTER
+	vsMask = 0x00000004;
 	fsMask = 0x0000003F;
 	matMask = 0x00000001;
 	
