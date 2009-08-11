@@ -2807,17 +2807,13 @@ namespace Ogre
 	{
 		RenderTarget* target;
 	};
-	RenderSystem::RenderSystemContext* D3D9RenderSystem::_pauseFrame(void)
+	//---------------------------------------------------------------------
+	D3D9RenderSystem::ZBufferIdentifier D3D9RenderSystem::getZBufferIdentifier(RenderTarget* rt)
 	{
-		_endFrame();
-
-		D3D9RenderContext* context = new D3D9RenderContext;
-		context->target = mActiveRenderTarget;
-
 		// Retrieve render surfaces (up to OGRE_MAX_MULTIPLE_RENDER_TARGETS)
 		IDirect3DSurface9* pBack[OGRE_MAX_MULTIPLE_RENDER_TARGETS];
 		memset(pBack, 0, sizeof(pBack));
-		context->target->getCustomAttribute( "DDBACKBUFFER", &pBack );
+		rt->getCustomAttribute( "DDBACKBUFFER", &pBack );
 		assert(pBack[0]);
 
 		/// Request a depth stencil that is compatible with the format, multisample type and
@@ -2828,18 +2824,34 @@ namespace Ogre
 		D3DFORMAT dsfmt = _getDepthStencilFormatFor(srfDesc.Format);
 		assert(dsfmt != D3DFMT_UNKNOWN);
 
-		/// Check if result is cached
-		ZBufferIdentifier zBufferIdentifer;
-		zBufferIdentifer.format = dsfmt;
-		zBufferIdentifer.multisampleType = srfDesc.MultiSampleType;
-		zBufferIdentifer.device = getActiveD3D9Device();
-		ZBufferRefQueue& zBuffers = mZBufferHash[zBufferIdentifer];
-		
-		IDirect3DSurface9* pDepth;
-		getActiveD3D9Device()->GetDepthStencilSurface(&pDepth);
-		
-		assert(zBuffers.front().surface == pDepth);
+		/// Build identifier and return
+		ZBufferIdentifier zBufferIdentifier;
+		zBufferIdentifier.format = dsfmt;
+		zBufferIdentifier.multisampleType = srfDesc.MultiSampleType;
+		zBufferIdentifier.device = getActiveD3D9Device();
+		return zBufferIdentifier;
+	}
+	//---------------------------------------------------------------------
+	RenderSystem::RenderSystemContext* D3D9RenderSystem::_pauseFrame(void)
+	{
+		//Stop rendering
+		_endFrame();
 
+		D3D9RenderContext* context = new D3D9RenderContext;
+		context->target = mActiveRenderTarget;
+
+		//Get the matching z buffer identifier and queue
+		ZBufferIdentifier zBufferIdentifier = getZBufferIdentifier(mActiveRenderTarget);
+		ZBufferRefQueue& zBuffers = mZBufferHash[zBufferIdentifier];
+		
+#ifdef OGRE_DEBUG_MODE
+		//Check that queue handling works as expected
+		IDirect3DSurface9* pDepth;
+		getActiveD3D9Device()->GetDepthStencilSurface(&pDepth);		
+		assert(zBuffers.front().surface == pDepth);
+#endif
+
+		//Store the depth buffer in the side and remove it from the queue
 		mCheckedOutTextures[mActiveRenderTarget] = zBuffers.front();
 		zBuffers.pop_front();
 		
@@ -2848,32 +2860,16 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_resumeFrame(RenderSystemContext* context)
 	{
+		//Resume rendering
 		_beginFrame();
 		D3D9RenderContext* d3dContext = static_cast<D3D9RenderContext*>(context);
 
-		// Retrieve render surfaces (up to OGRE_MAX_MULTIPLE_RENDER_TARGETS)
-		IDirect3DSurface9* pBack[OGRE_MAX_MULTIPLE_RENDER_TARGETS];
-		memset(pBack, 0, sizeof(pBack));
-		d3dContext->target->getCustomAttribute( "DDBACKBUFFER", &pBack );
-		assert(pBack[0]);
-
-		/// Request a depth stencil that is compatible with the format, multisample type and
-		/// dimensions of the render target.
-		D3DSURFACE_DESC srfDesc;
-		HRESULT hr = pBack[0]->GetDesc(&srfDesc);
-		assert(!(FAILED(hr)));
-		D3DFORMAT dsfmt = _getDepthStencilFormatFor(srfDesc.Format);
-		assert(dsfmt != D3DFMT_UNKNOWN);
-
-		/// Check if result is cached
-		ZBufferIdentifier zBufferIdentifer;
-		zBufferIdentifer.format = dsfmt;
-		zBufferIdentifer.multisampleType = srfDesc.MultiSampleType;
-		zBufferIdentifer.device = getActiveD3D9Device();
-		ZBufferRefQueue& zBuffers = mZBufferHash[zBufferIdentifer];
-		
+		///Find the stored depth buffer
+		ZBufferIdentifier zBufferIdentifier = getZBufferIdentifier(d3dContext->target);
+		ZBufferRefQueue& zBuffers = mZBufferHash[zBufferIdentifier];
 		assert(mCheckedOutTextures.find(d3dContext->target) != mCheckedOutTextures.end());
 		
+		//Return it to the general queue
 		zBuffers.push_front(mCheckedOutTextures[d3dContext->target]);
 		mCheckedOutTextures.erase(d3dContext->target);
 		

@@ -325,6 +325,11 @@ namespace Ogre
 		static IDirect3DDevice9* getResourceCreationDevice(UINT index);
 		static IDirect3DDevice9* getActiveD3D9Device();
 		
+		/**
+			Get the matching Z-Buffer identifier for a certain render target
+		*/
+		ZBufferIdentifier getZBufferIdentifier(RenderTarget* rt);
+
 		/** Check which depthStencil formats can be used with a certain pixel format,
 			and return the best suited.
 		*/
