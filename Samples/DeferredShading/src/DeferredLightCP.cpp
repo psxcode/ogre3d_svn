@@ -83,7 +83,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 		ll.push_back(light);
 
 		//if (++i != 2) continue;
-        //if (light->getType() != Light::LT_SPOTLIGHT) continue;
+        //if (light->getType() != Light::LT_DIRECTIONAL) continue;
 		//if (light->getDiffuseColour() != ColourValue::Red) continue;
 
 		LightsMap::iterator dLightIt = mLights.find(light);
@@ -101,9 +101,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 		tech = dLight->getMaterial()->getBestTechnique();
 
 		//Update shadow texture
-		bool castShadows = sm->isShadowTechniqueInUse() && light->getCastShadows() && 
-			light->getType() == Light::LT_SPOTLIGHT;
-		if (castShadows)
+		if (dLight->getCastChadows())
 		{
 			SceneManager::RenderContext* context = sm->_pauseRendering();
 

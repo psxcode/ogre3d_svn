@@ -234,9 +234,7 @@ void DLight::updateFromParent()
 		mParentLight->getAttenuationLinear(), mParentLight->getAttenuationQuadric());	
 	setSpecularColour(mParentLight->getSpecularColour());
 
-	bool castsShadows = mParentLight->_getManager()->isShadowTechniqueInUse() &&
-		mParentLight->getCastShadows();
-	if (castsShadows)
+	if (getCastChadows())
 	{
 		ENABLE_BIT(mPermutation,LightMaterialGenerator::MI_SHADOW_CASTER);
 	}
@@ -271,6 +269,14 @@ bool DLight::isCameraInsideLight(Ogre::Camera* camera)
 		//Please the compiler
 		return false;
 	}
+}
+//-----------------------------------------------------------------------
+bool DLight::getCastChadows() const
+{
+	return 
+		mParentLight->_getManager()->isShadowTechniqueInUse() &&
+		mParentLight->getCastShadows() && 
+		(/*mParentLight->getType() == Light::LT_DIRECTIONAL || */mParentLight->getType() == Light::LT_SPOTLIGHT);
 }
 //-----------------------------------------------------------------------
 void DLight::updateFromCamera(Ogre::Camera* camera)
@@ -312,5 +318,22 @@ void DLight::updateFromCamera(Ogre::Camera* camera)
 				pass->setDepthFunction(Ogre::CMPF_LESS_EQUAL);
 			}
 		}
+
+		Camera setupCam("CameraSetupCam", 0);
+		setupCam._notifyViewport(camera->getViewport());
+		SceneManager* sm = mParentLight->_getManager();
+		sm->getShadowCameraSetup()->getShadowCamera(sm, 
+			camera, camera->getViewport(), mParentLight, &setupCam, 0);
+			
+		//Get the shadow camera position
+		if (params->_findNamedConstantDefinition("shadowCamPos")) 
+		{
+			params->setNamedConstant("shadowCamPos", setupCam.getPosition());
+		}
+		if (params->_findNamedConstantDefinition("shadowFarClip"))
+		{
+			params->setNamedConstant("shadowFarClip", setupCam.getFarClipDistance());
+		}
+
 	}
 }

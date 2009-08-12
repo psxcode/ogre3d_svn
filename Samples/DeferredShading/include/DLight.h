@@ -43,6 +43,11 @@ public:
 	/** Update the information that is related to the camera
 	 */
 	void updateFromCamera(Ogre::Camera* camera);
+
+	/** Does this light cast shadows?
+	*/
+	virtual bool getCastChadows() const;
+
 	/** @copydoc MovableObject::getBoundingRadius */
 	virtual Ogre::Real getBoundingRadius(void) const;
 	/** @copydoc Renderable::getSquaredViewDepth */

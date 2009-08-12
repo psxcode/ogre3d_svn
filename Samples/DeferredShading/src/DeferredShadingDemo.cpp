@@ -221,7 +221,7 @@ protected:
             pAthene->buildTangentVectors(VES_TANGENT, src, dest);
 
         // Set ambient light
-        mSceneMgr->setAmbientLight(ColourValue(0.15, 0.00, 0.00));
+        mSceneMgr->setAmbientLight(ColourValue(0.2, 0.05, 0.05));
         // Skybox
         mSceneMgr->setSkyBox(true, "DeferredDemo/SkyBox", 500);
         // Create main, static light
@@ -229,6 +229,8 @@ protected:
         l1->setType(Light::LT_DIRECTIONAL);
         l1->setDiffuseColour(0.5f, 0.45f, 0.1f);
 		l1->setDirection(1, -0.5, -0.5);
+		l1->setShadowFarClipDistance(2000);
+		l1->setShadowFarDistance(1000);
 
 		// Create "root" node
 		SceneNode* rootNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();

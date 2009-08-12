@@ -49,9 +49,10 @@ void checkShadow(
 	float4x4 invView,
 	float4x4 shadowViewProj,
 	float shadowFarClip,
-	float distanceFromLight)
+	float3 shadowCamPos)
 {
 	float3 worldPos = mul(invView, float4(viewPos, 1)).xyz;
+	float distanceFromLight = length(shadowCamPos-worldPos);
 	float4 shadowProjPos = mul(shadowViewProj, float4(worldPos,1));
 	shadowProjPos /= shadowProjPos.w;
 	float2 shadowSampleTexCoord = shadowProjPos.xy;
@@ -95,6 +96,8 @@ float4 main(
 	uniform float4x4 invView,
 	uniform float4x4 shadowViewProjMat,
 	uniform sampler ShadowTex : register(s2),
+	uniform float3 shadowCamPos,
+	uniform float shadowFarClip,
 #endif
 
 	uniform float farClipDistance,
@@ -139,7 +142,7 @@ float4 main(
 #endif
 
 #ifdef IS_SHADOW_CASTER
-	checkShadow(ShadowTex, position, invView,shadowViewProjMat, lightFalloff.x, len);
+	checkShadow(ShadowTex, position, invView,shadowViewProjMat, shadowFarClip, shadowCamPos);
 #endif
 	
 	// Calculate diffuse colour

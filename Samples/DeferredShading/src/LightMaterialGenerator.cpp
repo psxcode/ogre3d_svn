@@ -150,8 +150,7 @@ public:
 			{
 				strPPD += "-DIS_ATTENUATED ";
 			}
-			if (permutation & LightMaterialGenerator::MI_SHADOW_CASTER
-				&& permutation & LightMaterialGenerator::MI_SPOTLIGHT)
+			if (permutation & LightMaterialGenerator::MI_SHADOW_CASTER)
 			{
 				strPPD += "-DIS_SHADOW_CASTER ";
 			}
