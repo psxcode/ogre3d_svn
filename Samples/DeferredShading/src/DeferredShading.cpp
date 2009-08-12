@@ -56,11 +56,11 @@ DeferredShadingSystem::DeferredShadingSystem(
 {
 	sm->setShadowTechnique(SHADOWTYPE_TEXTURE_ADDITIVE);
 	sm->setShadowTextureCasterMaterial("DeferredShading/Shadows/Caster");
-	mSceneMgr->setShadowFarDistance(5000);
-	mSceneMgr->setShadowTextureSize(1024);
+	mSceneMgr->setShadowFarDistance(150);
+	mSceneMgr->setShadowTextureSize(512);
 	mSceneMgr->setShadowTextureCount(1);
-	mSceneMgr->setShadowTexturePixelFormat(PF_FLOAT32_R);
-	mSceneMgr->setShadowDirectionalLightExtrusionDistance(1000);
+	mSceneMgr->setShadowTexturePixelFormat(PF_FLOAT16_R);
+	mSceneMgr->setShadowDirectionalLightExtrusionDistance(75);
 }
 
 void DeferredShadingSystem::initialize()

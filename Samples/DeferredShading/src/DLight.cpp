@@ -276,7 +276,7 @@ bool DLight::getCastChadows() const
 	return 
 		mParentLight->_getManager()->isShadowTechniqueInUse() &&
 		mParentLight->getCastShadows() && 
-		(/*mParentLight->getType() == Light::LT_DIRECTIONAL || */mParentLight->getType() == Light::LT_SPOTLIGHT);
+		(mParentLight->getType() == Light::LT_DIRECTIONAL || mParentLight->getType() == Light::LT_SPOTLIGHT);
 }
 //-----------------------------------------------------------------------
 void DLight::updateFromCamera(Ogre::Camera* camera)
@@ -319,20 +319,20 @@ void DLight::updateFromCamera(Ogre::Camera* camera)
 			}
 		}
 
-		Camera setupCam("CameraSetupCam", 0);
-		setupCam._notifyViewport(camera->getViewport());
+		Camera shadowCam("ShadowCameraSetupCam", 0);
+		shadowCam._notifyViewport(camera->getViewport());
 		SceneManager* sm = mParentLight->_getManager();
 		sm->getShadowCameraSetup()->getShadowCamera(sm, 
-			camera, camera->getViewport(), mParentLight, &setupCam, 0);
+			camera, camera->getViewport(), mParentLight, &shadowCam, 0);
 			
 		//Get the shadow camera position
 		if (params->_findNamedConstantDefinition("shadowCamPos")) 
 		{
-			params->setNamedConstant("shadowCamPos", setupCam.getPosition());
+			params->setNamedConstant("shadowCamPos", shadowCam.getPosition());
 		}
 		if (params->_findNamedConstantDefinition("shadowFarClip"))
 		{
-			params->setNamedConstant("shadowFarClip", setupCam.getFarClipDistance());
+			params->setNamedConstant("shadowFarClip", shadowCam.getFarClipDistance());
 		}
 
 	}
