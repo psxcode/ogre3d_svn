@@ -754,11 +754,12 @@ namespace Ogre {
         virtual void ensureShadowTexturesCreated();
         /// Internal method for destroying shadow textures (texture-based shadows)
         virtual void destroyShadowTextures(void);
-        /// Internal method for preparing shadow textures ready for use in a regular render
-        virtual void prepareShadowTextures(Camera* cam, Viewport* vp);
-
+        
 	public:
-		virtual void _prepareShadowTexturesPerLight(Camera* cam, Viewport* vp, Light* light);
+		/// Method for preparing shadow textures ready for use in a regular render
+		/// Do not call manually unless before frame start or rendering is paused
+		/// If lightList is not supplied, will render all lights in frustum
+        virtual void prepareShadowTextures(Camera* cam, Viewport* vp, const LightList* lightList = 0);
 
 		struct RenderContext;
 		RenderContext* _pauseRendering();
