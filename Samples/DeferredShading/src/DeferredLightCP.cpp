@@ -49,16 +49,14 @@ DLight* DeferredLightRenderOperation::createDLight(Ogre::Light* light)
 	return rv;
 }
 //-----------------------------------------------------------------------
-void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, Ogre::Light* light)
+void injectTechnique(SceneManager* sm, Technique* tech, Renderable* rend, const Ogre::LightList* lightList)
 {
     for(unsigned short i=0; i<tech->getNumPasses(); ++i)
 	{
 		Ogre::Pass* pass = tech->getPass(i);
-        if (light != 0) 
+        if (lightList != 0) 
 		{
-			Ogre::LightList list;
-			list.push_back(light);
-			sm->_injectRenderWithPass(pass, rend, false, false, &list);
+			sm->_injectRenderWithPass(pass, rend, false, false, lightList);
 		} 
 		else
 		{
@@ -81,7 +79,9 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
     for (LightList::const_iterator it = lightList.begin(); it != lightList.end(); it++) 
 	{
         Light* light = *it;
-		
+		Ogre::LightList ll;
+		ll.push_back(light);
+
 		//if (++i != 2) continue;
         //if (light->getType() != Light::LT_SPOTLIGHT) continue;
 		//if (light->getDiffuseColour() != ColourValue::Red) continue;
@@ -106,7 +106,8 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 		if (castShadows)
 		{
 			SceneManager::RenderContext* context = sm->_pauseRendering();
-			sm->_prepareShadowTexturesPerLight(cam, mViewport, light);
+
+			sm->prepareShadowTextures(cam, mViewport, &ll);
 			sm->_resumeRendering(context);
 			
 			//TODO : Organise this code?
@@ -126,8 +127,7 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 			
 		}
 		
-		
-        injectTechnique(sm, tech, dLight, light);
+        injectTechnique(sm, tech, dLight, &ll);
 	}
 }
 //-----------------------------------------------------------------------
