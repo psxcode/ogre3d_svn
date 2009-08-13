@@ -59,14 +59,14 @@ void checkShadow(
 {
 	float3 worldPos = mul(invView, float4(viewPos, 1)).xyz;
 #if LIGHT_TYPE == LIGHT_DIRECTIONAL
-	float len = length(shadowCamPos-worldPos);
+	float distanceFromLight = length(shadowCamPos-worldPos);
 #endif
 	float4 shadowProjPos = mul(shadowViewProj, float4(worldPos,1));
 	shadowProjPos /= shadowProjPos.w;
 	float2 shadowSampleTexCoord = shadowProjPos.xy;
 	float shadowDepth = tex2D(shadowMap, shadowSampleTexCoord).r;
 	float shadowDistance = shadowDepth * shadowFarClip;
-	clip(shadowDistance - distanceFromLight + 0.001);
+	clip(shadowDistance - distanceFromLight + 0.1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
