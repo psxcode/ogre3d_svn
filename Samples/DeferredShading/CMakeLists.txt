@@ -2,31 +2,31 @@
 
 set(HEADER_FILES 
   include/AmbientLight.h
+  include/DeferredLightCP.h
   include/DeferredShading.h
+  include/DLight.h
+  include/GBufferMaterialGenerator.h
+  include/GBufferSchemeHandler.h
   include/GeomUtils.h
   include/LightMaterialGenerator.h
-  include/MaterialGenerator.h
-  include/MLight.h
-  include/DeferredShadingLogic.h
-  include/SSAOLogic.h
-  include/GBufferSchemeHandler.h
-  include/SharedData.h
   include/ListenerFactoryLogic.h
-  include/DeferredLightCP.h
-  include/GBufferMaterialGenerator.h
+  include/MaterialGenerator.h
+  include/NullSchemeHandler.h
+  include/SharedData.h
+  include/SSAOLogic.h
 )
 set(SOURCE_FILES 
   src/AmbientLight.cpp
+  src/DeferredLightCP.cpp
   src/DeferredShading.cpp
   src/DeferredShadingDemo.cpp
+  src/DLight.cpp
+  src/GBufferMaterialGenerator.cpp
+  src/GBufferSchemeHandler.cpp
   src/GeomUtils.cpp
   src/LightMaterialGenerator.cpp
   src/MaterialGenerator.cpp
-  src/MLight.cpp
-  src/DeferredShadingLogic.cpp
   src/SSAOLogic.cpp
-  src/GBufferSchemeHandler.cpp
-  src/GBufferMaterialGenerator.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
