@@ -742,12 +742,13 @@ namespace Ogre {
 	RenderSystem::RenderSystemContext* RenderSystem::_pauseFrame(void)
 	{
 		_endFrame();
-		return 0;
+		return new RenderSystem::RenderSystemContext;
 	}
 	//---------------------------------------------------------------------
 	void RenderSystem::_resumeFrame(RenderSystemContext* context)
 	{
 		_beginFrame();
+		delete context;
 	}
 
 }

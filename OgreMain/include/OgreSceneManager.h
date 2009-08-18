@@ -761,9 +761,19 @@ namespace Ogre {
 		/// If lightList is not supplied, will render all lights in frustum
         virtual void prepareShadowTextures(Camera* cam, Viewport* vp, const LightList* lightList = 0);
 
+		//A render context, used to store internal data for pausing/resuming rendering
+		//TODO GSOC : Should the struct be declared here so that other SM implementations
+		//will be able to subclass here?
 		struct RenderContext;
-		RenderContext* _pauseRendering();
-		void _resumeRendering(RenderContext* context);
+
+		/** Pause rendering of the frame. This has to be called when inside a renderScene call
+			(Usually using a listener of some sort)
+		*/
+		virtual RenderContext* _pauseRendering();
+		/** Resume rendering of the frame. This has to be called after a _pauseRendering call
+		@param context The rendring context, as returned by the _pauseRendering call
+		*/
+		virtual void _resumeRendering(RenderContext* context);
 
 	protected:
         /** Internal method for rendering all the objects for a given light into the 

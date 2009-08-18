@@ -757,8 +757,21 @@ namespace Ogre
 		*/
 		virtual void _beginFrame(void) = 0;
 		
+		//Dummy structure for render system contexts - implementing RenderSystems can extend
+		//as needed
 		struct RenderSystemContext { };
+		/**
+		* Pause rendering for a frame. This has to be called after _beginFrame and before _endFrame.
+		* Will usually be called by the SceneManager, don't use this manually unless you know what
+		* you are doing.
+		*/
 		virtual RenderSystemContext* _pauseFrame(void);
+		/**
+		* Resume rendering for a frame. This has to be called after a _pauseFrame call
+		* Will usually be called by the SceneManager, don't use this manually unless you know what
+		* you are doing.
+		* @param context the render system context, as returned by _pauseFrame
+		*/
 		virtual void _resumeFrame(RenderSystemContext* context);
 
 		/**

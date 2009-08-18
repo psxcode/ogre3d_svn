@@ -6023,7 +6023,7 @@ struct SceneManager::RenderContext {
 	Camera* camera;
 	RenderSystem::RenderSystemContext* rsContext;
 };
-
+//---------------------------------------------------------------------
 SceneManager::RenderContext* SceneManager::_pauseRendering()
 {
 	RenderContext* context = new RenderContext;
