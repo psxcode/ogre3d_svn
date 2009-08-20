@@ -20,7 +20,6 @@ public:
 		mInfo["Description"] = "Demonstrates the use of transparent materials (or scene blending).";
 		mInfo["Thumbnail"] = "thumb_trans.png";
 		mInfo["Category"] = "Materials";
-		mInfo["Help"] = "Follow the fish!";
 	}
 
 	bool frameRenderingQueued(const FrameEvent& evt)

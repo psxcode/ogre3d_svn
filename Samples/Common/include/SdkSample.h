@@ -85,21 +85,11 @@ namespace OgreBites
 			return true;
 		}
 
-		virtual void okDialogClosed(const Ogre::DisplayString& message)
-		{
-			if (!mCursorWasVisible) mTrayMgr->hideCursor();  // re-hide the cursor when dialog is closed
-		}
-
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
 			if (evt.key == OIS::KC_H || evt.key == OIS::KC_F1)   // toggle visibility of help dialog
 			{
-				if (!mTrayMgr->isDialogVisible() && mInfo["Help"] != "")
-				{
-					mCursorWasVisible = mTrayMgr->isCursorVisible();
-					mTrayMgr->showCursor();
-					mTrayMgr->showOkDialog("Help", mInfo["Help"]);
-				}
+				if (!mTrayMgr->isDialogVisible() && mInfo["Help"] != "") mTrayMgr->showOkDialog("Help", mInfo["Help"]);
 				else mTrayMgr->closeDialog();
 			}
 

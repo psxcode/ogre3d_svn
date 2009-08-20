@@ -61,7 +61,7 @@ namespace OgreBites
 			if (mStyle == CS_ORBIT)
 			{
 				mTarget = target ? target : mCamera->getSceneManager()->getRootSceneNode();
-				setTargetOffset(Ogre::Degree(0), Ogre::Degree(15), 150);
+				setYawPitchDist(Ogre::Degree(0), Ogre::Degree(15), 150);
 				mCamera->setAutoTracking(true, mTarget);
 			}
 		}
@@ -74,7 +74,7 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Sets the spatial offset from the target. Only applies for orbit style.
 		-----------------------------------------------------------------------------*/
-		virtual void setTargetOffset(Ogre::Radian yaw, Ogre::Radian pitch, Ogre::Real dist)
+		virtual void setYawPitchDist(Ogre::Radian yaw, Ogre::Radian pitch, Ogre::Real dist)
 		{
 			if (mStyle == CS_ORBIT)
 			{

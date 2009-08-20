@@ -16,6 +16,7 @@ public:
 		mInfo["Description"] = "Demonstrates the creation and usage of particle effects.";
 		mInfo["Thumbnail"] = "thumb_particles.png";
 		mInfo["Category"] = "Effects";
+		mInfo["Help"] = "Use the checkboxes to toggle visibility of the individual particle systems.";
 	}
 
     bool frameRenderingQueued(const FrameEvent& evt)
@@ -35,13 +36,13 @@ protected:
 
 	void setupScene()
 	{     
-		// setup basic lighting
+		// setup some basic lighting for our scene
 		mSceneMgr->setAmbientLight(ColourValue(0.3, 0.3, 0.3));
 		mSceneMgr->createLight()->setPosition(20, 80, 50);
 
 		// set our camera to orbit around the origin and show cursor
 		mCameraMan->setStyle(CS_ORBIT);
-		mCameraMan->setTargetOffset(Degree(0), Degree(15), 250);
+		mCameraMan->setYawPitchDist(Degree(0), Degree(15), 250);
 		mTrayMgr->showCursor();
 
 		// create an ogre head entity and place it at the origin
@@ -89,13 +90,13 @@ protected:
 	void setupTogglers()
 	{
 		// create check boxes to toggle the visibility of our particle systems
-		mTrayMgr->setTrayWidgetAlignment(TL_TOPRIGHT, GHA_RIGHT);
-		mTrayMgr->createCheckBox(TL_TOPRIGHT, "Fireworks", "Fireworks")->check();
-		mTrayMgr->createCheckBox(TL_TOPRIGHT, "Fountain1", "Fountain1")->check();
-		mTrayMgr->createCheckBox(TL_TOPRIGHT, "Fountain2", "Fountain2")->check();
-		mTrayMgr->createCheckBox(TL_TOPRIGHT, "Aureola", "Aureola")->uncheck();
-		mTrayMgr->createCheckBox(TL_TOPRIGHT, "Nimbus", "Nimbus")->uncheck();
-		mTrayMgr->createCheckBox(TL_TOPRIGHT, "Rain", "Rain")->uncheck();
+		mTrayMgr->createLabel(TL_TOPLEFT, "VisLabel", "Particles");
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fireworks", "Fireworks", 130)->check();
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fountain1", "Fountain A", 130)->check();
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fountain2", "Fountain B", 130)->check();
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Aureola", "Aureola", 130)->uncheck();
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Nimbus", "Nimbus", 130)->uncheck();
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Rain", "Rain", 130)->uncheck();
 	}
 
 	SceneNode* mFountainPivot;

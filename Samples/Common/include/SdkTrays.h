@@ -2162,6 +2162,9 @@ namespace OgreBites
 				e->setVerticalAlignment(Ogre::GVA_CENTER);
 				e->setLeft(-(e->getWidth() / 2));
 				e->setTop(-(e->getHeight() / 2));
+
+				mCursorWasVisible = isCursorVisible();
+				showCursor();
 			}
 
 			mOk = new Button(mName + "/OkButton", "OK", 60);
@@ -2213,6 +2216,9 @@ namespace OgreBites
 				e->setVerticalAlignment(Ogre::GVA_CENTER);
 				e->setLeft(-(e->getWidth() / 2));
 				e->setTop(-(e->getHeight() / 2));
+
+				mCursorWasVisible = isCursorVisible();
+				showCursor();
 			}
 
 			mYes = new Button(mName + "/YesButton", "Yes", 58);
@@ -2605,6 +2611,8 @@ namespace OgreBites
 			mDialog->cleanup();
 			delete mDialog;
 			mDialog = 0;
+
+			if (!mCursorWasVisible) hideCursor();
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -2833,6 +2841,7 @@ namespace OgreBites
 		Button* mOk;                          // top priority OK button
 		Button* mYes;                         // top priority Yes button
 		Button* mNo;                          // top priority No button
+		bool mCursorWasVisible;               // cursor state before showing dialog
 		Label* mFpsLabel;                     // FPS label
 		ParamsPanel* mStatsPanel;             // frame stats panel
 		DecorWidget* mLogo;                   // logo

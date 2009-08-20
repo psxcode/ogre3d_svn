@@ -34,7 +34,7 @@ protected:
 
 		// set our camera to orbit around the origin and show cursor
 		mCameraMan->setStyle(CS_ORBIT);
-		mCameraMan->setTargetOffset(Degree(0), Degree(0), 250);
+		mCameraMan->setYawPitchDist(Degree(0), Degree(0), 250);
 		mTrayMgr->showCursor();
 
         Plane plane(0, 1, 0, 30);  // define a plane for the floor that is 30 units below and facing up
@@ -53,7 +53,7 @@ protected:
 
 		// create slider bars to control the dome curvature and texture tiling
 		mCurvatureSlider = mTrayMgr->createThickSlider(TL_TOPLEFT, "Curvature", "Dome Curvature", 200, 60, 0, 50, 11);
-		mTilingSlider = mTrayMgr->createThickSlider(TL_TOPLEFT, "Tiling", "Texture Tiling", 200, 60, 1, 20, 191);
+		mTilingSlider = mTrayMgr->createThickSlider(TL_TOPLEFT, "Tiling", "Dome Tiling", 200, 60, 1, 20, 191);
 
 		/* Here, we set default values for our sliders. We do not need to setup a skydome here, because when
 		slider values change, the sliderMoved callback is invoked, and we setup the skydome with the appropriate
