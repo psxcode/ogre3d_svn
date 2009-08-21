@@ -1171,20 +1171,18 @@ namespace OgreBites
 			mMinValue = minValue;
 			mMaxValue = maxValue;
 
-			if (snaps < 1 || mMinValue > mMaxValue)
+			if (snaps <= 1 || mMinValue >= mMaxValue)
 			{
-				mMinValue = 0;
-				mMaxValue = 1;
 				mInterval = 0;
 				mHandle->hide();
-				mValue = 0;
-				mValueTextArea->setCaption("");
+				mValue = minValue;
+				if (snaps == 1) mValueTextArea->setCaption(Ogre::StringConverter::toString(mMinValue));
+				else mValueTextArea->setCaption("");
 			}
 			else
 			{
 				mHandle->show();
-				if (snaps == 1) mInterval = 0;
-				else mInterval = (maxValue - minValue) / (snaps - 1);
+				mInterval = (maxValue - minValue) / (snaps - 1);
 				setValue(minValue, notifyListener);
 			}
 		}
@@ -1204,9 +1202,14 @@ namespace OgreBites
 
 		void setValue(Ogre::Real value, bool notifyListener = true)
 		{
+			if (mInterval == 0) return;
+
 			mValue = Ogre::Math::Clamp<Ogre::Real>(value, mMinValue, mMaxValue);
+
 			setValueCaption(Ogre::StringConverter::toString(mValue));
+
 			if (mListener && notifyListener) mListener->sliderMoved(this);
+
 			if (!mDragging) mHandle->setLeft((int)((mValue - mMinValue) / (mMaxValue - mMinValue) *
 				(mTrack->getWidth() - mHandle->getWidth())));
 		}
@@ -1224,6 +1227,7 @@ namespace OgreBites
 		void setCaption(const Ogre::DisplayString& caption)
 		{
 			mTextArea->setCaption(caption);
+
 			if (mFitToContents) mElement->setWidth(getCaptionWidth(caption, mTextArea) +
 				mValueTextArea->getParent()->getWidth() + mTrack->getWidth() + 26);
 		}
@@ -1243,6 +1247,7 @@ namespace OgreBites
 			{
 				Ogre::Real newLeft = mHandle->getLeft() + co.x;
 				Ogre::Real rightBoundary = mTrack->getWidth() - mHandle->getWidth();
+
 				mHandle->setLeft(Ogre::Math::Clamp<int>(newLeft, 0, rightBoundary));
 				setValue(getSnappedValue(newLeft / rightBoundary));
 			}
@@ -1265,6 +1270,7 @@ namespace OgreBites
 				Ogre::Vector2 co = Widget::cursorOffset(mHandle, cursorPos);
 				Ogre::Real newLeft = mHandle->getLeft() + co.x - mDragOffset;
 				Ogre::Real rightBoundary = mTrack->getWidth() - mHandle->getWidth();
+
 				mHandle->setLeft(Ogre::Math::Clamp<int>(newLeft, 0, rightBoundary));
 				setValue(getSnappedValue(newLeft / rightBoundary));
 			}
@@ -1284,7 +1290,6 @@ namespace OgreBites
 		Ogre::Real getSnappedValue(Ogre::Real percentage)
 		{
 			percentage = Ogre::Math::Clamp<Ogre::Real>(percentage, 0, 1);
-			if (mInterval == 0) return percentage * (mMaxValue - mMinValue) + mMinValue;
 			unsigned int whichMarker = percentage * (mMaxValue - mMinValue) / mInterval + 0.5;
 			return whichMarker * mInterval + mMinValue;
 		}
