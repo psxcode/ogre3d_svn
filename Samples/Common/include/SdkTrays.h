@@ -2264,11 +2264,6 @@ namespace OgreBites
 		Widget* getWidget(TrayLocation trayLoc, unsigned int place)
 		{
 			if (place >= 0 && place < mWidgets[trayLoc].size()) return mWidgets[trayLoc][place];
-
-			Ogre::String trayNames[] =
-			{ "TopLeft", "Top", "TopRight", "Left", "Center", "Right", "BottomLeft", "Bottom", "BottomRight" };
-			Ogre::String desc = "No widget in tray \"" + trayNames[trayLoc] + "\" at index " + Ogre::StringConverter::toString(place);
-			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "TrayManager::getWidget");
 			return 0;
 		}
 
@@ -2281,11 +2276,6 @@ namespace OgreBites
 			{
 				if (mWidgets[trayLoc][i]->getName() == name) return mWidgets[trayLoc][i];
 			}
-
-			Ogre::String trayNames[] =
-			{ "TopLeft", "Top", "TopRight", "Left", "Center", "Right", "BottomLeft", "Bottom", "BottomRight" };
-			Ogre::String desc = "No widget in tray \"" + trayNames[trayLoc] + "\" named \"" + name + "\"";
-			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "TrayManager::getWidget");
 			return 0;
 		}
 
@@ -2301,9 +2291,6 @@ namespace OgreBites
 					if (mWidgets[i][j]->getName() == name) return mWidgets[i][j];
 				}
 			}
-
-			Ogre::String desc = "No widget named \"" + name + "\"";
-			OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "TrayManager::getWidget");
 			return 0;
 		}
 

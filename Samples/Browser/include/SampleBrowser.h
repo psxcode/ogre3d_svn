@@ -38,6 +38,7 @@ namespace OgreBites
 				createDummyScene();
 				mTrayMgr->showBackdrop("SdkTrays/Bands");
 				mTrayMgr->showAll();
+				mTrayMgr->destroyWidget("Resume");
 				((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Start Sample");
 			}
 
@@ -45,6 +46,8 @@ namespace OgreBites
 			{
 				// destroy dummy scene and modify controls
 				((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Stop Sample");
+				mTrayMgr->createButton(TL_RIGHT, "Resume", "Resume Sample");
+				mTrayMgr->moveWidgetToTray("Resume", TL_RIGHT, 2);
 				mTrayMgr->showBackdrop("SdkTrays/Shade");
 				mTrayMgr->hideAll();
 				destroyDummyScene();
@@ -184,6 +187,7 @@ namespace OgreBites
 			}
 			else if (b->getName() == "Configure")   // enter configuration screen
 			{
+				if (mTrayMgr->getWidget("Resume")) mTrayMgr->removeWidgetFromTray("Resume");
 				mTrayMgr->removeWidgetFromTray("StartStop");
 				mTrayMgr->removeWidgetFromTray("UnloadReload");
 				mTrayMgr->removeWidgetFromTray("Configure");
@@ -235,6 +239,7 @@ namespace OgreBites
 				mTrayMgr->removeWidgetFromTray(mRendererMenu);
 				mTrayMgr->removeWidgetFromTray("ConfigSeparator");
 
+				if (mTrayMgr->getWidget("Resume")) mTrayMgr->moveWidgetToTray("Resume", TL_RIGHT);
 				mTrayMgr->moveWidgetToTray("StartStop", TL_RIGHT);
 				mTrayMgr->moveWidgetToTray("UnloadReload", TL_RIGHT);
 				mTrayMgr->moveWidgetToTray("Configure", TL_RIGHT);
@@ -264,6 +269,11 @@ namespace OgreBites
 
 				// reset with new settings if necessary
 				if (reset) reconfigure(mRendererMenu->getSelectedItem(), newOptions);
+			}
+			else if (b->getName() == "Resume")
+			{
+				mTrayMgr->hideAll();
+				unpauseCurrentSample();
 			}
 			else mRoot->queueEndRendering();   // exit browser
 		}
