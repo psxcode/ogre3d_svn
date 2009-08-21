@@ -911,28 +911,66 @@ const String &CompositorInstance::getSourceForTex(const String &name, size_t mrt
 
 	if (!texDef->refCompName.empty()) 
 	{
-		//This is a reference - find the compositor and get the texture name
-		CompositorInstance* refComp = mChain->getCompositor(texDef->refCompName);
-		//TODO GSOC: Check that the referencing compositor is BEFORE us.
-		if (refComp == 0 || !refComp->getEnabled()) 
+		//This is a reference - find the compositor and referenced texture definition
+		const CompositorPtr& refComp = CompositorManager::getSingleton().getByName(texDef->refCompName);
+		if (refComp.isNull())
 		{
-			OGRE_EXCEPT(Exception::ERR_INVALID_STATE, "Referencing inactive compositor texture",
+			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Referencing non-existent compositor",
 				"CompositorInstance::getSourceForTex");
 		}
-		CompositionTechnique::TextureDefinition* refTexDef = 
-			refComp->getTechnique()->getTextureDefinition(texDef->refTexName);
+		CompositionTechnique::TextureDefinition* refTexDef = refComp->getSupportedTechnique()->getTextureDefinition(texDef->refTexName);
+		if (refTexDef == 0)
+		{
+			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Referencing non-existent compositor texture",
+				"CompositorInstance::getSourceForTex");
+		}
+
 		switch (refTexDef->scope) 
 		{
-			case CompositionTechnique::TS_CHAIN:
+			case CompositionTechnique::TS_CHAIN: 
+			{
+				//Find the instance and check if it is before us
+				CompositorInstance* refCompInst = 0;
+				CompositorChain::InstanceIterator it = mChain->getCompositors();
+				bool beforeMe = true;
+				while (it.hasMoreElements())
+				{
+					CompositorInstance* nextCompInst = it.getNext();
+					if (nextCompInst->getCompositor()->getName() == texDef->refCompName)
+					{
+						refCompInst = nextCompInst;
+						break;
+					}
+					if (nextCompInst == this)
+					{
+						//We encountered ourselves while searching for the compositor -
+						//we are earlier in the chain.
+						beforeMe = false;
+					}
+				}
+				
+				if (refCompInst == 0 || !refCompInst->getEnabled()) 
+				{
+					OGRE_EXCEPT(Exception::ERR_INVALID_STATE, "Referencing inactive compositor texture",
+						"CompositorInstance::getSourceForTex");
+				}
+				if (!beforeMe)
+				{
+					OGRE_EXCEPT(Exception::ERR_INVALID_STATE, "Referencing compositor that is later in the chain",
+						"CompositorInstance::getSourceForTex");
+				}
+				return refCompInst->getTextureInstanceName(texDef->refTexName, mrtIndex);
+			}
 			case CompositionTechnique::TS_GLOBAL:
 				//Chain and global case - the referenced compositor will know how to handle
-				return refComp->getSourceForTex(texDef->refTexName, mrtIndex);
+				return refComp->getTextureInstanceName(texDef->refTexName, mrtIndex);
 			case CompositionTechnique::TS_LOCAL:
 			default:
 				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Referencing local compositor texture",
 					"CompositorInstance::getSourceForTex");
 		}
-	}
+
+	} // End of handlign texture references
 
 	if (texDef->formatList.size() == 1) 
 	{

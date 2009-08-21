@@ -226,19 +226,19 @@ void Compositor::createGlobalTextures()
 		if (def->scope == CompositionTechnique::TS_GLOBAL) 
 		{
 			//Check that this is a legit global texture
-			//TODO GSOC : Move these checks into script compilation?
 			if (!def->refCompName.empty()) {
 				OGRE_EXCEPT(Exception::ERR_INVALID_STATE, 
-					"Global texture definition can not be a reference",
+					"Global compositor texture definition can not be a reference",
 					"Compositor::createGlobalTextures");
 			}
 			if (def->width == 0 || def->height == 0) {
 				OGRE_EXCEPT(Exception::ERR_INVALID_STATE, 
-					"Global texture definition must have absolute size",
+					"Global compositor texture definition must have absolute size",
 					"Compositor::createGlobalTextures");
 			}
 			if (def->pooled) {
-				//TODO GSOC : Warn to log that this has no impact
+				LogManager::getSingleton().logMessage(
+					"Pooling global compositor textures has no effect");
 			}
 			globalTextureNames.insert(def->name);
 
