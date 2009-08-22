@@ -92,16 +92,7 @@ void CompositorInstance::setEnabled(bool value)
             freeResources(false, true);
         }
 
-		//Notify compositor logic
-		//TODO GSOC : Decide if we should bring this back, remove it or add to CompositorInstanceListener
-		//const String& logicName = mTechnique->getCompositorLogicName();
-		//if (!logicName.empty())
-		//{
-		//	CompositorManager::getSingleton().
-		//		getCompositorLogic(logicName)->compositorInstanceEnabledChanged(this, value);
-		//}
-
-        /// Notify chain state needs recompile.
+		/// Notify chain state needs recompile.
         mChain->_markDirty();
     }
 }
