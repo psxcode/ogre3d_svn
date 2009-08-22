@@ -15,39 +15,38 @@ Technique* GBufferSchemeHandler::handleSchemeNotFound(unsigned short schemeIndex
 	String curSchemeName = matMgr.getActiveScheme();
 	matMgr.setActiveScheme(MaterialManager::DEFAULT_SCHEME_NAME);
 	Technique* originalTechnique = originalMaterial->getBestTechnique(lodIndex, rend);
-    matMgr.setActiveScheme(curSchemeName);
+	matMgr.setActiveScheme(curSchemeName);
 
-    Technique* gBufferTech = originalMaterial->createTechnique();
-    gBufferTech->removeAllPasses();
+	Technique* gBufferTech = originalMaterial->createTechnique();
+	gBufferTech->removeAllPasses();
 	gBufferTech->setSchemeName(schemeName);
 
 	Technique* noGBufferTech = originalMaterial->createTechnique();
 	noGBufferTech->removeAllPasses();
 	noGBufferTech->setSchemeName("NoGBuffer");
 
-    for (unsigned short i=0; i<originalTechnique->getNumPasses(); i++)
-    {
-        Pass* originalPass = originalTechnique->getPass(i);
-        PassProperties props = inspectPass(originalPass, lodIndex, rend);
+	for (unsigned short i=0; i<originalTechnique->getNumPasses(); i++)
+	{
+		Pass* originalPass = originalTechnique->getPass(i);
+		PassProperties props = inspectPass(originalPass, lodIndex, rend);
 		
-        if (props.isTransparent)
-        {
-            //Just copy the technique so it gets rendered regularly
+		if (props.isTransparent)
+		{
+			//Just copy the technique so it gets rendered regularly
 			Pass* clonePass = noGBufferTech->createPass();
 			*clonePass = *originalPass;
-            continue;
-        }
+			continue;
+		}
 
 		Pass* newPass = gBufferTech->createPass();
-	    MaterialGenerator::Perm perm = getPermutation(props);
+		MaterialGenerator::Perm perm = getPermutation(props);
 
-	    const Ogre::MaterialPtr& templateMat = mMaterialGenerator.getMaterial(perm);
+		const Ogre::MaterialPtr& templateMat = mMaterialGenerator.getMaterial(perm);
     	
-        //We assume that the GBuffer technique contains only one pass. But its true.
-	    *newPass = *(templateMat->getTechnique(0)->getPass(0));
-	    fillPass(gBufferTech->getPass(0), originalTechnique->getPass(0), props);    
-    }
-
+		//We assume that the GBuffer technique contains only one pass. But its true.
+		*newPass = *(templateMat->getTechnique(0)->getPass(0));
+		fillPass(newPass, originalPass, props);    
+	}
     
 	return gBufferTech;
 }

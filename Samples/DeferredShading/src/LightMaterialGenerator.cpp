@@ -194,12 +194,6 @@ public:
 
 LightMaterialGenerator::LightMaterialGenerator()
 {
-	bitNames.push_back("Point");		// MI_POINT
-	bitNames.push_back("Spotlight");	// MI_SPOTLIGHT
-	bitNames.push_back("Directional");	// MI_DIRECTIONAL
-	bitNames.push_back("Attenuated");	// MI_ATTENUATED
-    bitNames.push_back("Specular");		// MI_SPECULAR
-	bitNames.push_back("ShadowCaster");	// MI_SHADOW_CASTER
 	vsMask = 0x00000004;
 	fsMask = 0x0000003F;
 	matMask = 0x00000001;

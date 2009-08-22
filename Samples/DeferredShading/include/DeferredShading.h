@@ -1,22 +1,18 @@
 /**
 Implementation of a Deferred Shading engine in OGRE, using Multiple Render Targets and
-HLSL/GLSL high level language shaders.
-	// W.J. :wumpus: van der Laan 2005 //
+CG high level language shaders.
+	// W.J. :wumpus: van der Laan 2005 / Noam Gat 2009 //
 
 Deferred shading renders the scene to a 'fat' texture format, using a shader that outputs colour, 
 normal, depth, and possible other attributes per fragment. Multi Render Target is required as we 
 are dealing with many outputs which get written into multiple render textures in the same pass.
 
 After rendering the scene in this format, the shading (lighting) can be done as a post process. 
-This means that lighting is done in screen space. Adding them requires nothing more than rendering 
-a screenful quad; thus the method allows for an enormous amount of lights without noticeable 
-performance loss.
+This means that lighting is done in screen space, using light-representing geometry (sphere for
+point light, cone for spot light and quad for directional) to render their contribution.
 
-Little lights affecting small area ("Minilights") can be even further optimised by rendering 
-their convex bounding geometry. This is also shown in this demo by 6 swarming lights.
-
-The paper for GDC2004 on Deferred Shading can be found here:
-  http://www.talula.demon.co.uk/DeferredShading.pdf
+The wiki article explaining this demo can be found here :
+  http://www.ogre3d.org/wiki/index.php/Deferred_Shading
 *******************************************************************************
 Copyright (c) W.J. van der Laan
 

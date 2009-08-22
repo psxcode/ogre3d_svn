@@ -970,7 +970,7 @@ const String &CompositorInstance::getSourceForTex(const String &name, size_t mrt
 					"CompositorInstance::getSourceForTex");
 		}
 
-	} // End of handlign texture references
+	} // End of handling texture references
 
 	if (texDef->formatList.size() == 1) 
 	{
