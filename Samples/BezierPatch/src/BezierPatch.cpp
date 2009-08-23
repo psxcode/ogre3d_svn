@@ -1,5 +1,5 @@
 #include "SamplePlugin.h"
-#include "BSP.h"
+#include "BezierPatch.h"
 
 using namespace Ogre;
 using namespace OgreBites;
@@ -9,7 +9,7 @@ Sample* s;
 
 extern "C" __declspec(dllexport) void dllStartPlugin()
 {
-	s = new BspSample;
+	s = new BezierPatchSample;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
 	sp->addSample(s);
 	Root::getSingleton().installPlugin(sp);

@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Sky Dome";
 		mInfo["Description"] = "Shows how to use skydomes (fixed-distance domes used for backgrounds).";
 		mInfo["Thumbnail"] = "thumb_skydome.png";
-		mInfo["Category"] = "Scenery";
+		mInfo["Category"] = "Skies";
 	}
 
 	void sliderMoved(Slider* slider)
@@ -60,6 +60,11 @@ protected:
 		values in there. See its definition above. */
 		mCurvatureSlider->setValue(5);
 		mTilingSlider->setValue(8);
+	}
+
+	void cleanupScene()
+	{
+		MeshManager::getSingleton().remove("floor.mesh");
 	}
 
 	Slider* mCurvatureSlider;

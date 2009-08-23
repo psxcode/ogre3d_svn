@@ -120,7 +120,7 @@ namespace OgreBites
 			{
 				mStyle = CS_MANUAL;
 				mCamera->setAutoTracking(false);
-				mCamera->setFixedYawAxis(false);
+				mCamera->setFixedYawAxis(true);
 			}
 		}
 
@@ -156,8 +156,8 @@ namespace OgreBites
 				if (mGoingBack) accel -= mCamera->getDirection();
 				if (mGoingRight) accel += mCamera->getRight();
 				if (mGoingLeft) accel -= mCamera->getRight();
-				if (mGoingUp) accel += Ogre::Vector3::UNIT_Y;
-				if (mGoingDown) accel -= Ogre::Vector3::UNIT_Y;
+				if (mGoingUp) accel += mCamera->getUp();
+				if (mGoingDown) accel -= mCamera->getUp();
 
 				// if accelerating, try to reach top speed in a certain time
 				if (accel.squaredLength() != 0)

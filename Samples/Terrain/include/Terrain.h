@@ -15,7 +15,14 @@ public:
 		mInfo["Title"] = "Terrain";
 		mInfo["Description"] = "Demonstrates use of the terrain rendering plugin.";
 		mInfo["Thumbnail"] = "thumb_terrain.png";
-		mInfo["Category"] = "Scenery";
+		mInfo["Category"] = "Scene Managers";
+	}
+
+	StringVector getRequiredPlugins()
+	{
+		StringVector names;
+		names.push_back("Octree & Terrain Scene Manager");
+		return names;
 	}
 
     bool frameRenderingQueued(const FrameEvent& evt)

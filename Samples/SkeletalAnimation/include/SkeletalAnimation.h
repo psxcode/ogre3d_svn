@@ -181,6 +181,11 @@ protected:
 		}
 	}
 
+	void cleanupScene()
+	{
+		MeshManager::getSingleton().remove("floor.mesh");
+	}
+
 	const unsigned int NUM_MODELS;
 	const Real ANIM_CHOP;
 

@@ -1575,10 +1575,10 @@ namespace OgreBites
 			mTraysLayer = om.create(nameBase + "WidgetsLayer");
 			mPriorityLayer = om.create(nameBase + "PriorityLayer");
 			mCursorLayer = om.create(nameBase + "CursorLayer");
-			mBackdropLayer->setZOrder(100);
-			mTraysLayer->setZOrder(200);
-			mPriorityLayer->setZOrder(201);
-			mCursorLayer->setZOrder(300);
+			mBackdropLayer->setZOrder(1);
+			mTraysLayer->setZOrder(2);
+			mPriorityLayer->setZOrder(3);
+			mCursorLayer->setZOrder(4);
 
 			// make backdrop and cursor overlay containers
 

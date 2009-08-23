@@ -137,7 +137,7 @@ namespace OgreBites
 					break;
 				default:
 					newVal = "Bilinear";
-					tfo = Ogre::TFO_TRILINEAR;
+					tfo = Ogre::TFO_BILINEAR;
 					aniso = 1;
 				}
 
@@ -234,9 +234,9 @@ namespace OgreBites
 			mMouse = mouse;
 
 			locateResources();
+			createSceneManager();
 			loadResources();
 			mResourcesLoaded = true;
-			createSceneManager();
 			setupView();
 			
 			mTrayMgr = new SdkTrayManager("SampleControls", window, mouse, this);  // create a tray interface
@@ -263,8 +263,6 @@ namespace OgreBites
 			mDetailsPanel->setParamValue(9, "Bilinear");
 			mDetailsPanel->setParamValue(10, "Solid");
 			mDetailsPanel->hide();
-
-			mCameraMan = new SdkCameraMan(mCamera);   // create a default camera
 
 			setupScene();
 			mSceneCreated = true;
@@ -294,6 +292,8 @@ namespace OgreBites
 			mCamera->setAspectRatio((Ogre::Real)mViewport->getActualWidth() / (Ogre::Real)mViewport->getActualHeight());
 			mCamera->setAutoAspectRatio(true);
 			mCamera->setNearClipDistance(5);
+
+			mCameraMan = new SdkCameraMan(mCamera);   // create a default camera controller
 		}
 
 		Ogre::Viewport* mViewport;    // main viewport
@@ -301,10 +301,7 @@ namespace OgreBites
 		SdkTrayManager* mTrayMgr;     // tray interface manager
 		SdkCameraMan* mCameraMan;     // basic camera controller
 		ParamsPanel* mDetailsPanel;   // sample details panel
-
-	private:
-
-		bool mCursorWasVisible;      // was cursor visible before dialog appeared (for private use)
+		bool mCursorWasVisible;       // was cursor visible before dialog appeared
     };
 }
 

@@ -96,9 +96,9 @@ namespace OgreBites
 			mMouse = mouse;
 
 			locateResources();
+			createSceneManager();
 			loadResources();
 			mResourcesLoaded = true;
-			createSceneManager();
 			setupView();
 			setupScene();
 			mSceneCreated = true;
@@ -112,8 +112,8 @@ namespace OgreBites
 		virtual void _shutdown()
 		{
 			if (mSceneCreated) cleanupScene();
-			if (mSceneMgr) Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
 			if (mResourcesLoaded) unloadResources();
+			if (mSceneMgr) Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
 
 			mDone = true;
 			mResourcesLoaded = false;
