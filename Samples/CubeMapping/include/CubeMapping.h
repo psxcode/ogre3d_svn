@@ -1,102 +1,147 @@
-/*
------------------------------------------------------------------------------
-This source file is part of OGRE
-    (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+#ifndef __Terrain_H__
+#define __Terrain_H__
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+#include "SdkSample.h"
 
-You may use this sample code for anything you like, it is not covered by the
-LGPL like the rest of the engine.
------------------------------------------------------------------------------
-*/
+using namespace Ogre;
+using namespace OgreBites;
+
+class CubeMappingSample : public SdkSample
+{
+public:
+
+	CubeMappingSample()
+	{
+		mInfo["Title"] = "Cube Mapping";
+		mInfo["Description"] = "Demonstrates the cube mapping feature where a wrap-around environment is reflected "
+			"off of an object. We also apply Perlin noise to the surface, because we can.";
+		mInfo["Thumbnail"] = "thumb_cubemap.png";
+		mInfo["Category"] = "Materials";
+	}
+
+    bool frameRenderingQueued(const FrameEvent& evt)
+    {
+		return SdkSample::frameRenderingQueued(evt);  // don't forget the parent updates!
+    }
+
+	void testCapabilities(const RenderSystemCapabilities* caps)
+	{
+        if (!caps->hasCapability(RSC_CUBEMAPPING))
+        {
+			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your graphics card does not support cube mapping, "
+				"so you cannot run this sample. Sorry!", "CubeMappingSample::testCapabilities");
+        }
+	}
+
+protected:
+
+	static inline Real lerp(Real t, Real a, Real b)
+	{
+		return a + t * (b - a);
+	}
+
+	static inline Real fade(Real t)
+	{
+		return 6 * Math::Pow(t, 6) - 5 * t;
+	}
+
+	static inline Real grad(int hash, Real x, Real y, Real z)
+	{
+		int h = hash & 15;                      
+		Real u = h < 8 || h == 12 || h == 13 ? x : y;
+		Real v = h < 4 || h == 12 || h == 13 ? y : z;
+		return (h & 1 ? -u : u) + (h & 2 ? -v : v);
+	}
+
+	static inline Real perlin(Real x, Real y, Real z)
+	{
+		// find unit cube that contains point
+		int X = ((int)floor(x)) & 255;
+		int Y = ((int)floor(y)) & 255;
+		int Z = ((int)floor(z)) & 255;
+
+		// make point relative to cube
+		x -= floor(x);
+		y -= floor(y);
+		z -= floor(z);
+
+		// compute fade curves for components
+		Real u = fade(x);
+		Real v = fade(y);
+		Real w = fade(z);
+
+		// hash coordinates of the 8 cube corners
+		int A = mNoise[X] + Y;
+		int AA = mNoise[A] + Z;
+		int AB = mNoise[A + 1] + Z;
+		int B = mNoise[X + 1] + Y;
+		int BA = mNoise[B] + Z;
+		int BB = mNoise[B + 1] + Z;
+
+		// add blended results from 8 corners of cube
+		return lerp(w,
+			lerp(v,
+				lerp(u, grad(mNoise[AA], x, y, z), grad(mNoise[BA], x - 1, y , z)),
+				lerp(u, grad(mNoise[AB], x, y - 1, z), grad(mNoise[BB], x - 1, y - 1, z))),
+			lerp(v,
+				lerp(u, grad(mNoise[AA + 1], x, y, z - 1), grad(mNoise[BA + 1], x - 1, y, z - 1)),
+				lerp(u, grad(mNoise[AB + 1], x, y - 1, z - 1), grad(mNoise[BB + 1], x - 1, y - 1, z - 1))));
+	}
+
+	void setupScene()
+	{
+		// setup some basic lighting for our scene
+        mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
+        mSceneMgr->createLight()->setPosition(20, 80, 50);
+
+        mSceneMgr->setSkyBox(true, "Examples/SceneSkyBox2");  // set a skybox
+
+        mObjectNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+
+		// use an orbit cam and show the cursor
+		mCameraMan->setStyle(CS_ORBIT);
+		mTrayMgr->showCursor();
+	}
+
+	void cleanupScene()
+	{
+	}
+
+	SceneNode* mObjectNode;
+	static const int mNoise[512];
+};
+
+const int CubeMappingSample::mNoise[512] =
+{
+	151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99,
+	37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32,
+	57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27,
+	166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 
+	102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135, 130,
+	116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123, 5, 202, 38, 147,
+	118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213, 119,
+	248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98, 108, 110,
+	79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179,
+	162, 241, 81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176,
+	115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78,
+	66, 215, 61, 156, 180, 151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36,
+	103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252,
+	219, 203, 117, 35, 11, 32, 57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74,
+	165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92,
+	41, 55, 46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18,
+	169, 200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124,
+	123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 
+	223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39,
+	253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 251, 34, 242, 193, 238,
+	210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106,
+	157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72,
+	243, 141, 128, 195, 78, 66, 215, 61, 156, 180
+};
+
+#endif
+
 
 /**
-    \file 
-        CubeMapping.h
-    \brief
-        Specialisation of OGRE's framework application to show the
-        cube mapping feature where a wrap-around environment is reflected
-        off of an object.
-		Extended with Perlin noise to show we can.
-*/
-
-#include "ExampleApplication.h"
-
-#define ENTITY_NAME "CubeMappedEntity"
-#define MESH_NAME "CubeMappedMesh"
-
-#define MATERIAL_NAME "Examples/SceneCubeMap2"
-#define SKYBOX_MATERIAL "Examples/SceneSkyBox2"
-
-/* ==================================================================== */
-/*    Perlin Noise data and algorithms - copied from Perlin himself :)  */
-/* ==================================================================== */
-#define lerp(t,a,b) ( (a)+(t)*((b)-(a)) )
-#define fade(t) ( (t)*(t)*(t)*(t)*((t)*((t)*6-15)+10) )
-double grad(int hash, double x, double y, double z) {
-	int h = hash & 15;                      // CONVERT LO 4 BITS OF HASH CODE
-	double u = h<8||h==12||h==13 ? x : y,   // INTO 12 GRADIENT DIRECTIONS.
-		v = h<4||h==12||h==13 ? y : z;
-	return ((h&1) == 0 ? u : -u) + ((h&2) == 0 ? v : -v);
-}
-int p[512]={
-	151,160,137,91,90,15,
-	131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
-	190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
-	88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
-	77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
-	102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
-	135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
-	5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
-	223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
-	129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
-	251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
-	49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
-	138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180,
-
-	151,160,137,91,90,15,
-	131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
-	190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
-	88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
-	77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
-	102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
-	135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
-	5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
-	223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
-	129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
-	251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
-	49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
-	138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
-	};
-
-double noise3(double x, double y, double z) {
-	int X = ((int)floor(x)) & 255,                  // FIND UNIT CUBE THAT
-		Y = ((int)floor(y)) & 255,                  // CONTAINS POINT.
-		Z = ((int)floor(z)) & 255;
-	x -= floor(x);                                // FIND RELATIVE X,Y,Z
-	y -= floor(y);                                // OF POINT IN CUBE.
-	z -= floor(z);
-	double u = fade(x),                                // COMPUTE FADE CURVES
-		v = fade(y),                                // FOR EACH OF X,Y,Z.
-		w = fade(z);
-	int A = p[X  ]+Y, AA = p[A]+Z, AB = p[A+1]+Z,      // HASH COORDINATES OF
-		B = p[X+1]+Y, BA = p[B]+Z, BB = p[B+1]+Z;      // THE 8 CUBE CORNERS,
-
-	return lerp(w, lerp(v, lerp(u, grad(p[AA  ], x  , y  , z   ),  // AND ADD
-						grad(p[BA  ], x-1, y  , z   )), // BLENDED
-					lerp(u, grad(p[AB  ], x  , y-1, z   ),  // RESULTS
-						grad(p[BB  ], x-1, y-1, z   ))),// FROM  8
-				lerp(v, lerp(u, grad(p[AA+1], x  , y  , z-1 ),  // CORNERS
-						grad(p[BA+1], x-1, y  , z-1 )), // OF CUBE
-					lerp(u, grad(p[AB+1], x  , y-1, z-1 ),
-						grad(p[BB+1], x-1, y-1, z-1 ))));
-}
-
-/* ==================================================================== */
-/*                                 Main part                            */
-/* ==================================================================== */
 
 class CubeMapListener : public ExampleFrameListener
 {
@@ -679,49 +724,4 @@ public:
 		return retval ;
 	}
 } ;
-
-class CubeMapApplication : public ExampleApplication
-{
-public:
-    CubeMapApplication() {}
-
-protected:
-	SceneNode *objectNode;
-
-    // Just override the mandatory create scene method
-    void createScene(void)
-    {
-        // First check that cube mapping is supported
-        if (!Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_CUBEMAPPING))
-        {
-            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support cube mapping, so cannot "
-                "run this demo. Sorry!", 
-                "CubeMapApplication::createScene");
-        }
-
-        // Set ambient light
-        mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
-
-        // Create a skybox
-        mSceneMgr->setSkyBox(true, SKYBOX_MATERIAL );
-
-        // Create a light
-        Light* l = mSceneMgr->createLight("MainLight");
-        // Accept default settings: point light, white diffuse, just set position
-        // NB I could attach the light to a SceneNode if I wanted it to move automatically with
-        //  other objects, but I don't
-        l->setPosition(20,80,50);
-
-        objectNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-
-		// show overlay
-		Overlay* overlay = OverlayManager::getSingleton().getByName("Example/CubeMappingOverlay");    
-		overlay->show();
-	}
-
-    void createFrameListener(void)
-    {
-        mFrameListener= new CubeMapListener(mWindow, mCamera, mSceneMgr, objectNode);
-        mRoot->addFrameListener(mFrameListener);
-    }
-};
+*/

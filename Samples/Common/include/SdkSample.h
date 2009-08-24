@@ -72,13 +72,13 @@ namespace OgreBites
 
 				if (mDetailsPanel->isVisible())   // if details panel is visible, then update its contents
 				{
-					mDetailsPanel->setParamValue(0, Ogre::StringConverter::toString(mCamera->getPosition().x));
-					mDetailsPanel->setParamValue(1, Ogre::StringConverter::toString(mCamera->getPosition().y));
-					mDetailsPanel->setParamValue(2, Ogre::StringConverter::toString(mCamera->getPosition().z));
-					mDetailsPanel->setParamValue(4, Ogre::StringConverter::toString(mCamera->getOrientation().w));
-					mDetailsPanel->setParamValue(5, Ogre::StringConverter::toString(mCamera->getOrientation().x));
-					mDetailsPanel->setParamValue(6, Ogre::StringConverter::toString(mCamera->getOrientation().y));
-					mDetailsPanel->setParamValue(7, Ogre::StringConverter::toString(mCamera->getOrientation().z));
+					mDetailsPanel->setParamValue(0, Ogre::StringConverter::toString(mCamera->getDerivedPosition().x));
+					mDetailsPanel->setParamValue(1, Ogre::StringConverter::toString(mCamera->getDerivedPosition().y));
+					mDetailsPanel->setParamValue(2, Ogre::StringConverter::toString(mCamera->getDerivedPosition().z));
+					mDetailsPanel->setParamValue(4, Ogre::StringConverter::toString(mCamera->getDerivedOrientation().w));
+					mDetailsPanel->setParamValue(5, Ogre::StringConverter::toString(mCamera->getDerivedOrientation().x));
+					mDetailsPanel->setParamValue(6, Ogre::StringConverter::toString(mCamera->getDerivedOrientation().y));
+					mDetailsPanel->setParamValue(7, Ogre::StringConverter::toString(mCamera->getDerivedOrientation().z));
 				}
 			}
 

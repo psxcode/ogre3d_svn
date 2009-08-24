@@ -50,7 +50,7 @@ namespace OgreBites
 		virtual void itemSelected(SelectMenu* menu) {}
 		virtual void labelHit(Label* label) {}
 		virtual void sliderMoved(Slider* slider) {}
-		virtual void checkBoxToggled(CheckBox* checkBox) {}
+		virtual void checkBoxToggled(CheckBox* box) {}
 		virtual void okDialogClosed(const Ogre::DisplayString& message) {}
 		virtual void yesNoDialogClosed(const Ogre::DisplayString& question, bool yesHit) {}
     };
@@ -768,7 +768,7 @@ namespace OgreBites
 			{
 				Ogre::String desc = "Menu \"" + getName() + "\" contains no item at position " +
 					Ogre::StringConverter::toString(index) + ".";
-				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::selectItem");
+				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::removeItem");
 			}
 		}
 
@@ -787,8 +787,6 @@ namespace OgreBites
 					Ogre::StringConverter::toString(index) + ".";
 				OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, desc, "SelectMenu::selectItem");
 			}
-
-			if (index == mSelectionIndex) return;    // do not do anything if an item's already selected
 
 			mSelectionIndex = index;
 			fitCaptionToArea(mItems[index], mSmallTextArea, mSmallBox->getWidth() - mSmallTextArea->getLeft() * 2);
@@ -866,7 +864,7 @@ namespace OgreBites
 
 					if (cursorPos.x >= l && cursorPos.x <= r && cursorPos.y >= t && cursorPos.y <= b)
 					{
-						selectItem(mHighlightIndex);
+						if (mHighlightIndex != mSelectionIndex) selectItem(mHighlightIndex);
 						retract();
 					}
 				}
@@ -1952,27 +1950,29 @@ namespace OgreBites
 		}
 
 		SelectMenu* createThickSelectMenu(TrayLocation trayLoc, const Ogre::String& name, const Ogre::DisplayString& caption,
-			Ogre::Real width, unsigned int maxItemsShown)
+			Ogre::Real width, unsigned int maxItemsShown, const Ogre::StringVector& items = Ogre::StringVector())
 		{
 			SelectMenu* sm = new SelectMenu(name, caption, width, 0, maxItemsShown);
 			moveWidgetToTray(sm, trayLoc);
 			sm->_assignListener(mListener);
+			if (!items.empty()) sm->setItems(items);
 			return sm;
 		}
 
 		SelectMenu* createLongSelectMenu(TrayLocation trayLoc, const Ogre::String& name, const Ogre::DisplayString& caption,
-			Ogre::Real width, Ogre::Real boxWidth, unsigned int maxItemsShown)
+			Ogre::Real width, Ogre::Real boxWidth, unsigned int maxItemsShown, const Ogre::StringVector& items = Ogre::StringVector())
 		{
 			SelectMenu* sm = new SelectMenu(name, caption, width, boxWidth, maxItemsShown);
 			moveWidgetToTray(sm, trayLoc);
 			sm->_assignListener(mListener);
+			if (!items.empty()) sm->setItems(items);
 			return sm;
 		}
 
 		SelectMenu* createLongSelectMenu(TrayLocation trayLoc, const Ogre::String& name, const Ogre::DisplayString& caption,
-			Ogre::Real boxWidth, unsigned int maxItemsShown)
+			Ogre::Real boxWidth, unsigned int maxItemsShown, const Ogre::StringVector& items = Ogre::StringVector())
 		{
-			return createLongSelectMenu(trayLoc, name, caption, 0, boxWidth, maxItemsShown);
+			return createLongSelectMenu(trayLoc, name, caption, 0, boxWidth, maxItemsShown, items);
 		}
 
 		Label* createLabel(TrayLocation trayLoc, const Ogre::String& name, const Ogre::DisplayString& caption, Ogre::Real width = 0)

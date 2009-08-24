@@ -46,7 +46,7 @@ protected:
 
 		// create a head entity from the mesh and attach it to a node with a vertical offset to center it
 		Entity* head = mSceneMgr->createEntity("Head", "facial.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(0, -20, 0))->attachObject(head);
+		mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(0, -30, 0))->attachObject(head);
 
 		// get the animation states
 		mSpeakAnimState = head->getAnimationState("Speak");
@@ -91,11 +91,14 @@ protected:
 	{
 		// unload mesh and revert any changes we made to it (so we don't affect subsequent samples)
 		MeshManager::getSingleton().unload(mHeadMesh->getHandle());
+
+		mExpressions.clear();
+		mMouthShapes.clear();
 	}
 
-	void checkBoxToggled(OgreBites::CheckBox * checkBox)
+	void checkBoxToggled(OgreBites::CheckBox * box)
 	{
-		mPlayAnimation = !checkBox->isChecked();
+		mPlayAnimation = !box->isChecked();
 
 		// toggle animation states
 		mSpeakAnimState->setEnabled(mPlayAnimation);

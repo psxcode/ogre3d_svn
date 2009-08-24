@@ -16,7 +16,7 @@ public:
 		mInfo["Description"] = "An example of using AnimationTracks to make a node smoothly follow "
 			"a predefined path with spline interpolation. Also uses the auto-tracking feature of the camera.";
 		mInfo["Thumbnail"] = "thumb_camtrack.png";
-		mInfo["Category"] = "Other";
+		mInfo["Category"] = "Animation";
 	}
 
     bool frameRenderingQueued(const FrameEvent& evt)

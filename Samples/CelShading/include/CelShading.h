@@ -18,12 +18,12 @@ public:
 		mInfo["Category"] = "Materials";
 	}
 
-	void testCapabilities(const RenderSystemCapabilities* caps)   // test capabilities
+	void testCapabilities(const RenderSystemCapabilities* caps)
 	{
 		if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !caps->hasCapability(RSC_FRAGMENT_PROGRAM))
         {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your graphics card does not support vertex and fragment"
-				" programs, so you cannot run this sample. Sorry!", "CelShading::testCapabilities");
+				" programs, so you cannot run this sample. Sorry!", "CelShadingSample::testCapabilities");
         }
 	}
 

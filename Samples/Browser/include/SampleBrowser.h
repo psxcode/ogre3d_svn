@@ -210,10 +210,7 @@ namespace OgreBites
 				mTrayMgr->moveWidgetToTray(mRendererMenu, TL_LEFT);
 				mTrayMgr->moveWidgetToTray("ConfigSeparator", TL_LEFT);
 
-				/* By default, select menus only notify their listeners of a CHANGE in item, so we manually call
-				the callback here to populate the rest of the configuration controls as well. */
-				mRendererMenu->selectItem(mRoot->getRenderSystem()->getName(), false);
-				itemSelected(mRendererMenu);
+				mRendererMenu->selectItem(mRoot->getRenderSystem()->getName());
 
 				windowResized(mWindow);
 			}
@@ -331,9 +328,7 @@ namespace OgreBites
 				mCarouselPlace = 0;  // reset carousel
 
 				mSampleMenu->setItems(sampleTitles);
-				/* By default, select menus only notify their listeners of a CHANGE in item, so we manually call
-				the callback here to update sample information as well. */
-				if (mSampleMenu->getSelectionIndex() != -1) itemSelected(mSampleMenu);
+				if (mSampleMenu->getNumItems() != 0) itemSelected(mSampleMenu);
 
 				mSampleSlider->setRange(1, sampleTitles.size(), sampleTitles.size());
 			}
@@ -769,16 +764,12 @@ namespace OgreBites
 		virtual void populateSampleMenus()
 		{
 			Ogre::StringVector categories;
-
 			for (std::set<Ogre::String>::iterator i = mSampleCategories.begin(); i != mSampleCategories.end(); i++)
-			{
 				categories.push_back(*i);
-			}
 
-			/* By default, select menus only notify their listeners of a CHANGE in item, so we manually call
-			the callback here to populate the sample menu as well. */
 			mCategoryMenu->setItems(categories);
-			itemSelected(mCategoryMenu);
+			if (mCategoryMenu->getNumItems() != 0) mCategoryMenu->selectItem(0);
+			else itemSelected(mCategoryMenu);   // if there are no items, we can't select one, so manually invoke callback
 		}
 
 		/*-----------------------------------------------------------------------------

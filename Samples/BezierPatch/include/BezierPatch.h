@@ -18,9 +18,9 @@ public:
 		mInfo["Category"] = "Other";
 	}
 
-	void checkBoxToggled(CheckBox* checkBox)
+	void checkBoxToggled(CheckBox* box)
 	{
-		mPatchPass->setPolygonMode(checkBox->isChecked() ? PM_WIREFRAME : PM_SOLID);
+		mPatchPass->setPolygonMode(box->isChecked() ? PM_WIREFRAME : PM_SOLID);
 	}
 
 	void sliderMoved(Slider* slider)

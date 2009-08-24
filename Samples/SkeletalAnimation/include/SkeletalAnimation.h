@@ -184,6 +184,10 @@ protected:
 	void cleanupScene()
 	{
 		MeshManager::getSingleton().remove("floor.mesh");
+
+		mModelNodes.clear();
+		mAnimStates.clear();
+		mAnimSpeeds.clear();
 	}
 
 	const unsigned int NUM_MODELS;

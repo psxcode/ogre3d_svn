@@ -26,10 +26,10 @@ public:
 		return SdkSample::frameRenderingQueued(evt);   // don't forget the parent class updates!
     }
 
-	void checkBoxToggled(CheckBox* checkBox)
+	void checkBoxToggled(CheckBox* box)
 	{
 		// show or hide the particle system with the same name as the check box
-		mSceneMgr->getParticleSystem(checkBox->getName())->setVisible(checkBox->isChecked());
+		mSceneMgr->getParticleSystem(box->getName())->setVisible(box->isChecked());
 	}
 
 protected:
