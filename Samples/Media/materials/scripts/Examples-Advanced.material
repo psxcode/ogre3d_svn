@@ -424,14 +424,14 @@ material Examples/FresnelReflectionRefraction
 			texture_unit
 			{
 				// Will be filled in at runtime
-				texture Reflection
+				texture reflection
 				tex_address_mode clamp
 			}
 			// Refraction
 			texture_unit
 			{
 				// Will be filled in at runtime
-				texture Refraction
+				texture refraction
 				tex_address_mode clamp
 			}
 		}

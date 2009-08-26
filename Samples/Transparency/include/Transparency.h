@@ -32,11 +32,11 @@ public:
 		Ogre::Real y = r * Math::Sin(mTheta);
 		Ogre::Real z = 60 * Math::Cos(mTheta * 3 / 2 + 0.2);
 
-		mLastFishPos = mFishNode->getPosition();   // save fishy's last position
-		mFishNode->setPosition(x, y, z);           // set fishy's new position
+		Vector3 lastPos = mFishNode->getPosition();   // save fishy's last position
+		mFishNode->setPosition(x, y, z);              // set fishy's new position
 
 		// set fishy's direction based on the change in position
-		mFishNode->setDirection(mFishNode->getPosition() - mLastFishPos, Node::TS_PARENT, Vector3::NEGATIVE_UNIT_X);
+		mFishNode->setDirection(mFishNode->getPosition() - lastPos, Node::TS_PARENT, Vector3::NEGATIVE_UNIT_X);
 
 		mFishSwim->addTime(evt.timeSinceLastFrame * 5);   // update fishy's swimming animation
 
@@ -74,7 +74,6 @@ protected:
 	SceneNode* mFishNode;
 	AnimationState* mFishSwim;
 	Real mTheta;
-	Vector3 mLastFishPos;
 };
 
 #endif

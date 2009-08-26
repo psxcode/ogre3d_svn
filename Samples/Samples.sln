@@ -35,6 +35,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_Dot3Bump", "Dot3Bump
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_DynTex", "DynTex\Sample_DynTex.vcproj", "{3D49F822-A371-41AA-BB69-B8EB6BBFBB4C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_Fresnel", "Fresnel\Sample_Fresnel.vcproj", "{7F371F43-F337-4F6A-A4AD-614ED4B6E330}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -147,6 +149,12 @@ Global
 		{3D49F822-A371-41AA-BB69-B8EB6BBFBB4C}.Release|Win32.ActiveCfg = Release|Win32
 		{3D49F822-A371-41AA-BB69-B8EB6BBFBB4C}.Release|Win32.Build.0 = Release|Win32
 		{3D49F822-A371-41AA-BB69-B8EB6BBFBB4C}.Release|x64.ActiveCfg = Release|Win32
+		{7F371F43-F337-4F6A-A4AD-614ED4B6E330}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7F371F43-F337-4F6A-A4AD-614ED4B6E330}.Debug|Win32.Build.0 = Debug|Win32
+		{7F371F43-F337-4F6A-A4AD-614ED4B6E330}.Debug|x64.ActiveCfg = Debug|Win32
+		{7F371F43-F337-4F6A-A4AD-614ED4B6E330}.Release|Win32.ActiveCfg = Release|Win32
+		{7F371F43-F337-4F6A-A4AD-614ED4B6E330}.Release|Win32.Build.0 = Release|Win32
+		{7F371F43-F337-4F6A-A4AD-614ED4B6E330}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

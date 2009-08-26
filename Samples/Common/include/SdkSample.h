@@ -85,6 +85,11 @@ namespace OgreBites
 			return true;
 		}
 
+		virtual void windowResized(Ogre::RenderWindow* rw)
+		{
+			mCamera->setAspectRatio((Ogre::Real)mViewport->getActualWidth() / (Ogre::Real)mViewport->getActualHeight());
+		}
+
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
 			if (evt.key == OIS::KC_H || evt.key == OIS::KC_F1)   // toggle visibility of help dialog
@@ -290,7 +295,6 @@ namespace OgreBites
 			mCamera = mSceneMgr->createCamera("MainCamera");
 			mViewport = mWindow->addViewport(mCamera);
 			mCamera->setAspectRatio((Ogre::Real)mViewport->getActualWidth() / (Ogre::Real)mViewport->getActualHeight());
-			mCamera->setAutoAspectRatio(true);
 			mCamera->setNearClipDistance(5);
 
 			mCameraMan = new SdkCameraMan(mCamera);   // create a default camera controller
