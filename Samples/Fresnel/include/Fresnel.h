@@ -91,7 +91,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{
         mCamera->setPosition(-50, 125, 760);
 		mCameraMan->setTopSpeed(280);
@@ -213,7 +213,7 @@ protected:
 		mFishAnimTime = 0;
 	}
 
-	void cleanupScene()
+	void cleanupContent()
 	{
 		mSurfaceEnts.clear();
 		mSubmergedEnts.clear();

@@ -28,7 +28,7 @@ public:
 
 protected:
 
-	void setupScene(void)
+	void setupContent(void)
 	{
 		// setup some basic lighting for our scene
         mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
@@ -87,13 +87,12 @@ protected:
 		mTrayMgr->createCheckBox(TL_TOP, "Manual", "Manual Animation")->setChecked(!mPlayAnimation);
 	}
 
-	void cleanupScene()
+	void cleanupContent()
 	{
-		// unload mesh and revert any changes we made to it (so we don't affect subsequent samples)
-		MeshManager::getSingleton().unload(mHeadMesh->getHandle());
-
 		mExpressions.clear();
 		mMouthShapes.clear();
+		mSceneMgr->clearScene();
+		MeshManager::getSingleton().unload(mHeadMesh->getHandle());
 	}
 
 	void checkBoxToggled(OgreBites::CheckBox * box)

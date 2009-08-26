@@ -49,7 +49,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{
 		// set shadow properties
 		mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE);
@@ -181,13 +181,13 @@ protected:
 		}
 	}
 
-	void cleanupScene()
+	void cleanupContent()
 	{
-		MeshManager::getSingleton().remove("floor");
-
 		mModelNodes.clear();
 		mAnimStates.clear();
 		mAnimSpeeds.clear();
+		mSceneMgr->clearScene();
+		MeshManager::getSingleton().remove("floor");
 	}
 
 	const unsigned int NUM_MODELS;

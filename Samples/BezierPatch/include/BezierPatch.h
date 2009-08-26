@@ -40,7 +40,7 @@ protected:
         float u, v;
     };
 
-	void setupScene()
+	void setupContent()
 	{
 		// setup some basic lighting for our scene
 		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
@@ -91,11 +91,10 @@ protected:
 		mTrayMgr->createCheckBox(TL_TOPLEFT, "Wireframe", "Wireframe", 120);
 	}
 
-    void cleanupScene()
+    void cleanupContent()
     {
-		mPatchPass->setPolygonMode(PM_SOLID);
+		mSceneMgr->clearScene();
 		MeshManager::getSingleton().remove(mPatch->getHandle());
-		mPatch.setNull();
     }
 
 	PatchMeshPtr mPatch;

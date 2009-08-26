@@ -51,7 +51,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{
 		mSceneMgr->setSkyBox(true, "Examples/StormySkyBox");  // add a skybox
 
@@ -136,7 +136,7 @@ protected:
 		mTexBuf->unlock();
 	}
 
-	void cleanupScene()
+	void cleanupContent()
 	{
 		TextureManager::getSingleton().remove("thaw");
 	}

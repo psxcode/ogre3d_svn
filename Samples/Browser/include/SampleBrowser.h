@@ -563,15 +563,25 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void setup()
 		{
-			SampleContext::setup();
+			createWindow();
+			setupInput();
+			locateResources();
 
-			createDummyScene();
+			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Essential");
 
 			mTrayMgr = new SdkTrayManager("BrowserControls", mWindow, mMouse, this);
 			mTrayMgr->showBackdrop("SdkTrays/Bands");
 			mTrayMgr->getTrayContainer(TL_NONE)->hide();
 
+			createDummyScene();
 			loadSamples();
+			loadResources();
+
+			Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
+
+			// adds context as listener to process context-level (above the sample level) events
+			mRoot->addFrameListener(this);
+			Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
 
 			// create template material for sample thumbnails
 			Ogre::MaterialPtr thumbMat = Ogre::MaterialManager::getSingleton().create("SampleThumbnail", "Essential");
@@ -596,7 +606,6 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void loadResources()
 		{
-			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Essential");
 			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Popular");
 		}
 

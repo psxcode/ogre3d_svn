@@ -45,7 +45,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{     
 		mSceneMgr->setSkyBox(true, "Examples/TrippySkyBox");
 

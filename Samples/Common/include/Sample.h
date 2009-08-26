@@ -39,7 +39,7 @@ namespace OgreBites
 			mSceneMgr = 0;
 			mDone = true;
 			mResourcesLoaded = false;
-			mSceneCreated = false;
+			mContentSetup = false;
         }
 
 		virtual ~Sample() {}
@@ -97,11 +97,11 @@ namespace OgreBites
 
 			locateResources();
 			createSceneManager();
+			setupView();
 			loadResources();
 			mResourcesLoaded = true;
-			setupView();
-			setupScene();
-			mSceneCreated = true;
+			setupContent();
+			mContentSetup = true;
 
 			mDone = false;
 		}
@@ -111,15 +111,13 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void _shutdown()
 		{
-			if (mSceneMgr) mSceneMgr->clearScene();
-
-			if (mSceneCreated) cleanupScene();
+			if (mContentSetup) cleanupContent();
 			if (mResourcesLoaded) unloadResources();
-			if (mSceneMgr) Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
+			if (mSceneMgr) mRoot->destroySceneManager(mSceneMgr);
 
 			mDone = true;
 			mResourcesLoaded = false;
-			mSceneCreated = false;
+			mContentSetup = false;
 			mSceneMgr = 0;
 		}
 
@@ -192,12 +190,12 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Sets up the scene (and anything else you want for the sample).
 		-----------------------------------------------------------------------------*/
-		virtual void setupScene() {}
+		virtual void setupContent() {}
 
 		/*-----------------------------------------------------------------------------
 		| Cleans up the scene (and anything else you used).
 		-----------------------------------------------------------------------------*/
-		virtual void cleanupScene() {}
+		virtual void cleanupContent() {}
 
 		/*-----------------------------------------------------------------------------
 		| Unloads sample-specific resources. My method here is simple and good
@@ -222,7 +220,7 @@ namespace OgreBites
 		Ogre::NameValuePairList mInfo;    // custom sample info
 		bool mDone;                       // flag to mark the end of the sample
 		bool mResourcesLoaded;    // whether or not resources have been loaded
-		bool mSceneCreated;       // whether or not scene was created
+		bool mContentSetup;       // whether or not scene was created
     };
 
 	typedef std::set<Sample*, Sample::Comparer> SampleSet;

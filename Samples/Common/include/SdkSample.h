@@ -240,11 +240,12 @@ namespace OgreBites
 
 			locateResources();
 			createSceneManager();
-			loadResources();
-			mResourcesLoaded = true;
 			setupView();
 			
 			mTrayMgr = new SdkTrayManager("SampleControls", window, mouse, this);  // create a tray interface
+
+			loadResources();
+			mResourcesLoaded = true;
 
 			// show stats and logo and hide the cursor
 			mTrayMgr->showFrameStats(TL_BOTTOMLEFT);
@@ -269,8 +270,8 @@ namespace OgreBites
 			mDetailsPanel->setParamValue(10, "Solid");
 			mDetailsPanel->hide();
 
-			setupScene();
-			mSceneCreated = true;
+			setupContent();
+			mContentSetup = true;
 
 			mDone = false;
 		}

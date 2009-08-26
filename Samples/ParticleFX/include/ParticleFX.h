@@ -34,7 +34,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{     
 		// setup some basic lighting for our scene
 		mSceneMgr->setAmbientLight(ColourValue(0.3, 0.3, 0.3));

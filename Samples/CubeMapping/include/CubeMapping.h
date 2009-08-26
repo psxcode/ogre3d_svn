@@ -88,7 +88,7 @@ protected:
 				lerp(u, grad(mNoise[AB + 1], x, y - 1, z - 1), grad(mNoise[BB + 1], x - 1, y - 1, z - 1))));
 	}
 
-	void setupScene()
+	void setupContent()
 	{
 		// setup some basic lighting for our scene
         mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
@@ -103,7 +103,7 @@ protected:
 		mTrayMgr->showCursor();
 	}
 
-	void cleanupScene()
+	void cleanupContent()
 	{
 	}
 

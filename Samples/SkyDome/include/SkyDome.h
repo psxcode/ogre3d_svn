@@ -26,7 +26,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{
 		// setup some basic lighting for our scene
         mSceneMgr->setAmbientLight(ColourValue(0.3, 0.3, 0.3));
@@ -60,8 +60,9 @@ protected:
 		mTilingSlider->setValue(8);
 	}
 
-	void cleanupScene()
+	void cleanupContent()
 	{
+		mSceneMgr->clearScene();
 		MeshManager::getSingleton().remove("floor");
 	}
 

@@ -37,7 +37,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{     
 		mViewport->setBackgroundColour(ColourValue::White);
 

@@ -105,7 +105,7 @@ public:
 
 protected:
 
-	void setupScene()
+	void setupContent()
 	{
 		// create our main node to attach our entities to
 		mObjectNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -231,7 +231,7 @@ protected:
 		mMeshMenu->selectItem(0);  // select first mesh
 	}
 
-	void cleanupScene()
+	void cleanupContent()
 	{
 		// clean up properly to avoid interfering with subsequent samples
 		for (std::map<String, StringVector>::iterator it = mPossibilities.begin(); it != mPossibilities.end(); it++)

@@ -73,7 +73,7 @@ protected:
 		else mCamera->setFarClipDistance(1000);
 	}
 
-	void setupScene()
+	void setupContent()
 	{
 		mCameraMan->setTopSpeed(50);
 
@@ -90,11 +90,6 @@ protected:
 
 		// create our scene query, which will be used to cast a ray to the ground from the camera
         mGroundQuery = mSceneMgr->createRayQuery(mGroundRay);
-	}
-
-	void cleanupScene()
-	{
-		delete mGroundQuery;
 	}
 
 	RaySceneQuery* mGroundQuery;
