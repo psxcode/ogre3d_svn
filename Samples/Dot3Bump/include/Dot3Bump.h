@@ -6,7 +6,7 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class Dot3BumpSample : public SdkSample
+class _OgreSampleClassExport Dot3BumpSample : public SdkSample
 {
 public:
 

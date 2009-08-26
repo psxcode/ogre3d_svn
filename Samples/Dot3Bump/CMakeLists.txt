@@ -1,10 +1,13 @@
 # Configure Dot3Bump demo build
 
+set(HEADER_FILES include/Dot3Bump.h)
 set(SOURCE_FILES src/Dot3Bump.cpp)
 
-add_executable(Demo_Dot3Bump WIN32 ${SOURCE_FILES} ${RESOURCE_FILES})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(Demo_Dot3Bump ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
-ogre_config_sample(Demo_Dot3Bump)
+add_library(Sample_Dot3Bump SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
-add_dependencies(Demo_Dot3Bump ${SAMPLE_DEPENDENCIES})
+target_link_libraries(Sample_Dot3Bump ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
+ogre_config_sample(Sample_Dot3Bump)
+
+add_dependencies(Sample_Dot3Bump SampleBrowser)

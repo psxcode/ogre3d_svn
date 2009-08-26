@@ -1,10 +1,13 @@
 # Configure DynTex demo build
 
+set(HEADER_FILES include/DynTex.h)
 set(SOURCE_FILES src/DynTex.cpp)
 
-add_executable(Demo_DynTex WIN32 ${SOURCE_FILES} ${RESOURCE_FILES})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(Demo_DynTex ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
-ogre_config_sample(Demo_DynTex)
+add_library(Sample_DynTex SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
-add_dependencies(Demo_DynTex ${SAMPLE_DEPENDENCIES})
+target_link_libraries(Sample_DynTex ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
+ogre_config_sample(Sample_DynTex)
+
+add_dependencies(Sample_DynTex SampleBrowser)
