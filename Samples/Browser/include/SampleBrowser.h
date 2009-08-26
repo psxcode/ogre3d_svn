@@ -144,13 +144,13 @@ namespace OgreBites
 		{
 			if (b->getName() == "StartStop")   // start or stop sample
 			{
-				if (mCurrentSample) runSample(0);
-				else
+				if (b->getCaption() == "Start Sample")
 				{
 					if (mLoadedSamples.empty()) mTrayMgr->showOkDialog("Error!", "No sample selected!");
 					// use the sample pointer we stored inside the thumbnail
 					else runSample(Ogre::any_cast<Sample*>(mThumbs[mSampleMenu->getSelectionIndex()]->getUserAny()));
 				}
+				else runSample(0);
 			}
 			else if (b->getName() == "UnloadReload")   // unload or reload sample plugins and update controls
 			{
@@ -340,6 +340,9 @@ namespace OgreBites
 				Sample* s = Ogre::any_cast<Sample*>(mThumbs[menu->getSelectionIndex()]->getUserAny());
 				mTitleLabel->setCaption(menu->getSelectedItem()); 
 				mDescBox->setText("Category: " + s->getInfo()["Category"] + "\nDescription: " + s->getInfo()["Description"]);
+
+				if (mCurrentSample != s) ((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Start Sample");
+				else ((Button*)mTrayMgr->getWidget("StartStop"))->setCaption("Stop Sample");
 			}
 			else if (menu == mRendererMenu)    // renderer selected, so update all settings
 			{
