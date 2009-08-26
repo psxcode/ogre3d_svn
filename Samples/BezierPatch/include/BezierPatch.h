@@ -67,13 +67,13 @@ protected:
         decl->addElement(0, sizeof(float) * 6, VET_FLOAT2, VES_TEXTURE_COORDINATES, 0);
 
 		// create a patch mesh using vertices and declaration
-        mPatch = MeshManager::getSingleton().createBezierPatch("patch.mesh",
+        mPatch = MeshManager::getSingleton().createBezierPatch("patch",
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, (float*)verts, decl, 3, 3, 5, 5, PatchSurface::VS_BOTH);
 
         mPatch->setSubdivision(0);   // start at 0 detail
 
 		// create a patch entity from the mesh, give it a material, and attach it to the origin
-        Entity* ent = mSceneMgr->createEntity("Patch", "patch.mesh");
+        Entity* ent = mSceneMgr->createEntity("Patch", "patch");
 		ent->setMaterialName("Examples/BumpyMetal");
         mSceneMgr->getRootSceneNode()->attachObject(ent);
 
@@ -95,6 +95,7 @@ protected:
     {
 		mPatchPass->setPolygonMode(PM_SOLID);
 		MeshManager::getSingleton().remove(mPatch->getHandle());
+		mPatch.setNull();
     }
 
 	PatchMeshPtr mPatch;

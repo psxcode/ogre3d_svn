@@ -111,6 +111,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void _shutdown()
 		{
+			mSceneMgr->clearScene();
+
 			if (mSceneCreated) cleanupScene();
 			if (mResourcesLoaded) unloadResources();
 			if (mSceneMgr) Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);

@@ -74,11 +74,11 @@ protected:
         l->setDiffuseColour(0.5, 1.0, 0.5);
 
 		// create a floor mesh resource
-		MeshManager::getSingleton().createPlane("floor.mesh", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		MeshManager::getSingleton().createPlane("floor", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 			Plane(Vector3::UNIT_Y, 0), 250, 250, 25, 25, true, 1, 15, 15, Vector3::UNIT_Z);
 
 		// add a floor to our scene using the floor mesh we created
-		Entity* floor = mSceneMgr->createEntity("Floor", "floor.mesh");
+		Entity* floor = mSceneMgr->createEntity("Floor", "floor");
 		floor->setMaterialName("Examples/Rockwall");
 		floor->setCastShadows(false);
 		mSceneMgr->getRootSceneNode()->attachObject(floor);
@@ -183,7 +183,7 @@ protected:
 
 	void cleanupScene()
 	{
-		MeshManager::getSingleton().remove("floor.mesh");
+		MeshManager::getSingleton().remove("floor");
 
 		mModelNodes.clear();
 		mAnimStates.clear();

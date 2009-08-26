@@ -1929,7 +1929,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		Ogre::Ray getCursorRay(Ogre::Camera* cam)
 		{
-			return screenToScene(cam, Ogre::Vector2(mCursor->getLeft(), mCursor->getTop()));
+			return screenToScene(cam, Ogre::Vector2(mCursor->_getLeft(), mCursor->_getTop()));
 		}
 
 		Button* createButton(TrayLocation trayLoc, const Ogre::String& name, const Ogre::String& caption, Ogre::Real width = 0)

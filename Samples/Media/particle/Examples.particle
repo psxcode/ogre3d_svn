@@ -372,13 +372,6 @@ particle_system Examples/Snow
 		depth	1
 	}
 
-	affector DeflectorPlane
-	{
-		plane_point	0 0 0
-		plane_normal	0 1 0
-		bounce	0
-	}
-
 	affector DirectionRandomiser
 	{
 		randomness	10

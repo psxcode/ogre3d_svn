@@ -37,14 +37,12 @@ protected:
 		mCameraMan->setYawPitchDist(Degree(0), Degree(0), 250);
 		mTrayMgr->showCursor();
 
-        Plane plane(0, 1, 0, 30);  // define a plane for the floor that is 30 units below and facing up
-
-		// using the plane, create a mesh for the floor
-        MeshManager::getSingleton().createPlane("floor.mesh", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			plane, 1000, 1000, 10, 10, true, 1, 8, 8, Vector3::UNIT_Z);
+		// create a floor mesh resource
+		MeshManager::getSingleton().createPlane("floor", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+			Plane(Vector3::UNIT_Y, -30), 1000, 1000, 10, 10, true, 1, 8, 8, Vector3::UNIT_Z);
 
 		// create a floor entity, give it a material, and place it at the origin
-        Entity* floor = mSceneMgr->createEntity("Floor", "floor.mesh");
+        Entity* floor = mSceneMgr->createEntity("Floor", "floor");
         floor->setMaterialName("Examples/BumpyMetal");
         mSceneMgr->getRootSceneNode()->attachObject(floor);
 
@@ -64,7 +62,7 @@ protected:
 
 	void cleanupScene()
 	{
-		MeshManager::getSingleton().remove("floor.mesh");
+		MeshManager::getSingleton().remove("floor");
 	}
 
 	Slider* mCurvatureSlider;

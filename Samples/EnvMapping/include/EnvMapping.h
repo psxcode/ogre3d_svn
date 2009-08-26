@@ -36,7 +36,7 @@ protected:
 		mCameraMan->setStyle(CS_ORBIT);
 		mTrayMgr->showCursor();
 
-		// create our model, give it the shader material, and place it at the origin
+		// create our model, give it the environment mapped material, and place it at the origin
         Entity *ent = mSceneMgr->createEntity("Head", "ogrehead.mesh");
 		ent->setMaterialName("Examples/EnvMappedRustySteel");
 		mSceneMgr->getRootSceneNode()->attachObject(ent);

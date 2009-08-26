@@ -4,7 +4,6 @@ material Examples/EnvMappedRustySteel
 	{
 		pass
 		{
-
 			texture_unit
 			{
 				texture RustySteel.jpg
@@ -16,6 +15,30 @@ material Examples/EnvMappedRustySteel
 				colour_op_ex add src_texture src_current
 				colour_op_multipass_fallback one one
 				env_map spherical
+			}
+		}
+	}
+}
+
+material Examples/PlasmaStream
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture RustySteel.jpg
+				scale 2 2
+				scroll_anim 0.05 0.1
+			}
+
+			texture_unit
+			{
+				cubic_texture nm.png combinedUVW
+				colour_op_ex add src_texture src_current
+				colour_op_multipass_fallback one one
+				env_map cubic_reflection
 			}
 		}
 	}
