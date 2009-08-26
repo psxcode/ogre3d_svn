@@ -616,7 +616,7 @@ namespace OgreBites
 			Ogre::StringVector unloadedSamplePlugins;
 
 			Ogre::ConfigFile cfg;
-			cfg.load("Samples.cfg");
+			cfg.load("samples.cfg");
 
 			Ogre::String sampleDir = cfg.getSetting("SampleFolder");        // Mac OS X just uses Resources/ directory
 			Ogre::StringVector sampleList = cfg.getMultiSetting("Sample");

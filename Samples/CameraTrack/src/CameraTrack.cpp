@@ -7,7 +7,7 @@ using namespace OgreBites;
 SamplePlugin* sp;
 Sample* s;
 
-extern "C" __declspec(dllexport) void dllStartPlugin()
+extern "C" _OgreSampleExport void dllStartPlugin()
 {
 	s = new CameraTrackSample;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
@@ -15,7 +15,7 @@ extern "C" __declspec(dllexport) void dllStartPlugin()
 	Root::getSingleton().installPlugin(sp);
 }
 
-extern "C" __declspec(dllexport) void dllStopPlugin()
+extern "C" _OgreSampleExport void dllStopPlugin()
 {
 	Root::getSingleton().uninstallPlugin(sp); 
 	OGRE_DELETE sp;

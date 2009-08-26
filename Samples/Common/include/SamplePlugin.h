@@ -4,12 +4,25 @@
 #include "OgrePlugin.h"
 #include "Sample.h"
 
+// Export macro to export the sample's main dll functions.
+#if (OGRE_PLATFORM == OGRE_PLATFORM_WIN32) && !defined(__MINGW32__)
+#	define _OgreSampleExport __declspec(dllexport)
+#	define _OgreSampleClassExport
+#elif defined ( OGRE_GCC_VISIBILITY )
+#   define _OgreSampleExport  __attribute__ ((visibility("default")))
+#   define _OgreSampleClassExport  __attribute__ ((visibility("default")))
+#else
+#	define _OgreSampleExport
+#	define _OgreSampleClassExport
+#endif
+
+
 namespace OgreBites
 {
 	/*=============================================================================
 	| Utility class used to hold a set of samples in an OGRE plugin.
 	=============================================================================*/
-	class SamplePlugin : public Ogre::Plugin
+	class _OgreSampleClassExport SamplePlugin : public Ogre::Plugin
     {
     public:
 

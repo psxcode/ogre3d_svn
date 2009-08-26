@@ -299,7 +299,7 @@ namespace OgreBites
 			workDir = macBundlePath() + "/Contents/Resources/";
 			#endif
 
-			mRoot = OGRE_NEW Ogre::Root(workDir + "Plugins.cfg", workDir + "Ogre.cfg", workDir + "Ogre.log");
+			mRoot = OGRE_NEW Ogre::Root(workDir + "plugins.cfg", workDir + "Ogre.cfg", workDir + "Ogre.log");
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -386,7 +386,7 @@ namespace OgreBites
 			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 			cf.load(macBundlePath() + "/Contents/Resources/Resources.cfg");
 			#else
-			cf.load("Resources.cfg");
+			cf.load("resources.cfg");
 			#endif
 
 			Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();

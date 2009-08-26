@@ -111,7 +111,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void _shutdown()
 		{
-			mSceneMgr->clearScene();
+			if (mSceneMgr) mSceneMgr->clearScene();
 
 			if (mSceneCreated) cleanupScene();
 			if (mResourcesLoaded) unloadResources();
@@ -205,7 +205,7 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void unloadResources()
 		{
-			Ogre::ResourceGroupManager::ResourceManagerIterator& resMgrs =
+			Ogre::ResourceGroupManager::ResourceManagerIterator resMgrs =
 			Ogre::ResourceGroupManager::getSingleton().getResourceManagerIterator();
 
 			while (resMgrs.hasMoreElements())
