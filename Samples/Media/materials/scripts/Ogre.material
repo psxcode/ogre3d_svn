@@ -1,4 +1,3 @@
-
 material Ogre/Earring
 {
 	technique
@@ -18,6 +17,7 @@ material Ogre/Earring
 		}
 	}
 }
+
 material Ogre/Skin
 {
 	technique
@@ -34,13 +34,14 @@ material Ogre/Skin
 		}
 	}
 }
+
 material Ogre/Tusks
 {
 	technique
 	{
 		pass
 		{
-			ambient 0.8 0.8 0.5
+			ambient 0.7 0.7 0.6
 
 			texture_unit
 			{
@@ -50,6 +51,7 @@ material Ogre/Tusks
 		}
 	}
 }
+
 material Ogre/Eyes
 {
 	technique
