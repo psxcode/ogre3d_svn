@@ -16,7 +16,7 @@ public:
 		mInfo["Description"] = "Demonstrates the cube mapping feature where a wrap-around environment is reflected "
 			"off of an object. We also apply Perlin noise to the surface, because we can.";
 		mInfo["Thumbnail"] = "thumb_cubemap.png";
-		mInfo["Category"] = "Effects";
+		mInfo["Category"] = "Unsorted";
 	}
 
     bool frameRenderingQueued(const FrameEvent& evt)
@@ -41,7 +41,6 @@ protected:
 
 	void cleanupContent()
 	{
-		mSceneMgr->clearScene();
 	}
 };
 

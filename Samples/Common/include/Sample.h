@@ -111,14 +111,14 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void _shutdown()
 		{
-			if (mContentSetup) cleanupContent();
-			if (mResourcesLoaded) unloadResources();
 			if (mSceneMgr) mRoot->destroySceneManager(mSceneMgr);
+			mSceneMgr = 0;
+			if (mContentSetup) cleanupContent();
+			mContentSetup = false;
+			if (mResourcesLoaded) unloadResources();
+			mResourcesLoaded = false;
 
 			mDone = true;
-			mResourcesLoaded = false;
-			mContentSetup = false;
-			mSceneMgr = 0;
 		}
 
 		/*-----------------------------------------------------------------------------

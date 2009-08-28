@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Fresnel";
 		mInfo["Description"] = "Shows how to create reflections and refractions.";
 		mInfo["Thumbnail"] = "thumb_fresnel.png";
-		mInfo["Category"] = "Effects";
+		mInfo["Category"] = "Unsorted";
 	}
 
 	void testCapabilities(const RenderSystemCapabilities* caps)

@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Bezier Patch";
 		mInfo["Description"] = "A demonstration of the Bezier patch support.";
 		mInfo["Thumbnail"] = "thumb_bezier.png";
-		mInfo["Category"] = "Other";
+		mInfo["Category"] = "Unsorted";
 	}
 
 	void checkBoxToggled(CheckBox* box)
@@ -93,7 +93,6 @@ protected:
 
     void cleanupContent()
     {
-		mSceneMgr->clearScene();
 		MeshManager::getSingleton().remove(mPatch->getHandle());
     }
 

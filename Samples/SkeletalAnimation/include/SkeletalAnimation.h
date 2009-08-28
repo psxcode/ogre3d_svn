@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Skeletal Animation";
 		mInfo["Description"] = "A demo of the skeletal animation feature, including spline animation.";
 		mInfo["Thumbnail"] = "thumb_skelanim.png";
-		mInfo["Category"] = "Animation";
+		mInfo["Category"] = "Unsorted";
 	}
 
     bool frameRenderingQueued(const FrameEvent& evt)
@@ -75,7 +75,7 @@ protected:
 
 		// create a floor mesh resource
 		MeshManager::getSingleton().createPlane("floor", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			Plane(Vector3::UNIT_Y, 0), 250, 250, 25, 25, true, 1, 15, 15, Vector3::UNIT_Z);
+			Plane(Vector3::UNIT_Y, -1), 250, 250, 25, 25, true, 1, 15, 15, Vector3::UNIT_Z);
 
 		// add a floor to our scene using the floor mesh we created
 		Entity* floor = mSceneMgr->createEntity("Floor", "floor");
@@ -186,7 +186,6 @@ protected:
 		mModelNodes.clear();
 		mAnimStates.clear();
 		mAnimSpeeds.clear();
-		mSceneMgr->clearScene();
 		MeshManager::getSingleton().remove("floor");
 	}
 

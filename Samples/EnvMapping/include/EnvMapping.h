@@ -19,7 +19,7 @@ public:
 		mInfo["Title"] = "Environment Mapping";
 		mInfo["Description"] = "Shows the environment mapping feature of materials.";
 		mInfo["Thumbnail"] = "thumb_envmap.png";
-		mInfo["Category"] = "Materials";
+		mInfo["Category"] = "Unsorted";
 	}
 
 protected:

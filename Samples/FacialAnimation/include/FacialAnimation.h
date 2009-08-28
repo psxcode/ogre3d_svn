@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Facial Animation";
 		mInfo["Description"] = "A demonstration of the facial animation feature, using pose animation.";
 		mInfo["Thumbnail"] = "thumb_facial.png";
-		mInfo["Category"] = "Animation";
+		mInfo["Category"] = "Unsorted";
 		mInfo["Help"] = "Use the checkbox to enable/disable manual animation. "
 			"When manual animation is enabled, use the sliders to adjust each pose's influence.";
 	}
@@ -91,7 +91,6 @@ protected:
 	{
 		mExpressions.clear();
 		mMouthShapes.clear();
-		mSceneMgr->clearScene();
 		MeshManager::getSingleton().unload(mHeadMesh->getHandle());
 	}
 

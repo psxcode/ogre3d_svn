@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Dynamic Texturing";
 		mInfo["Description"] = "Demonstrates how to create and use dynamically changing textures.";
 		mInfo["Thumbnail"] = "thumb_dyntex.png";
-		mInfo["Category"] = "Effects";
+		mInfo["Category"] = "Unsorted";
 		mInfo["Help"] = "Use the left mouse button to wipe away the frost. "
 			"It's cold though, so the frost will return after a while.";
 	}

@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Sky Dome";
 		mInfo["Description"] = "Shows how to use skydomes (fixed-distance domes used for backgrounds).";
 		mInfo["Thumbnail"] = "thumb_skydome.png";
-		mInfo["Category"] = "Skies";
+		mInfo["Category"] = "Unsorted";
 	}
 
 	void sliderMoved(Slider* slider)
@@ -62,7 +62,6 @@ protected:
 
 	void cleanupContent()
 	{
-		mSceneMgr->clearScene();
 		MeshManager::getSingleton().remove("floor");
 	}
 

@@ -15,7 +15,7 @@ public:
 		mInfo["Title"] = "Terrain";
 		mInfo["Description"] = "Demonstrates use of the terrain rendering plugin.";
 		mInfo["Thumbnail"] = "thumb_terrain.png";
-		mInfo["Category"] = "Scene Managers";
+		mInfo["Category"] = "Unsorted";
 	}
 
 	StringVector getRequiredPlugins()

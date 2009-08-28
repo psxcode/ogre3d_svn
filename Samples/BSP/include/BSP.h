@@ -16,7 +16,7 @@ public:
 		mInfo["Description"] = "A demo of the indoor, or BSP (Binary Space Partition) scene manager. "
 			"Also demonstrates how to load BSP maps from Quake 3.";
 		mInfo["Thumbnail"] = "thumb_bsp.png";
-		mInfo["Category"] = "Scene Managers";
+		mInfo["Category"] = "Unsorted";
 	}
 
 	StringVector getRequiredPlugins()
