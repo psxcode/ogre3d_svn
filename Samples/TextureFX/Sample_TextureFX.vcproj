@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="Sample_TextureFX"
-	ProjectGUID="{E01825F9-BC70-41E3-ACAA-9942C6812567}"
+	ProjectGUID="{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}"
 	RootNamespace="Sample_TextureFX"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"

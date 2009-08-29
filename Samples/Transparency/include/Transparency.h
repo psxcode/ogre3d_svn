@@ -24,13 +24,13 @@ public:
 
 	bool frameRenderingQueued(const FrameEvent& evt)
 	{
-		mTheta += evt.timeSinceLastFrame;
+		Real theta = mRoot->getTimer()->getMilliseconds() / 1000.0f;
 
 		// this is the equation for a PQ torus knot
-		Ogre::Real r = 28 * (2 + Math::Sin(mTheta * 3 / 2 + 0.2));
-		Ogre::Real x = r * Math::Cos(mTheta);
-		Ogre::Real y = r * Math::Sin(mTheta);
-		Ogre::Real z = 60 * Math::Cos(mTheta * 3 / 2 + 0.2);
+		Ogre::Real r = 28 * (2 + Math::Sin(theta * 3 / 2 + 0.2));
+		Ogre::Real x = r * Math::Cos(theta);
+		Ogre::Real y = r * Math::Sin(theta);
+		Ogre::Real z = 60 * Math::Cos(theta * 3 / 2 + 0.2);
 
 		Vector3 lastPos = mFishNode->getPosition();   // save fishy's last position
 		mFishNode->setPosition(x, y, z);              // set fishy's new position
@@ -67,13 +67,10 @@ protected:
 		mFishNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		mFishNode->attachObject(ent);
 		mFishNode->setScale(2, 2, 2);
-
-		mTheta = 0;
 	}
 
 	SceneNode* mFishNode;
 	AnimationState* mFishSwim;
-	Real mTheta;
 };
 
 #endif

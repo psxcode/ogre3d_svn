@@ -85,12 +85,13 @@ protected:
 		mCamera->setNearClipDistance(4);
 		mCamera->setFarClipDistance(4000);
 
+		// set a random player starting point
+		ViewPoint vp = mSceneMgr->getSuggestedViewpoint(true);
+
 		// Quake uses the Z axis as the up axis, so make necessary adjustments
 		mCamera->setFixedYawAxis(true, Vector3::UNIT_Z);
 		mCamera->pitch(Degree(90));
 
-		// set a random player starting point
-		ViewPoint vp = mSceneMgr->getSuggestedViewpoint(true);
 		mCamera->setPosition(vp.position);
 		mCamera->rotate(vp.orientation);
 

@@ -93,6 +93,7 @@ protected:
 
     void cleanupContent()
     {
+		mPatchPass->setPolygonMode(PM_SOLID);
 		MeshManager::getSingleton().remove(mPatch->getHandle());
     }
 

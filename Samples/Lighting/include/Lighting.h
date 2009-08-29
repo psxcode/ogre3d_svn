@@ -50,11 +50,12 @@ protected:
 		mSceneMgr->setAmbientLight(ColourValue(0.1, 0.1, 0.1));  // dim ambient lighting
 
 		// create a ribbon trail that our lights will leave behind
-		RibbonTrail* trail = (RibbonTrail*)mSceneMgr->createMovableObject("RibbonTrail");
+		NameValuePairList params;
+		params["numberOfChains"] = "2";
+		params["maxElements"] = "80";
+		RibbonTrail* trail = (RibbonTrail*)mSceneMgr->createMovableObject("RibbonTrail", &params);
 		mSceneMgr->getRootSceneNode()->attachObject(trail);
 		trail->setMaterialName("Examples/LightRibbonTrail");
-		trail->setNumberOfChains(2);
-		trail->setMaxChainElements(80);
 		trail->setTrailLength(400);
 
 		SceneNode* node;

@@ -39,6 +39,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_Fresnel", "Fresnel\S
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_Lighting", "Lighting\Sample_Lighting.vcproj", "{74064A87-EECC-4B66-BB96-DB5E662F4913}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_TextureFX", "TextureFX\Sample_TextureFX.vcproj", "{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -163,6 +165,12 @@ Global
 		{74064A87-EECC-4B66-BB96-DB5E662F4913}.Release|Win32.ActiveCfg = Release|Win32
 		{74064A87-EECC-4B66-BB96-DB5E662F4913}.Release|Win32.Build.0 = Release|Win32
 		{74064A87-EECC-4B66-BB96-DB5E662F4913}.Release|x64.ActiveCfg = Release|Win32
+		{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}.Debug|Win32.Build.0 = Debug|Win32
+		{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}.Debug|x64.ActiveCfg = Debug|Win32
+		{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}.Release|Win32.ActiveCfg = Release|Win32
+		{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}.Release|Win32.Build.0 = Release|Win32
+		{5E8AA82F-B7EF-4D5E-AE2A-0DCC94E63151}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
