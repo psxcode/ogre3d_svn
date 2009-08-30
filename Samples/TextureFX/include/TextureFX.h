@@ -1,5 +1,5 @@
-#ifndef __ParticleFX_H__
-#define __ParticleFX_H__
+#ifndef __TextureFX_H__
+#define __TextureFX_H__
 
 #include "SdkSample.h"
 

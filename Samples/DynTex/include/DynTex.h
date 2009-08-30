@@ -1,5 +1,5 @@
-#ifndef __DynTexBump_H__
-#define __DynTexBump_H__
+#ifndef __DynTex_H__
+#define __DynTex_H__
 
 #include "SdkSample.h"
 

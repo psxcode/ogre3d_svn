@@ -43,6 +43,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_TextureFX", "Texture
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_Grass", "Grass\Sample_Grass.vcproj", "{816024FB-7746-4A8B-BC17-96C98A179E28}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_Smoke", "Smoke\Sample_Smoke.vcproj", "{E85D67CD-ABBB-4A5F-8577-3C7F5D7BD1D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -179,6 +181,12 @@ Global
 		{816024FB-7746-4A8B-BC17-96C98A179E28}.Release|Win32.ActiveCfg = Release|Win32
 		{816024FB-7746-4A8B-BC17-96C98A179E28}.Release|Win32.Build.0 = Release|Win32
 		{816024FB-7746-4A8B-BC17-96C98A179E28}.Release|x64.ActiveCfg = Release|Win32
+		{E85D67CD-ABBB-4A5F-8577-3C7F5D7BD1D4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E85D67CD-ABBB-4A5F-8577-3C7F5D7BD1D4}.Debug|Win32.Build.0 = Debug|Win32
+		{E85D67CD-ABBB-4A5F-8577-3C7F5D7BD1D4}.Debug|x64.ActiveCfg = Debug|Win32
+		{E85D67CD-ABBB-4A5F-8577-3C7F5D7BD1D4}.Release|Win32.ActiveCfg = Release|Win32
+		{E85D67CD-ABBB-4A5F-8577-3C7F5D7BD1D4}.Release|Win32.Build.0 = Release|Win32
+		{E85D67CD-ABBB-4A5F-8577-3C7F5D7BD1D4}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

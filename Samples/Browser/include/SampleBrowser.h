@@ -398,6 +398,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual bool keyPressed(const OIS::KeyEvent& evt)
 		{
+			if (mTrayMgr->isDialogVisible()) return true;  // ignore keypresses when dialog is showing
+
 			if (evt.key == OIS::KC_ESCAPE)
 			{
 				if (mTitleLabel->getTrayLocation() != TL_NONE)

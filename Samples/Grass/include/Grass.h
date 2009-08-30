@@ -45,7 +45,9 @@ public:
 
 	bool keyPressed(const OIS::KeyEvent& evt)
 	{
-		if (evt.key == OIS::KC_B) mSceneMgr->showBoundingBoxes(!mSceneMgr->getShowBoundingBoxes());  // toggle bounding boxes
+		// toggle bounding boxes with B key unless the help dialog is visible
+		if (evt.key == OIS::KC_B && !mTrayMgr->isDialogVisible())
+			mSceneMgr->showBoundingBoxes(!mSceneMgr->getShowBoundingBoxes());
 		return SdkSample::keyPressed(evt);
 	}
 
