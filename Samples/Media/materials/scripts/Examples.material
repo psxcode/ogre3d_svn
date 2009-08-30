@@ -196,6 +196,24 @@ material Examples/StormySkyBox
 	}
 }
 
+material Examples/EarlyMorningSkyBox
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+			depth_write off
+
+			texture_unit
+			{
+				cubic_texture early_morning.jpg separateUV
+				tex_address_mode clamp
+			}
+		}
+	}
+}
+
 
 fragment_program Examples/MorningSkyBoxHDRfp cg
 {
@@ -391,7 +409,7 @@ material Examples/OgreDance
 
 			texture_unit
 			{
-				anim_texture ogredance.png 8 3
+				anim_texture ogredance.png 8 2
 				filtering none
 			}
 		}

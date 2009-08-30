@@ -18,7 +18,15 @@ public:
 			"on bump mapping from http://users.ox.ac.uk/~univ1234 by paul.baker@univ.ox.ac.uk.";
 		mInfo["Thumbnail"] = "thumb_bump.png";
 		mInfo["Category"] = "Unsorted";
-		mInfo["Help"] = "Free-look camera only active when left mouse button is held down. Let go again to use cursor.";
+		mInfo["Help"] = "Left click and drag anywhere in the scene to look around. Let go again to show "
+			"cursor and access widgets. Use WASD keys to move.";
+	}
+
+	StringVector getRequiredPlugins()
+	{
+		StringVector names;
+		names.push_back("Cg Program Manager");
+		return names;
 	}
 
 	void testCapabilities(const RenderSystemCapabilities* caps)
@@ -49,21 +57,22 @@ public:
 	bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 	{
 		if (mTrayMgr->injectMouseDown(evt, id)) return true;
-
-		mCameraMan->setStyle(CS_FREELOOK);  // click and drag for free-look camera
-		mTrayMgr->hideCursor();
-
+		if (id == OIS::MB_Left) mTrayMgr->hideCursor();  // hide the cursor if user left-clicks in the scene
 		return true;
 	}
 
 	bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 	{
 		if (mTrayMgr->injectMouseUp(evt, id)) return true;
+		if (id == OIS::MB_Left) mTrayMgr->showCursor();  // unhide the cursor if user lets go of LMB
+		return true;
+	}
 
-		mCameraMan->manualStop();
-		mCameraMan->setStyle(CS_MANUAL);  // let go to show cursor again
-		mTrayMgr->showCursor();
-
+	bool mouseMoved(const OIS::MouseEvent& evt)
+	{
+		// only rotate the camera if cursor is hidden
+		if (mTrayMgr->isCursorVisible()) mTrayMgr->injectMouseMove(evt);
+		else mCameraMan->injectMouseMove(evt);
 		return true;
 	}
 
@@ -114,8 +123,6 @@ protected:
 		setupLights();
 		setupControls();
 
-		// set camera initial position and disable camera controller
-		mCameraMan->setStyle(CS_MANUAL);
 		mCamera->setPosition(0, 0, 500);
 	}
 
@@ -225,8 +232,8 @@ protected:
 
 		// a friendly reminder
 		StringVector names;
-		names.push_back("H");
-		mTrayMgr->createParamsPanel(TL_TOPLEFT, "Help", 75, names)->setParamValue(0, "Help");
+		names.push_back("Help");
+		mTrayMgr->createParamsPanel(TL_TOPLEFT, "Help", 100, names)->setParamValue(0, "H/F1");
 
 		mMeshMenu->selectItem(0);  // select first mesh
 	}
@@ -235,7 +242,7 @@ protected:
 	{
 		// clean up properly to avoid interfering with subsequent samples
 		for (std::map<String, StringVector>::iterator it = mPossibilities.begin(); it != mPossibilities.end(); it++)
-			MaterialManager::getSingleton().unload(it->first);
+			MeshManager::getSingleton().unload(it->first);
 		mPossibilities.clear();
 	}
 

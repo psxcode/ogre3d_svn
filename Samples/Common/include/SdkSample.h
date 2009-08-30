@@ -278,14 +278,14 @@ namespace OgreBites
 
 		virtual void _shutdown()
 		{
+			Sample::_shutdown();
+
 			if (mTrayMgr) delete mTrayMgr;
 			if (mCameraMan) delete mCameraMan;
 
 			// restore settings we may have changed, so as not to affect other samples
 			Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(Ogre::TFO_BILINEAR);
 			Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(1);
-
-			Sample::_shutdown();
 		}
 
     protected:

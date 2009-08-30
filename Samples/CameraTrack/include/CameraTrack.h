@@ -33,16 +33,7 @@ protected:
         mSceneMgr->setAmbientLight(ColourValue(0.3, 0.3, 0.3));
         mSceneMgr->createLight()->setPosition(20, 80, 50);
         
-		mSceneMgr->setSkyDome(true, "Examples/CloudySky", 5, 8);  // set a nice cloudy skydome
-
-		// create a floor mesh resource
-		MeshManager::getSingleton().createPlane("floor", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			Plane(Vector3::UNIT_Y, -30), 1000, 1000, 10, 10, true, 1, 8, 8, Vector3::UNIT_Z);
-
-		// create a floor entity, give it a material, and place it at the origin
-        Entity* floor = mSceneMgr->createEntity("Floor", "floor");
-        floor->setMaterialName("Examples/BumpyMetal");
-        mSceneMgr->getRootSceneNode()->attachObject(floor);
+		mSceneMgr->setSkyBox(true, "Examples/MorningSkyBox");
 
 		// create an ogre head entity and attach it to a node
 		Entity* head = mSceneMgr->createEntity("Head", "ogrehead.mesh");
@@ -64,11 +55,11 @@ protected:
         NodeAnimationTrack* track = anim->createNodeTrack(0, camNode);
 
         // create keyframes for our track
-        track->createNodeKeyFrame(0)->setTranslate(Vector3(200, 100, 0));
-        track->createNodeKeyFrame(2.5)->setTranslate(Vector3(0, 50, 100));
-        track->createNodeKeyFrame(5)->setTranslate(Vector3(-500, 200, 0));
-        track->createNodeKeyFrame(7.5)->setTranslate(Vector3(0, 300, -300));
-        track->createNodeKeyFrame(10)->setTranslate(Vector3(200, 100, 0));
+        track->createNodeKeyFrame(0)->setTranslate(Vector3(200, 0, 0));
+        track->createNodeKeyFrame(2.5)->setTranslate(Vector3(0, -50, 100));
+        track->createNodeKeyFrame(5)->setTranslate(Vector3(-500, 100, 0));
+        track->createNodeKeyFrame(7.5)->setTranslate(Vector3(0, 200, -300));
+        track->createNodeKeyFrame(10)->setTranslate(Vector3(200, 0, 0));
 
         // create a new animation state to track this
         mAnimState = mSceneMgr->createAnimationState("CameraTrack");

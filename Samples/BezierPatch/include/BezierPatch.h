@@ -60,7 +60,7 @@ protected:
 			{ 50, -35,  50,  0.5, 0.5, 0.0, 1.0, 1.0}
 		};
 
-		// specify a vertex format declaration for our patch
+		// specify a vertex format declaration for our patch: 3 floats for position, 3 floats for normal, 2 floats for UV
         VertexDeclaration* decl = HardwareBufferManager::getSingleton().createVertexDeclaration();
         decl->addElement(0, 0, VET_FLOAT3, VES_POSITION);
         decl->addElement(0, sizeof(float) * 3, VET_FLOAT3, VES_NORMAL);

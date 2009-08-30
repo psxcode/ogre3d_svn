@@ -49,6 +49,20 @@ public:
 		return SdkSample::frameRenderingQueued(evt);  // don't forget the parent class updates!
 	}
 
+	bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+	{
+		if (mTrayMgr->injectMouseDown(evt, id)) return true;
+		mWiping = true;  // wipe frost if user left clicks in the scene
+		return true;
+	}
+
+	bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+	{
+		if (mTrayMgr->injectMouseUp(evt, id)) return true;
+		mWiping = false;  // stop wiping frost if user releases LMB
+		return true;
+	}
+
 protected:
 
 	void setupContent()
@@ -96,6 +110,7 @@ protected:
 		mCursorQuery = mSceneMgr->createRayQuery(Ray());  // create a ray scene query for the cursor
 
 		mTimeSinceLastFreeze = 0;
+		mWiping = false;
 	}
 
 	void updateTexture(uint8 freezeAmount)
@@ -121,7 +136,7 @@ protected:
 					else *data = 0xff;
 				}
 
-				if (mMouse->getMouseState().buttonDown(OIS::MB_Left))
+				if (mWiping)
 				{
 					// wipe frost from under the cursor
 					sqrDistToBrush = Math::Sqr(x - mBrushPos.x) + Math::Sqr(y - mBrushPos.y);
@@ -148,6 +163,7 @@ protected:
 	RaySceneQuery* mCursorQuery;
 	Vector2 mBrushPos;
 	Real mTimeSinceLastFreeze;
+	bool mWiping;
 };
 
 #endif
