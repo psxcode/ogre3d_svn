@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="Sample_EnvMapping"
+	Name="Sample_SphereMapping"
 	ProjectGUID="{94947F68-B17C-46C9-93F1-23BF7EB3CA3B}"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
@@ -178,7 +178,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="src\EnvMapping.cpp"
+				RelativePath=".\src\SphereMapping.cpp"
 				>
 			</File>
 		</Filter>
@@ -188,7 +188,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="include\EnvMapping.h"
+				RelativePath=".\include\SphereMapping.h"
 				>
 			</File>
 		</Filter>

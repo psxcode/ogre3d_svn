@@ -46,6 +46,9 @@ public:
 
 		updateTexture(freezeAmount);  // rebuild texture contents
 
+		mPenguinAnimState->addTime(evt.timeSinceLastFrame);  // increment penguin idle animation time
+		mPenguinNode->yaw(Radian(evt.timeSinceLastFrame));   // spin the penguin around
+
 		return SdkSample::frameRenderingQueued(evt);  // don't forget the parent class updates!
 	}
 
@@ -90,8 +93,14 @@ protected:
 		memset(mTexBuf->getCurrentLock().data, 0xff, mTexBuf->getSizeInBytes());
 		mTexBuf->unlock();
 
-		// create an ogre head entity and place it at the origin
-        mSceneMgr->getRootSceneNode()->attachObject(mSceneMgr->createEntity("Head", "ogrehead.mesh"));
+		// create a penguin and attach him to our penguin node
+		Entity* penguin = mSceneMgr->createEntity("Penguin", "penguin.mesh");
+		mPenguinNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		mPenguinNode->attachObject(penguin);
+
+		// get and enable the penguin idle animation
+		mPenguinAnimState = penguin->getAnimationState("amuse");
+		mPenguinAnimState->setEnabled(true);
 
 		// create a snowstorm over the scene, and fast forward it a little
         ParticleSystem* ps = mSceneMgr->createParticleSystem("Snow", "Examples/Snow");
@@ -164,6 +173,8 @@ protected:
 	Vector2 mBrushPos;
 	Real mTimeSinceLastFreeze;
 	bool mWiping;
+	SceneNode* mPenguinNode;
+	AnimationState* mPenguinAnimState;
 };
 
 #endif

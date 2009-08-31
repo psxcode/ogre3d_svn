@@ -1,4 +1,4 @@
-material Examples/EnvMappedRustySteel
+material Examples/SphereMappedRustySteel
 {
 	technique
 	{
@@ -327,6 +327,23 @@ material Examples/EveningSkyBox
 			{
 				cubic_texture evening.jpg separateUV
 				tex_address_mode clamp
+			}
+		}
+	}
+}
+
+material Examples/DynamicCubeMap
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				# will be filled in at runtime
+				cubic_texture dyncubemap combinedUVW
+				tex_address_mode clamp
+				env_map cubic_reflection
 			}
 		}
 	}
@@ -931,6 +948,7 @@ material Examples/GrassBladesShadowCaster
         
       }
 }
+
 material Examples/GrassBladesShadowReceiver
 {
 	// Vertex program waving grass
@@ -1089,6 +1107,7 @@ material Examples/GrassBladesAdditiveFloatTransparentBest
         }
     }
 }
+
 material Examples/GrassBladesAdditiveFloatTransparent
 {
     

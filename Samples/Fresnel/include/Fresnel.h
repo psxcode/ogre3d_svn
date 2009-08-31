@@ -13,7 +13,7 @@ public:
 	FresnelSample() : NUM_FISH(30), NUM_FISH_WAYPOINTS(10), FISH_PATH_LENGTH(200), FISH_SCALE(2)
 	{
 		mInfo["Title"] = "Fresnel";
-		mInfo["Description"] = "Shows how to create reflections and refractions.";
+		mInfo["Description"] = "Shows how to create reflections and refractions using render-to-texture and shaders.";
 		mInfo["Thumbnail"] = "thumb_fresnel.png";
 		mInfo["Category"] = "Unsorted";
 	}
@@ -126,8 +126,8 @@ protected:
 				ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 512, 512, 0, PF_R8G8B8, TU_RENDERTARGET);
 
 			RenderTarget* rtt = tex->getBuffer()->getRenderTarget();
-			rtt->addListener(this);
 			rtt->addViewport(mCamera)->setOverlaysEnabled(false);
+			rtt->addListener(this);
 
 			if (i == 0) mRefractionTarget = rtt;
 			else mReflectionTarget = rtt;

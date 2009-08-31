@@ -1,5 +1,5 @@
 #include "SamplePlugin.h"
-#include "EnvMapping.h"
+#include "SphereMapping.h"
 
 using namespace Ogre;
 using namespace OgreBites;
@@ -9,7 +9,7 @@ Sample* s;
 
 extern "C" _OgreSampleExport void dllStartPlugin()
 {
-	s = new EnvMappingSample;
+	s = new SphereMappingSample;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
 	sp->addSample(s);
 	Root::getSingleton().installPlugin(sp);

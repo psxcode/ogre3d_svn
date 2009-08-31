@@ -56,7 +56,7 @@ protected:
 		/* Here, we set default values for our sliders. We do not need to setup a skydome here, because when
 		slider values change, the sliderMoved callback is invoked, and we setup the skydome with the appropriate
 		values in there. See its definition above. */
-		mCurvatureSlider->setValue(5);
+		mCurvatureSlider->setValue(10);
 		mTilingSlider->setValue(8);
 	}
 
