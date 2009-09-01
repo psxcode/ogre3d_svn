@@ -77,7 +77,7 @@ protected:
 		mFishSwim->setEnabled(true);
 
 		// create a child node at an offset and attach a regular ogre head and a nimbus to it
-		SceneNode* node = mPivot->createChildSceneNode(Vector3(-30, 10, 0));
+		SceneNode* node = mPivot->createChildSceneNode(Vector3(-60, 10, 0));
 		node->setScale(7, 7, 7);
 		node->yaw(Degree(90));
 		node->attachObject(fish);
@@ -107,7 +107,7 @@ protected:
 
 		// create our dynamic cube map texture
 		TexturePtr tex = TextureManager::getSingleton().createManual("dyncubemap",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_CUBE_MAP, 64, 64, 0, PF_R8G8B8, TU_RENDERTARGET);
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_CUBE_MAP, 128, 128, 0, PF_R8G8B8, TU_RENDERTARGET);
 
 		// assign our camera to all 6 render targets of the texture (1 for each direction)
 		for (unsigned int i = 0; i < 6; i++)
