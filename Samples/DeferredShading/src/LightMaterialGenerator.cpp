@@ -103,14 +103,22 @@ public:
 
 	virtual MaterialPtr generateTemplateMaterial(Perm permutation)
 	{
+		String materialName = mBaseName;
+	
         if(permutation & LightMaterialGenerator::MI_DIRECTIONAL)
 		{   
-			return MaterialManager::getSingleton().getByName("DeferredShading/LightMaterialQuad");
+			materialName += "Quad";
 		}
 		else
 		{
-			return MaterialManager::getSingleton().getByName("DeferredShading/LightMaterial");
+			materialName += "Geometry";
 		}
+
+		if(permutation & LightMaterialGenerator::MI_SHADOW_CASTER)
+		{
+			materialName += "Shadow";
+		}
+		return MaterialManager::getSingleton().getByName(materialName);
 	}
 
 	protected:
@@ -196,7 +204,8 @@ LightMaterialGenerator::LightMaterialGenerator()
 {
 	vsMask = 0x00000004;
 	fsMask = 0x0000003F;
-	matMask = 0x00000001;
+	matMask =	LightMaterialGenerator::MI_DIRECTIONAL | 
+				LightMaterialGenerator::MI_SHADOW_CASTER;
 	
 	materialBaseName = "DeferredShading/LightMaterial/";
     mImpl = new LightMaterialGeneratorCG("DeferredShading/LightMaterial/");

@@ -8,9 +8,9 @@ compositor DeferredShading/GBuffer
 		texture mrt_output target_width target_height PF_FLOAT16_RGBA PF_FLOAT16_RGBA chain_scope
 		
 		target mrt_output
-        {
-            input none
-        	pass clear
+		{
+			input none
+			pass clear
 			{
 			}
 			
@@ -21,12 +21,11 @@ compositor DeferredShading/GBuffer
 			// could do this with something like a visibility mask too
 			pass render_scene
 			{
-				//material_scheme GBuffer
 				//These values are synchronized with the code
 				first_render_queue 10
 				last_render_queue  79	
 			}
-        }
+		}
 	}
 }
 

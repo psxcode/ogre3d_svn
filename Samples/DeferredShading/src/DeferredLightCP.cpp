@@ -108,19 +108,13 @@ void DeferredLightRenderOperation::execute(SceneManager *sm, RenderSystem *rs)
 			sm->prepareShadowTextures(cam, mViewport, &ll);
 			sm->_resumeRendering(context);
 			
-			//TODO : Organise this code?
 			Pass* pass = tech->getPass(0);
 			TextureUnitState* tus = pass->getTextureUnitState("ShadowMap");
-			if (tus == 0)
+			assert(tus);
+			const TexturePtr& shadowTex = sm->getShadowTexture(0);
+			if (tus->_getTexturePtr() != shadowTex)
 			{
-				tus = pass->createTextureUnitState();
-				tus->setContentType(TextureUnitState::CONTENT_SHADOW);
-				tus->setName("ShadowMap");
-			}
-			const String& shadowTexName = sm->getShadowTexture(0)->getName();
-			if (tus->getTextureName() != shadowTexName)
-			{
-				tus->_setTexturePtr(sm->getShadowTexture(0));
+				tus->_setTexturePtr(shadowTex);
 			}
 			
 		}
