@@ -3,8 +3,8 @@
 // Reference material [geometry]
 material DeferredShading/LightMaterial/Geometry
 {
-    technique DeferredTechnique
-    {
+	technique DeferredTechnique
+	{
 		pass DeferredPass
 		{
 			// Don't disable depth test, because the light doesn't have to be rendered
@@ -31,8 +31,8 @@ material DeferredShading/LightMaterial/Geometry
 // Reference material [geometry w/shadows]
 material DeferredShading/LightMaterial/GeometryShadow : DeferredShading/LightMaterial/Geometry
 {
-    technique DeferredTechnique
-    {
+	technique DeferredTechnique
+	{
 		pass DeferredPass
 		{
 			texture_unit ShadowMap
