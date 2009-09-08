@@ -608,7 +608,9 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void loadResources()
 		{
+			mTrayMgr->showLoadingBar(1, 0);
 			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Popular");
+			mTrayMgr->hideLoadingBar();
 		}
 
 		/*-----------------------------------------------------------------------------

@@ -48,25 +48,17 @@ protected:
 
 	void loadResources()
 	{
-		ResourceGroupManager& rgm = ResourceGroupManager::getSingleton();
-/*
-		mLoadingBar.start(mWindow, 1, 1, 0.75);
+		/* NOTE: The browser initialises everything at the beginning already, so we use a 0 init proportion.
+		If you're not compiling this sample for use with the browser, then leave the init proportion at 0.7. */
+		mTrayMgr->showLoadingBar(1, 1, 0);
 
-		// Turn off rendering of everything except overlays
-		mSceneMgr->clearSpecialCaseRenderQueues();
-		mSceneMgr->addSpecialCaseRenderQueue(RENDER_QUEUE_OVERLAY);
-		mSceneMgr->setSpecialCaseRenderQueueMode(SceneManager::SCRQM_INCLUDE);
-*/
 		// associate the world geometry with the world resource group, and then load the group
+		ResourceGroupManager& rgm = ResourceGroupManager::getSingleton();
 		rgm.linkWorldGeometryToResourceGroup(rgm.getWorldResourceGroupName(), mMap, mSceneMgr);
 		rgm.initialiseResourceGroup(rgm.getWorldResourceGroupName());
 		rgm.loadResourceGroup(rgm.getWorldResourceGroupName(), false);
-/*
-		// Back to full rendering
-		mSceneMgr->clearSpecialCaseRenderQueues();
-		mSceneMgr->setSpecialCaseRenderQueueMode(SceneManager::SCRQM_EXCLUDE);
 
-		mLoadingBar.finish();*/
+		mTrayMgr->hideLoadingBar();
 	}
 
 	void unloadResources()

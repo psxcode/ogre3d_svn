@@ -1134,10 +1134,10 @@ namespace OgreBites
 			mElement->setWidth(width);
 			Ogre::OverlayContainer* c = (Ogre::OverlayContainer*)mElement;
 			mTextArea = (Ogre::TextAreaOverlayElement*)c->getChild(getName() + "/SliderCaption");
-			mValueBox = (Ogre::OverlayContainer*)c->getChild(getName() + "/SliderValueBox");
-			mValueBox->setWidth(valueBoxWidth);
-			mValueBox->setLeft(-(valueBoxWidth + 5));
-			mValueTextArea = (Ogre::TextAreaOverlayElement*)mValueBox->getChild(mValueBox->getName() + "/SliderValueText");
+			Ogre::OverlayContainer* valueBox = (Ogre::OverlayContainer*)c->getChild(getName() + "/SliderValueBox");
+			valueBox->setWidth(valueBoxWidth);
+			valueBox->setLeft(-(valueBoxWidth + 5));
+			mValueTextArea = (Ogre::TextAreaOverlayElement*)valueBox->getChild(valueBox->getName() + "/SliderValueText");
 			mTrack = (Ogre::BorderPanelOverlayElement*)c->getChild(getName() + "/SliderTrack");
 			mHandle = (Ogre::PanelOverlayElement*)mTrack->getChild(mTrack->getName() + "/SliderHandle");
 
@@ -1150,7 +1150,7 @@ namespace OgreBites
 				if (width <= 0) mFitToContents = true;
 				mElement->setHeight(34);
 				mTextArea->setTop(10);
-				mValueBox->setTop(2);
+				valueBox->setTop(2);
 				mTrack->setTop(-23);
 				mTrack->setWidth(trackWidth);
 				mTrack->setHorizontalAlignment(Ogre::GHA_RIGHT);
@@ -1295,7 +1295,6 @@ namespace OgreBites
 		Ogre::TextAreaOverlayElement* mTextArea;
 		Ogre::TextAreaOverlayElement* mValueTextArea;
 		Ogre::BorderPanelOverlayElement* mTrack;
-		Ogre::OverlayContainer* mValueBox;
 		Ogre::PanelOverlayElement* mHandle;
 		bool mDragging;
 		bool mFitToContents;
@@ -1549,9 +1548,81 @@ namespace OgreBites
 	};
 
 	/*=============================================================================
+	| Basic progress bar widget.
+	=============================================================================*/
+	class ProgressBar : public Widget
+	{
+	public:
+
+		// Do not instantiate any widgets directly. Use SdkTrayManager.
+		ProgressBar(const Ogre::String& name, const Ogre::DisplayString& caption, Ogre::Real width, Ogre::Real commentBoxWidth)
+		{
+			mElement = Ogre::OverlayManager::getSingleton().createOverlayElementFromTemplate
+				("SdkTrays/ProgressBar", "BorderPanel", name);
+			mElement->setWidth(width);
+			Ogre::OverlayContainer* c = (Ogre::OverlayContainer*)mElement;
+			mTextArea = (Ogre::TextAreaOverlayElement*)c->getChild(getName() + "/ProgressCaption");
+			Ogre::OverlayContainer* commentBox = (Ogre::OverlayContainer*)c->getChild(getName() + "/ProgressCommentBox");
+			commentBox->setWidth(commentBoxWidth);
+			commentBox->setLeft(-(commentBoxWidth + 5));
+			mCommentTextArea = (Ogre::TextAreaOverlayElement*)commentBox->getChild(commentBox->getName() + "/ProgressCommentText");
+			mMeter = c->getChild(getName() + "/ProgressMeter");
+			mMeter->setWidth(width - 10);
+			mFill = ((Ogre::OverlayContainer*)mMeter)->getChild(mMeter->getName() + "/ProgressFill");
+			setCaption(caption);
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Sets the progress as a percentage.
+		-----------------------------------------------------------------------------*/
+		void setProgress(Ogre::Real progress)
+		{
+			mProgress = Ogre::Math::Clamp<Ogre::Real>(progress, 0, 1);
+			mFill->setWidth(std::max<int>(mFill->getHeight(), mProgress * (mMeter->getWidth() - 2 * mFill->getLeft())));
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Gets the progress as a percentage.
+		-----------------------------------------------------------------------------*/
+		Ogre::Real getProgress()
+		{
+			return mProgress;
+		}
+
+		const Ogre::DisplayString& getCaption()
+		{
+			return mTextArea->getCaption();
+		}
+
+		void setCaption(const Ogre::DisplayString& caption)
+		{
+			mTextArea->setCaption(caption);
+		}
+
+		const Ogre::DisplayString& getComment()
+		{
+			return mCommentTextArea->getCaption();
+		}
+
+		void setComment(const Ogre::DisplayString& comment)
+		{
+			mCommentTextArea->setCaption(comment);
+		}
+
+
+	protected:
+
+		Ogre::TextAreaOverlayElement* mTextArea;
+		Ogre::TextAreaOverlayElement* mCommentTextArea;
+		Ogre::OverlayElement* mMeter;
+		Ogre::OverlayElement* mFill;
+		Ogre::Real mProgress;
+	};
+
+	/*=============================================================================
 	| Main class to manage a cursor, backdrop, trays and widgets.
 	=============================================================================*/
-	class SdkTrayManager : public SdkTrayListener
+	class SdkTrayManager : public SdkTrayListener, public Ogre::ResourceGroupListener
     {
     public:
 
@@ -1559,8 +1630,9 @@ namespace OgreBites
 		| Creates backdrop, cursor, and trays.
 		-----------------------------------------------------------------------------*/
 		SdkTrayManager(const Ogre::String& name, Ogre::RenderWindow* window, OIS::Mouse* mouse, SdkTrayListener* listener = 0) :
-		  mName(name), mWindow(window), mMouse(mouse), mListener(listener), mTrayPadding(0), mWidgetPadding(8), mWidgetSpacing(2),
-			  mTrayDrag(false), mExpandedMenu(0), mDialog(0), mOk(0), mYes(0), mNo(0), mFpsLabel(0), mStatsPanel(0), mLogo(0)
+		  mName(name), mWindow(window), mMouse(mouse), mListener(listener), mTrayPadding(0), mWidgetPadding(8),
+			  mWidgetSpacing(2), mTrayDrag(false), mExpandedMenu(0), mDialog(0), mOk(0), mYes(0), mNo(0),
+			  mFpsLabel(0), mStatsPanel(0), mLogo(0), mLoadBar(0)
 		{
 			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
 
@@ -1638,16 +1710,8 @@ namespace OgreBites
 			om.destroy(mPriorityLayer);
 			om.destroy(mCursorLayer);
 
-			if (mDialog)
-			{
-				if (mOk) delete mOk;
-				else
-				{
-					delete mYes;
-					delete mNo;
-				}
-				delete mDialog;
-			}
+			closeDialog();
+			hideLoadingBar();
 
 			Widget::nukeOverlayElement(mBackdrop);
 			Widget::nukeOverlayElement(mCursor);
@@ -2048,6 +2112,14 @@ namespace OgreBites
 			return dw;
 		}
 
+		ProgressBar* createProgressBar(TrayLocation trayLoc, const Ogre::String& name, const Ogre::DisplayString& caption,
+			Ogre::Real width, Ogre::Real commentBoxWidth)
+		{
+			ProgressBar* pb = new ProgressBar(name, caption, width, commentBoxWidth);
+			moveWidgetToTray(pb, trayLoc);
+			return pb;
+		}
+
 		/*-----------------------------------------------------------------------------
 		| Shows frame statistics widget set in the specified location.
 		-----------------------------------------------------------------------------*/
@@ -2107,9 +2179,6 @@ namespace OgreBites
 			moveWidgetToTray(mLogo, trayLoc, place);
 		}
 
-		/*-----------------------------------------------------------------------------
-		| Hides logo.
-		-----------------------------------------------------------------------------*/
 		void hideLogo()
 		{
 			if (isLogoVisible())
@@ -2122,6 +2191,76 @@ namespace OgreBites
 		bool isLogoVisible()
 		{
 			return mLogo != 0;
+		}
+
+		/*-----------------------------------------------------------------------------
+		| Shows loading bar. Also takes job settings: the number of resource groups
+		| to be initialised, the number of resource groups to be loaded, and the
+		| proportion of the job that will be taken up by initialisation. Usually,
+		| script parsing takes up most time, so the default value is 0.7.
+		-----------------------------------------------------------------------------*/
+		void showLoadingBar(unsigned int numGroupsInit = 1, unsigned int numGroupsLoad = 1,
+			Ogre::Real initProportion = 0.7)
+		{
+			if (mLoadBar)
+			{
+				hideLoadingBar();
+				return;
+			}
+
+			mLoadBar = new ProgressBar(mName + "/LoadingBar", "Loading...", 400, 308);
+			Ogre::OverlayElement* e = mLoadBar->getOverlayElement();
+			mDialogShade->addChild(e);
+			e->setVerticalAlignment(Ogre::GVA_CENTER);
+			e->setLeft(-(e->getWidth() / 2));
+			e->setTop(-(e->getHeight() / 2));
+
+			Ogre::ResourceGroupManager::getSingleton().addResourceGroupListener(this);
+			mCursorWasVisible = isCursorVisible();
+			hideCursor();
+			mDialogShade->show();
+
+			// calculate the proportion of job required to init/load one group
+
+			if (numGroupsInit == 0 && numGroupsLoad != 0)
+			{
+				mGroupInitProportion = 0;
+				mGroupLoadProportion = 1;
+			}
+			else if (numGroupsLoad == 0 && numGroupsInit != 0)
+			{
+				mGroupLoadProportion = 0;
+				if (numGroupsInit != 0) mGroupInitProportion = 1;
+			}
+			else if (numGroupsInit == 0 && numGroupsLoad == 0)
+			{
+				mGroupInitProportion = 0;
+				mGroupLoadProportion = 0;
+			}
+			else
+			{
+				mGroupInitProportion = initProportion / numGroupsInit;
+				mGroupLoadProportion = (1 - initProportion) / numGroupsLoad;
+			}
+		}
+
+		void hideLoadingBar()
+		{
+			if (mLoadBar)
+			{
+				mLoadBar->cleanup();
+				delete mLoadBar;
+				mLoadBar = 0;
+
+				Ogre::ResourceGroupManager::getSingleton().removeResourceGroupListener(this);
+				if (mCursorWasVisible) showCursor();
+				mDialogShade->hide();
+			}
+		}
+
+		bool isLoadingBarVisible()
+		{
+			return mLoadBar != 0;
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -2246,12 +2385,32 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Hides whatever dialog is currently showing.
 		-----------------------------------------------------------------------------*/
-		void closeDialog(bool yesHit = false)
+		void closeDialog()
 		{
 			if (mDialog)
 			{
-				if (mOk) buttonHit(mOk);
-				else buttonHit(yesHit ? mYes : mNo);
+				if (mOk)
+				{
+					mOk->cleanup();
+					delete mOk;
+					mOk = 0;
+				}
+				else
+				{
+					mYes->cleanup();
+					mNo->cleanup();
+					delete mYes;
+					delete mNo;
+					mYes = 0;
+					mNo = 0;
+				}
+
+				mDialogShade->hide();
+				mDialog->cleanup();
+				delete mDialog;
+				mDialog = 0;
+
+				if (!mCursorWasVisible) hideCursor();
 			}
 		}
 
@@ -2555,6 +2714,60 @@ namespace OgreBites
 			return true;
 		}
 
+		void resourceGroupScriptingStarted(const Ogre::String& groupName, size_t scriptCount)
+		{
+			mLoadInc = mGroupInitProportion / scriptCount;
+			mLoadBar->setCaption("Parsing...");
+			mWindow->update();
+		}
+
+		void scriptParseStarted(const Ogre::String& scriptName, bool& skipThisScript)
+		{
+			mLoadBar->setComment(scriptName);
+			mWindow->update();
+		}
+
+		void scriptParseEnded(const Ogre::String& scriptName, bool skipped)
+		{
+			mLoadBar->setProgress(mLoadBar->getProgress() + mLoadInc);
+			mWindow->update();
+		}
+
+		void resourceGroupScriptingEnded(const Ogre::String& groupName) {}
+
+		void resourceGroupLoadStarted(const Ogre::String& groupName, size_t resourceCount)
+		{
+			mLoadInc = mGroupLoadProportion / resourceCount;
+			mLoadBar->setCaption("Loading...");
+			mWindow->update();
+		}
+
+		void resourceLoadStarted(const Ogre::ResourcePtr& resource)
+		{
+			mLoadBar->setComment(resource->getName());
+			mWindow->update();
+		}
+
+		void resourceLoadEnded()
+		{
+			mLoadBar->setProgress(mLoadBar->getProgress() + mLoadInc);
+			mWindow->update();
+		}
+
+		void worldGeometryStageStarted(const Ogre::String& description)
+		{
+			mLoadBar->setComment(description);
+			mWindow->update();
+		}
+
+		void worldGeometryStageEnded()
+		{
+			mLoadBar->setProgress(mLoadBar->getProgress() + mLoadInc);
+			mWindow->update();
+		}
+
+		void resourceGroupLoadEnded(const Ogre::String& groupName) {}
+
 		/*-----------------------------------------------------------------------------
 		| Toggles visibility of advanced statistics.
 		-----------------------------------------------------------------------------*/
@@ -2579,32 +2792,12 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void buttonHit(Button* button)
 		{
-			if (button == mOk)
+			if (mListener)
 			{
-				if (mListener) mListener->okDialogClosed(mDialog->getText());
-
-				mOk->cleanup();
-				delete mOk;
-				mOk = 0;
+				if (button == mOk) mListener->okDialogClosed(mDialog->getText());
+				else mListener->yesNoDialogClosed(mDialog->getText(), button == mYes);
 			}
-			else
-			{
-				if (mListener) mListener->yesNoDialogClosed(mDialog->getText(), button == mYes);
-
-				mYes->cleanup();
-				mNo->cleanup();
-				delete mYes;
-				delete mNo;
-				mYes = 0;
-				mNo = 0;
-			}
-
-			mDialogShade->hide();
-			mDialog->cleanup();
-			delete mDialog;
-			mDialog = 0;
-
-			if (!mCursorWasVisible) hideCursor();
+			closeDialog();
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -2837,6 +3030,10 @@ namespace OgreBites
 		Label* mFpsLabel;                     // FPS label
 		ParamsPanel* mStatsPanel;             // frame stats panel
 		DecorWidget* mLogo;                   // logo
+		ProgressBar* mLoadBar;                // loading bar
+		Ogre::Real mGroupInitProportion;      // proportion of load job assigned to initialising one resource group
+		Ogre::Real mGroupLoadProportion;      // proportion of load job assigned to loading one resource group
+		Ogre::Real mLoadInc;                  // loading increment
 		Ogre::GuiHorizontalAlignment mTrayWidgetAlign[10];   // tray widget alignments
     };
 }

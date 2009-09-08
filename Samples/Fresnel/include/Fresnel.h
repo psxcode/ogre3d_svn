@@ -148,30 +148,46 @@ protected:
 	{
         Entity* ent;
 
-		// surface entities
+		// setting up props might take a while, so create a progress bar for visual feedback
+		ProgressBar* pb = mTrayMgr->createProgressBar(TL_CENTER, "FresnelBuildingBar", "Creating Props...", 280, 100);
+		mTrayMgr->showBackdrop("SdkTrays/Shade");
 
+		pb->setComment("Upper Bath");
+		mWindow->update();
         ent = mSceneMgr->createEntity("UpperBath", "RomanBathUpper.mesh" );
 		mSceneMgr->getRootSceneNode()->attachObject(ent);        
         mSurfaceEnts.push_back(ent);
+		pb->setProgress(0.4);
 
+		pb->setComment("Columns");
+		mWindow->update();
         ent = mSceneMgr->createEntity("Columns", "columns.mesh");
 		mSceneMgr->getRootSceneNode()->attachObject(ent);        
         mSurfaceEnts.push_back(ent);
+		pb->setProgress(0.5);
 
+		pb->setComment("Ogre Head");
+		mWindow->update();
 		ent = mSceneMgr->createEntity("Head", "ogrehead.mesh");
 		ent->setMaterialName("RomanBath/OgreStone");
         mSurfaceEnts.push_back(ent);
+		pb->setProgress(0.6);
 
 		SceneNode* headNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		headNode->setPosition(-350, 55, 130);
 		headNode->yaw(Degree(90));
         headNode->attachObject(ent);
 
-		// submerged entities
-
+		pb->setComment("Lower Bath");
+		mWindow->update();
 		ent = mSceneMgr->createEntity("LowerBath", "RomanBathLower.mesh");
         mSceneMgr->getRootSceneNode()->attachObject(ent);
         mSubmergedEnts.push_back(ent);
+		pb->setProgress(1);
+		mWindow->update();
+
+		mTrayMgr->destroyWidget(pb);
+		mTrayMgr->hideBackdrop();
 	}
 
 	void setupFish()
