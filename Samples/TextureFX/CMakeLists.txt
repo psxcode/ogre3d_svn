@@ -4,9 +4,10 @@ set(HEADER_FILES include/TextureFX.h)
 set(SOURCE_FILES src/TextureFX.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-add_executable(Demo_TextureFX WIN32 ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE_FILES})
+add_library(Sample_TextureFX SHARED ${HEADER_FILES} ${SOURCE_FILES})
 
-target_link_libraries(Demo_TextureFX ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
-ogre_config_sample(Demo_TextureFX)
+target_link_libraries(Sample_TextureFX ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
+ogre_config_sample(Sample_TextureFX)
 
-add_dependencies(Demo_TextureFX ${SAMPLE_DEPENDENCIES})
+add_dependencies(Sample_TextureFX SampleBrowser)
+
