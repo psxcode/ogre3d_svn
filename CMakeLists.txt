@@ -122,7 +122,6 @@ option(OGRE_BUILD_COMPONENT_PAGING "Build Paging component" TRUE)
 option(OGRE_BUILD_COMPONENT_TERRAIN "Build Terrain component" TRUE)
 cmake_dependent_option(OGRE_BUILD_COMPONENT_PROPERTY "Build Property component" TRUE "Boost_FOUND" FALSE)
 cmake_dependent_option(OGRE_BUILD_PLUGIN_CG "Build Cg plugin" TRUE "Cg_FOUND" FALSE)
-cmake_dependent_option(OGRE_BUILD_CEGUIRENDERER "Build CEGUI renderer" TRUE "CEGUI_FOUND" FALSE)
 option(OGRE_BUILD_SAMPLES "Build Ogre demos" TRUE)
 option(OGRE_BUILD_TOOLS "Build the command-line tools" TRUE)
 option(OGRE_BUILD_TESTS "Build the unit tests & PlayPen" FALSE)
@@ -196,11 +195,6 @@ add_subdirectory(PlugIns)
 
 # Setup Components
 add_subdirectory(Components)
-
-# Setup CEGUI renderer
-if (OGRE_BUILD_CEGUIRENDERER)
-  add_subdirectory(Samples/Common/CEGUIRenderer)
-endif ()
 
 # Setup samples
 add_subdirectory(Samples) 
