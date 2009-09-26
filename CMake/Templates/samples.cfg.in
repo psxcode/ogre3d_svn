@@ -1,5 +1,4 @@
 SampleFolder=@OGRE_SAMPLES_DIR_REL@
-SampleFolder=samples
 Sample=Sample_BezierPatch
 Sample=Sample_BSP
 Sample=Sample_CameraTrack
