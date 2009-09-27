@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 ----------------------------------------------------------------------------
 */
 #include "OgreD3D9HardwareIndexBuffer.h"
@@ -38,11 +37,13 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 	//---------------------------------------------------------------------
-    D3D9HardwareIndexBuffer::D3D9HardwareIndexBuffer(HardwareIndexBuffer::IndexType idxType, 
+    D3D9HardwareIndexBuffer::D3D9HardwareIndexBuffer(HardwareBufferManagerBase* mgr, HardwareIndexBuffer::IndexType idxType, 
         size_t numIndexes, HardwareBuffer::Usage usage,
         bool useSystemMemory, bool useShadowBuffer)
-        : HardwareIndexBuffer(idxType, numIndexes, usage, useSystemMemory, useShadowBuffer)
+        : HardwareIndexBuffer(mgr, idxType, numIndexes, usage, useSystemMemory, useShadowBuffer)
     {
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		D3DPOOL eResourcePool;
 
 #if OGRE_D3D_MANAGE_BUFFERS
@@ -75,6 +76,8 @@ namespace Ogre {
 	//---------------------------------------------------------------------
     D3D9HardwareIndexBuffer::~D3D9HardwareIndexBuffer()
     {
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 
 		while (it != mMapDeviceToBufferResources.end())
@@ -84,12 +87,14 @@ namespace Ogre {
 			++it;
 		}	
 		mMapDeviceToBufferResources.clear();   
-		SAFE_DELETE(mSystemMemoryBuffer);
+		SAFE_DELETE_ARRAY(mSystemMemoryBuffer);
     }
 	//---------------------------------------------------------------------
     void* D3D9HardwareIndexBuffer::lockImpl(size_t offset, 
         size_t length, LockOptions options)
     {		
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		if (options != HBL_READ_ONLY)
 		{
 			DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
@@ -99,10 +104,22 @@ namespace Ogre {
 				BufferResources* bufferResources = it->second;
 
 				bufferResources->mOutOfDate = true;
-				if (offset < bufferResources->mLockOffset)
-					bufferResources->mLockOffset = offset;
-				if (length > bufferResources->mLockLength)
-					bufferResources->mLockLength = length;
+
+				if(bufferResources->mLockLength > 0)
+				{
+					size_t highPoint = std::max( offset + length, 
+						bufferResources->mLockOffset + bufferResources->mLockLength );
+					bufferResources->mLockOffset = std::min( bufferResources->mLockOffset, offset );
+					bufferResources->mLockLength = highPoint - bufferResources->mLockOffset;
+				}
+				else
+				{
+					if (offset < bufferResources->mLockOffset)
+						bufferResources->mLockOffset = offset;
+					if (length > bufferResources->mLockLength)
+						bufferResources->mLockLength = length;
+				}
+			
 				if (bufferResources->mLockOptions != HBL_DISCARD)
 					bufferResources->mLockOptions = options;
 
@@ -115,6 +132,8 @@ namespace Ogre {
 	//---------------------------------------------------------------------
 	void D3D9HardwareIndexBuffer::unlockImpl(void)
     {	
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 		uint nextFrameNumber = Root::getSingleton().getNextFrameNumber();
 
@@ -155,12 +174,18 @@ namespace Ogre {
 	}
 	//---------------------------------------------------------------------
 	void D3D9HardwareIndexBuffer::notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device)
-	{	
+	{			
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
+		if (D3D9RenderSystem::getResourceManager()->getCreationPolicy() == RCP_CREATE_ON_ALL_DEVICES)
+			createBuffer(d3d9Device, mBufferDesc.Pool);	
 
 	}
 	//---------------------------------------------------------------------
 	void D3D9HardwareIndexBuffer::notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device)
 	{		
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.find(d3d9Device);
 
 		if (it != mMapDeviceToBufferResources.end())	
@@ -172,7 +197,9 @@ namespace Ogre {
 	}
 	//---------------------------------------------------------------------
 	void D3D9HardwareIndexBuffer::notifyOnDeviceLost(IDirect3DDevice9* d3d9Device)
-	{
+	{		
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		if (mBufferDesc.Pool == D3DPOOL_DEFAULT)
 		{
 			DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.find(d3d9Device);
@@ -185,13 +212,17 @@ namespace Ogre {
 	}
 	//---------------------------------------------------------------------
 	void D3D9HardwareIndexBuffer::notifyOnDeviceReset(IDirect3DDevice9* d3d9Device)
-	{
+	{		
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		if (D3D9RenderSystem::getResourceManager()->getCreationPolicy() == RCP_CREATE_ON_ALL_DEVICES)
 			createBuffer(d3d9Device, mBufferDesc.Pool);		
 	}
 	//---------------------------------------------------------------------
 	void D3D9HardwareIndexBuffer::createBuffer(IDirect3DDevice9* d3d9Device, D3DPOOL ePool)
 	{
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		BufferResources* bufferResources;		
 		HRESULT hr;
 
@@ -229,7 +260,7 @@ namespace Ogre {
 
 		if (FAILED(hr))
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Cannot create D3D9 Index buffer: " + msg, 
 				"D3D9HardwareIndexBuffer::createBuffer");
@@ -238,7 +269,7 @@ namespace Ogre {
 		hr = bufferResources->mBuffer->GetDesc(&mBufferDesc);
 		if (FAILED(hr))
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Cannot get D3D9 Index buffer desc: " + msg, 
 				"D3D9HardwareIndexBuffer::createBuffer");
@@ -288,7 +319,7 @@ namespace Ogre {
 
 		if (FAILED(hr))
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Cannot lock D3D9 vertex buffer: " + msg, 
 				"D3D9HardwareIndexBuffer::updateBufferResources");
@@ -300,7 +331,7 @@ namespace Ogre {
 		hr = bufferResources->mBuffer->Unlock();
 		if (FAILED(hr))
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
 				"Cannot unlock D3D9 vertex buffer: " + msg, 
 				"D3D9HardwareIndexBuffer::updateBufferResources");

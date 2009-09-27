@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9Texture.h"
@@ -58,7 +57,9 @@ namespace Ogre
 	}
 	/****************************************************************************************/
 	D3D9Texture::~D3D9Texture()
-	{		
+	{	
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+		
         // have to call this here reather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
 		if (isLoaded())
@@ -68,7 +69,7 @@ namespace Ogre
 		else
 		{
 			freeInternalResources();
-		}		
+		}				
 
 		// Free memory allocated per device.
 		DeviceToTextureResourcesIterator it = mMapDeviceToTextureResources.begin();
@@ -80,6 +81,7 @@ namespace Ogre
 			++it;
 		}		
 		mMapDeviceToTextureResources.clear();
+		mSurfaceList.clear();		
 	}
 	/****************************************************************************************/
 	void D3D9Texture::copyToTexture(TexturePtr& target)
@@ -117,7 +119,7 @@ namespace Ogre
 				IDirect3DSurface9 *pSrcSurface = 0;
 				if( FAILED( hr = srcTextureResource->pNormTex->GetSurfaceLevel(0, &pSrcSurface) ) )
 				{
-					String msg = DXGetErrorDescription9(hr);
+					String msg = DXGetErrorDescription(hr);
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Couldn't blit : " + msg, "D3D9Texture::copyToTexture" );
 				}
 
@@ -125,7 +127,7 @@ namespace Ogre
 				IDirect3DSurface9 *pDstSurface = 0;			
 				if( FAILED( hr = dstTextureResource->pNormTex->GetSurfaceLevel(0, &pDstSurface) ) )
 				{
-					String msg = DXGetErrorDescription9(hr);
+					String msg = DXGetErrorDescription(hr);
 					SAFE_RELEASE(pSrcSurface);
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Couldn't blit : " + msg, "D3D9Texture::copyToTexture" );
 				}
@@ -133,7 +135,7 @@ namespace Ogre
 				// do the blit, it's called StretchRect in D3D9 :)
 				if( FAILED( hr = it->first->StretchRect( pSrcSurface, NULL, pDstSurface, &dstRC, D3DTEXF_NONE) ) )
 				{
-					String msg = DXGetErrorDescription9(hr);
+					String msg = DXGetErrorDescription(hr);
 					SAFE_RELEASE(pSrcSurface);
 					SAFE_RELEASE(pDstSurface);
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Couldn't blit : " + msg, "D3D9Texture::copyToTexture" );
@@ -154,7 +156,7 @@ namespace Ogre
 					IDirect3DSurface9 *pSrcSurface = 0;
 					if( FAILED( hr =srcTextureResource->pCubeTex->GetCubeMapSurface((D3DCUBEMAP_FACES)face, 0, &pSrcSurface) ) )
 					{
-						String msg = DXGetErrorDescription9(hr);
+						String msg = DXGetErrorDescription(hr);
 						OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Couldn't blit : " + msg, "D3D9Texture::copyToTexture" );
 					}
 
@@ -162,7 +164,7 @@ namespace Ogre
 					IDirect3DSurface9 *pDstSurface = 0;
 					if( FAILED( hr = dstTextureResource->pCubeTex->GetCubeMapSurface((D3DCUBEMAP_FACES)face, 0, &pDstSurface) ) )
 					{
-						String msg = DXGetErrorDescription9(hr);
+						String msg = DXGetErrorDescription(hr);
 						SAFE_RELEASE(pSrcSurface);
 						OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Couldn't blit : " + msg, "D3D9Texture::copyToTexture" );
 					}
@@ -170,7 +172,7 @@ namespace Ogre
 					// do the blit, it's called StretchRect in D3D9 :)
 					if( FAILED( hr = it->first->StretchRect( pSrcSurface, NULL, pDstSurface, &dstRC, D3DTEXF_NONE) ) )
 					{
-						String msg = DXGetErrorDescription9(hr);
+						String msg = DXGetErrorDescription(hr);
 						SAFE_RELEASE(pSrcSurface);
 						SAFE_RELEASE(pDstSurface);
 						OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Couldn't blit : " + msg, "D3D9Texture::copyToTexture" );
@@ -202,23 +204,38 @@ namespace Ogre
 			mD3DPool = D3DPOOL_MANAGED;
 		}
 
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		for (uint i = 0; i < D3D9RenderSystem::getResourceCreationDeviceCount(); ++i)
 		{
 			IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getResourceCreationDevice(i);
 
 			loadImpl(d3d9Device);
-		}
-
-		mLoadedStreams.setNull();
+		}		
 	}
 
 	/****************************************************************************************/
 	void D3D9Texture::loadImpl(IDirect3DDevice9* d3d9Device)
-	{
+	{		
 		if (mUsage & TU_RENDERTARGET)
 		{
 			createInternalResourcesImpl(d3d9Device);
 			return;
+		}
+
+		// Make sure streams prepared.
+		if (mLoadedStreams.isNull())
+		{
+			prepareImpl();
+		}
+		
+
+		// Set reading positions of loaded streams to the beginning.
+		for (uint i = 0; i < mLoadedStreams->size(); ++i)
+		{
+			MemoryDataStreamPtr curDataStream = (*mLoadedStreams)[i];
+
+			curDataStream->seek(0);
 		}
 
 		// only copy is on the stack so well-behaved if exception thrown
@@ -239,25 +256,18 @@ namespace Ogre
 			break;
 		default:
 			OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::loadImpl" );
-		}
-
-		for (uint i = 0; i < mLoadedStreams->size(); ++i)
-		{
-			MemoryDataStreamPtr curDataStream = (*mLoadedStreams)[i];
-
-			curDataStream->seek(0);
-		}
-		
-
+		}				
 	}
 	/****************************************************************************************/
 	void D3D9Texture::prepareImpl()
-	{
-		if (mUsage & TU_RENDERTARGET)
+	{		
+		if (mUsage & TU_RENDERTARGET || isManuallyLoaded())
 		{
 			return;
 		}
 
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+		
         LoadedStreams loadedStreams;
 
 		// prepare load based on tex.type
@@ -268,8 +278,8 @@ namespace Ogre
 			loadedStreams = _prepareNormTex();
 			break;
 		case TEX_TYPE_3D:
-            loadedStreams = _prepareVolumeTex();
-            break;
+			loadedStreams = _prepareVolumeTex();
+			break;
 		case TEX_TYPE_CUBE_MAP:
 			loadedStreams = _prepareCubeTex();
 			break;
@@ -277,7 +287,7 @@ namespace Ogre
 			OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::prepareImpl" );
 		}
 
-        mLoadedStreams = loadedStreams;
+		mLoadedStreams = loadedStreams;		
 	}
     /****************************************************************************************/
 	D3D9Texture::LoadedStreams D3D9Texture::_prepareCubeTex()
@@ -353,15 +363,19 @@ namespace Ogre
 	}
 	/****************************************************************************************/
 	void D3D9Texture::unprepareImpl()
-	{
-		if (mUsage & TU_RENDERTARGET)
+	{		
+		if (mUsage & TU_RENDERTARGET || isManuallyLoaded())
 		{
 			return;
-		}
-
-        mLoadedStreams.setNull();
-
+		}   
 	}
+
+	/****************************************************************************************/
+	void D3D9Texture::postLoadImpl(void)
+	{
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+		mLoadedStreams.setNull();
+	}	
 
 	/****************************************************************************************/
 	void D3D9Texture::freeInternalResources(void)
@@ -372,6 +386,8 @@ namespace Ogre
 	/****************************************************************************************/
 	void D3D9Texture::freeInternalResourcesImpl()
 	{
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		DeviceToTextureResourcesIterator it = mMapDeviceToTextureResources.begin();
 
 		while (it != mMapDeviceToTextureResources.end())
@@ -385,7 +401,7 @@ namespace Ogre
 
 	/****************************************************************************************/
 	D3D9Texture::TextureResources* D3D9Texture::getTextureResources(IDirect3DDevice9* d3d9Device)
-	{
+	{		
 		DeviceToTextureResourcesIterator it = mMapDeviceToTextureResources.find(d3d9Device);
 
 		if (it == mMapDeviceToTextureResources.end())		
@@ -414,8 +430,8 @@ namespace Ogre
 
 	/****************************************************************************************/
 	void D3D9Texture::createTextureResources(IDirect3DDevice9* d3d9Device)
-	{
-		OGRE_LOCK_AUTO_MUTEX
+	{				
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
 		
 		if (mIsManual)
 		{
@@ -433,16 +449,21 @@ namespace Ogre
 		}
 		else
 		{			
-			prepareImpl();
-			preLoadImpl();							
+			prepareImpl();		
+
+			preLoadImpl();
+
 			loadImpl(d3d9Device);
-			postLoadImpl();
+
+			postLoadImpl();			
 		}		
 	}
 
 	/****************************************************************************************/
 	void D3D9Texture::freeTextureResources(IDirect3DDevice9* d3d9Device, D3D9Texture::TextureResources* textureResources)
-	{
+	{		
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		// Release surfaces from each mip level.
 		for(unsigned int i = 0; i < mSurfaceList.size(); ++i)
 		{
@@ -526,7 +547,7 @@ namespace Ogre
             if (FAILED(hr))
 		    {
 				freeInternalResources();
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't create cube texture: " + String(DXGetErrorDescription9(hr)), 
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't create cube texture: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_loadCubeTex" );
 		    }
 
@@ -535,7 +556,7 @@ namespace Ogre
             if (FAILED(hr))
 		    {
 				freeInternalResources();
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription9(hr)), 
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_loadCubeTex" );
 		    }
 
@@ -637,7 +658,7 @@ namespace Ogre
 			if (FAILED(hr))
 			{
 				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-					"Unable to load volume texture from " + getName() + ": " + String(DXGetErrorDescription9(hr)),
+					"Unable to load volume texture from " + getName() + ": " + String(DXGetErrorDescription(hr)),
 					"D3D9Texture::_loadVolumeTex");
 			}
 	
@@ -646,7 +667,7 @@ namespace Ogre
 			if (FAILED(hr))
 			{
 				freeInternalResources();
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription9(hr)), 
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_loadVolumeTex" );
 			}
 	
@@ -672,6 +693,27 @@ namespace Ogre
 	
 			DataStreamPtr stream((*loadedStreams)[0]);
 			img.load(stream, ext);
+
+			if (img.getHeight() == 0)
+			{
+				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
+					"Image height == 0 in " + getName(),
+					"D3D9Texture::_loadVolumeTex");
+			}
+
+			if (img.getWidth() == 0)
+			{
+				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
+					"Image width == 0 in " + getName(),
+					"D3D9Texture::_loadVolumeTex");
+			}
+
+			if (img.getDepth() == 0)
+			{
+				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
+					"Image depth == 0 in " + getName(),
+					"D3D9Texture::_loadVolumeTex");
+			}
 			// Call internal _loadImages, not loadImage since that's external and 
 			// will determine load status etc again
 			ConstImagePtrList imagePtrs;
@@ -752,7 +794,7 @@ namespace Ogre
 			if (FAILED(hr))
 			{
 				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-					"Unable to load texture from " + getName() + " :" + String(DXGetErrorDescription9(hr)),
+					"Unable to load texture from " + getName() + " :" + String(DXGetErrorDescription(hr)),
 					"D3D9Texture::_loadNormTex");
 			}
 	
@@ -761,7 +803,7 @@ namespace Ogre
 			if (FAILED(hr))
 			{
 				freeInternalResources();
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription9(hr)), 
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_loadNormTex" );
 			}
 	
@@ -788,6 +830,21 @@ namespace Ogre
 
 			DataStreamPtr stream((*loadedStreams)[0]);
 			img.load(stream, ext);
+
+			if (img.getHeight() == 0)
+			{
+				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
+					"Image height == 0 in " + getName(),
+					"D3D9Texture::_loadNormTex");
+			}
+
+			if (img.getWidth() == 0)
+			{
+				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
+					"Image width == 0 in " + getName(),
+					"D3D9Texture::_loadNormTex");
+			}
+
 			// Call internal _loadImages, not loadImage since that's external and 
 			// will determine load status etc again
 			ConstImagePtrList imagePtrs;
@@ -812,8 +869,23 @@ namespace Ogre
 	}
 
 	/****************************************************************************************/
+	void D3D9Texture::determinePool()
+	{
+		if (useDefaultPool())
+		{
+			mD3DPool = D3DPOOL_DEFAULT;
+		}
+		else
+		{
+			mD3DPool = D3DPOOL_MANAGED;
+		}
+
+	}
+	/****************************************************************************************/
     void D3D9Texture::createInternalResourcesImpl(void)
 	{
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		for (uint i = 0; i < D3D9RenderSystem::getResourceCreationDeviceCount(); ++i)
 		{
 			IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getResourceCreationDevice(i);
@@ -824,7 +896,7 @@ namespace Ogre
 
 	/****************************************************************************************/
 	void D3D9Texture::createInternalResourcesImpl(IDirect3DDevice9* d3d9Device)
-	{
+	{		
 		TextureResources* textureResources;			
 
 		// Check if resources already exist.
@@ -840,17 +912,6 @@ namespace Ogre
 			mSrcHeight = mHeight;
 		}
 
-		// Determine D3D pool to use
-		// Use managed unless we're a render target or user has asked for 
-		// a dynamic texture
-		if (useDefaultPool())
-		{
-			mD3DPool = D3DPOOL_DEFAULT;
-		}
-		else
-		{
-			mD3DPool = D3DPOOL_MANAGED;
-		}
 		// load based on tex.type
 		switch (getTextureType())
 		{
@@ -946,6 +1007,9 @@ namespace Ogre
 			numMips = 1;
 		}
 
+		// derive the pool to use
+		determinePool();
+
 		TextureResources* textureResources;			
 	
 		// Get or create new texture resources structure.
@@ -970,7 +1034,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error creating texture: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error creating texture: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createNormTex" );
 		}
 		
@@ -979,7 +1043,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createNormTex" );
 		}
 		
@@ -990,7 +1054,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createNormTex" );
 		}
 
@@ -1006,7 +1070,7 @@ namespace Ogre
 			if (FAILED(hr))
 			{
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-					"Unable to create AA render target: " + String(DXGetErrorDescription9(hr)), 
+					"Unable to create AA render target: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_createNormTex");
 			}
 
@@ -1021,7 +1085,7 @@ namespace Ogre
 			hr = textureResources->pBaseTex->SetAutoGenFilterType(_getBestFilterMethod(d3d9Device));
 			if(FAILED(hr))
 			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type: "  + String(DXGetErrorDescription9(hr)), 
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type: "  + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_createNormTex" );
 			}
 		}
@@ -1102,6 +1166,8 @@ namespace Ogre
 			numMips = 1;
 		}
 
+		// derive the pool to use
+		determinePool();
 		TextureResources* textureResources;			
 
 		// Get or create new texture resources structure.
@@ -1125,7 +1191,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error creating texture: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error creating texture: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createCubeTex" );
 		}
 
@@ -1134,7 +1200,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createCubeTex" );
 		}
 		
@@ -1145,7 +1211,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createCubeTex" );
 		}
 
@@ -1161,7 +1227,7 @@ namespace Ogre
 			if (FAILED(hr))
 			{
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-					"Unable to create AA render target: " + String(DXGetErrorDescription9(hr)), 
+					"Unable to create AA render target: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_createCubeTex");
 			}
 		}
@@ -1175,7 +1241,7 @@ namespace Ogre
 			hr = textureResources->pBaseTex->SetAutoGenFilterType(_getBestFilterMethod(d3d9Device));
 			if(FAILED(hr))
 			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type: " + String(DXGetErrorDescription9(hr)), 
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_createCubeTex" );
 			}
 		}
@@ -1250,6 +1316,8 @@ namespace Ogre
 			numMips = 1;
 		}
 
+		// derive the pool to use
+		determinePool();
 		TextureResources* textureResources;			
 
 		// Get or create new texture resources structure.
@@ -1275,7 +1343,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error creating texture: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error creating texture: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createVolumeTex" );
 		}
 
@@ -1284,7 +1352,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get base texture: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createVolumeTex" );
 		}
 		
@@ -1295,7 +1363,7 @@ namespace Ogre
 		if (FAILED(hr))
 		{
 			freeInternalResources();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description: " + String(DXGetErrorDescription9(hr)), 
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description: " + String(DXGetErrorDescription(hr)), 
 				"D3D9Texture::_createVolumeTex" );
 		}
 		_setFinalAttributes(d3d9Device, textureResources,
@@ -1307,7 +1375,7 @@ namespace Ogre
 			hr = textureResources->pBaseTex->SetAutoGenFilterType(_getBestFilterMethod(d3d9Device));
 			if(FAILED(hr))
 			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type: " + String(DXGetErrorDescription9(hr)), 
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type: " + String(DXGetErrorDescription(hr)), 
 					"D3D9Texture::_createCubeTex" );
 			}
 		}
@@ -1626,12 +1694,12 @@ namespace Ogre
 		 				"D3D9Texture::_createSurfaceList");
 
 				D3D9HardwarePixelBuffer* currPixelBuffer = GETLEVEL(0, mip);
-				
-				currPixelBuffer->bind(d3d9Device, surface, textureResources->pFSAASurface,
-					mHwGammaWriteSupported, mFSAA, mName, textureResources->pBaseTex);
-
+								
 				if (mip == 0 && mNumRequestedMipmaps != 0 && (mUsage & TU_AUTOMIPMAP))
 					currPixelBuffer->_setMipmapping(true, mMipmapsHardwareGenerated);
+
+				currPixelBuffer->bind(d3d9Device, surface, textureResources->pFSAASurface,
+					mHwGammaWriteSupported, mFSAA, mName, textureResources->pBaseTex);
 
 				// decrement reference count, the GetSurfaceLevel call increments this
 				// this is safe because the pixel buffer keeps a reference as well
@@ -1652,12 +1720,12 @@ namespace Ogre
 
 					D3D9HardwarePixelBuffer* currPixelBuffer = GETLEVEL(face, mip);
 					
-					currPixelBuffer->bind(d3d9Device, surface, textureResources->pFSAASurface,
-						mHwGammaWriteSupported, mFSAA, mName, textureResources->pBaseTex);
-
+					
 					if (mip == 0 && mNumRequestedMipmaps != 0 && (mUsage & TU_AUTOMIPMAP))
 						currPixelBuffer->_setMipmapping(true, mMipmapsHardwareGenerated);
 
+					currPixelBuffer->bind(d3d9Device, surface, textureResources->pFSAASurface,
+						mHwGammaWriteSupported, mFSAA, mName, textureResources->pBaseTex);
 
 					// decrement reference count, the GetSurfaceLevel call increments this
 					// this is safe because the pixel buffer keeps a reference as well
@@ -1715,19 +1783,27 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	bool D3D9Texture::useDefaultPool()
 	{
-		return (mUsage & TU_RENDERTARGET) || (mUsage & TU_DYNAMIC);
+		// Determine D3D pool to use
+		// Use managed unless we're a render target or user has asked for 
+		// a dynamic texture, and device supports D3DUSAGE_DYNAMIC (because default pool
+		// resources without the dynamic flag are not lockable)
+		return (mUsage & TU_RENDERTARGET) || ((mUsage & TU_DYNAMIC) && mDynamicTextures);
 	}
 	
 	//---------------------------------------------------------------------
 	void D3D9Texture::notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device) 
-	{	
+	{		
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		if (D3D9RenderSystem::getResourceManager()->getCreationPolicy() == RCP_CREATE_ON_ALL_DEVICES)
 			createTextureResources(d3d9Device);
 	}
 
 	//---------------------------------------------------------------------
 	void D3D9Texture::notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device) 
-	{						
+	{				
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		DeviceToTextureResourcesIterator it = mMapDeviceToTextureResources.find(d3d9Device);
 
 		if (it != mMapDeviceToTextureResources.end())
@@ -1738,6 +1814,14 @@ namespace Ogre
 			LogManager::getSingleton().logMessage(ss.str());
 
 			TextureResources* textureResource = it->second;
+
+			// Destroy surfaces from each mip level.
+			for(unsigned int i = 0; i < mSurfaceList.size(); ++i)
+			{
+				D3D9HardwarePixelBuffer* pixelBuffer = static_cast<D3D9HardwarePixelBuffer*>(mSurfaceList[i].get());
+
+				pixelBuffer->destroyBufferResources(d3d9Device);			
+			}
 
 			// Just free any internal resources, don't call unload() here
 			// because we want the un-touched resource to keep its unloaded status
@@ -1754,7 +1838,9 @@ namespace Ogre
 
 	//---------------------------------------------------------------------
 	void D3D9Texture::notifyOnDeviceLost(IDirect3DDevice9* d3d9Device) 
-	{
+	{		
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 		if(mD3DPool == D3DPOOL_DEFAULT)
 		{
 			DeviceToTextureResourcesIterator it = mMapDeviceToTextureResources.find(d3d9Device);
@@ -1766,7 +1852,7 @@ namespace Ogre
 				ss << "D3D9 device: 0x[" << d3d9Device << "] lost. Releasing D3D9 texture: " << mName;
 				LogManager::getSingleton().logMessage(ss.str());
 
-				TextureResources* textureResource = it->second;
+				TextureResources* textureResource = it->second;				
 
 				// Just free any internal resources, don't call unload() here
 				// because we want the un-touched resource to keep its unloaded status
@@ -1781,41 +1867,12 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void D3D9Texture::notifyOnDeviceReset(IDirect3DDevice9* d3d9Device) 
 	{		
-		if(mD3DPool == D3DPOOL_DEFAULT)
-		{
-			reloadTexture();
-		}
-	}
+		D3D9_DEVICE_ACCESS_CRITICAL_SECTION
 
-	//---------------------------------------------------------------------
-	void D3D9Texture::reloadTexture()
-	{
-		LogManager::getSingleton().logMessage(
-			"Recreating D3D9 default pool texture: " + mName);
-		// We just want to create the texture resources if:
-		// 1. This is a render texture, or
-		// 2. This is a manual texture with no loader, or
-		// 3. This was an unloaded regular texture (preserve unloaded state)
-		if ((mIsManual && !mLoader) || (mUsage & TU_RENDERTARGET) || !isLoaded())
-		{
-			// just recreate any internal resources
-			createInternalResources();
+		if(mD3DPool == D3DPOOL_DEFAULT)
+		{			
+			createTextureResources(d3d9Device);
 		}
-		// Otherwise, this is a regular loaded texture, or a manual texture with a loader
-		else
-		{
-			// The internal resources already freed, need unload/load here:
-			// 1. Make sure resource memory usage statistic correction.
-			// 2. Don't call unload() in releaseIfDefaultPool() because we want
-			//    the un-touched resource keep unload status after device reset.
-			unload();
-			// if manual, we need to recreate internal resources since load() won't do that
-			if (mIsManual)
-				createInternalResources();
-			load();
-		}
-		LogManager::getSingleton().logMessage(
-			"Recreated D3D9 default pool texture: " + mName);
 	}
 
 	//---------------------------------------------------------------------
@@ -1962,7 +2019,7 @@ namespace Ogre
 					if (FAILED(hr))
 					{
 						OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-							"Unable to copy AA buffer to final buffer: " + String(DXGetErrorDescription9(hr)), 
+							"Unable to copy AA buffer to final buffer: " + String(DXGetErrorDescription(hr)), 
 							"D3D9RenderTexture::swapBuffers");
 					}
 				}								

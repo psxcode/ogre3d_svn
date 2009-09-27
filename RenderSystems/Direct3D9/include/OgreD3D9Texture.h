@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __D3D9TEXTURE_H__
@@ -36,10 +35,6 @@ Torus Knot Software Ltd.
 #include "OgreException.h"
 #include "OgreD3D9HardwarePixelBuffer.h"
 #include "OgreD3D9Resource.h"
-
-#include <d3d9.h>
-#include <d3dx9.h>
-#include <dxerr9.h>
 
 namespace Ogre {
 	class D3D9Texture : public Texture, public D3D9Resource
@@ -153,6 +148,8 @@ namespace Ogre {
         void prepareImpl();
         /// overriden from Resource
         void unprepareImpl();
+		/// overriden from Resource
+		void postLoadImpl();
 
 		/// gets the texture resources attached to the given device.
 		TextureResources* getTextureResources(IDirect3DDevice9* d3d9Device);
@@ -165,6 +162,8 @@ namespace Ogre {
 
 		/// frees the given texture resources.
 		void freeTextureResources(IDirect3DDevice9* d3d9Device, TextureResources* textureResources);
+
+		void determinePool();
 
         /** Vector of pointers to streams that were pulled from disk by
             prepareImpl  but have yet to be pushed into texture memory
@@ -216,10 +215,7 @@ namespace Ogre {
 		virtual void notifyOnDeviceLost(IDirect3DDevice9* d3d9Device);
 
 		// Called immediately after the Direct3D device has been reset
-		virtual void notifyOnDeviceReset(IDirect3DDevice9* d3d9Device);
-
-		// Reload this texture.
-		void reloadTexture();		
+		virtual void notifyOnDeviceReset(IDirect3DDevice9* d3d9Device);	
     };
 
     /** Specialisation of SharedPtr to allow SharedPtr to be assigned to D3D9TexturePtr 

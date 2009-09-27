@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9RenderSystem.h"
@@ -695,7 +694,12 @@ namespace Ogre
 		D3D9RenderWindow* renderWindow = new D3D9RenderWindow(mhInstance);
 		
 		renderWindow->create(name, width, height, fullScreen, miscParams);
+
+		mResourceManager->lockDeviceAccess();
+
 		mDeviceManager->linkRenderWindow(renderWindow);
+
+		mResourceManager->unlockDeviceAccess();
 	
 		mRenderWindows.push_back(renderWindow);		
 		
@@ -779,16 +783,24 @@ namespace Ogre
 			IDirect3DDevice9* d3d9Device = device->getD3D9Device();
 
 			IDirect3DSurface9* pSurf;
-			D3DSURFACE_DESC surfDesc;
+			
 
 			// Check for hardware stencil support
 			d3d9Device->GetDepthStencilSurface(&pSurf);
-			pSurf->GetDesc(&surfDesc);
-			pSurf->Release();
 
-			if (surfDesc.Format != D3DFMT_D24S8 && surfDesc.Format != D3DFMT_D24X8)			
-				rsc->unsetCapability(RSC_HWSTENCIL);												
+			if (pSurf != NULL)
+			{
+				D3DSURFACE_DESC surfDesc;
 
+				pSurf->GetDesc(&surfDesc);
+				pSurf->Release();
+
+				if (surfDesc.Format != D3DFMT_D15S1 &&
+					surfDesc.Format != D3DFMT_D24S8 && 				
+					surfDesc.Format != D3DFMT_D24X4S4 && 
+					surfDesc.Format != D3DFMT_D24FS8)			
+					rsc->unsetCapability(RSC_HWSTENCIL);	
+			}																	
 
 			// Check for hardware occlusion support
 			HRESULT hr = d3d9Device->CreateQuery(D3DQUERYTYPE_OCCLUSION,  NULL);
@@ -936,6 +948,9 @@ namespace Ogre
 			break;
 		case 0x102B:
 			rsc->setVendor(GPU_MATROX);
+			break;
+		case 0x1039:
+			rsc->setVendor(GPU_SIS);
 			break;
 		default:
 			rsc->setVendor(GPU_UNKNOWN);
@@ -1357,7 +1372,7 @@ namespace Ogre
 
 			HRESULT hr = mpD3D->CheckDeviceFormat(
 				currDevice->getAdapterNumber(),
-				D3DDEVTYPE_HAL,
+				currDevice->getDeviceType(),
 				srfDesc.Format,
 				d3dusage,
 				rtype,
@@ -1404,7 +1419,7 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	String D3D9RenderSystem::getErrorDescription( long errorNumber ) const
 	{
-		const String errMsg = DXGetErrorDescription9( errorNumber );
+		const String errMsg = DXGetErrorDescription( errorNumber );
 		return errMsg;
 	}
 	//---------------------------------------------------------------------
@@ -2686,6 +2701,16 @@ namespace Ogre
 
 		HRESULT hr;
 
+
+		// If this is called without going through RenderWindow::update, then 
+		// the device will not have been set. Calling it twice is safe, the 
+		// implementation ensures nothing happens if the same device is set twice
+		if (std::find(mRenderWindows.begin(), mRenderWindows.end(), target) != mRenderWindows.end())
+		{
+			D3D9RenderWindow *window = static_cast<D3D9RenderWindow*>(target);
+			mDeviceManager->setActiveRenderTargetDevice(window->getDevice());
+		}
+
 		// Retrieve render surfaces (up to OGRE_MAX_MULTIPLE_RENDER_TARGETS)
 		IDirect3DSurface9* pBack[OGRE_MAX_MULTIPLE_RENDER_TARGETS];
 		memset(pBack, 0, sizeof(pBack));
@@ -2712,14 +2737,14 @@ namespace Ogre
 			hr = getActiveD3D9Device()->SetRenderTarget(x, pBack[x]);
 			if (FAILED(hr))
 			{
-				String msg = DXGetErrorDescription9(hr);
+				String msg = DXGetErrorDescription(hr);
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to setRenderTarget : " + msg, "D3D9RenderSystem::_setViewport" );
 			}
 		}
 		hr = getActiveD3D9Device()->SetDepthStencilSurface(pDepth);
 		if (FAILED(hr))
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to setDepthStencil : " + msg, "D3D9RenderSystem::_setViewport" );
 		}
 	}
@@ -2775,11 +2800,17 @@ namespace Ogre
 
 		if( FAILED( hr = getActiveD3D9Device()->BeginScene() ) )
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error beginning frame :" + msg, "D3D9RenderSystem::_beginFrame" );
 		}
 
 		mLastVertexSourceCount = 0;
+
+		// Clear left overs of previous viewport.
+		// I.E: Viewport A can use 3 different textures and light states
+		// When trying to render viewport B these settings should be cleared, otherwise 
+		// graphical artifacts might occur.
+ 		mDeviceManager->getActiveDevice()->clearDeviceStreams();
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_endFrame()
@@ -2973,7 +3004,7 @@ namespace Ogre
 
 		if( FAILED( hr ) )
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to DrawPrimitive : " + msg, "D3D9RenderSystem::_render" );
 		}
 
@@ -3063,8 +3094,8 @@ namespace Ogre
 		}
 
 		HRESULT hr;
-		const GpuLogicalBufferStruct* floatLogical = params->getFloatLogicalBufferStruct();
-		const GpuLogicalBufferStruct* intLogical = params->getIntLogicalBufferStruct();
+		GpuLogicalBufferStructPtr floatLogical = params->getFloatLogicalBufferStruct();
+		GpuLogicalBufferStructPtr intLogical = params->getIntLogicalBufferStruct();
 
 		switch(gptype)
 		{
@@ -3333,7 +3364,7 @@ namespace Ogre
 			depth, 
 			stencil ) ) )
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error clearing frame buffer : " 
 				+ msg, "D3D9RenderSystem::clearFrameBuffer" );
 		}
@@ -3520,21 +3551,24 @@ namespace Ogre
 	IDirect3DDevice9* D3D9RenderSystem::getResourceCreationDevice(UINT index)
 	{
 		D3D9ResourceCreationPolicy creationPolicy = msD3D9RenderSystem->mResourceManager->getCreationPolicy();
+		IDirect3DDevice9* d3d9Device = NULL;
 
 		if (creationPolicy == RCP_CREATE_ON_ACTIVE_DEVICE)
 		{
-			return msD3D9RenderSystem->getActiveD3D9Device();
+			d3d9Device = msD3D9RenderSystem->getActiveD3D9Device();
 		}
 		else if (creationPolicy == RCP_CREATE_ON_ALL_DEVICES) 
 		{
-			return msD3D9RenderSystem->mDeviceManager->getDevice(index)->getD3D9Device();
+			d3d9Device = msD3D9RenderSystem->mDeviceManager->getDevice(index)->getD3D9Device();
+		}
+		else
+		{
+			OGRE_EXCEPT( Exception::ERR_INVALIDPARAMS, 
+				"Invalid resource creation policy !!!", 
+				"D3D9RenderSystem::getResourceCreationDevice" );
 		}
 
-		OGRE_EXCEPT( Exception::ERR_INVALIDPARAMS, 
-			"Invalid resource creation policy !!!", 
-			"D3D9RenderSystem::getResourceCreationDevice" );
-
-		return NULL;
+		return d3d9Device;
 	}
 
 	//---------------------------------------------------------------------
@@ -3591,7 +3625,7 @@ namespace Ogre
 				// Verify that the depth format exists
 				if (mpD3D->CheckDeviceFormat(
 					activeDevice->getAdapterNumber(),
-					D3DDEVTYPE_HAL,
+					activeDevice->getDeviceType(),
 					srfDesc.Format,
 					D3DUSAGE_DEPTHSTENCIL,
 					D3DRTYPE_SURFACE,
@@ -3602,7 +3636,8 @@ namespace Ogre
 				// Verify that the depth format is compatible
 				if(mpD3D->CheckDepthStencilMatch(
 					activeDevice->getAdapterNumber(),
-					D3DDEVTYPE_HAL, srfDesc.Format,
+					activeDevice->getDeviceType(), 
+					srfDesc.Format,
 					fmt, ddDepthStencilFormats[x]) == D3D_OK)
 				{
 					dsfmt = ddDepthStencilFormats[x];
@@ -3659,7 +3694,7 @@ namespace Ogre
 				NULL);
 			if(FAILED(hr))
 			{
-				String msg = DXGetErrorDescription9(hr);
+				String msg = DXGetErrorDescription(hr);
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error CreateDepthStencilSurface : " + msg, "D3D9RenderSystem::_getDepthStencilFor" );
 			}
 			/// And cache it
@@ -3765,6 +3800,12 @@ namespace Ogre
 		mActiveViewport = NULL;
 
 		std::stringstream ss;
+
+		// Reset the texture stages, they will need to be rebound
+		for (size_t i = 0; i < OGRE_MAX_TEXTURE_LAYERS; ++i)
+			_setTexture(i, false, TexturePtr());
+
+		LogManager::getSingleton().logMessage("!!! Direct3D Device successfully restored.");
 
 		ss << "D3D9 device: 0x[" << device->getD3D9Device() << "] was reset";
 		LogManager::getSingleton().logMessage(ss.str());

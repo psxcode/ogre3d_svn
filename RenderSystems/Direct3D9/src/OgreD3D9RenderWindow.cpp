@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9RenderWindow.h"
@@ -75,8 +74,8 @@ namespace Ogre
 		mVSyncInterval = 1;
 		String title = name;
 		unsigned int colourDepth = 32;
-		int left = -1; // Defaults to screen center
-		int top = -1; // Defaults to screen center
+		int left = INT_MAX; // Defaults to screen center
+		int top = INT_MAX;  // Defaults to screen center
 		bool depthBuffer = true;
 		String border = "";
 		bool outerSize = false;
@@ -213,7 +212,7 @@ namespace Ogre
 
 
 			// No specified top left -> Center the window in the middle of the monitor
-			if (left == -1 || top == -1)
+			if (left == INT_MAX || top == INT_MAX)
 			{				
 				int screenw = monitorInfo.rcMonitor.right  - monitorInfo.rcMonitor.left;
 				int screenh = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
@@ -225,12 +224,12 @@ namespace Ogre
 				int outerw = (rc.right-rc.left < screenw)? rc.right-rc.left : screenw;
 				int outerh = (rc.bottom-rc.top < screenh)? rc.bottom-rc.top : screenh;
 
-				if (left == -1)
+				if (left == INT_MAX)
 					left = monitorInfo.rcMonitor.left + (screenw - outerw) / 2;
 				else if (monitorIndex != -1)
 					left += monitorInfo.rcMonitor.left;
 
-				if (top == -1)
+				if (top == INT_MAX)
 					top = monitorInfo.rcMonitor.top + (screenh - outerh) / 2;
 				else if (monitorIndex != -1)
 					top += monitorInfo.rcMonitor.top;
@@ -407,7 +406,7 @@ namespace Ogre
 			// Have to release & trigger device reset
 			// NB don't use windowMovedOrResized since Win32 doesn't know
 			// about the size change yet				
-			mDevice->invalidate();
+			mDevice->invalidate(this);
 			// Notify viewports of resize
 			ViewportList::iterator it = mViewportList.begin();
 			while(it != mViewportList.end()) (*it++).second->_updateDimensions();
@@ -450,6 +449,10 @@ namespace Ogre
 		// Set up the presentation parameters		
 		IDirect3D9* pD3D = D3D9RenderSystem::getDirect3D9();
 		D3DDEVTYPE devType = D3DDEVTYPE_HAL;
+
+		if (mDevice != NULL)		
+			devType = mDevice->getDeviceType();		
+	
 
 		ZeroMemory( presentParams, sizeof(D3DPRESENT_PARAMETERS) );
 		presentParams->Windowed					= !mIsFullScreen;

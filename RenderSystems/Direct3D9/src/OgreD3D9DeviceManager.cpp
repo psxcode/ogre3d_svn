@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9DeviceManager.h"
@@ -99,8 +98,8 @@ namespace Ogre
 	void D3D9DeviceManager::setActiveRenderTargetDevice(D3D9Device* device)
 	{
 		mActiveRenderWindowDevice = device;
-		if (mActiveRenderWindowDevice != NULL)
-			setActiveDevice(mActiveRenderWindowDevice);
+		if (mActiveRenderWindowDevice != NULL)		
+			setActiveDevice(mActiveRenderWindowDevice);			
 	}
 
 	//---------------------------------------------------------------------
@@ -164,6 +163,9 @@ namespace Ogre
 		bool					nvAdapterFound = false;
 
 
+		// Default group includes at least the given render window.
+		renderWindowsGroup.push_back(renderWindow);
+
 		// Case we use nvidia performance HUD, override the device settings. 
 		if (renderWindow->isNvPerfHUDEnable())
 		{
@@ -193,12 +195,44 @@ namespace Ogre
 			renderSystem->mActiveD3DDriver = findDriver(renderWindow);
 			nAdapterOrdinal = renderSystem->mActiveD3DDriver->getAdapterNumber();
 
-			// Default group includes at least the given render window.
-			renderWindowsGroup.push_back(renderWindow);
+			BOOL bTryUsingMultiheadDevice = FALSE;
 
-			// Case this is a full screen window, check if we can create a group of 
-			// render windows on the same device using the multi-head feature.
 			if (renderWindow->isFullScreen())
+			{
+				bTryUsingMultiheadDevice = TRUE;
+
+				OSVERSIONINFO osVersionInfo;
+				
+				osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+				
+				// Case version info failed -> assume we run on XP.
+				if (FALSE == GetVersionEx(&osVersionInfo))
+				{
+					osVersionInfo.dwMajorVersion = 5;
+				}
+
+				// XP and below - multi-head will cause artifacts when vsync is on.
+				if (osVersionInfo.dwMajorVersion <= 5 && renderWindow->isVSync())
+				{
+					bTryUsingMultiheadDevice = FALSE;
+					LogManager::getSingleton().logMessage("D3D9 : Multi head disabled. It causes horizontal line when used in XP + VSync combination");
+				}		
+
+				// Vista and SP1 or SP2 - multi-head device can not be reset - it causes memory corruption.
+				if (osVersionInfo.dwMajorVersion == 6 &&
+					(_stricmp(osVersionInfo.szCSDVersion, "Service Pack 1") == 0 ||
+					 _stricmp(osVersionInfo.szCSDVersion, "Service Pack 2") == 0))
+
+				{
+					bTryUsingMultiheadDevice = FALSE;
+					LogManager::getSingleton().logMessage("D3D9 : Multi head disabled. It causes application run time crashes when used in Vista + SP 1 or 2 combination");
+				}				
+			}
+			
+			
+			// Check if we can create a group of render windows 
+			// on the same device using the multi-head feature.
+			if (bTryUsingMultiheadDevice)
 			{
 				const D3DCAPS9& targetAdapterCaps = renderSystem->mActiveD3DDriver->getD3D9DeviceCaps();
 				D3DCAPS9        masterAdapterCaps;
@@ -257,7 +291,7 @@ namespace Ogre
 					bool bDeviceGroupFull = true;
 
 
-					// Check if render windows group is full and ready to be drived by
+					// Check if render windows group is full and ready to be driven by
 					// the master device.
 					for (uint i = 0; i < renderWindowsGroup.size(); ++i)
 					{
@@ -383,8 +417,7 @@ namespace Ogre
 	{
 		D3D9RenderSystem*		renderSystem	 = static_cast<D3D9RenderSystem*>(Root::getSingleton().getRenderSystem());		
 		IDirect3D9*				direct3D9	     = D3D9RenderSystem::getDirect3D9();
-		UINT					nAdapterOrdinal  = D3DADAPTER_DEFAULT;
-		D3DDEVTYPE				devType			 = D3DDEVTYPE_HAL;						
+		UINT					nAdapterOrdinal  = D3DADAPTER_DEFAULT;						
 		HMONITOR				hRenderWindowMonitor = NULL;			
 		D3D9DriverList*			driverList = renderSystem->getDirect3DDrivers();
 
@@ -426,6 +459,13 @@ namespace Ogre
 				}												
 				++itDevice;
 			}
+
+			if (mActiveDevice == NULL)
+			{
+				DeviceIterator itDevice = mRenderDevices.begin();
+				if (itDevice != mRenderDevices.end())				
+					mActiveDevice = (*itDevice);
+			}
 		}
 	}
 
@@ -453,7 +493,9 @@ namespace Ogre
 		{			
 			if ((*itDevice)->getRenderWindowCount() == 0 &&
 				(*itDevice)->getLastPresentFrame() + 1 < Root::getSingleton().getNextFrameNumber())
-			{									
+			{		
+				if (*itDevice == mActiveRenderWindowDevice)
+					setActiveRenderTargetDevice(NULL);
 				(*itDevice)->destroy();
 				break;
 			}												

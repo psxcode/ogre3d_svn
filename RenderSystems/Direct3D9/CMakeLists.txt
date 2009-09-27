@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 # Configure Direct3D9 RenderSystem build
 
 set (HEADER_FILES
@@ -65,10 +74,7 @@ add_definitions(-D_USRDLL)
 add_library(RenderSystem_Direct3D9 ${OGRE_LIB_TYPE} ${HEADER_FILES} ${SOURCE_FILES})
 target_link_libraries(RenderSystem_Direct3D9
   OgreMain
-  d3d9
-  d3dx9
-  dxerr9
-  dxguid
+  ${DirectX_LIBRARIES}
 )
 
 if (NOT OGRE_STATIC)
@@ -81,3 +87,6 @@ if (OGRE_CONFIG_THREADS)
 endif ()
 
 ogre_config_plugin(RenderSystem_Direct3D9)
+if (OGRE_INSTALL_PLUGINS_HEADERS)
+  install(FILES ${HEADER_FILES} DESTINATION include/OGRE/RenderSystems/Direct3D9)
+endif ()

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -257,10 +257,7 @@ namespace Ogre {
         D3DXCONSTANTTABLE_DESC desc;
         HRESULT hr = mpConstTable->GetDesc(&desc);
 
-		mFloatLogicalToPhysical.bufferSize = 0;
-		mIntLogicalToPhysical.bufferSize = 0;
-		mConstantDefs.floatBufferSize = 0;
-		mConstantDefs.intBufferSize = 0;
+		createParameterMappingStructures(true);
 
         if (FAILED(hr))
         {
@@ -332,29 +329,29 @@ namespace Ogre {
 				populateDef(desc, def);
 				if (def.isFloat())
 				{
-					def.physicalIndex = mFloatLogicalToPhysical.bufferSize;
-					OGRE_LOCK_MUTEX(mFloatLogicalToPhysical.mutex)
-					mFloatLogicalToPhysical.map.insert(
+					def.physicalIndex = mFloatLogicalToPhysical->bufferSize;
+					OGRE_LOCK_MUTEX(mFloatLogicalToPhysical->mutex)
+					mFloatLogicalToPhysical->map.insert(
 						GpuLogicalIndexUseMap::value_type(paramIndex, 
 						GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
-					mFloatLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
-					mConstantDefs.floatBufferSize = mFloatLogicalToPhysical.bufferSize;
+					mFloatLogicalToPhysical->bufferSize += def.arraySize * def.elementSize;
+					mConstantDefs->floatBufferSize = mFloatLogicalToPhysical->bufferSize;
 				}
 				else
 				{
-					def.physicalIndex = mIntLogicalToPhysical.bufferSize;
-					OGRE_LOCK_MUTEX(mIntLogicalToPhysical.mutex)
-					mIntLogicalToPhysical.map.insert(
+					def.physicalIndex = mIntLogicalToPhysical->bufferSize;
+					OGRE_LOCK_MUTEX(mIntLogicalToPhysical->mutex)
+					mIntLogicalToPhysical->map.insert(
 						GpuLogicalIndexUseMap::value_type(paramIndex, 
 						GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
-					mIntLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
-					mConstantDefs.intBufferSize = mIntLogicalToPhysical.bufferSize;
+					mIntLogicalToPhysical->bufferSize += def.arraySize * def.elementSize;
+					mConstantDefs->intBufferSize = mIntLogicalToPhysical->bufferSize;
 				}
 
-                mConstantDefs.map.insert(GpuConstantDefinitionMap::value_type(name, def));
+                mConstantDefs->map.insert(GpuConstantDefinitionMap::value_type(name, def));
 
 				// Now deal with arrays
-				mConstantDefs.generateConstantDefinitionArrayEntries(name, def);
+				mConstantDefs->generateConstantDefinitionArrayEntries(name, def);
             }
         }
             
@@ -383,9 +380,59 @@ namespace Ogre {
 			} // columns
 			break;
 		case D3DXPT_FLOAT:
-			switch(d3dDesc.Rows)
+			switch(d3dDesc.Class)
 			{
-			case 1:
+			case D3DXPC_MATRIX_COLUMNS:
+			case D3DXPC_MATRIX_ROWS:
+				switch(d3dDesc.RegisterCount)
+				{
+				case 2:
+					switch(d3dDesc.Columns)
+					{
+					case 2:
+						def.constType = GCT_MATRIX_2X2;
+						break;
+					case 3:
+						def.constType = GCT_MATRIX_2X3;
+						break;
+					case 4:
+						def.constType = GCT_MATRIX_2X4;
+						break;
+					} // columns
+					break;
+				case 3:
+					switch(d3dDesc.Columns)
+					{
+					case 2:
+						def.constType = GCT_MATRIX_3X2;
+						break;
+					case 3:
+						def.constType = GCT_MATRIX_3X3;
+						break;
+					case 4:
+						def.constType = GCT_MATRIX_3X4;
+						break;
+					} // columns
+					break;
+				case 4:
+					switch(d3dDesc.Columns)
+					{
+					case 2:
+						def.constType = GCT_MATRIX_4X2;
+						break;
+					case 3:
+						def.constType = GCT_MATRIX_4X3;
+						break;
+					case 4:
+						def.constType = GCT_MATRIX_4X4;
+						break;
+					} // columns
+					break;
+
+				} // rows
+				break;
+			case D3DXPC_SCALAR:
+			case D3DXPC_VECTOR:
 				switch(d3dDesc.Columns)
 				{
 				case 1:
@@ -402,52 +449,7 @@ namespace Ogre {
 					break;
 				} // columns
 				break;
-			case 2:
-				switch(d3dDesc.Columns)
-				{
-				case 2:
-					def.constType = GCT_MATRIX_2X2;
-					break;
-				case 3:
-					def.constType = GCT_MATRIX_2X3;
-					break;
-				case 4:
-					def.constType = GCT_MATRIX_2X4;
-					break;
-				} // columns
-				break;
-			case 3:
-				switch(d3dDesc.Columns)
-				{
-				case 2:
-					def.constType = GCT_MATRIX_3X2;
-					break;
-				case 3:
-					def.constType = GCT_MATRIX_3X3;
-					break;
-				case 4:
-					def.constType = GCT_MATRIX_3X4;
-					break;
-				} // columns
-				break;
-			case 4:
-				switch(d3dDesc.Columns)
-				{
-				case 2:
-					def.constType = GCT_MATRIX_4X2;
-					break;
-				case 3:
-					def.constType = GCT_MATRIX_4X3;
-					break;
-				case 4:
-					def.constType = GCT_MATRIX_4X4;
-					break;
-				} // columns
-				break;
-
-			} // rows
-			break;
-			
+			}
 		default:
 			// not mapping samplers, don't need to take the space 
 			break;
@@ -594,7 +596,7 @@ namespace Ogre {
 		case OPT_2:
 			return "2";
 		case OPT_3:
-			return "2";
+			return "3";
 		}
 	}
 	void D3D9HLSLProgram::CmdOptimisation::doSet(void *target, const String& val)

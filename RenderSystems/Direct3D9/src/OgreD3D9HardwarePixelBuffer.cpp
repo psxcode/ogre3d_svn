@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9HardwarePixelBuffer.h"
@@ -33,15 +32,12 @@ Torus Knot Software Ltd.
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
 #include "OgreBitwise.h"
-
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
 
-#include <d3dx9.h>
-#include <dxerr9.h>
-
 namespace Ogre {
 
+OGRE_STATIC_MUTEX_INSTANCE(D3D9HardwarePixelBuffer::msDeviceAccessMutex)
 //-----------------------------------------------------------------------------  
 
 D3D9HardwarePixelBuffer::D3D9HardwarePixelBuffer(HardwareBuffer::Usage usage, 
@@ -49,15 +45,17 @@ D3D9HardwarePixelBuffer::D3D9HardwarePixelBuffer(HardwareBuffer::Usage usage,
 	HardwarePixelBuffer(0, 0, 0, PF_UNKNOWN, usage, false, false),
 	mDoMipmapGen(0), mHWMipmaps(0), mOwnerTexture(ownerTexture), 
 	mRenderTexture(NULL)
-{
+{	
 }
 D3D9HardwarePixelBuffer::~D3D9HardwarePixelBuffer()
 {
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	destroyRenderTexture();
 	
 	DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 
-	if (it != mMapDeviceToBufferResources.end())
+	while (it != mMapDeviceToBufferResources.end())
 	{
 		SAFE_RELEASE(it->second->surface);
 		SAFE_RELEASE(it->second->volume);
@@ -71,6 +69,8 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *sur
 								   bool writeGamma, uint fsaa, const String& srcName,
 								   IDirect3DBaseTexture9 *mipTex)
 {
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	BufferResources* bufferResources = getBufferResources(dev);
 	bool isNewBuffer = false;
 
@@ -103,7 +103,7 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *sur
 	if(mUsage & TU_RENDERTARGET)
 		updateRenderTexture(writeGamma, fsaa, srcName);
 
-	if (isNewBuffer)
+	if (isNewBuffer && mOwnerTexture->isManuallyLoaded())
 	{
 		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 
@@ -111,7 +111,8 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *sur
 		{
 			if (it->second != bufferResources && 
 				it->second->surface != NULL &&
-				it->first->TestCooperativeLevel() == D3D_OK)
+				it->first->TestCooperativeLevel() == D3D_OK &&
+				dev->TestCooperativeLevel() == D3D_OK)
 			{
 				Box fullBufferBox(0,0,0,mWidth,mHeight,mDepth);
 				PixelBox dstBox(fullBufferBox, mFormat);
@@ -119,7 +120,7 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *sur
 				dstBox.data = new char[getSizeInBytes()];
 				blitToMemory(fullBufferBox, dstBox, it->second, it->first);
 				blitFromMemory(dstBox, fullBufferBox, bufferResources);
-				SAFE_DELETE(dstBox.data);
+				SAFE_DELETE_ARRAY(dstBox.data);
 				break;
 			}
 			++it;			
@@ -129,6 +130,8 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *sur
 //-----------------------------------------------------------------------------
 void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volume, IDirect3DBaseTexture9 *mipTex)
 {
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	BufferResources* bufferResources = getBufferResources(dev);
 	bool isNewBuffer = false;
 
@@ -156,7 +159,7 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volu
 	mSlicePitch = mHeight*mWidth;
 	mSizeInBytes = PixelUtil::getMemorySize(mWidth, mHeight, mDepth, mFormat);
 
-	if (isNewBuffer)
+	if (isNewBuffer && mOwnerTexture->isManuallyLoaded())
 	{
 		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 		
@@ -164,7 +167,8 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volu
 		{
 			if (it->second != bufferResources &&
 				it->second->volume != NULL &&
-				it->first->TestCooperativeLevel() == D3D_OK)
+				it->first->TestCooperativeLevel() == D3D_OK &&
+				dev->TestCooperativeLevel() == D3D_OK)
 			{
 				Box fullBufferBox(0,0,0,mWidth,mHeight,mDepth);
 				PixelBox dstBox(fullBufferBox, mFormat);
@@ -204,6 +208,8 @@ D3D9HardwarePixelBuffer::BufferResources* D3D9HardwarePixelBuffer::createBufferR
 //-----------------------------------------------------------------------------  
 void D3D9HardwarePixelBuffer::destroyBufferResources(IDirect3DDevice9* d3d9Device)
 {
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.find(d3d9Device);
 
 	if (it != mMapDeviceToBufferResources.end())
@@ -213,6 +219,18 @@ void D3D9HardwarePixelBuffer::destroyBufferResources(IDirect3DDevice9* d3d9Devic
 		SAFE_DELETE(it->second);
 		mMapDeviceToBufferResources.erase(it);
 	}
+}
+
+//-----------------------------------------------------------------------------  
+void D3D9HardwarePixelBuffer::lockDeviceAccess()
+{
+	D3D9_DEVICE_ACCESS_LOCK;			
+}
+
+//-----------------------------------------------------------------------------  
+void D3D9HardwarePixelBuffer::unlockDeviceAccess()
+{
+	D3D9_DEVICE_ACCESS_UNLOCK;								
 }
 
 //-----------------------------------------------------------------------------  
@@ -310,7 +328,9 @@ D3DBOX toD3DBOXExtent(const PixelBox &lockBox)
 }
 //-----------------------------------------------------------------------------  
 PixelBox D3D9HardwarePixelBuffer::lockImpl(const Image::Box lockBox,  LockOptions options)
-{
+{	
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	// Check for misuse
 	if(mUsage & TU_RENDERTARGET)
 		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "DirectX does not allow locking of or directly writing to RenderTargets. Use blitFromMemory if you need the contents.",
@@ -380,7 +400,7 @@ Ogre::PixelBox D3D9HardwarePixelBuffer::lockBuffer(BufferResources* bufferResour
 			"D3D9HardwarePixelBuffer::lockImpl");
 		fromD3DLock(rval, lrect);
 	} 
-	else 
+	else if(bufferResources->volume) 
 	{
 		// Volume
 		D3DBOX pbox = toD3DBOX(lockBox); // specify range to lock
@@ -399,36 +419,33 @@ Ogre::PixelBox D3D9HardwarePixelBuffer::lockBuffer(BufferResources* bufferResour
 //-----------------------------------------------------------------------------  
 void D3D9HardwarePixelBuffer::unlockImpl(void)
 {
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	if (mMapDeviceToBufferResources.size() == 0)
 	{
 		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "There are no resources attached to this pixel buffer !!",
 			"D3D9HardwarePixelBuffer::lockImpl");	
 	}
 
-	DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
+	DeviceToBufferResourcesIterator it;
+	
+	// 1. Update duplicates buffers.
+	it = mMapDeviceToBufferResources.begin();
+	++it;
 	while (it != mMapDeviceToBufferResources.end())
 	{			
 		BufferResources* bufferResources = it->second;
 		
-		// Case this is a copy of the original buffer, update it from the locked content.
-		if (it != mMapDeviceToBufferResources.begin())
-		{
-			PixelBox lockedBox;		
-			
-			lockedBox = lockBuffer(bufferResources, mLockedBox, mLockFlags);	
-			memcpy(lockedBox.data, mCurrentLock.data, getSizeInBytes());
-			unlockBuffer(bufferResources);
-		}					
-		else
-		{
-			unlockBuffer(bufferResources);
-		}
-
-		if(mDoMipmapGen)
-			_genMipmaps(it->second->mipTex);
-
+		// Update duplicated buffer from the from the locked buffer content.					
+		blitFromMemory(mCurrentLock, mLockedBox, bufferResources);										
 		++it;			
 	}
+
+	// 2. Unlock the locked buffer.
+	it = mMapDeviceToBufferResources.begin();							
+	unlockBuffer( it->second);		
+	if(mDoMipmapGen)
+		_genMipmaps(it->second->mipTex);	
 }
 
 //-----------------------------------------------------------------------------  
@@ -439,7 +456,7 @@ void D3D9HardwarePixelBuffer::unlockBuffer(BufferResources* bufferResources)
 		// Surface
 		bufferResources->surface->UnlockRect();
 	} 
-	else 
+	else if(bufferResources->volume) 
 	{
 		// Volume
 		bufferResources->volume->UnlockBox();
@@ -451,6 +468,8 @@ void D3D9HardwarePixelBuffer::blit(const HardwarePixelBufferSharedPtr &rsrc,
 								   const Image::Box &srcBox, 
 								   const Image::Box &dstBox)
 {
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	D3D9HardwarePixelBuffer *src = static_cast<D3D9HardwarePixelBuffer*>(rsrc.getPointer());
 	DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 
@@ -466,13 +485,14 @@ void D3D9HardwarePixelBuffer::blit(const HardwarePixelBufferSharedPtr &rsrc,
 				"D3D9HardwarePixelBuffer::blit");	
 		}
 
-		blit(rsrc, srcBox, dstBox, srcBufferResources, dstBufferResources);
+		blit(it->first, rsrc, srcBox, dstBox, srcBufferResources, dstBufferResources);
 		++it;
 	}
 }
 
 //-----------------------------------------------------------------------------  
-void D3D9HardwarePixelBuffer::blit(const HardwarePixelBufferSharedPtr &rsrc, 
+void D3D9HardwarePixelBuffer::blit(IDirect3DDevice9* d3d9Device, 
+								   const HardwarePixelBufferSharedPtr &rsrc, 
 								   const Image::Box &srcBox, 
 								   const Image::Box &dstBox,
 								   BufferResources* srcBufferResources, 
@@ -483,6 +503,63 @@ void D3D9HardwarePixelBuffer::blit(const HardwarePixelBufferSharedPtr &rsrc,
 		// Surface-to-surface
 		RECT dsrcRect = toD3DRECT(srcBox);
 		RECT ddestRect = toD3DRECT(dstBox);
+
+		D3DSURFACE_DESC srcDesc;
+		if(srcBufferResources->surface->GetDesc(&srcDesc) != D3D_OK)
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not get surface information",
+			"D3D9HardwarePixelBuffer::blit");
+
+		// If we're blitting from a RTT, try GetRenderTargetData
+		// if we're going to try to use GetRenderTargetData, need to use system mem pool
+		bool tryGetRenderTargetData = false;
+		if ((srcDesc.Usage & D3DUSAGE_RENDERTARGET) != 0
+			&& srcDesc.MultiSampleType == D3DMULTISAMPLE_NONE)
+		{
+
+			// Temp texture
+			IDirect3DTexture9 *tmptex;
+			IDirect3DSurface9 *tmpsurface;
+
+			if(D3DXCreateTexture(
+				d3d9Device,
+				srcDesc.Width, srcDesc.Height,
+				1, // 1 mip level ie topmost, generate no mipmaps
+				0, srcDesc.Format, D3DPOOL_SYSTEMMEM,
+				&tmptex
+				) != D3D_OK)
+			{
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Create temporary texture failed",
+					"D3D9HardwarePixelBuffer::blit");
+			}
+			if(tmptex->GetSurfaceLevel(0, &tmpsurface) != D3D_OK)
+			{
+				tmptex->Release();
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Get surface level failed",
+					"D3D9HardwarePixelBuffer::blit");
+			}
+			if(d3d9Device->GetRenderTargetData(srcBufferResources->surface, tmpsurface) == D3D_OK)
+			{
+				// Hey, it worked
+				// Copy from this surface instead
+				if(D3DXLoadSurfaceFromSurface(
+					dstBufferResources->surface, NULL, &ddestRect, 
+					tmpsurface, NULL, &dsrcRect,
+					D3DX_DEFAULT, 0) != D3D_OK)
+				{
+					tmpsurface->Release();
+					tmptex->Release();
+					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "D3DXLoadSurfaceFromSurface failed",
+						"D3D9HardwarePixelBuffer::blit");
+				}
+				tmpsurface->Release();
+				tmptex->Release();
+				return;
+			}
+
+		}
+
+		// Otherwise, try the normal method
+
 		// D3DXLoadSurfaceFromSurface
 		if(D3DXLoadSurfaceFromSurface(
 			dstBufferResources->surface, NULL, &ddestRect, 
@@ -519,6 +596,8 @@ void D3D9HardwarePixelBuffer::blit(const HardwarePixelBufferSharedPtr &rsrc,
 //-----------------------------------------------------------------------------  
 void D3D9HardwarePixelBuffer::blitFromMemory(const PixelBox &src, const Image::Box &dstBox)
 {	
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 
 	while (it != mMapDeviceToBufferResources.end())
@@ -627,6 +706,8 @@ void D3D9HardwarePixelBuffer::blitFromMemory(const PixelBox &src, const Image::B
 //-----------------------------------------------------------------------------  
 void D3D9HardwarePixelBuffer::blitToMemory(const Image::Box &srcBox, const PixelBox &dst)
 {
+	D3D9_DEVICE_ACCESS_CRITICAL_SECTION
+
 	DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
 	BufferResources* bufferResources = it->second;
 
@@ -898,12 +979,6 @@ void D3D9HardwarePixelBuffer::destroyRenderTexture()
 		Root::getSingleton().getRenderSystem()->destroyRenderTarget(mRenderTexture->getName());
 		mRenderTexture = NULL;
 	}
-}
-
-//----------------------------------------------------------------------------- 
-void D3D9HardwarePixelBuffer::notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device)
-{
-	destroyBufferResources(d3d9Device);
 }
 
 };
