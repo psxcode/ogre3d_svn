@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -100,6 +99,23 @@ namespace Ogre {
 
 	Pass::HashFunc* Pass::msHashFunc = &sMinTextureStateChangeHashFunc;
 	//-----------------------------------------------------------------------------
+	Pass::HashFunc* Pass::getBuiltinHashFunction(BuiltinHashFunction builtin)
+	{
+		Pass::HashFunc* hashFunc = NULL;
+
+		switch(builtin)
+		{
+		case MIN_TEXTURE_CHANGE:
+			hashFunc = &sMinTextureStateChangeHashFunc;
+			break;
+		case MIN_GPU_PROGRAM_CHANGE:
+			hashFunc = &sMinGpuProgramChangeHashFunc;
+			break;
+		}
+
+		return hashFunc;
+	}
+	//-----------------------------------------------------------------------------
 	void Pass::setHashFunction(BuiltinHashFunction builtin)
 	{
 		switch(builtin)
@@ -143,6 +159,7 @@ namespace Ogre {
 		, mAlphaRejectVal(0)
 		, mAlphaToCoverageEnabled(false)
 		, mTransparentSorting(true)
+		, mTransparentSortingForced(false)
 		, mCullMode(CULL_CLOCKWISE)
 		, mManualCullMode(MANUAL_CULL_BACK)
 		, mLightingEnabled(true)
@@ -166,8 +183,8 @@ namespace Ogre {
 		, mShadowCasterVertexProgramUsage(0)
 		, mShadowReceiverVertexProgramUsage(0)
 		, mFragmentProgramUsage(0)
-		, mGeometryProgramUsage(0)
 		, mShadowReceiverFragmentProgramUsage(0)
+        , mGeometryProgramUsage(0)
 		, mQueuedForDeletion(false)
 		, mPassIterationCount(1)
 		, mPointSize(1.0f)
@@ -192,7 +209,9 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------------
 	Pass::Pass(Technique *parent, unsigned short index, const Pass& oth)
-        :mParent(parent), mIndex(index), mQueuedForDeletion(false), mPassIterationCount(1)
+        :mParent(parent), mIndex(index), mQueuedForDeletion(false), mPassIterationCount(1),
+		 mVertexProgramUsage(0), mShadowCasterVertexProgramUsage(0), mShadowReceiverVertexProgramUsage(0),
+		 mFragmentProgramUsage(0), mGeometryProgramUsage(0), mShadowReceiverFragmentProgramUsage(0)
     {
         *this = oth;
         mParent = parent;
@@ -205,6 +224,11 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     Pass::~Pass()
     {
+		OGRE_DELETE mVertexProgramUsage;
+		OGRE_DELETE mFragmentProgramUsage;
+		OGRE_DELETE mShadowCasterVertexProgramUsage;
+		OGRE_DELETE mShadowReceiverVertexProgramUsage;
+		OGRE_DELETE mShadowReceiverFragmentProgramUsage;
 
     }
     //-----------------------------------------------------------------------------
@@ -244,6 +268,7 @@ namespace Ogre {
 		mAlphaRejectVal = oth.mAlphaRejectVal;
 		mAlphaToCoverageEnabled = oth.mAlphaToCoverageEnabled;
 		mTransparentSorting = oth.mTransparentSorting;
+		mTransparentSortingForced = oth.mTransparentSortingForced;
         mColourWrite = oth.mColourWrite;
 	    mDepthFunc = oth.mDepthFunc;
         mDepthBiasConstant = oth.mDepthBiasConstant;
@@ -275,7 +300,7 @@ namespace Ogre {
 		mLightClipPlanes = oth.mLightClipPlanes;
 		mIlluminationStage = oth.mIlluminationStage;
 
-
+		OGRE_DELETE mVertexProgramUsage;
 		if (oth.mVertexProgramUsage)
 		{
 			mVertexProgramUsage = OGRE_NEW GpuProgramUsage(*(oth.mVertexProgramUsage), this);
@@ -284,6 +309,8 @@ namespace Ogre {
 		{
 		    mVertexProgramUsage = NULL;
 		}
+
+		OGRE_DELETE mShadowCasterVertexProgramUsage;
         if (oth.mShadowCasterVertexProgramUsage)
         {
             mShadowCasterVertexProgramUsage = OGRE_NEW GpuProgramUsage(*(oth.mShadowCasterVertexProgramUsage), this);
@@ -292,6 +319,8 @@ namespace Ogre {
         {
             mShadowCasterVertexProgramUsage = NULL;
         }
+
+		OGRE_DELETE mShadowReceiverVertexProgramUsage;
         if (oth.mShadowReceiverVertexProgramUsage)
         {
             mShadowReceiverVertexProgramUsage = OGRE_NEW GpuProgramUsage(*(oth.mShadowReceiverVertexProgramUsage), this);
@@ -300,6 +329,8 @@ namespace Ogre {
         {
             mShadowReceiverVertexProgramUsage = NULL;
         }
+
+		OGRE_DELETE mFragmentProgramUsage;
 		if (oth.mFragmentProgramUsage)
 		{
 		    mFragmentProgramUsage = OGRE_NEW GpuProgramUsage(*(oth.mFragmentProgramUsage), this);
@@ -308,6 +339,8 @@ namespace Ogre {
         {
 		    mFragmentProgramUsage = NULL;
         }
+
+		OGRE_DELETE mGeometryProgramUsage;
 		if (oth.mGeometryProgramUsage)
 		{
 		    mGeometryProgramUsage = OGRE_NEW GpuProgramUsage(*(oth.mGeometryProgramUsage), this);
@@ -316,6 +349,8 @@ namespace Ogre {
         {
 		    mGeometryProgramUsage = NULL;
         }
+
+		OGRE_DELETE mShadowReceiverFragmentProgramUsage;
 		if (oth.mShadowReceiverFragmentProgramUsage)
 		{
 			mShadowReceiverFragmentProgramUsage = OGRE_NEW GpuProgramUsage(*(oth.mShadowReceiverFragmentProgramUsage), this);
@@ -914,6 +949,16 @@ namespace Ogre {
 	{
 		return mTransparentSorting;
 	}
+	//-----------------------------------------------------------------------
+	void Pass::setTransparentSortingForced(bool enabled)
+	{
+		mTransparentSortingForced = enabled;
+	}
+	//-----------------------------------------------------------------------
+	bool Pass::getTransparentSortingForced(void) const
+	{
+		return mTransparentSortingForced;
+	}
     //-----------------------------------------------------------------------
 	void Pass::setColourWriteEnabled(bool enabled)
 	{
@@ -1245,22 +1290,31 @@ namespace Ogre {
 	{
 		OGRE_LOCK_MUTEX(mGpuProgramChangeMutex)
 
-        // Turn off vertex program if name blank
-        if (name.empty())
-        {
-            if (mVertexProgramUsage) OGRE_DELETE mVertexProgramUsage;
-            mVertexProgramUsage = NULL;
-        }
-        else
-        {
-            if (!mVertexProgramUsage)
-            {
-                mVertexProgramUsage = OGRE_NEW GpuProgramUsage(GPT_VERTEX_PROGRAM, this);
-            }
-		    mVertexProgramUsage->setProgramName(name, resetParams);
-        }
-        // Needs recompilation
-        mParent->_notifyNeedsRecompile();
+		if (getVertexProgramName() != name)
+		{
+			// Turn off vertex program if name blank
+			if (name.empty())
+			{
+				if (mVertexProgramUsage) OGRE_DELETE mVertexProgramUsage;
+				mVertexProgramUsage = NULL;
+			}
+			else
+			{
+				if (!mVertexProgramUsage)
+				{
+					mVertexProgramUsage = OGRE_NEW GpuProgramUsage(GPT_VERTEX_PROGRAM, this);
+				}
+				mVertexProgramUsage->setProgramName(name, resetParams);
+			}
+			// Needs recompilation
+			mParent->_notifyNeedsRecompile();
+
+			if( Pass::getHashFunction() == Pass::getBuiltinHashFunction( Pass::MIN_GPU_PROGRAM_CHANGE ) )
+			{
+				_dirtyHash();
+			}
+
+		}
 	}
     //-----------------------------------------------------------------------
 	void Pass::setVertexProgramParameters(GpuProgramParametersSharedPtr params)
@@ -1278,22 +1332,31 @@ namespace Ogre {
 	void Pass::setFragmentProgram(const String& name, bool resetParams)
 	{
 		OGRE_LOCK_MUTEX(mGpuProgramChangeMutex)
-        // Turn off fragment program if name blank
-        if (name.empty())
-        {
-            if (mFragmentProgramUsage) OGRE_DELETE mFragmentProgramUsage;
-            mFragmentProgramUsage = NULL;
-        }
-        else
-        {
-            if (!mFragmentProgramUsage)
-            {
-                mFragmentProgramUsage = OGRE_NEW GpuProgramUsage(GPT_FRAGMENT_PROGRAM, this);
-            }
-		    mFragmentProgramUsage->setProgramName(name, resetParams);
-        }
-        // Needs recompilation
-        mParent->_notifyNeedsRecompile();
+
+		if (getFragmentProgramName() != name)
+		{
+			// Turn off fragment program if name blank
+			if (name.empty())
+			{
+				if (mFragmentProgramUsage) OGRE_DELETE mFragmentProgramUsage;
+				mFragmentProgramUsage = NULL;
+			}
+			else
+			{
+				if (!mFragmentProgramUsage)
+				{
+					mFragmentProgramUsage = OGRE_NEW GpuProgramUsage(GPT_FRAGMENT_PROGRAM, this);
+				}
+				mFragmentProgramUsage->setProgramName(name, resetParams);
+			}
+			// Needs recompilation
+			mParent->_notifyNeedsRecompile();
+
+			if( Pass::getHashFunction() == Pass::getBuiltinHashFunction( Pass::MIN_GPU_PROGRAM_CHANGE ) )
+			{
+				_dirtyHash();
+			}
+		}
 	}
     //-----------------------------------------------------------------------
 	void Pass::setFragmentProgramParameters(GpuProgramParametersSharedPtr params)
@@ -1311,22 +1374,31 @@ namespace Ogre {
 	void Pass::setGeometryProgram(const String& name, bool resetParams)
 	{
 		OGRE_LOCK_MUTEX(mGpuProgramChangeMutex)
-        // Turn off geometry program if name blank
-        if (name.empty())
-        {
-            if (mGeometryProgramUsage) OGRE_DELETE mGeometryProgramUsage;
-            mGeometryProgramUsage = NULL;
-        }
-        else
-        {
-            if (!mGeometryProgramUsage)
-            {
-                mGeometryProgramUsage = OGRE_NEW GpuProgramUsage(GPT_GEOMETRY_PROGRAM, this);
-            }
-		    mGeometryProgramUsage->setProgramName(name, resetParams);
-        }
-        // Needs recompilation
-        mParent->_notifyNeedsRecompile();
+
+		if (getGeometryProgramName() != name)
+		{
+			// Turn off geometry program if name blank
+			if (name.empty())
+			{
+				if (mGeometryProgramUsage) OGRE_DELETE mGeometryProgramUsage;
+				mGeometryProgramUsage = NULL;
+			}
+			else
+			{
+				if (!mGeometryProgramUsage)
+				{
+					mGeometryProgramUsage = OGRE_NEW GpuProgramUsage(GPT_GEOMETRY_PROGRAM, this);
+				}
+				mGeometryProgramUsage->setProgramName(name, resetParams);
+			}
+			// Needs recompilation
+			mParent->_notifyNeedsRecompile();
+
+			if( Pass::getHashFunction() == Pass::getBuiltinHashFunction( Pass::MIN_GPU_PROGRAM_CHANGE ) )
+			{
+				_dirtyHash();
+			}
+		}
 	}
     //-----------------------------------------------------------------------
 	void Pass::setGeometryProgramParameters(GpuProgramParametersSharedPtr params)

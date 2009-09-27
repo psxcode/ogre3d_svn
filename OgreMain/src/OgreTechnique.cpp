@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -498,6 +498,19 @@ namespace Ogre {
         {
             // Base decision on the transparency of the first pass
             return mPasses[0]->getTransparentSortingEnabled();
+        }
+    }
+    //-----------------------------------------------------------------------------
+    bool Technique::isTransparentSortingForced(void) const
+    {
+        if (mPasses.empty())
+        {
+            return false;
+        }
+        else
+        {
+            // Base decision on the first pass
+            return mPasses[0]->getTransparentSortingForced();
         }
     }
     //-----------------------------------------------------------------------------
@@ -1160,6 +1173,8 @@ namespace Ogre {
 					++i; // always increment on decal, since nothing more to do with this pass
 
 					break;
+                case IS_UNKNOWN:
+                    break;
 				}
 			}
 		}

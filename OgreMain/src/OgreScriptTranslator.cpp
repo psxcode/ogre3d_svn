@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -477,24 +476,18 @@ namespace Ogre{
 			compiler->addError(ScriptCompiler::CE_OBJECTNAMEEXPECTED, obj->file, obj->line);
 
 		// Create a material with the given name
-		vector<Ogre::Any>::type args;
-		args.push_back(Any(obj->file));
-		args.push_back(Any(obj->name));
-		args.push_back(Any(compiler->getResourceGroup()));
-		Ogre::Any retval = compiler->_fireCreateObject("Material", args);
-		if(retval.isEmpty())
+		CreateMaterialScriptCompilerEvent evt(node->file, obj->name, compiler->getResourceGroup());
+		bool processed = compiler->_fireEvent(&evt, (void*)&mMaterial);
+
+		if(!processed)
 		{
 			mMaterial = reinterpret_cast<Ogre::Material*>(MaterialManager::getSingleton().create(obj->name, compiler->getResourceGroup()).get());
 		}
 		else
 		{
-			try{
-				mMaterial = Ogre::any_cast<Ogre::Material*>(retval);
-			}catch(...){
+			if(!mMaterial)
 				compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line, 
 					"failed to find or create material \"" + obj->name + "\"");
-				return;
-			}
 		}
 
 		mMaterial->removeAllTechniques();
@@ -649,10 +642,8 @@ namespace Ogre{
 		// Apply the texture aliases
 		if(compiler->getListener())
 		{
-			vector<Ogre::Any>::type args;
-			args.push_back(Ogre::Any(mMaterial));
-			args.push_back(Ogre::Any(&mTextureAliases));
-			compiler->getListener()->handleEvent(compiler, "preApplyTextureAliases", args, 0);
+			PreApplyTextureAliasesScriptCompilerEvent evt(mMaterial, &mTextureAliases);
+			compiler->_fireEvent(&evt, 0);
 		}
 		mMaterial->applyTextureAliases(mTextureAliases);
 		mTextureAliases.clear();
@@ -745,11 +736,9 @@ namespace Ogre{
 						String matName;
 						if(getString(*i0, &matName))
 						{
-							vector<Any>::type args;
-							args.push_back(Any(&matName));
-							compiler->_fireEvent("processMaterialName", args, 0);
-
-							mTechnique->setShadowCasterMaterial(matName);
+							ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::MATERIAL, matName);
+							compiler->_fireEvent(&evt, 0);
+							mTechnique->setShadowCasterMaterial(evt.mName); // Use the processed name
 						}
 						else
 							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
@@ -772,11 +761,9 @@ namespace Ogre{
 						String matName;
 						if(getString(*i0, &matName))
 						{
-							vector<Any>::type args;
-							args.push_back(Any(&matName));
-							compiler->_fireEvent("processMaterialName", args, 0);
-
-							mTechnique->setShadowReceiverMaterial(matName);
+							ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::MATERIAL, matName);
+							compiler->_fireEvent(&evt, 0);
+							mTechnique->setShadowReceiverMaterial(evt.mName);
 						}
 						else
 							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
@@ -1572,11 +1559,25 @@ namespace Ogre{
 					else
 					{
 						bool val = true;
-						if(getBoolean(prop->values.front(), &val))
+						if(getBoolean(prop->values.front(), &val)) 
+						{
 							mPass->setTransparentSortingEnabled(val);
-						else
-							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-								prop->values.front()->getValue() + " is not a valid boolean");
+                            mPass->setTransparentSortingForced(false);
+                        } 
+						else 
+						{
+                            String val2;
+                            if (getString(prop->values.front(), &val2) && val2=="force") 
+							{
+                                mPass->setTransparentSortingEnabled(true);
+                                mPass->setTransparentSortingForced(true);
+                            }
+							else 
+							{
+                                compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+                                    prop->values.front()->getValue() + " must be boolean or force");
+                            }
+                        }    
 					}
 					break;
 				case ID_ILLUMINATION_STAGE:
@@ -1884,13 +1885,15 @@ namespace Ogre{
 
 							if(i2 != prop->values.end())
 							{
-								if(!getColour(i2, prop->values.end(), &clr))
-								{
-									compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-										(*i2)->getValue() + " is not a valid colour");
-									break;
-								}
-							}
+								  if(!getColour(i2, prop->values.end(), &clr, 3))
+								  {
+									 compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+									 (*i2)->getValue() + " is not a valid colour");
+									 break;
+								  }
+
+							   i2 = getNodeAt(prop->values, 5);
+							} 
 
 							if(i2 != prop->values.end())
 							{
@@ -2337,20 +2340,17 @@ namespace Ogre{
 			return;
 		}
 
-		String name = node->name;
+		ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, node->name);
+		compiler->_fireEvent(&evt, 0);
 
-		vector<Any>::type args;
-		args.push_back(Any(&name));
-		compiler->_fireEvent("processGpuProgramName", args, 0);
-
-		if (GpuProgramManager::getSingleton().getByName(name).isNull())
+		if (GpuProgramManager::getSingleton().getByName(evt.mName).isNull())
 		{
 			compiler->addError(ScriptCompiler::CE_REFERENCETOANONEXISTINGOBJECT, node->file, node->line);
 			return;
 		}
 
 		Pass *pass = any_cast<Pass*>(node->parent->context);
-		pass->setFragmentProgram(name);
+		pass->setFragmentProgram(evt.mName);
 		if(pass->getFragmentProgram()->isSupported())
 		{
 			GpuProgramParametersSharedPtr params = pass->getFragmentProgramParameters();
@@ -2366,13 +2366,17 @@ namespace Ogre{
 			return;
 		}
 
-		String name = node->name;
-		vector<Any>::type args;
-		args.push_back(Any(&name));
-		compiler->_fireEvent("processGpuProgramName", args, 0);
+		ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, node->name);
+		compiler->_fireEvent(&evt, 0);
+
+		if (GpuProgramManager::getSingleton().getByName(evt.mName).isNull())
+		{
+			compiler->addError(ScriptCompiler::CE_REFERENCETOANONEXISTINGOBJECT, node->file, node->line);
+			return;
+		}
 
 		Pass *pass = any_cast<Pass*>(node->parent->context);
-		pass->setVertexProgram(name);
+		pass->setVertexProgram(evt.mName);
 		if(pass->getVertexProgram()->isSupported())
 		{
 			GpuProgramParametersSharedPtr params = pass->getVertexProgramParameters();
@@ -2388,13 +2392,17 @@ namespace Ogre{
 			return;
 		}
 
-		String name = node->name;
-		vector<Any>::type args;
-		args.push_back(Any(&name));
-		compiler->_fireEvent("processGpuProgramName", args, 0);
+		ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, node->name);
+		compiler->_fireEvent(&evt, 0);
+
+		if (GpuProgramManager::getSingleton().getByName(evt.mName).isNull())
+		{
+			compiler->addError(ScriptCompiler::CE_REFERENCETOANONEXISTINGOBJECT, node->file, node->line);
+			return;
+		}
 
 		Pass *pass = any_cast<Pass*>(node->parent->context);
-		pass->setGeometryProgram(name);
+		pass->setGeometryProgram(evt.mName);
 		if(pass->getGeometryProgram()->isSupported())
 		{
 			GpuProgramParametersSharedPtr params = pass->getGeometryProgramParameters();
@@ -2410,13 +2418,17 @@ namespace Ogre{
 			return;
 		}
 
-		String name = node->name;
-		vector<Any>::type args;
-		args.push_back(Any(&name));
-		compiler->_fireEvent("processGpuProgramName", args, 0);
+		ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, node->name);
+		compiler->_fireEvent(&evt, 0);
+
+		if (GpuProgramManager::getSingleton().getByName(evt.mName).isNull())
+		{
+			compiler->addError(ScriptCompiler::CE_REFERENCETOANONEXISTINGOBJECT, node->file, node->line);
+			return;
+		}
 
 		Pass *pass = any_cast<Pass*>(node->parent->context);
-		pass->setShadowCasterVertexProgram(name);
+		pass->setShadowCasterVertexProgram(evt.mName);
 		if(pass->getShadowCasterVertexProgram()->isSupported())
 		{
 			GpuProgramParametersSharedPtr params = pass->getShadowCasterVertexProgramParameters();
@@ -2432,13 +2444,17 @@ namespace Ogre{
 			return;
 		}
 
-		String name = node->name;
-		vector<Any>::type args;
-		args.push_back(Any(&name));
-		compiler->_fireEvent("processGpuProgramName", args, 0);
+		ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, node->name);
+		compiler->_fireEvent(&evt, 0);
+
+		if (GpuProgramManager::getSingleton().getByName(evt.mName).isNull())
+		{
+			compiler->addError(ScriptCompiler::CE_REFERENCETOANONEXISTINGOBJECT, node->file, node->line);
+			return;
+		}
 
 		Pass *pass = any_cast<Pass*>(node->parent->context);
-		pass->setShadowReceiverVertexProgram(name);
+		pass->setShadowReceiverVertexProgram(evt.mName);
 		if(pass->getShadowReceiverVertexProgram()->isSupported())
 		{
 			GpuProgramParametersSharedPtr params = pass->getShadowReceiverVertexProgramParameters();
@@ -2454,13 +2470,17 @@ namespace Ogre{
 			return;
 		}
 
-		String name = node->name;
-		vector<Any>::type args;
-		args.push_back(Any(&name));
-		compiler->_fireEvent("processGpuProgramName", args, 0);
+		ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, node->name);
+		compiler->_fireEvent(&evt, 0);
+
+		if (GpuProgramManager::getSingleton().getByName(evt.mName).isNull())
+		{
+			compiler->addError(ScriptCompiler::CE_REFERENCETOANONEXISTINGOBJECT, node->file, node->line);
+			return;
+		}
 
 		Pass *pass = any_cast<Pass*>(node->parent->context);
-		pass->setShadowReceiverFragmentProgram(name);
+		pass->setShadowReceiverFragmentProgram(evt.mName);
 		if(pass->getShadowReceiverFragmentProgram()->isSupported())
 		{
 			GpuProgramParametersSharedPtr params = pass->getShadowReceiverFragmentProgramParameters();
@@ -2582,12 +2602,10 @@ namespace Ogre{
 								++j;
 							}
 
-							vector<Any>::type args;
-							args.push_back(Any(&val));
-							args.push_back(Any(1));
-							compiler->_fireEvent("processTextureNames", args, 0);
+							ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::TEXTURE, val);
+							compiler->_fireEvent(&evt, 0);
 
-							mUnit->setTextureName(val, texType);
+							mUnit->setTextureName(evt.mName, texType);
 							mUnit->setDesiredFormat(format);
 							mUnit->setIsAlpha(isAlpha);
 							mUnit->setNumMipmaps(mipmaps);
@@ -2617,12 +2635,10 @@ namespace Ogre{
 								Real val2;
 								if(getString(*i0, &val0) && getUInt(*i1, &val1) && getReal(*i2, &val2))
 								{
-									vector<Any>::type args;
-									args.push_back(Any(&val0));
-									args.push_back(Any(1));
-									compiler->_fireEvent("processTextureNames", args, 0);
+									ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::TEXTURE, val0);
+									compiler->_fireEvent(&evt, 0);
 
-									mUnit->setAnimatedTextureName(val0, val1, val2);
+									mUnit->setAnimatedTextureName(evt.mName, val1, val2);
 								}
 								else
 								{
@@ -2650,17 +2666,25 @@ namespace Ogre{
 								while(j != in)
 								{
 									if((*j)->type == ANT_ATOM)
-										names[n++] = ((AtomAbstractNode*)(*j).get())->value;
+									{
+										String name = ((AtomAbstractNode*)(*j).get())->value;
+										// Run the name through the listener
+										if(compiler->getListener())
+										{
+											ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::TEXTURE, name);
+											compiler->_fireEvent(&evt, 0);
+											names[n++] = evt.mName;
+										}
+										else
+										{
+											names[n++] = name;
+										}
+									}
 									else
 										compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
 											(*j)->getValue() + " is not supported as a texture name");
 									++j;
 								}
-
-								vector<Any>::type args;
-								args.push_back(Any(names));
-								args.push_back(Any(n));
-								compiler->_fireEvent("processTextureNames", args, 0);
 
 								mUnit->setAnimatedTextureName(names, n, duration);
 
@@ -2687,13 +2711,10 @@ namespace Ogre{
 						{	
 							AtomAbstractNode *atom0 = (AtomAbstractNode*)(*i0).get(), *atom1 = (AtomAbstractNode*)(*i1).get();
 
-							String name = atom0->value;
-							vector<Any>::type args;
-							args.push_back(Any(&name));
-							args.push_back(Any(1));
-							compiler->_fireEvent("processTextureNames", args, 0);
+							ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::TEXTURE, atom0->value);
+							compiler->_fireEvent(&evt, 0);
 
-							mUnit->setCubicTextureName(atom0->value, atom1->id == ID_COMBINED_UVW);
+							mUnit->setCubicTextureName(evt.mName, atom1->id == ID_COMBINED_UVW);
 						}
 						else
 						{
@@ -2724,10 +2745,16 @@ namespace Ogre{
 							names[4] = atom4->value;
 							names[5] = atom5->value;
 
-							vector<Any>::type args;
-							args.push_back(Any((String*)names));
-							args.push_back(Any(6));
-							compiler->_fireEvent("processTextureNames", args, 0);
+							if(compiler->getListener())
+							{
+								// Run each name through the listener
+								for(int i = 0; i < 6; ++i)
+								{
+									ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::TEXTURE, names[i]);
+									compiler->_fireEvent(&evt, 0);
+									names[i] = evt.mName;
+								}
+							}
 
 							mUnit->setCubicTextureName(names, atom6->id == ID_COMBINED_UVW);
 						}
@@ -2910,7 +2937,7 @@ namespace Ogre{
 							AtomAbstractNode *atom0 = (AtomAbstractNode*)(*i0).get(),
 								*atom1 = (AtomAbstractNode*)(*i1).get(),
 								*atom2 = (AtomAbstractNode*)(*i2).get();
-							FilterOptions tmin, tmax, tmip;
+							FilterOptions tmin = FO_NONE, tmax = FO_NONE, tmip = FO_NONE;
 							switch(atom0->id)
 							{
 							case ID_NONE:
@@ -3250,6 +3277,39 @@ namespace Ogre{
 						compiler->addError(ScriptCompiler::CE_FEWERPARAMETERSEXPECTED, prop->file, prop->line,
 							"colour_op_multiplass_fallback must have at most 2 arguments");
 					}
+					else if(prop->values.size() == 1)
+					{
+						if(prop->values.front()->type == ANT_ATOM)
+						{
+							AtomAbstractNode *atom = (AtomAbstractNode*)prop->values.front().get();
+							switch(atom->id)
+							{
+							case ID_ADD:
+								mUnit->setColourOpMultipassFallback(SBF_ONE, SBF_ONE);
+								break;
+							case ID_MODULATE:
+								mUnit->setColourOpMultipassFallback(SBF_DEST_COLOUR, SBF_ZERO);
+								break;
+							case ID_COLOUR_BLEND:
+								mUnit->setColourOpMultipassFallback(SBF_SOURCE_COLOUR, SBF_ONE_MINUS_SOURCE_COLOUR);
+								break;
+							case ID_ALPHA_BLEND:
+								mUnit->setColourOpMultipassFallback(SBF_SOURCE_ALPHA, SBF_ONE_MINUS_SOURCE_ALPHA);
+								break;
+							case ID_REPLACE:
+								mUnit->setColourOpMultipassFallback(SBF_ONE, SBF_ZERO);
+								break;
+							default:
+								compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+									"argument must be a valid scene blend type (add, modulate, colour_blend, alpha_blend, or replace)");
+							}
+						}
+						else
+						{
+							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
+								"argument must be a valid scene blend type (add, modulate, colour_blend, alpha_blend, or replace)");
+						}
+					}
 					else
 					{
 						AbstractNodeList::const_iterator i0 = getNodeAt(prop->values, 0), i1 = getNodeAt(prop->values, 1);
@@ -3284,7 +3344,7 @@ namespace Ogre{
 								*atom2 = (AtomAbstractNode*)(*i2).get();
 							LayerBlendOperationEx op = LBX_ADD;
 							LayerBlendSource source1 = LBS_CURRENT, source2 = LBS_TEXTURE;
-							Real arg1, arg2;
+							Real arg1 = 0.0f, arg2 = 0.0f;
 							Real manualBlend = 0.0f;
 
 							switch(atom0->id)
@@ -3607,8 +3667,8 @@ namespace Ogre{
 							(*i3)->type == ANT_ATOM && (*i4)->type == ANT_ATOM && (*i5)->type == ANT_ATOM)
 						{
 							AtomAbstractNode *atom0 = (AtomAbstractNode*)(*i0).get(), *atom1 = (AtomAbstractNode*)(*i1).get();
-							TextureUnitState::TextureTransformType type;
-							WaveformType wave;
+							TextureUnitState::TextureTransformType type = TextureUnitState::TT_ROTATE;
+							WaveformType wave = WFT_SINE;
 							Real base = 0.0f, freq = 0.0f, phase = 0.0f, amp = 0.0f;
 
 							switch(atom0->id)
@@ -3970,30 +4030,12 @@ namespace Ogre{
 
 		// Allocate the program
 		GpuProgram *prog = 0;
-		
-		Any retval;
-		vector<Any>::type args;
-		args.push_back(Any(obj->file));
-		args.push_back(Any(obj->name));
-		args.push_back(Any(compiler->getResourceGroup()));
-		args.push_back(Any(source));
-		args.push_back(Any(translateIDToGpuProgramType(obj->id)));
-		args.push_back(Any(syntax));
-		retval = compiler->_fireCreateObject("GpuProgram", args);
-		if(retval.isEmpty())
+		CreateGpuProgramScriptCompilerEvent evt(obj->file, obj->name, compiler->getResourceGroup(), source, syntax, translateIDToGpuProgramType(obj->id));
+		bool processed = compiler->_fireEvent(&evt, (void*)&prog);
+		if(!processed)
 		{
 			prog = reinterpret_cast<GpuProgram*>(GpuProgramManager::getSingleton().createProgram(obj->name, 
 					compiler->getResourceGroup(), source, translateIDToGpuProgramType(obj->id), syntax).get());
-		}
-		else
-		{
-			try{
-				prog = any_cast<GpuProgram*>(retval);
-			}catch(...){
-				compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line,
-					"gpu program \"" + obj->name + "\" could not be created");
-				return;
-			}
 		}
 
 		// Check that allocation worked
@@ -4039,10 +4081,9 @@ namespace Ogre{
 					if(!prop->values.empty() && prop->values.front()->type == ANT_ATOM)
 						value = ((AtomAbstractNode*)prop->values.front().get())->value;
 					
-					vector<Any>::type args;
-					args.push_back(Any(&value));
-					compiler->_fireEvent("processGpuProgramName", args, 0);
-					customParameters.push_back(std::make_pair("delegate", value));
+					ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, value);
+					compiler->_fireEvent(&evt, 0);
+					customParameters.push_back(std::make_pair("delegate", evt.mName));
 				}
 				else
 				{
@@ -4073,28 +4114,14 @@ namespace Ogre{
 
 		// Allocate the program
 		HighLevelGpuProgram *prog = 0;
-		Any retval;
-		vector<Any>::type args;
-		args.push_back(Any(obj->file));
-		args.push_back(Any(obj->name));
-		args.push_back(Any(compiler->getResourceGroup()));
-		args.push_back(Any(translateIDToGpuProgramType(obj->id)));
-		retval = compiler->_fireCreateObject("UnifiedGpuProgram", args);
-		if(retval.isEmpty())
+		CreateHighLevelGpuProgramScriptCompilerEvent evt(obj->file, obj->name, compiler->getResourceGroup(), "", "unified", translateIDToGpuProgramType(obj->id));
+		bool processed = compiler->_fireEvent(&evt, (void*)&prog);
+
+		if(!processed)
 		{
 			prog = reinterpret_cast<HighLevelGpuProgram*>(
 				HighLevelGpuProgramManager::getSingleton().createProgram(obj->name, compiler->getResourceGroup(), 
 				"unified", translateIDToGpuProgramType(obj->id)).get());
-		}
-		else
-		{
-			try{
-				prog = any_cast<HighLevelGpuProgram*>(retval);
-			}catch(...){
-				compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line,
-					"gpu program \"" + obj->name + "\" could not be created");
-				return;
-			}
 		}
 
 		// Check that allocation worked
@@ -4176,14 +4203,18 @@ namespace Ogre{
 								value += " ";
 							else
 								first = false;
-							value += ((AtomAbstractNode*)(*i).get())->value;
+
 							if(prop->name == "attach")
 							{
-								vector<Any>::type args;
-								args.push_back(Any(&value));
-								compiler->_fireEvent("processGpuProgramName", args, 0);
+								ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::GPU_PROGRAM, ((AtomAbstractNode*)(*i).get())->value);
+								compiler->_fireEvent(&evt, 0);
+								value += evt.mName;
+							}
+							else
+							{
+								value += ((AtomAbstractNode*)(*i).get())->value;
+							}
 						}
-					}
 					}
 					customParameters.push_back(std::make_pair(name, value));
 				}
@@ -4199,31 +4230,15 @@ namespace Ogre{
 
 		// Allocate the program
 		HighLevelGpuProgram *prog = 0;
-		Any retval;
-		vector<Any>::type args;
-		args.push_back(Any(obj->file));
-		args.push_back(Any(obj->name));
-		args.push_back(Any(compiler->getResourceGroup()));
-		args.push_back(Any(language));
-		args.push_back(Any(translateIDToGpuProgramType(obj->id)));
-		args.push_back(Any(source));
-		retval = compiler->_fireCreateObject("HighLevelGpuProgram", args);
-		if(retval.isEmpty())
+		CreateHighLevelGpuProgramScriptCompilerEvent evt(obj->file, obj->name, compiler->getResourceGroup(), source, language, 
+			translateIDToGpuProgramType(obj->id));
+		bool processed = compiler->_fireEvent(&evt, (void*)&prog);
+		if(!processed)
 		{
 			prog = reinterpret_cast<HighLevelGpuProgram*>(
 				HighLevelGpuProgramManager::getSingleton().createProgram(obj->name, compiler->getResourceGroup(), 
 				language, translateIDToGpuProgramType(obj->id)).get());
 			prog->setSourceFile(source);
-		}
-		else
-		{
-			try{
-				prog = any_cast<HighLevelGpuProgram*>(retval);
-			}catch(...){
-				compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line,
-					"gpu program \"" + obj->name + "\" could not be created");
-				return;
-			}
 		}
 
 		// Check that allocation worked
@@ -4691,26 +4706,19 @@ namespace Ogre{
 			return;
 		}
 
-		GpuSharedParameters* sharedParams;
-		Any retval;
-		vector<Any>::type args;
-		args.push_back(Any(obj->file));
-		args.push_back(Any(obj->name));
-		args.push_back(Any(compiler->getResourceGroup()));
-		retval = compiler->_fireCreateObject("GpuSharedParameters", args);
+		GpuSharedParameters* sharedParams = 0;
+		CreateGpuSharedParametersScriptCompilerEvent evt(obj->file, obj->name, compiler->getResourceGroup());
+		bool processed = compiler->_fireEvent(&evt, (void*)&sharedParams);
 
-		if(retval.isEmpty())
+		if(!processed)
 		{
 			sharedParams = GpuProgramManager::getSingleton().createSharedParameters(obj->name).get();
 		}
-		else
+		
+		if(!sharedParams)
 		{
-			try{
-				sharedParams = any_cast<GpuSharedParameters*>(retval);
-			}catch(...){
-				compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line);
-				return;
-			}
+			compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line);
+			return;
 		}
 
 
@@ -4740,7 +4748,7 @@ namespace Ogre{
 						}
 
 
-						AtomAbstractNode *atom0 = (AtomAbstractNode*)(*i0).get(), *atom1 = (AtomAbstractNode*)(*i1).get();
+						AtomAbstractNode *atom0 = (AtomAbstractNode*)(*i0).get();
 
 						String pName = atom0->value;
 						GpuConstantType constType;
@@ -4854,25 +4862,12 @@ namespace Ogre{
 		}
 
 		// Allocate the particle system
-		Any retval;
-		vector<Any>::type args;
-		args.push_back(Any(obj->file));
-		args.push_back(Any(obj->name));
-		args.push_back(Any(compiler->getResourceGroup()));
-		retval = compiler->_fireCreateObject("ParticleSystem", args);
+		CreateParticleSystemScriptCompilerEvent evt(obj->file, obj->name, compiler->getResourceGroup());
+		bool processed = compiler->_fireEvent(&evt, (void*)&mSystem);
 
-		if(retval.isEmpty())
+		if(!processed)
 		{
 			mSystem = ParticleSystemManager::getSingleton().createTemplate(obj->name, compiler->getResourceGroup());
-		}
-		else
-		{
-			try{
-				mSystem = any_cast<ParticleSystem*>(retval);
-			}catch(...){
-				compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line);
-				return;
-			}
 		}
 
 		if(!mSystem)
@@ -4907,17 +4902,16 @@ namespace Ogre{
 						{
 							String name = ((AtomAbstractNode*)prop->values.front().get())->value;
 							
-							vector<Any>::type args;
-							args.push_back(Any(&name));
-							compiler->_fireEvent("processMaterialName", args, 0);
+							ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::MATERIAL, name);
+							compiler->_fireEvent(&evt, 0);
 
-							if(!mSystem->setParameter("material", name))
+							if(!mSystem->setParameter("material", evt.mName))
 							{
 								if(mSystem->getRenderer())
 								{
-									if(!mSystem->getRenderer()->setParameter("material", name))
+									if(!mSystem->getRenderer()->setParameter("material", evt.mName))
 										compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-											"material property could not be set with material \"" + name + "\"");
+											"material property could not be set with material \"" + evt.mName + "\"");
 								}
 							}
 						}
@@ -5116,26 +5110,13 @@ namespace Ogre{
 		}
 
 		// Create the compositor
-		Any retval;
-		vector<Any>::type args;
-		args.push_back(Any(obj->file));
-		args.push_back(Any(obj->name));
-		args.push_back(Any(compiler->getResourceGroup()));
-		retval = compiler->_fireCreateObject("Compositor", args);
+		CreateCompositorScriptCompilerEvent evt(obj->file, obj->name, compiler->getResourceGroup());
+		bool processed = compiler->_fireEvent(&evt, (void*)&mCompositor);
 		
-		if(retval.isEmpty())
+		if(!processed)
 		{
 			mCompositor = reinterpret_cast<Compositor*>(CompositorManager::getSingleton().create(obj->name, 
 				compiler->getResourceGroup()).get());
-		}
-		else
-		{
-			try{
-				mCompositor = any_cast<Compositor*>(retval);
-			}catch(...){
-				compiler->addError(ScriptCompiler::CE_OBJECTALLOCATIONERROR, obj->file, obj->line);
-				return;
-			}
 		}
 
 		if(mCompositor == 0)
@@ -5320,14 +5301,7 @@ namespace Ogre{
 				
 
 						// No errors, create
-						String name = atom0->value;
-						
-						vector<Any>::type args;
-						args.push_back(Any(&name));
-						args.push_back(Any(1));
-						compiler->_fireEvent("processTextureNames", args, 0);
-
-						CompositionTechnique::TextureDefinition *def = mTechnique->createTextureDefinition(name);
+						CompositionTechnique::TextureDefinition *def = mTechnique->createTextureDefinition(atom0->value);
 						def->width = width;
 						def->height = height;
 						def->widthFactor = widthFactor;
@@ -5386,11 +5360,6 @@ namespace Ogre{
 			if(!obj->name.empty())
 			{
 				String name = obj->name;
-				
-				vector<Any>::type args;
-				args.push_back(Any(&name));
-				args.push_back(Any(1));
-				compiler->_fireEvent("processTextureNames", args, 0);
 
 				mTarget->setOutputName(name);
 			}
@@ -5645,11 +5614,9 @@ namespace Ogre{
 						String val;
 						if(getString(prop->values.front(), &val))
 						{
-							vector<Any>::type args;
-							args.push_back(Any(&val));
-							compiler->_fireEvent("processMaterialName", args, 0);
-
-							mPass->setMaterialName(val);
+							ProcessResourceNameScriptCompilerEvent evt(ProcessResourceNameScriptCompilerEvent::MATERIAL, val);
+							compiler->_fireEvent(&evt, 0);
+							mPass->setMaterialName(evt.mName);
 						}
 						else
 						{
@@ -5684,11 +5651,6 @@ namespace Ogre{
 									return;
 								}
 							}
-							
-							vector<Any>::type args;
-							args.push_back(Any(&name));
-							args.push_back(Any(1));
-							compiler->_fireEvent("processTextureNames", args, 0);
 
 							mPass->setInput(id, name, index);
 						}

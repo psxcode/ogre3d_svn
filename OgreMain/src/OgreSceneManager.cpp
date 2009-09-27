@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -48,6 +47,7 @@ Torus Knot Software Ltd.
 #include "OgreOverlayManager.h"
 #include "OgreStringConverter.h"
 #include "OgreRenderQueueListener.h"
+#include "OgreRenderObjectListener.h"
 #include "OgreBillboardSet.h"
 #include "OgrePass.h"
 #include "OgreTechnique.h"
@@ -186,6 +186,8 @@ mGpuParamsDirty((uint16)GPV_ALL)
 //-----------------------------------------------------------------------
 SceneManager::~SceneManager()
 {
+	fireSceneManagerDestroyed();
+	destroyShadowTextures();
     clearScene();
     destroyAllCameras();
 
@@ -512,7 +514,7 @@ Entity* SceneManager::createEntity(const String& entityName, PrefabType ptype)
 Entity* SceneManager::createEntity(PrefabType ptype)
 {
 	String name = mMovableNameGenerator.generate();
-	return createEntity(ptype);
+	return createEntity(name, ptype);
 }
 
 //-----------------------------------------------------------------------
@@ -1340,8 +1342,9 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 					// MUST be specific to this camera / target is done 
 					// AFTER THIS POINT
 					prepareShadowTextures(camera, vp);
-					// reset the cameras because of the re-entrant call
+					// reset the cameras & viewport because of the re-entrant call
 					mCameraInProgress = camera;
+					mCurrentViewport = vp;
 				}
 			}
 		}
@@ -2997,7 +3000,7 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 									  const LightList* manualLightList)
 {
     unsigned short numMatrices;
-    static RenderOperation ro;
+    RenderOperation ro;
 
 
     // Set up rendering operation
@@ -3102,6 +3105,8 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 				case CULL_ANTICLOCKWISE:
 					cullMode = CULL_CLOCKWISE;
 					break;
+                case CULL_NONE:
+                    break;
 				};
 			}
 
@@ -3278,6 +3283,7 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 					lightsLeft = 0;
 				}
 
+				fireRenderSingleObject(rend, pass, mAutoParamDataSource, pLightListToUse, mSuppressRenderStateChanges);
 
 				// Do we need to update GPU program parameters?
 				if (pass->isProgrammable())
@@ -3370,6 +3376,7 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 
 			if (!skipBecauseOfLightType)
 			{
+				fireRenderSingleObject(rend, pass, mAutoParamDataSource, manualLightList, mSuppressRenderStateChanges);
 				// Do we need to update GPU program parameters?
 				if (pass->isProgrammable())
 				{
@@ -3424,6 +3431,7 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 	}
 	else // mSuppressRenderStateChanges
 	{
+		fireRenderSingleObject(rend, pass, mAutoParamDataSource, NULL, mSuppressRenderStateChanges);
 		// Just render
 		mDestRenderSystem->setCurrentPassIterationCount(1);
 		if (rend->preRender(this, mDestRenderSystem))
@@ -3641,6 +3649,7 @@ void SceneManager::_applySceneAnimations(void)
 	// manual lock over states (extended duration required)
 	OGRE_LOCK_MUTEX(mAnimationStates.OGRE_AUTO_MUTEX_NAME)
 
+	// Iterate twice, once to reset, once to apply, to allow blending
     ConstEnabledAnimationStateIterator stateIt = mAnimationStates.getEnabledAnimationStateIterator();
 
     while (stateIt.hasMoreElements())
@@ -3649,7 +3658,6 @@ void SceneManager::_applySceneAnimations(void)
         Animation* anim = getAnimation(state->getAnimationName());
 
         // Reset any nodes involved
-        // NB this excludes blended animations
         Animation::NodeTrackIterator nodeTrackIt = anim->getNodeTrackIterator();
         while(nodeTrackIt.hasMoreElements())
         {
@@ -3665,12 +3673,17 @@ void SceneManager::_applySceneAnimations(void)
 			if (!anim.isNull())
 				anim->resetToBaseValue();
         }
-
-        // Apply the animation
-        anim->apply(state->getTimePosition(), state->getWeight());
     }
 
-
+	// this should allow blended animations
+	stateIt = mAnimationStates.getEnabledAnimationStateIterator();
+	while (stateIt.hasMoreElements())
+	{
+		const AnimationState* state = stateIt.getNext();
+		Animation* anim = getAnimation(state->getAnimationName());
+		// Apply the animation
+		anim->apply(state->getTimePosition(), state->getWeight());
+	}
 }
 //---------------------------------------------------------------------
 void SceneManager::manualRender(RenderOperation* rend, 
@@ -3824,6 +3837,24 @@ void SceneManager::removeRenderQueueListener(RenderQueueListener* delListener)
 
 }
 //---------------------------------------------------------------------
+void SceneManager::addRenderObjectListener(RenderObjectListener* newListener)
+{
+	mRenderObjectListeners.push_back(newListener);
+}
+//---------------------------------------------------------------------
+void SceneManager::removeRenderObjectListener(RenderObjectListener* delListener)
+{
+	RenderObjectListenerList::iterator i, iend;
+	iend = mRenderObjectListeners.end();
+	for (i = mRenderObjectListeners.begin(); i != iend; ++i)
+	{
+		if (*i == delListener)
+		{
+			mRenderObjectListeners.erase(i);
+			break;
+		}
+	}
+}
 void SceneManager::addListener(Listener* newListener)
 {
     mListeners.push_back(newListener);
@@ -3888,6 +3919,19 @@ bool SceneManager::fireRenderQueueEnded(uint8 id, const String& invocation)
     return repeat;
 }
 //---------------------------------------------------------------------
+void SceneManager::fireRenderSingleObject(Renderable* rend, const Pass* pass,
+										   const AutoParamDataSource* source, 
+										   const LightList* pLightList, bool suppressRenderStateChanges)
+{
+	RenderObjectListenerList::iterator i, iend;
+
+	iend = mRenderObjectListeners.end();
+	for (i = mRenderObjectListeners.begin(); i != iend; ++i)
+	{
+		(*i)->notifyRenderSingleObject(rend, pass, source, pLightList, suppressRenderStateChanges);
+	}
+}
+//---------------------------------------------------------------------
 void SceneManager::fireShadowTexturesUpdated(size_t numberOfShadowTextures)
 {
     ListenerList::iterator i, iend;
@@ -3944,6 +3988,17 @@ void SceneManager::firePostFindVisibleObjects(Viewport* v)
 	}
 
 
+}
+//---------------------------------------------------------------------
+void SceneManager::fireSceneManagerDestroyed()
+{
+	ListenerList::iterator i, iend;
+
+	iend = mListeners.end();
+	for (i = mListeners.begin(); i != iend; ++i)
+	{
+		(*i)->sceneManagerDestroyed(this);
+	}
 }
 //---------------------------------------------------------------------
 void SceneManager::setViewport(Viewport* vp)
@@ -4162,6 +4217,7 @@ void SceneManager::findLightsAffectingFrustum(const Camera* camera)
 				LightInfo lightInfo;
 				lightInfo.light = l;
 				lightInfo.type = l->getType();
+				lightInfo.lightMask = l->getLightMask();
 				if (lightInfo.type == Light::LT_DIRECTIONAL)
 				{
 					// Always visible
@@ -4415,6 +4471,9 @@ void SceneManager::initShadowVolumeMaterials(void)
                     GpuProgramParameters::ACT_WORLDVIEWPROJ_MATRIX);
                 mInfiniteExtrusionParams->setAutoConstant(4, 
                     GpuProgramParameters::ACT_LIGHT_POSITION_OBJECT_SPACE);
+                // Note ignored extra parameter - for compatibility with finite extrusion vertex program
+                mInfiniteExtrusionParams->setAutoConstant(5, 
+					GpuProgramParameters::ACT_SHADOW_EXTRUSION_DISTANCE);
             }	
             matDebug->compile();
 
@@ -5246,10 +5305,12 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
             extrudeDist = caster->getPointExtrusionDistance(light); 
         }
 
+        Real darkCapExtrudeDist = extrudeDist;
         if (!extrudeInSoftware && !finiteExtrude)
         {
             // hardware extrusion, to infinity (and beyond!)
             flags |= SRF_EXTRUDE_TO_INFINITY;
+            darkCapExtrudeDist = mShadowDirLightExtrudeDist;
         }
 
 		// Determine whether zfail is required
@@ -5269,7 +5330,7 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
 			// since that extrudes to a single point
 			if(!((flags & SRF_EXTRUDE_TO_INFINITY) && 
 				light->getType() == Light::LT_DIRECTIONAL) &&
-				camera->isVisible(caster->getDarkCapBounds(*light, extrudeDist)))
+				camera->isVisible(caster->getDarkCapBounds(*light, darkCapExtrudeDist)))
 			{
 				flags |= SRF_INCLUDE_DARK_CAP;
 			}
@@ -5285,12 +5346,12 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
 			if ((flags & SRF_EXTRUDE_TO_INFINITY) && 
 				light->getType() != Light::LT_DIRECTIONAL && 
 				isShadowTechniqueModulative() && 
-				camera->isVisible(caster->getDarkCapBounds(*light, extrudeDist)))
+				camera->isVisible(caster->getDarkCapBounds(*light, darkCapExtrudeDist)))
 			{
 				flags |= SRF_INCLUDE_DARK_CAP;
 			}
 			else if (!(flags & SRF_EXTRUDE_TO_INFINITY) && 
-				camera->isVisible(caster->getDarkCapBounds(*light, extrudeDist)))
+				camera->isVisible(caster->getDarkCapBounds(*light, darkCapExtrudeDist)))
 			{
 				flags |= SRF_INCLUDE_DARK_CAP;
 			}
@@ -5970,6 +6031,10 @@ void SceneManager::prepareShadowTextures(Camera* cam, Viewport* vp)
 				if (light->getType() != Light::LT_DIRECTIONAL)
 					texCam->setPosition(light->getDerivedPosition());
 
+				// Use the material scheme of the main viewport 
+				// This is required to pick up the correct shadow_caster_material and similar properties.
+				shadowView->setMaterialScheme(vp->getMaterialScheme());
+
 				// update shadow cam - light mapping
 				ShadowCamLightMapping::iterator camLightIt = mShadowCamLightMapping.find( texCam );
 				assert(camLightIt != mShadowCamLightMapping.end());
@@ -6476,7 +6541,7 @@ SceneManager::getShadowCasterBoundsInfo( const Light* light, size_t iteration ) 
 	static VisibleObjectsBoundsInfo nullBox;
 
 	// find light
-	int foundCount = 0;
+	unsigned int foundCount = 0;
 	ShadowCamLightMapping::const_iterator it; 
 	for ( it = mShadowCamLightMapping.begin() ; it != mShadowCamLightMapping.end(); ++it )
 	{

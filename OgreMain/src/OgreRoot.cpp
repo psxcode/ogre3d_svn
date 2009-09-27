@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 // Ogre includes
@@ -54,7 +53,6 @@ Torus Knot Software Ltd.
 #include "OgreStringConverter.h"
 #include "OgreArchiveManager.h"
 #include "OgrePlugin.h"
-#include "OgreZip.h"
 #include "OgreFileSystem.h"
 #include "OgreShadowVolumeExtrudeProgram.h"
 #include "OgreResourceBackgroundQueue.h"
@@ -67,6 +65,7 @@ Torus Knot Software Ltd.
 #include "OgreRenderQueueInvocation.h"
 #include "OgrePlatformInformation.h"
 #include "OgreConvexBody.h"
+#include "Threading/OgreDefaultWorkQueue.h"
 	
 #if OGRE_NO_FREEIMAGE == 0
 #include "OgreFreeImageCodec.h"
@@ -76,6 +75,9 @@ Torus Knot Software Ltd.
 #endif
 #if OGRE_NO_DDS_CODEC == 0
 #include "OgreDDSCodec.h"
+#endif
+#if OGRE_NO_ZIP_ARCHIVE == 0
+#include "OgreZip.h"
 #endif
 
 #include "OgreFontManager.h"
@@ -90,6 +92,10 @@ Torus Knot Software Ltd.
 #include "OgreScriptCompiler.h"
 
 #include "OgreWindowEventUtilities.h"
+
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+#include "macUtils.h"
+#endif
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -106,6 +112,7 @@ namespace Ogre {
     typedef void (*DLL_START_PLUGIN)(void);
     typedef void (*DLL_STOP_PLUGIN)(void);
 
+	const uint16 Root::MAX_USER_WORKQUEUE_CHANNEL = 32767;
 
     //-----------------------------------------------------------------------
     Root::Root(const String& pluginFileName, const String& configFileName, 
@@ -143,6 +150,25 @@ namespace Ogre {
 
 		// ResourceGroupManager
 		mResourceGroupManager = OGRE_NEW ResourceGroupManager();
+
+		// WorkQueue (note: users can replace this if they want)
+		DefaultWorkQueue* defaultQ = OGRE_NEW DefaultWorkQueue("Root");
+		// never process responses in main thread for longer than 10ms by default
+		defaultQ->setResponseProcessingTimeLimit(10);
+		// match threads to hardware
+#if OGRE_THREAD_SUPPORT
+		unsigned threadCount = OGRE_THREAD_HARDWARE_CONCURRENCY;
+		if (!threadCount)
+			threadCount = 1;
+		defaultQ->setWorkerThreadCount(threadCount);
+#endif
+		// only allow workers to access rendersystem if threadsupport is 1
+#if OGRE_THREAD_SUPPORT == 1
+		defaultQ->setWorkersCanAccessRenderSystem(true);
+#else
+		defaultQ->setWorkersCanAccessRenderSystem(false);
+#endif
+		mWorkQueue = defaultQ;
 
 		// ResourceBackgroundQueue
 		mResourceBackgroundQueue = OGRE_NEW ResourceBackgroundQueue();
@@ -196,8 +222,10 @@ namespace Ogre {
 #endif
         mFileSystemArchiveFactory = OGRE_NEW FileSystemArchiveFactory();
         ArchiveManager::getSingleton().addArchiveFactory( mFileSystemArchiveFactory );
+#if OGRE_NO_ZIP_ARCHIVE == 0
         mZipArchiveFactory = OGRE_NEW ZipArchiveFactory();
         ArchiveManager::getSingleton().addArchiveFactory( mZipArchiveFactory );
+#endif
 #if OGRE_NO_FREEIMAGE == 0
 		// Register image codecs
 		FreeImageCodec::startup();
@@ -277,7 +305,9 @@ namespace Ogre {
         OGRE_DELETE mFontManager;
 		OGRE_DELETE mLodStrategyManager;
         OGRE_DELETE mArchiveManager;
+#if OGRE_NO_ZIP_ARCHIVE == 0
         OGRE_DELETE mZipArchiveFactory;
+#endif
         OGRE_DELETE mFileSystemArchiveFactory;
         OGRE_DELETE mSkeletonManager;
         OGRE_DELETE mMeshManager;
@@ -306,6 +336,8 @@ namespace Ogre {
 		OGRE_DELETE mBillboardChainFactory;
 		OGRE_DELETE mRibbonTrailFactory;
 
+		OGRE_DELETE mWorkQueue;
+
 		OGRE_DELETE mTimer;
 
         OGRE_DELETE mDynLibManager;
@@ -323,11 +355,20 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Root::saveConfig(void)
     {
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+        // Check the Documents directory within the application sandbox
+        Ogre::String outBaseName, extension, configFileName;
+        Ogre::StringUtil::splitFilename(mConfigFileName, outBaseName, extension);
+        configFileName = macBundlePath() + "/../Documents/" + outBaseName;
+		std::ofstream of(configFileName.c_str());
+        if (of)
+            mConfigFileName = configFileName;
+#else
         if (mConfigFileName.empty ())
             return;
 
 		std::ofstream of(mConfigFileName.c_str());
-
+#endif
         if (!of)
             OGRE_EXCEPT(Exception::ERR_CANNOT_WRITE_TO_FILE, "Cannot create settings file.",
             "Root::saveConfig");
@@ -359,6 +400,24 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool Root::restoreConfig(void)
     {
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+        // Read the config from Documents first(user config) if it exists on iPhone.
+        // If it doesn't exist or is invalid then use mConfigFileName
+        // TODO: I really want to use NSFileManager here but I'll find another way
+
+//        Ogre::String outBaseName, extension, configFileName;
+//        Ogre::StringUtil::splitFilename(mConfigFileName, outBaseName, extension);
+//        configFileName = macBundlePath() + "/../Documents/" + outBaseName;
+//		std::ifstream fp;
+//        fp.open(configFileName.c_str(), std::ios::in | std::ios::binary);
+//        if(fp)
+//            mConfigFileName = configFileName;
+//        else
+//            mConfigFileName = Ogre::StringUtil::BLANK;
+//        fp.close();
+        return true;
+#endif
+        
         if (mConfigFileName.empty ())
             return true;
 
@@ -661,8 +720,9 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Root::removeFrameListener(FrameListener* oldListener)
     {
-        // Remove, 1 only (set)
-        mRemovedFrameListeners.insert(oldListener);
+		// Remove, 1 only (set), and only when this listener was added before.
+		if( mFrameListeners.find( oldListener ) != mFrameListeners.end() )
+			mRemovedFrameListeners.insert(oldListener);
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameStarted(FrameEvent& evt)
@@ -740,8 +800,8 @@ namespace Ogre {
         if (HardwareBufferManager::getSingletonPtr())
             HardwareBufferManager::getSingleton()._releaseBufferCopies();
 
-		// Also tell the ResourceBackgroundQueue to propagate background load events
-		ResourceBackgroundQueue::getSingleton()._fireOnFrameCallbacks();
+		// Tell the queue to process responses
+		mWorkQueue->processResponses();
 
 		OgreProfileEndGroup("Frame", OGREPROF_GENERAL);
 
@@ -876,6 +936,7 @@ namespace Ogre {
 
         ShadowVolumeExtrudeProgram::shutdown();
 		mResourceBackgroundQueue->shutdown();
+		mWorkQueue->shutdown();
         ResourceGroupManager::getSingleton().shutdownAll();
 
 		// Destroy pools
@@ -905,7 +966,7 @@ namespace Ogre {
         pluginDir = cfg.getSetting("PluginFolder"); // Ignored on Mac OS X, uses Resources/ directory
         pluginList = cfg.getMultiSetting("Plugin");
 
-#if OGRE_PLATFORM != OGRE_PLATFORM_APPLE
+#if OGRE_PLATFORM != OGRE_PLATFORM_APPLE && OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 		if (pluginDir.empty())
 		{
 			// User didn't specify plugins folder, try current one
@@ -1047,8 +1108,8 @@ namespace Ogre {
         if (!mActiveRenderer)
         {
             OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-            "Cannot create window - no render "
-            "system has been selected.", "Root::destroyRenderWindow");
+            "Cannot detach target - no render "
+            "system has been selected.", "Root::detachRenderTarget");
         }
 
         mActiveRenderer->detachRenderTarget( target->getName() );
@@ -1059,8 +1120,8 @@ namespace Ogre {
         if (!mActiveRenderer)
         {
             OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-            "Cannot create window - no render "
-            "system has been selected.", "Root::destroyRenderWindow");
+            "Cannot detach target - no render "
+            "system has been selected.", "Root::detachRenderTarget");
         }
 
         mActiveRenderer->detachRenderTarget( name );
@@ -1071,8 +1132,8 @@ namespace Ogre {
         if (!mActiveRenderer)
         {
             OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-            "Cannot create window - no render "
-            "system has been selected.", "Root::getRenderWindow");
+            "Cannot get target - no render "
+            "system has been selected.", "Root::getRenderTarget");
         }
 
         return mActiveRenderer->getRenderTarget(name);
@@ -1115,17 +1176,21 @@ namespace Ogre {
 		// Load plugin library
         DynLib* lib = DynLibManager::getSingleton().load( pluginName );
 		// Store for later unload
-		mPluginLibs.push_back(lib);
+		// Check for existence, because if called 2+ times DynLibManager returns existing entry
+		if (std::find(mPluginLibs.begin(), mPluginLibs.end(), lib) == mPluginLibs.end())
+		{
+			mPluginLibs.push_back(lib);
 
-		// Call startup function
-		DLL_START_PLUGIN pFunc = (DLL_START_PLUGIN)lib->getSymbol("dllStartPlugin");
+			// Call startup function
+			DLL_START_PLUGIN pFunc = (DLL_START_PLUGIN)lib->getSymbol("dllStartPlugin");
 
-		if (!pFunc)
-			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Cannot find symbol dllStartPlugin in library " + pluginName,
-				"Root::loadPlugin");
+			if (!pFunc)
+				OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Cannot find symbol dllStartPlugin in library " + pluginName,
+					"Root::loadPlugin");
 
-		// This must call installPlugin
-		pFunc();
+			// This must call installPlugin
+			pFunc();
+		}
 
 	}
     //-----------------------------------------------------------------------
@@ -1161,6 +1226,7 @@ namespace Ogre {
         {
 			// Background loader
 			mResourceBackgroundQueue->initialise();
+			mWorkQueue->startup();
 			// Initialise material manager
 			mMaterialManager->initialise();
             // Init particle systems manager
@@ -1372,6 +1438,19 @@ namespace Ogre {
 
 	}
 	//---------------------------------------------------------------------
+	void Root::setWorkQueue(WorkQueue* queue)
+	{
+		if (mWorkQueue != queue)
+		{
+			// delete old one (will shut down)
+			OGRE_DELETE mWorkQueue;
+
+			mWorkQueue = queue;
+			if (mIsInitialised)
+				mWorkQueue->startup();
+
+		}
+	}
 
 
 

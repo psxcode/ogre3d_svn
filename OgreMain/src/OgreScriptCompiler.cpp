@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -37,7 +36,7 @@ namespace Ogre
 {
 	// AbstractNode
 	AbstractNode::AbstractNode(AbstractNode *ptr)
-		:parent(ptr), type(ANT_UNKNOWN), line(0)
+		:line(0), type(ANT_UNKNOWN), parent(ptr)
 	{}
 
 	// AtomAbstractNode
@@ -65,7 +64,7 @@ namespace Ogre
 
 	// ObjectAbstractNode
 	ObjectAbstractNode::ObjectAbstractNode(AbstractNode *ptr)
-		:AbstractNode(ptr), abstract(false), id(0)
+		:AbstractNode(ptr), id(0), abstract(false)
 	{
 		type = ANT_OBJECT;
 	}
@@ -237,14 +236,9 @@ namespace Ogre
 		Ogre::LogManager::getSingleton().logMessage(str);
 	}
 
-	bool ScriptCompilerListener::handleEvent(ScriptCompiler *compiler, const String &name, const vector<Ogre::Any>::type &args, Ogre::Any *retval)
+	bool ScriptCompilerListener::handleEvent(ScriptCompiler *compiler, ScriptCompilerEvent *evt, void *retval)
 	{
 		return false;
-	}
-
-	Ogre::Any ScriptCompilerListener::createObject(ScriptCompiler *compiler, const String &type, const vector<Ogre::Any>::type &args)
-	{
-		return Ogre::Any();
 	}
 
 	// ScriptCompiler
@@ -491,18 +485,11 @@ namespace Ogre
 		return mGroup;
 	}
 
-	bool ScriptCompiler::_fireEvent(const Ogre::String &name, const vector<Any>::type &args, Ogre::Any *retval)
+	bool ScriptCompiler::_fireEvent(ScriptCompilerEvent *evt, void *retval)
 	{
 		if(mListener)
-			return mListener->handleEvent(this, name, args, retval);
+			return mListener->handleEvent(this, evt, retval);
 		return false;
-	}
-
-	Any ScriptCompiler::_fireCreateObject(const Ogre::String &type, const vector<Any>::type &args)
-	{
-		if(mListener)
-			return mListener->createObject(this, type, args);
-		return Any();
 	}
 
 	AbstractNodeListPtr ScriptCompiler::convertToAST(const Ogre::ConcreteNodeListPtr &nodes)
@@ -650,23 +637,22 @@ namespace Ogre
 			{
 				ObjectAbstractNode *obj = (ObjectAbstractNode*)(*i).get();
 
-				// Check if it is inheriting anything
-				if(!obj->base.empty())
+				// Overlay base classes in order.
+                for (std::vector<String>::const_iterator baseIt = obj->bases.begin(), end_it = obj->bases.end(); baseIt != end_it; ++baseIt)
 				{
+                    const String& base = *baseIt;
 					// Check the top level first, then check the import table
-					AbstractNodeListPtr newNodes = locateTarget(top.get(), obj->base);
+					AbstractNodeListPtr newNodes = locateTarget(top.get(), base);
 					if(newNodes->empty())
-						newNodes = locateTarget(&mImportTable, obj->base);
+						newNodes = locateTarget(&mImportTable, base);
 
-					if(!newNodes->empty())
-					{
-						for(AbstractNodeList::iterator j = newNodes->begin(); j != newNodes->end(); ++j)
+					if (!newNodes->empty()) {
+						for(AbstractNodeList::iterator j = newNodes->begin(); j != newNodes->end(); ++j) {
 							overlayObject(*j, obj);
-					}
-					else
-					{
+                        }
+					} else {
 						addError(CE_OBJECTBASENOTFOUND, obj->file, obj->line,
-							"base object named \"" + obj->base + "\" not found in script definition");
+							"base object named \"" + base + "\" not found in script definition");
 					}
 				}
 
@@ -813,7 +799,7 @@ namespace Ogre
 							for(size_t j = overrideIndex; j < overrides.size(); ++j)
 							{
 								ObjectAbstractNode *temp = reinterpret_cast<ObjectAbstractNode*>(overrides[j].first.get());
-								if(temp->cls == node->cls && overrides[j].second == dest->children.end())
+								if(temp->name.empty() && temp->cls == node->cls && overrides[j].second == dest->children.end())
 								{
 									overrides[j] = std::make_pair(overrides[j].first, i);
 									break;
@@ -858,13 +844,11 @@ namespace Ogre
 	bool ScriptCompiler::isNameExcluded(const String &cls, AbstractNode *parent)
 	{
 		// Run past the listener
-		Any retval;
-		vector<Any>::type args;
-		args.push_back(Any(cls));
-		args.push_back(Any(parent));
-		_fireEvent("processNameExclusion", args, &retval);
+		bool excludeName = false;
+		ProcessNameExclusionScriptCompilerEvent evt(cls, parent);
+		bool processed = _fireEvent(&evt, (void*)&excludeName);
 
-		if(retval.isEmpty())
+		if(!processed)
 		{
 			// Process the built-in name exclusions
 			if(cls == "emitter" || cls == "affector")
@@ -906,7 +890,7 @@ namespace Ogre
 		}
 		else
 		{
-			return any_cast<bool>(retval);
+			return excludeName;
 		}
 		return false;
 	}
@@ -1275,7 +1259,7 @@ namespace Ogre
 
 	// AbstractTreeeBuilder
 	ScriptCompiler::AbstractTreeBuilder::AbstractTreeBuilder(ScriptCompiler *compiler)
-		:mCurrent(0), mNodes(OGRE_NEW_T(AbstractNodeList, MEMCATEGORY_GENERAL)(), SPFM_DELETE_T), mCompiler(compiler)
+		:mNodes(OGRE_NEW_T(AbstractNodeList, MEMCATEGORY_GENERAL)(), SPFM_DELETE_T), mCurrent(0), mCompiler(compiler)
 	{
 	}
 
@@ -1447,15 +1431,13 @@ namespace Ogre
 					++iter;
 				}
 
-				// Find the base
+				// Find the bases
 				if(iter != temp.end() && (*iter)->type == CNT_COLON)
 				{
-					if((*iter)->children.empty())
-					{
-						mCompiler->addError(CE_STRINGEXPECTED, (*iter)->file, (*iter)->line);
-						return;
-					}
-					impl->base = (*iter)->children.front()->token;
+					// Children of the ':' are bases
+					for(ConcreteNodeList::iterator j = (*iter)->children.begin(); j != (*iter)->children.end(); ++j)
+						impl->bases.push_back((*j)->token);
+                    ++iter;
 				}
 
 				// Finally try to map the cls to an id
@@ -1553,7 +1535,7 @@ namespace Ogre
     }
 	//-----------------------------------------------------------------------
 	ScriptCompilerManager::ScriptCompilerManager()
-		:mListener(0)
+		:mListener(0), OGRE_THREAD_POINTER_INIT(mScriptCompiler)
 	{
 		OGRE_LOCK_AUTO_MUTEX
 #if OGRE_USE_NEW_COMPILERS == 1
@@ -1645,19 +1627,39 @@ namespace Ogre
     {
 #if OGRE_THREAD_SUPPORT
 		// check we have an instance for this thread (should always have one for main thread)
-		if (!mScriptCompiler.get())
+		if (!OGRE_THREAD_POINTER_GET(mScriptCompiler))
 		{
 			// create a new instance for this thread - will get deleted when
 			// the thread dies
-			mScriptCompiler.reset(OGRE_NEW ScriptCompiler());
+			OGRE_THREAD_POINTER_SET(mScriptCompiler, OGRE_NEW ScriptCompiler());
 		}
 #endif
 		// Set the listener on the compiler before we continue
 		{
 			OGRE_LOCK_AUTO_MUTEX
-			mScriptCompiler->setListener(mListener);
+			OGRE_THREAD_POINTER_GET(mScriptCompiler)->setListener(mListener);
 		}
-        mScriptCompiler->compile(stream->getAsString(), stream->getName(), groupName);
+        OGRE_THREAD_POINTER_GET(mScriptCompiler)->compile(stream->getAsString(), stream->getName(), groupName);
     }
+
+	//-------------------------------------------------------------------------
+	String PreApplyTextureAliasesScriptCompilerEvent::eventType = "preApplyTextureAliases";
+	//-------------------------------------------------------------------------
+	String ProcessResourceNameScriptCompilerEvent::eventType = "processResourceName";
+	//-------------------------------------------------------------------------
+	String ProcessNameExclusionScriptCompilerEvent::eventType = "processNameExclusion";
+	//----------------------------------------------------------------------------
+	String CreateMaterialScriptCompilerEvent::eventType = "createMaterial";
+	//----------------------------------------------------------------------------
+	String CreateGpuProgramScriptCompilerEvent::eventType = "createGpuProgram";
+	//-------------------------------------------------------------------------
+	String CreateHighLevelGpuProgramScriptCompilerEvent::eventType = "createHighLevelGpuProgram";
+	//-------------------------------------------------------------------------
+	String CreateGpuSharedParametersScriptCompilerEvent::eventType = "createGpuSharedParameters";
+	//-------------------------------------------------------------------------
+	String CreateParticleSystemScriptCompilerEvent::eventType = "createParticleSystem";
+	//-------------------------------------------------------------------------
+	String CreateCompositorScriptCompilerEvent::eventType = "createCompositor";
 }
+
 
