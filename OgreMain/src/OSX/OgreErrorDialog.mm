@@ -26,49 +26,28 @@
  Torus Knot Software Ltd.
  -----------------------------------------------------------------------------
  */
+#include "OgreErrorDialog.h"
 
-#include <QuickTime/QuickTime.h>
-#include "OgreLogManager.h"
-#include "OgreConfigDialog.h"
+#include <Cocoa/Cocoa.h>
 
-namespace Ogre {
+using namespace Ogre;
 
-	ConfigDialog* dlg = NULL;
-	ConfigDialog::ConfigDialog() 
-	{
-		dlg = this;
-	}
-	
-	ConfigDialog::~ConfigDialog()
-	{
-	}
-	
-	void ConfigDialog::initialise()
-	{
-	}
-	
-	bool ConfigDialog::display()
-	{
-		// TODO: Fix OS X Config dialog
-		const RenderSystemList& renderers = Root::getSingleton().getAvailableRenderers();
-		RenderSystem* renderer = renderers.front();
+ErrorDialog::ErrorDialog()
+{
+}
 
-		// WARNING: restoreConfig() should not be invoked here as Root calls
-		// it before this method anyway, and invoking restoreConfig() here
-		// forces the client application to use Ogre.cfg, while it may have
-		// different plans.
-		if(!Root::getSingleton().restoreConfig())
-		{
-			// Set some defaults
-			renderer->setConfigOption("Video Mode", "800 x 600");
-			renderer->setConfigOption("Colour Depth", "32");
-			renderer->setConfigOption("FSAA", "0");
-			renderer->setConfigOption("Full Screen", "No");
-			renderer->setConfigOption("RTT Preferred Mode", "FBO");
-			// Set the rendersystem and save the config.
-			Root::getSingleton().setRenderSystem(renderer);
-		}
-		return true;
-	}
+void ErrorDialog::display(const String& errorMessage, String logName)
+{
+    // Because Carbon is missing 64-bit support we have to use Cocoa
+    NSApplicationLoad();
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    NSAlert *alert = [[NSAlert alloc] init];
 
-};
+    [alert setMessageText:@"An error has occurred!"];
+    [alert setAlertStyle:NSCriticalAlertStyle];
+    [alert setInformativeText:[[NSString alloc] initWithCString:errorMessage.c_str()
+                                                       encoding:NSASCIIStringEncoding]];
+    [alert runModal];
+    [alert release];
+    [pool release];
+}

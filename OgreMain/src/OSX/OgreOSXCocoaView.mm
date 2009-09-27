@@ -27,48 +27,51 @@
  -----------------------------------------------------------------------------
  */
 
-#include <QuickTime/QuickTime.h>
-#include "OgreLogManager.h"
-#include "OgreConfigDialog.h"
+#include "OgreOSXCocoaView.h"
 
-namespace Ogre {
+@implementation OgreView
 
-	ConfigDialog* dlg = NULL;
-	ConfigDialog::ConfigDialog() 
-	{
-		dlg = this;
-	}
-	
-	ConfigDialog::~ConfigDialog()
-	{
-	}
-	
-	void ConfigDialog::initialise()
-	{
-	}
-	
-	bool ConfigDialog::display()
-	{
-		// TODO: Fix OS X Config dialog
-		const RenderSystemList& renderers = Root::getSingleton().getAvailableRenderers();
-		RenderSystem* renderer = renderers.front();
+- (id)initWithFrame:(NSRect)f
+{
+	if((self = [super initWithFrame:f]))
+    {
+        NSApplicationLoad();
+        
+        window = 0;
+    }
+	return self;
+}
 
-		// WARNING: restoreConfig() should not be invoked here as Root calls
-		// it before this method anyway, and invoking restoreConfig() here
-		// forces the client application to use Ogre.cfg, while it may have
-		// different plans.
-		if(!Root::getSingleton().restoreConfig())
-		{
-			// Set some defaults
-			renderer->setConfigOption("Video Mode", "800 x 600");
-			renderer->setConfigOption("Colour Depth", "32");
-			renderer->setConfigOption("FSAA", "0");
-			renderer->setConfigOption("Full Screen", "No");
-			renderer->setConfigOption("RTT Preferred Mode", "FBO");
-			// Set the rendersystem and save the config.
-			Root::getSingleton().setRenderSystem(renderer);
-		}
-		return true;
-	}
+- (id)initWithGLOSXWindow:(Ogre::RenderWindow*)w
+{
+	if((self = [super initWithFrame:NSMakeRect(0, 0, w->getWidth(), w->getHeight())]))
+    {
+        window = w;
+    }
+	return self;
+}
 
-};
+- (void)setOgreWindow:(Ogre::RenderWindow*)w
+{
+	window = w;
+}
+
+- (Ogre::RenderWindow*)ogreWindow
+{
+	return window;
+}
+
+- (void)setFrameSize:(NSSize)s
+{
+	[super setFrameSize:s];
+    if (window)
+        window->windowMovedOrResized();
+}
+
+- (void)drawRect:(NSRect)r
+{
+	if(window)
+		window->update();
+}
+
+@end
