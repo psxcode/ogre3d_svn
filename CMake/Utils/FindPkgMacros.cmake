@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 ##################################################################
 # Provides some common functionality for the FindPackage modules
 ##################################################################
@@ -72,7 +81,7 @@ endmacro(make_library_set)
 # Generate debug names from given release names
 macro(get_debug_names PREFIX)
   foreach(i ${${PREFIX}})
-    set(${PREFIX}_DBG ${${PREFIX}_DBG} ${i}d ${i}D ${i}_d ${i}_D)
+    set(${PREFIX}_DBG ${${PREFIX}_DBG} ${i}d ${i}D ${i}_d ${i}_D ${i}_debug ${i})
   endforeach(i)
 endmacro(get_debug_names)
 
@@ -117,6 +126,7 @@ MACRO(findpkg_framework fwk)
       /Library/Frameworks
       /System/Library/Frameworks
       /Network/Library/Frameworks
+      /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS3.0.sdk/System/Library/Frameworks/
     )
     FOREACH(dir ${${fwk}_FRAMEWORK_PATH})
       SET(fwkpath ${dir}/${fwk}.framework)
@@ -124,7 +134,7 @@ MACRO(findpkg_framework fwk)
         SET(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
           ${fwkpath}/Headers ${fwkpath}/PrivateHeaders)
         if (NOT ${fwk}_LIBRARY_FWK)
-          SET(${fwk}_LIBRARY_FWK "-framework ${fwk}" CACHE STRING "${fwk} library")
+          SET(${fwk}_LIBRARY_FWK "-framework ${fwk}")
         endif ()
       ENDIF(EXISTS ${fwkpath})
     ENDFOREACH(dir)

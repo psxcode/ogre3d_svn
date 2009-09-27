@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 #
 # Try to find nVidia's Cg compiler, runtime libraries, and include path.
 # Once done this will define
@@ -67,6 +76,7 @@ ELSE (APPLE)
       ${Cg_COMPILER_SUPER_DIR}/lib
       ${Cg_COMPILER_DIR}
       DOC "The Cg runtime library"
+      PATH_SUFFIXES "" release relwithdebinfo minsizerel debug
       )
     FIND_LIBRARY( Cg_GL_LIBRARIES
       NAMES CgGL
@@ -77,6 +87,7 @@ ELSE (APPLE)
       ${Cg_COMPILER_SUPER_DIR}/lib
       ${Cg_COMPILER_DIR}
       DOC "The Cg runtime library"
+      PATH_SUFFIXES "" release relwithdebinfo minsizerel debug
       )
   ELSE (WIN32)
     FIND_PROGRAM( Cg_COMPILER cgc
@@ -101,6 +112,7 @@ ELSE (APPLE)
       ${Cg_COMPILER_SUPER_DIR}/lib64
       ${Cg_COMPILER_SUPER_DIR}/lib
       DOC "The Cg runtime library"
+      PATH_SUFFIXES "" release relwithdebinfo minsizerel debug
       )
     FIND_LIBRARY( Cg_GL_LIBRARIES CgGL
       PATHS
@@ -111,6 +123,7 @@ ELSE (APPLE)
       ${Cg_COMPILER_SUPER_DIR}/lib64
       ${Cg_COMPILER_SUPER_DIR}/lib
       DOC "The Cg runtime library"
+      PATH_SUFFIXES "" release relwithdebinfo minsizerel debug
       )
   ENDIF (WIN32)
 ENDIF (APPLE)

@@ -1,8 +1,23 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 #######################################################################
 # This file takes care of configuring Ogre to build with the settings
 # given in CMake. It creates the necessary config.h file and will 
 # also prepare package files for pkg-config and CMake.
 #######################################################################
+
+if (OGRE_BUILD_PLATFORM_IPHONE)
+  set(OGRE_SET_BUILD_PLATFORM_IPHONE 1)
+  set(OGRE_STATIC 1)
+  set(OGRE_STATIC_LIB 1)
+endif()
 
 # should we build static libs?
 if (OGRE_STATIC)
@@ -12,15 +27,35 @@ else ()
 endif ()
 
 # configure threading options
+set(OGRE_THREAD_PROVIDER 0)
 if (OGRE_CONFIG_THREADS)
-  if (UNIX)
-    add_definitions(-pthread)
-  endif ()
+	if (UNIX)
+		add_definitions(-pthread)
+	endif ()
+
+	if (OGRE_CONFIG_THREAD_PROVIDER STREQUAL "boost")
+		set(OGRE_THREAD_PROVIDER 1)
+		include_directories(${Boost_INCLUDE_DIRS})
+		# On MSVC Boost usually tries to autolink boost libraries. However since
+		# this behaviour is not available on all compilers, we need to find the libraries
+		# ourselves, anyway. Disable auto-linking to avoid mess-ups.
+		add_definitions(-DBOOST_ALL_NO_LIB)
+		set(OGRE_THREAD_LIBRARIES ${Boost_LIBRARIES})
+	endif ()
+
+	if (OGRE_CONFIG_THREAD_PROVIDER STREQUAL "poco")
+		set(OGRE_THREAD_PROVIDER 2)
+		include_directories(${POCO_INCLUDE_DIRS})
+		set(OGRE_THREAD_LIBRARIES ${POCO_LIBRARIES})
+	endif ()
+
+	if (OGRE_CONFIG_THREAD_PROVIDER STREQUAL "tbb")
+		set(OGRE_THREAD_PROVIDER 3)
+		include_directories(${TBB_INCLUDE_DIRS})
+		set(OGRE_THREAD_LIBRARIES ${TBB_LIBRARIES})
+	endif ()
 endif()
 
-if (Boost_FOUND AND !Boost_USE_STATIC_LIBS)
-  add_definitions(-DBOOST_ALL_DYN_LINK)
-endif ()
 
 # determine config values depending on build options 
 set(OGRE_SET_DOUBLE 0)
@@ -30,10 +65,13 @@ set(OGRE_SET_STRING_USE_ALLOCATOR 0)
 set(OGRE_SET_MEMTRACK_DEBUG 0)
 set(OGRE_SET_MEMTRACK_RELEASE 0)
 set(OGRE_SET_THREADS ${OGRE_CONFIG_THREADS})
+set(OGRE_SET_THREAD_PROVIDER ${OGRE_THREAD_PROVIDER})
 set(OGRE_SET_DISABLE_FREEIMAGE 0)
 set(OGRE_SET_DISABLE_DDS 0)
+set(OGRE_SET_DISABLE_ZIP 0)
 set(OGRE_SET_NEW_COMPILERS 0)
 set(OGRE_STATIC_LIB 0)
+set(OGRE_SET_USE_BOOST 0)
 if (OGRE_CONFIG_DOUBLE)
   set(OGRE_SET_DOUBLE 1)
 endif()
@@ -55,11 +93,17 @@ endif()
 if (OGRE_CONFIG_DISABLE_DDS)
   set(OGRE_SET_DISABLE_DDS 1)
 endif()
+if (OGRE_CONFIG_DISABLE_ZIP)
+  set(OGRE_SET_DISABLE_ZIP 1)
+endif()
 if(OGRE_CONFIG_NEW_COMPILERS)
   set(OGRE_SET_NEW_COMPILERS 1)
 endif()
 if (OGRE_STATIC)
   set(OGRE_STATIC_LIB 1)
+endif()
+if (OGRE_USE_BOOST)
+  set(OGRE_SET_USE_BOOST 1)
 endif()
 add_definitions(-DHAVE_OGRE_BUILDSETTINGS_H)
 
@@ -136,6 +180,12 @@ if (OGRE_STANDALONE_BUILD)
   set(CMAKE_USE_RELATIVE_PATHS true)
   set(CMAKE_SUPPRESS_REGENERATION true)
 endif()
+
+if (MSVC)
+  # Enable intrinsics on MSVC in debug mode
+  # Not actually necessary in release mode since /O2 implies /Oi but can't easily add this per build type?
+  add_definitions(/Oi)
+endif (MSVC)
 
 ### Commented because the FindOGRE script can currently fill this role better ###
 # # Create the CMake package files

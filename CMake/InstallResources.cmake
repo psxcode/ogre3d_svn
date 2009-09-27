@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 ##################################################################
 # Generate and install the config files needed for the samples
 ##################################################################
@@ -32,6 +41,9 @@ if (CMAKE_SYSTEM_VERSION VERSION_LESS "6.0")
 endif ()
 if (NOT OGRE_BUILD_RENDERSYSTEM_GL)
   set(OGRE_COMMENT_RENDERSYSTEM_GL "#")
+endif ()
+if (NOT OGRE_BUILD_RENDERSYSTEM_GLES)
+  set(OGRE_COMMENT_RENDERSYSTEM_GLES "#")
 endif ()
 if (NOT OGRE_BUILD_PLUGIN_BSP)
   set(OGRE_COMMENT_PLUGIN_BSP "#")
@@ -144,6 +156,14 @@ elseif (UNIX)
   set(OGRE_SAMPLES_DIR_REL "../lib")
   set(OGRE_SAMPLES_DIR_DBG "../lib")
 endif ()
+
+# On iPhone resources can't be referenced outside the app bundle due to the app jail unless they are installed
+# in the Documents directory.  We aren't doing that so hardcode the path
+if (OGRE_BUILD_PLATFORM_IPHONE)
+  set(OGRE_MEDIA_DIR_REL "Media")
+  set(OGRE_MEDIA_DIR_REL "Media")
+endif ()
+
 if (WIN32)
   # create resources.cfg
   configure_file(${OGRE_TEMPLATES_DIR}/resources_d.cfg.in ${OGRE_BINARY_DIR}/bin/debug/resources.cfg)

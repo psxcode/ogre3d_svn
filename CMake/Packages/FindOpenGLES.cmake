@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 # - Try to find OpenGLES
 # Once done this will define
 #  
@@ -26,8 +35,9 @@ ELSE (WIN32)
 
   IF (APPLE)
 
-    FIND_LIBRARY(OPENGLES_gl_LIBRARY GLES_CM DOC "OpenGL ES lib for OSX")
-    FIND_PATH(OPENGL_INCLUDE_DIR GLES/gl.h DOC "Include for OpenGL ES on OSX")
+	create_search_paths(/Developer/Platforms)
+	findpkg_framework(OpenGLES)
+    set(OPENGLES_gl_LIBRARY "-framework OpenGLES")
 
   ELSE(APPLE)
 
@@ -70,19 +80,11 @@ ENDIF (WIN32)
 SET( OPENGLES_FOUND "NO" )
 IF(OPENGLES_gl_LIBRARY)
 
-
-    SET( OPENGLES_LIBRARIES  ${OPENGLES_gl_LIBRARY} ${OPENGLES_LIBRARIES})
+    SET( OPENGLES_LIBRARIES ${OPENGLES_gl_LIBRARY} ${OPENGLES_LIBRARIES})
 
     SET( OPENGLES_FOUND "YES" )
 
-    # This deprecated setting is for backward compatibility with CMake1.4
-
-    SET (OPENGLES_LIBRARY ${OPENGLES_LIBRARIES})
-
 ENDIF(OPENGLES_gl_LIBRARY)
-
-# This deprecated setting is for backward compatibility with CMake1.4
-SET(OPENGLES_INCLUDE_PATH ${OPENGLES_INCLUDE_DIR})
 
 MARK_AS_ADVANCED(
   OPENGLES_INCLUDE_DIR

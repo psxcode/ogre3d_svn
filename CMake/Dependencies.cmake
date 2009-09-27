@@ -1,32 +1,57 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 #######################################################################
 # Find all necessary and optional OGRE dependencies
 #######################################################################
 
 # OGRE_DEPENDENCIES_DIR can be used to specify a single base
 # folder where the required dependencies may be found.
-set(OGRE_DEPENDENCIES_DIR "${OGRE_SOURCE_DIR}/Dependencies" CACHE PATH "Path to OGRE dependencies")
-set(DEP_PREFIX_SEARCH_DIR "${OGRE_DEPENDENCIES_DIR}")
+set(OGRE_DEPENDENCIES_DIR "" CACHE PATH "Path to prebuilt OGRE dependencies")
+include(FindPkgMacros)
+getenv_path(OGRE_DEPENDENCIES_DIR)
+if(OGRE_BUILD_PLATFORM_IPHONE)
+  set(OGRE_DEP_SEARCH_PATH 
+    ${OGRE_DEPENDENCIES_DIR}
+    ${ENV_OGRE_DEPENDENCIES_DIR}
+    "${OGRE_BINARY_DIR}/iPhoneDependencies"
+    "${OGRE_SOURCE_DIR}/iPhoneDependencies"
+    "${OGRE_BINARY_DIR}/../iPhoneDependencies"
+    "${OGRE_SOURCE_DIR}/../iPhoneDependencies"
+  )
+else()
+  set(OGRE_DEP_SEARCH_PATH 
+    ${OGRE_DEPENDENCIES_DIR}
+    ${ENV_OGRE_DEPENDENCIES_DIR}
+    "${OGRE_BINARY_DIR}/Dependencies"
+    "${OGRE_SOURCE_DIR}/Dependencies"
+    "${OGRE_BINARY_DIR}/../Dependencies"
+    "${OGRE_SOURCE_DIR}/../Dependencies"
+  )
+endif()
 
 # Set hardcoded path guesses for various platforms
-if (WIN32 OR APPLE)
-  set(DEP_INCLUDE_SEARCH_DIR "${OGRE_DEPENDENCIES_DIR}/include")
-  set(DEP_LIB_SEARCH_DIR "${OGRE_DEPENDENCIES_DIR}/lib/Release")
-  set(DEP_LIBD_SEARCH_DIR "${OGRE_DEPENDENCIES_DIR}/lib/Debug")
-endif ()
-
-
 if (UNIX)
-  # Important - OS X registers as *both* UNIX and APPLE, so append
-  set(DEP_INCLUDE_SEARCH_DIR ${DEP_INCLUDE_SEARCH_DIR} "/usr/local/include" ${OGRE_DEPENDENCIES_DIR}/include)
-  set(DEP_LIB_SEARCH_DIR ${DEP_LIB_SEARCH_DIR} "/usr/local/lib" ${OGRE_DEPENDENCIES_DIR}/lib)
-  set(DEP_LIBD_SEARCH_DIR ${DEP_LIBD_SEARCH_DIR} "/usr/local/lib" ${OGRE_DEPENDENCIES_DIR}/lib)
+  set(OGRE_DEP_SEARCH_PATH ${OGRE_DEP_SEARCH_PATH} /usr/local)
 endif ()
 
 # give guesses as hints to the find_package calls
-set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} ${DEP_INCLUDE_SEARCH_DIR})
-set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} ${DEP_LIB_SEARCH_DIR} ${DEP_LIBD_SEARCH_DIR})
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${DEP_PREFIX_SEARCH_DIR})
-set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${OGRE_DEPENDENCIES_DIR})
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OGRE_DEP_SEARCH_PATH})
+set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${OGRE_DEP_SEARCH_PATH})
+
+# see if there is an install directive somewhere in the dependencies folders
+find_file(OGRE_DEP_INSTALL_FILE OgreInstallDependencies.cmake 
+  HINTS ${OGRE_DEP_SEARCH_PATH} NO_DEFAULT_PATH)
+mark_as_advanced(OGRE_DEP_INSTALL_FILE)
+if (OGRE_DEP_INSTALL_FILE)
+  include(${OGRE_DEP_INSTALL_FILE})
+endif ()
 
 
 #######################################################################
@@ -35,11 +60,13 @@ set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${OGRE_DEPENDENCIES_DIR})
 
 # Find zlib
 find_package(ZLIB)
-macro_log_feature(ZLIB_FOUND "zlib" "Simple data compression library" "http://www.zlib.net" TRUE "" "")
+macro_log_feature(ZLIB_FOUND "zlib" "Simple data compression library" "http://www.zlib.net" FALSE "" "")
 
-# Find zziplib
-find_package(ZZip)
-macro_log_feature(ZZip_FOUND "zziplib" "Extract data from zip archives" "http://zziplib.sourceforge.net" TRUE "" "")
+if (ZLIB_FOUND)
+  # Find zziplib
+  find_package(ZZip)
+  macro_log_feature(ZZip_FOUND "zziplib" "Extract data from zip archives" "http://zziplib.sourceforge.net" FALSE "" "")
+endif ()
 
 # Find FreeImage
 find_package(FreeImage)
@@ -66,11 +93,15 @@ endif ()
 
 # Find OpenGL
 find_package(OpenGL)
-macro_log_feature(OPENGL_FOUND "opengl" "Support for the OpenGL render system" "" FALSE "" "")
+macro_log_feature(OPENGL_FOUND "OpenGL" "Support for the OpenGL render system" "http://www.opengl.org/" FALSE "" "")
 
-# Find OpenGLES
+# Find OpenGL ES
 find_package(OpenGLES)
-macro_log_feature(OPENGLES_FOUND "opengles" "Support for the OpenGL ES render system" "" FALSE "" "")
+macro_log_feature(OPENGLES_FOUND "OpenGL ES" "Support for the OpenGL ES 1.x render system" "http://www.khronos.org/opengles/" FALSE "" "")
+
+# Find OpenGL ES 2.x
+#find_package(OpenGLES2)
+#macro_log_feature(OPENGLES2_FOUND "OpenGL ES 2" "Support for the OpenGL ES 2.x render system" "http://www.khronos.org/opengles/" FALSE "" "")
 
 # Find DirectX
 if(WIN32)
@@ -88,28 +119,36 @@ macro_log_feature(Cg_FOUND "cg" "C for graphics shader language" "http://develop
 
 # Find Boost
 # Prefer static linking in all cases
-set(Boost_USE_STATIC_LIBS TRUE)
-set(Boost_ADDITIONAL_VERSIONS "1.37.0" "1.37" "1.38.0" "1.38")
-# Components that need linking (NB does not include heaader-only components like bind)
-set(OGRE_BOOST_COMPONENTS thread)
-find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
-if (!Boost_FOUND)
-	# Try dynamic
-	set(Boost_USE_STATIC_LIBS TRUE)
+if (NOT OGRE_BUILD_PLATFORM_IPHONE)
+	if (WIN32 OR APPLE)
+		set(Boost_USE_STATIC_LIBS TRUE)
+	else ()
+		# Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
+		set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
+	endif ()
+	set(Boost_ADDITIONAL_VERSIONS "1.37.0" "1.37" "1.38.0" "1.38" "1.39.0" "1.39" "1.40.0" "1.40")
+	# Components that need linking (NB does not include header-only components like bind)
+	set(OGRE_BOOST_COMPONENTS thread date_time)
 	find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
-endif()
-# Optional Boost libs (Boost_${COMPONENT}_FOUND
-if(OGRE_BUILD_COMPONENT_PROPERTY)
-	set(OGRE_BOOST_REQUIRED TRUE)
-else ()
-	set(OGRE_BOOST_REQUIRED FALSE)
-endif()
-macro_log_feature(Boost_FOUND "boost" "Boost (general)" "http://boost.org" ${OGRE_BOOST_REQUIRED} "" "")
-macro_log_feature(Boost_THREAD_FOUND "boost-thread" "Used for threading support" "http://boost.org" FALSE "" "")
+	if (NOT Boost_FOUND)
+		# Try again with the other type of libs
+		set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
+		find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
+	endif()
+	find_package(Boost QUIET)
+	# Optional Boost libs (Boost_${COMPONENT}_FOUND
+	macro_log_feature(Boost_FOUND "boost" "Boost (general)" "http://boost.org" FALSE "" "")
+	macro_log_feature(Boost_THREAD_FOUND "boost-thread" "Used for threading support" "http://boost.org" FALSE "" "")
+	macro_log_feature(Boost_DATE_TIME_FOUND "boost-date_time" "Used for threading support" "http://boost.org" FALSE "" "")
+endif(NOT OGRE_BUILD_PLATFORM_IPHONE)
 
 # POCO
 find_package(POCO)
-macro_log_feature(Poco_FOUND "POCO" "POCO framework" "http://pocoproject.org/" FALSE "" "")
+macro_log_feature(POCO_FOUND "POCO" "POCO framework" "http://pocoproject.org/" FALSE "" "")
+
+# ThreadingBuildingBlocks
+find_package(TBB)
+macro_log_feature(TBB_FOUND "tbb" "Threading Building Blocks" "http://www.threadingbuildingblocks.org/" FALSE "" "")
 
 
 
@@ -144,18 +183,20 @@ macro_log_feature(CppUnit_FOUND "CppUnit" "Library for performing unit tests" "h
 #######################################################################
 if (APPLE)
   find_package(Carbon)
-  macro_log_feature(Carbon_FOUND "Carbon" "Carbon" "http://www.apple.com" TRUE "" "")
+  macro_log_feature(Carbon_FOUND "Carbon" "Carbon" "http://developer.apple.com/mac" TRUE "" "")
 
   find_package(Cocoa)
-  macro_log_feature(Cocoa_FOUND "Cocoa" "Cocoa" "http://www.apple.com" TRUE "" "")
+  macro_log_feature(Cocoa_FOUND "Cocoa" "Cocoa" "http://developer.apple.com/mac" TRUE "" "")
 
   find_package(IOKit)
-  macro_log_feature(IOKit_FOUND "IOKit" "IOKit HID framework needed by the samples" "http://www.apple.com" FALSE "" "")
+  macro_log_feature(IOKit_FOUND "IOKit" "IOKit HID framework needed by the samples" "http://developer.apple.com/mac" FALSE "" "")
+
+  find_package(iPhoneSDK)
+  macro_log_feature(iPhoneSDK_FOUND "iPhone SDK" "iPhone SDK" "http://developer.apple.com/iphone" FALSE "" "")
 endif(APPLE)
 
 # Display results, terminate if anything required is missing
 MACRO_DISPLAY_FEATURE_LOG()
-
 
 # Add library and include paths from the dependencies
 include_directories(
@@ -164,22 +205,27 @@ include_directories(
   ${FreeImage_INCLUDE_DIRS}
   ${FREETYPE_INCLUDE_DIRS}
   ${OPENGL_INCLUDE_DIRS}
+  ${OPENGLES_INCLUDE_DIRS}
   ${CEGUI_INCLUDE_DIRS}
   ${OIS_INCLUDE_DIRS}
   ${Cg_INCLUDE_DIRS}
-  ${BOOST_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
   ${DirectX_INCLUDE_DIRS}
   ${CppUnit_INCLUDE_DIRS}
   ${Carbon_INCLUDE_DIRS}
   ${Cocoa_INCLUDE_DIRS}
 )
+
 link_directories(
   ${OPENGL_LIBRARY_DIRS}
+  ${OPENGLES_LIBRARY_DIRS}
   ${Cg_LIBRARY_DIRS}
-  ${BOOST_LIBRARY_DIRS}
   ${X11_LIBRARY_DIRS}
   ${DirectX_LIBRARY_DIRS}
   ${CppUnit_LIBRARY_DIRS}
 )
 
+if (Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_directories(${Boost_LIBRARY_DIRS})
+endif ()

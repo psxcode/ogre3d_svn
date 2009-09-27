@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 ############################################################
 # OgreMain core library
 ############################################################
@@ -86,6 +95,8 @@ set (HEADER_FILES
   include/OgreImage.h
   include/OgreImageCodec.h
   include/OgreInstancedGeometry.h
+  include/OgreIteratorRange.h
+  include/OgreIteratorWrapper.h
   include/OgreIteratorWrappers.h
   include/OgreKeyFrame.h
   include/OgreLight.h
@@ -158,6 +169,7 @@ set (HEADER_FILES
   include/OgreRectangle.h
   include/OgreRectangle2D.h
   include/OgreRenderable.h
+  include/OgreRenderObjectListener.h
   include/OgreRenderOperation.h
   include/OgreRenderQueue.h
   include/OgreRenderQueueInvocation.h
@@ -239,6 +251,7 @@ set (HEADER_FILES
   include/OgreViewport.h
   include/OgreWindowEventUtilities.h
   include/OgreWireBoundingBox.h
+  include/OgreWorkQueue.h
   include/OgreZip.h
 )
 
@@ -332,7 +345,9 @@ set (SOURCE_FILES
   src/OgreNumerics.cpp
   src/OgreOptimisedUtil.cpp
   src/OgreOptimisedUtilGeneral.cpp
+#  src/OgreOptimisedUtilNEON.cpp
   src/OgreOptimisedUtilSSE.cpp
+#  src/OgreOptimisedUtilVFP.cpp
   src/OgreOverlay.cpp
   src/OgreOverlayContainer.cpp
   src/OgreOverlayElement.cpp
@@ -427,6 +442,7 @@ set (SOURCE_FILES
   src/OgreViewport.cpp
   src/OgreWindowEventUtilities.cpp
   src/OgreWireBoundingBox.cpp
+  src/OgreWorkQueue.cpp
   src/OgreZip.cpp
 )
 
@@ -455,29 +471,58 @@ if (WIN32)
   set(PLATFORM_HEADER_INSTALL "win32")
 
 elseif (APPLE)
-  include_directories("include/OSX")
-  include_directories("${CMAKE_SOURCE_DIR}/Mac/Ogre/include")
-  set(PLATFORM_HEADER_FILES
-    include/OSX/OgreConfigDialogImp.h
-    include/OSX/OgreErrorDialogImp.h
-    include/OSX/OgreTimerImp.h
-    # think about relocating these
-    ${CMAKE_SOURCE_DIR}/Mac/Ogre/include/macBundlePath.h
-    ${CMAKE_SOURCE_DIR}/Mac/Ogre/include/macPlugins.h
-    ${CMAKE_SOURCE_DIR}/Mac/Ogre/include/OgreOSXCocoaView.h
-  )
-  set(PLATFORM_SOURCE_FILES
-    src/OSX/OgreConfigDialog.cpp
-    src/OSX/OgreErrorDialog.cpp
-    src/OSX/OgreTimer.cpp
-    src/OgreSearchOps.cpp
-    # think about relocating these
-    ${CMAKE_SOURCE_DIR}/Mac/Ogre/src/macBundlePath.cpp
-    ${CMAKE_SOURCE_DIR}/Mac/Ogre/src/macPlugins.cpp
-    ${CMAKE_SOURCE_DIR}/Mac/Ogre/src/OgreOSXCocoaView.mm
-  )
-  set(PLATFORM_LIBS ${Carbon_LIBRARY_FWK} ${Cocoa_LIBRARY_FWK})
-  set(PLATFORM_HEADER_INSTALL "OSX")
+  if (OGRE_BUILD_PLATFORM_IPHONE)
+    include_directories("include/iPhone")
+    set(PLATFORM_HEADER_FILES
+      include/iPhone/OgreConfigDialogImp.h
+      include/iPhone/OgreErrorDialogImp.h
+      include/iPhone/OgreTimerImp.h
+      include/iPhone/macUtils.h
+    )
+    set(PLATFORM_SOURCE_FILES
+      src/iPhone/OgreConfigDialog.cpp
+      src/iPhone/OgreErrorDialog.cpp
+      src/iPhone/OgreTimer.cpp
+      src/iPhone/macUtils.mm
+      src/OgreSearchOps.cpp
+    )
+    set(PLATFORM_LIBS "")
+    set(PLATFORM_HEADER_INSTALL "iPhone")
+  else ()
+    include_directories("include/OSX")
+    set(PLATFORM_HEADER_FILES
+      # Hack around a CMake bug.  The first item has its role set to Project instead of public.
+      # including it twice works around the issue
+      # In addition, include OgreZip.h because of a similar issue
+	  include/OSX/config.h
+	  include/OSX/config.h
+      include/OSX/macUtils.h
+      include/OSX/OgreConfigDialogImp.h
+      include/OSX/OgreErrorDialogImp.h
+      include/OSX/OgreTimerImp.h
+      include/OSX/OgreOSXCocoaView.h
+	  include/OgreConfig.h
+	  include/OgreZip.h
+	  ${OGRE_BINARY_DIR}/include/buildsettings.h
+    )
+    set(PLATFORM_SOURCE_FILES
+      src/OSX/OgreConfigDialog.mm
+      src/OSX/OgreErrorDialog.mm
+      src/OSX/OgreTimer.cpp
+      src/OSX/macUtils.cpp
+      src/OSX/OgreOSXCocoaView.mm
+      src/OgreSearchOps.cpp
+	  include/OSX/ogrelogo.png
+    )
+
+    set(RESOURCE_FILES
+	  include/OSX/ogrelogo.png
+    )
+    source_group(Resources FILES ${RESOURCE_FILES})
+
+    set(PLATFORM_LIBS ${Carbon_LIBRARY_FWK} ${Cocoa_LIBRARY_FWK})
+    set(PLATFORM_HEADER_INSTALL "OSX")
+  endif ()
 elseif (UNIX)
   include_directories(include/GLX ${X11_INCLUDE_DIR})
   set(PLATFORM_HEADER_FILES
@@ -498,35 +543,112 @@ elseif (UNIX)
 endif(WIN32)
 
 
+# Configure threading files
+set(THREAD_HEADER_FILES
+	include/Threading/OgreThreadDefines.h
+	include/Threading/OgreThreadHeaders.h
+	include/Threading/OgreDefaultWorkQueue.h
+)
+if (OGRE_THREAD_PROVIDER EQUAL 0)
+	list(APPEND THREAD_HEADER_FILES
+		include/Threading/OgreThreadDefinesNone.h
+		include/Threading/OgreDefaultWorkQueueStandard.h
+	)
+	set(THREAD_SOURCE_FILES
+		src/Threading/OgreDefaultWorkQueueStandard.cpp
+	)
+elseif (OGRE_THREAD_PROVIDER EQUAL 1)
+	list(APPEND THREAD_HEADER_FILES
+		include/Threading/OgreThreadDefinesBoost.h
+		include/Threading/OgreThreadHeadersBoost.h
+		include/Threading/OgreDefaultWorkQueueStandard.h
+	)
+	set(THREAD_SOURCE_FILES
+		src/Threading/OgreDefaultWorkQueueStandard.cpp
+	)
+elseif (OGRE_THREAD_PROVIDER EQUAL 2)
+	list(APPEND THREAD_HEADER_FILES
+		include/Threading/OgreThreadDefinesPoco.h
+		include/Threading/OgreThreadHeadersPoco.h
+		include/Threading/OgreDefaultWorkQueueStandard.h
+	)
+	set(THREAD_SOURCE_FILES
+		src/Threading/OgreDefaultWorkQueueStandard.cpp
+	)
+elseif (OGRE_THREAD_PROVIDER EQUAL 3)
+	list(APPEND THREAD_HEADER_FILES
+		include/Threading/OgreThreadDefinesTBB.h
+		include/Threading/OgreThreadHeadersTBB.h
+		include/Threading/OgreDefaultWorkQueueTBB.h
+	)
+	set(THREAD_SOURCE_FILES
+		src/Threading/OgreDefaultWorkQueueTBB.cpp
+	)
+endif ()
+
+
 # Add needed definitions and nedmalloc include dir
 add_definitions(-DOGRE_NONCLIENT_BUILD -DFREEIMAGE_LIB -D_MT -D_USRDLL)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/nedmalloc)
 
-
-# setup OgreMain target
-add_library(OgreMain ${OGRE_LIB_TYPE} ${PREC_HEADER} ${HEADER_FILES} ${SOURCE_FILES} ${PLATFORM_HEADER_FILES} ${PLATFORM_SOURCE_FILES})
-set_target_properties(OgreMain PROPERTIES VERSION ${OGRE_VERSION} SOVERSION ${OGRE_VERSION_MAJOR})
-if (APPLE)
-  set_target_properties(OgreMain PROPERTIES	FRAMEWORK TRUE)
-  set_target_properties(OgreMain PROPERTIES PUBLIC_HEADER "${HEADER_FILES} ${PLATFORM_HEADER_FILES}" )
-  # Framework is called 'Ogre'
-  set_target_properties(OgreMain PROPERTIES	OUTPUT_NAME Ogre)
-  # Set the INSTALL_PATH so that Frameworks can be local
-  set_target_properties(OgreMain
-     PROPERTIES BUILD_WITH_INSTALL_RPATH 1
-     INSTALL_NAME_DIR "@executable_path/../Frameworks"
-  )
-endif()
-target_link_libraries(OgreMain
+set(LIBRARIES
   ${ZLIB_LIBRARIES}
   ${ZZip_LIBRARIES}
   ${FreeImage_LIBRARIES}
   ${FREETYPE_LIBRARIES}
   ${PLATFORM_LIBS}
 )
+
 if (OGRE_CONFIG_THREADS)
-  target_link_libraries(OgreMain ${Boost_LIBRARIES})
+  list(APPEND LIBRARIES ${OGRE_THREAD_LIBRARIES})
 endif ()
+
+if (OGRE_CONFIG_DISABLE_FREEIMAGE)
+  list(REMOVE_ITEM HEADER_FILES include/OgreFreeImageCodec.h)
+  list(REMOVE_ITEM SOURCE_FILES src/OgreFreeImageCodec.cpp)
+  list(REMOVE_ITEM LIBRARIES    "${FreeImage_LIBRARIES}")
+endif()
+
+if (OGRE_CONFIG_DISABLE_DDS)
+  list(REMOVE_ITEM HEADER_FILES include/OgreDDSCodec.h)
+  list(REMOVE_ITEM SOURCE_FILES src/OgreDDSCodec.cpp)
+endif ()
+
+if (OGRE_CONFIG_DISABLE_ZIP)
+  list(REMOVE_ITEM HEADER_FILES include/OgreZip.h)
+  list(REMOVE_ITEM SOURCE_FILES src/OgreZip.cpp)
+  list(REMOVE_ITEM LIBRARIES "${ZZip_LIBRARIES}")
+  list(REMOVE_ITEM LIBRARIES "${ZLIB_LIBRARIES}")
+endif ()
+
+# setup OgreMain target
+add_library(OgreMain ${OGRE_LIB_TYPE} ${PREC_HEADER} ${HEADER_FILES} ${SOURCE_FILES} ${PLATFORM_HEADER_FILES} ${PLATFORM_SOURCE_FILES} ${THREAD_HEADER_FILES} ${THREAD_SOURCE_FILES})
+set_target_properties(OgreMain PROPERTIES VERSION ${OGRE_VERSION} SOVERSION ${OGRE_VERSION_MAJOR})
+if (APPLE)
+  if (NOT OGRE_BUILD_PLATFORM_IPHONE)
+    set_target_properties(OgreMain PROPERTIES FRAMEWORK TRUE)
+    # Set the INSTALL_PATH so that Frameworks can be local
+    set_target_properties(OgreMain
+       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+       INSTALL_NAME_DIR "@executable_path/../Frameworks"
+    )
+    set_target_properties(OgreMain PROPERTIES PUBLIC_HEADER "${HEADER_FILES} ${PLATFORM_HEADER_FILES} ${THREAD_HEADER_FILES}")
+	set_target_properties(OgreMain PROPERTIES RESOURCE "${RESOURCE_FILES}")
+	set_source_files_properties("${RESOURCE_FILES}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  else ()
+    set_target_properties(OgreMain PROPERTIES INSTALL_NAME_DIR "OGRE")
+    set_target_properties(OgreMain PROPERTIES XCODE_ATTRIBUTE_GCC_THUMB_SUPPORT "NO")
+    set_target_properties(OgreMain PROPERTIES XCODE_ATTRIBUTE_GCC_UNROLL_LOOPS "YES")
+    set_target_properties(OgreMain PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer")
+    set_target_properties(OgreMain PROPERTIES XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES")
+    set_target_properties(OgreMain PROPERTIES XCODE_ATTRIBUTE_GCC_PREFIX_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/OgreStableHeaders.h")
+  endif ()
+
+  # Framework is called 'Ogre'
+  set_target_properties(OgreMain PROPERTIES	OUTPUT_NAME Ogre)
+endif ()
+target_link_libraries(OgreMain ${LIBRARIES})
+
 # specify a precompiled header to use
 use_precompiled_header(OgreMain 
   "${CMAKE_CURRENT_SOURCE_DIR}/include/OgreStableHeaders.h"
@@ -541,4 +663,6 @@ install(FILES ${HEADER_FILES}
 install(FILES ${PLATFORM_HEADER_FILES}
   DESTINATION include/OGRE/${PLATFORM_HEADER_INSTALL}
 )
-
+install(FILES ${THREAD_HEADER_FILES}
+	DESTINATION include/OGRE/Threading
+)

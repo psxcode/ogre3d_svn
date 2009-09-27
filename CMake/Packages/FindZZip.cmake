@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 # - Try to find zziplib
 # Once done, this will define
 #
@@ -31,8 +40,8 @@ use_pkgconfig(ZZip_PKGC zziplib)
 findpkg_framework(ZZip)
 
 find_path(ZZip_INCLUDE_DIR NAMES zzip/zzip.h HINTS ${ZZip_INC_SEARCH_PATH} ${ZZip_PKGC_INCLUDE_DIRS})
-find_library(ZZip_LIBRARY_REL NAMES ${ZZip_LIBRARY_NAMES} HINTS ${ZZip_LIB_SEARCH_PATH} ${ZZip_PKGC_LIBRARY_DIRS})
-find_library(ZZip_LIBRARY_DBG NAMES ${ZZip_LIBRARY_NAMES_DBG} HINTS ${ZZip_LIB_SEARCH_PATH} ${ZZip_PKGC_LIBRARY_DIRS})
+find_library(ZZip_LIBRARY_REL NAMES ${ZZip_LIBRARY_NAMES} HINTS ${ZZip_LIB_SEARCH_PATH} ${ZZip_PKGC_LIBRARY_DIRS} PATH_SUFFIXES "" release relwithdebinfo minsizerel)
+find_library(ZZip_LIBRARY_DBG NAMES ${ZZip_LIBRARY_NAMES_DBG} HINTS ${ZZip_LIB_SEARCH_PATH} ${ZZip_PKGC_LIBRARY_DIRS} PATH_SUFFIXES "" debug)
 make_library_set(ZZip_LIBRARY)
 
 findpkg_finish(ZZip)
