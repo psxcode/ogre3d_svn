@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -277,8 +276,8 @@ namespace Ogre {
                 StringConverter::toString(numFaces));
             // Write each face in turn
             size_t i;
-		    unsigned int* pInt;
-		    unsigned short* pShort;
+		    unsigned int* pInt = 0;
+		    unsigned short* pShort = 0;
 		    HardwareIndexBufferSharedPtr ibuf = s->indexData->indexBuffer;
 		    if (use32BitIndexes)
 		    {
@@ -519,6 +518,12 @@ namespace Ogre {
     						dataNode->SetAttribute("v", StringConverter::toString(*pFloat++));
     						dataNode->SetAttribute("w", StringConverter::toString(*pFloat++));
                             break;
+                        case VET_FLOAT4:
+    						dataNode->SetAttribute("u", StringConverter::toString(*pFloat++));
+    						dataNode->SetAttribute("v", StringConverter::toString(*pFloat++));
+    						dataNode->SetAttribute("w", StringConverter::toString(*pFloat++));
+    						dataNode->SetAttribute("x", StringConverter::toString(*pFloat++));
+                            break;
                         default:
                             break;
                         }
@@ -643,7 +648,7 @@ namespace Ogre {
             if (readFaces)
             {
                 TiXmlElement* faces = smElem->FirstChildElement("faces");
-                size_t actualCount = 0;
+                int actualCount = 0;
                 for (TiXmlElement *faceElem = faces->FirstChildElement(); faceElem != 0; faceElem = faceElem->NextSiblingElement())
                 {
                         actualCount++;
@@ -677,8 +682,8 @@ namespace Ogre {
 							HardwareBuffer::HBU_DYNAMIC,
 							false);
 					sm->indexData->indexBuffer = ibuf;
-					unsigned int *pInt;
-					unsigned short *pShort;
+					unsigned int *pInt = 0;
+					unsigned short *pShort = 0;
 					if (use32BitIndexes)
 					{
 						pInt = static_cast<unsigned int*>(
@@ -753,7 +758,7 @@ namespace Ogre {
         ARGB *pCol;
 
         const char *claimedVertexCount_ = mGeometryNode->Attribute("vertexcount");
-        ptrdiff_t claimedVertexCount;
+        ptrdiff_t claimedVertexCount = 0;
         if (claimedVertexCount_)
         {
                 claimedVertexCount =
@@ -769,7 +774,7 @@ namespace Ogre {
         unsigned short totalTexCoords = 0; // across all buffers
 
         // Information for calculating bounds
-        Vector3 min, max, pos;
+        Vector3 min = Vector3::ZERO, max = Vector3::UNIT_SCALE, pos = Vector3::ZERO;
         Real maxSquaredRadius = -1;
         bool first = true;
 
@@ -1053,6 +1058,11 @@ namespace Ogre {
                             *pFloat++ = StringConverter::parseReal(
                                 xmlElem->Attribute("w"));
                         }
+                        if (VertexElement::getTypeCount(elem.getType()) > 3)
+                        {
+                            *pFloat++ = StringConverter::parseReal(
+                                xmlElem->Attribute("x"));
+                        }
 
                         break;
                     default:
@@ -1261,8 +1271,8 @@ namespace Ogre {
 				bool use32BitIndexes = (facedata->indexBuffer->getType() == HardwareIndexBuffer::IT_32BIT);
 
 				// Write each face in turn
-				unsigned int* pInt;
-				unsigned short* pShort;
+				unsigned int* pInt = 0;
+				unsigned short* pShort = 0;
 				HardwareIndexBufferSharedPtr ibuf = facedata->indexBuffer;
 				if (use32BitIndexes)
 				{
@@ -1388,7 +1398,7 @@ namespace Ogre {
 	{
 		MeshLodUsage usage;
 		const char* val = manualNode->Attribute("value");
-		Real userValue;
+
         // If value attribute not found check for old name
         if (!val)
         {
@@ -1413,7 +1423,7 @@ namespace Ogre {
 	{
 		MeshLodUsage usage;
 		const char* val = genNode->Attribute("value");
-		Real userValue;
+
         // If value attribute not found check for old name
         if (!val)
         {
@@ -1455,8 +1465,8 @@ namespace Ogre {
 					createIndexBuffer(
 						itype, numFaces * 3, HardwareBuffer::HBU_STATIC_WRITE_ONLY);
 
-				unsigned short *pShort;
-				unsigned int *pInt;
+				unsigned short *pShort = 0;
+				unsigned int *pInt = 0;
 				if (use32bitindexes)
 				{
 					pInt = static_cast<unsigned int*>(

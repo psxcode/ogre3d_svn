@@ -858,7 +858,7 @@ class MeshExporter:
 		# populated on export
 		self.submeshManager = None
 		return
-	def export(self, dir, materialManager=MaterialManager(), fixUpAxis=True, exportMesh=True, colouredAmbient=False, convertXML=False):
+	def export(self, dir, materialManager, fixUpAxis=True, exportMesh=True, colouredAmbient=False, convertXML=False):
 		# leave editmode
 		editmode = Blender.Window.EditMode()
 		if editmode:
@@ -902,15 +902,16 @@ class MeshExporter:
 		bMesh = self.bObject.getData(mesh=True)
 		self.submeshManager = SubmeshManager(bMesh, fixUpAxis, self.armatureExporter)
 		for bMFace in bMesh.faces:
-			faceMaterial = materialManager.getMaterial(bMesh, bMFace, colouredAmbient)
+			faceMaterial = materialManager.getMaterial(bMesh, bMFace, colouredAmbient, self.name)
 			if faceMaterial and exportMesh:
 				# append face to submesh
 				self.submeshManager.getSubmesh(faceMaterial).addFace(bMFace)
 		return
 	def _write(self, dir, convertXML):
+		exportDir = dir or Blender.sys.dirname(Blender.Get('filename'))
 		file = self.getName() + ".mesh.xml"
 		Log.getSingleton().logInfo("Writing mesh file \"%s\"" % file)
-		fileObject = open(os.path.join(dir, file), "w")
+		fileObject = open(Blender.sys.join(exportDir, file), "w")
 		fileObject.write(indent(0)+"<mesh>\n")
 		# submeshes
 		self.submeshManager.write(fileObject, 1)
@@ -922,5 +923,5 @@ class MeshExporter:
 		fileObject.write(indent(0)+"</mesh>\n")
 		fileObject.close()
 		if convertXML:
-			OgreXMLConverter.getSingleton().convert(os.path.join(dir, file))
+			OgreXMLConverter.getSingleton().convert(Blender.sys.join(exportDir, file))
 		return
