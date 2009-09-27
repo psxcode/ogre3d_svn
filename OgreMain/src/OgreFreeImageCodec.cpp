@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -40,11 +39,23 @@ Torus Knot Software Ltd.
 
 #include <FreeImage.h>
 
+// freeimage 3.9.1~3.11.0 interoperability fix
+#ifndef FREEIMAGE_COLORORDER
+// we have freeimage 3.9.1, define these symbols in such way as 3.9.1 really work (do not use 3.11.0 definition, as color order was changed between these two versions on Apple systems)
+#define FREEIMAGE_COLORORDER_BGR	0
+#define FREEIMAGE_COLORORDER_RGB	1
+#if defined(FREEIMAGE_BIGENDIAN)
+#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_RGB
+#else
+#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_BGR
+#endif
+#endif
+
 namespace Ogre {
 
 	FreeImageCodec::RegisteredCodecList FreeImageCodec::msCodecList;
 	//---------------------------------------------------------------------
-	void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) 
+	void FreeImageLoadErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) 
 	{
 		// Callback method as required by FreeImage to report problems
 		const char* typeName = FreeImage_GetFormatFromFIF(fif);
@@ -60,6 +71,13 @@ namespace Ogre {
 				<< "FreeImage error: '" << message << "'";
 		}
 
+	}
+	//---------------------------------------------------------------------
+	void FreeImageSaveErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) 
+	{
+		// Callback method as required by FreeImage to report problems
+		OGRE_EXCEPT(Exception::ERR_CANNOT_WRITE_TO_FILE, 
+					message, "FreeImageCodec::save")
 	}
 	//---------------------------------------------------------------------
 	void FreeImageCodec::startup(void)
@@ -107,7 +125,7 @@ namespace Ogre {
 			strExt.str());
 
 		// Set error handler
-		FreeImage_SetOutputMessage(FreeImageErrorHandler);
+		FreeImage_SetOutputMessage(FreeImageLoadErrorHandler);
 
 
 
@@ -136,6 +154,9 @@ namespace Ogre {
 	//---------------------------------------------------------------------
 	FIBITMAP* FreeImageCodec::encode(MemoryDataStreamPtr& input, CodecDataPtr& pData) const
 	{
+		// Set error handler
+		FreeImage_SetOutputMessage(FreeImageSaveErrorHandler);
+
 		FIBITMAP* ret = 0;
 
 		ImageData* pImgData = static_cast< ImageData * >( pData.getPointer() );
@@ -173,7 +194,7 @@ namespace Ogre {
 			// data in RGB[A] (big endian) and BGR[A] (little endian), always.
 			if (PixelUtil::hasAlpha(determiningFormat))
 			{
-#if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 				requiredFormat = PF_BYTE_RGBA;
 #else
 				requiredFormat = PF_BYTE_BGRA;
@@ -181,7 +202,7 @@ namespace Ogre {
 			}
 			else
 			{
-#if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 				requiredFormat = PF_BYTE_RGB;
 #else
 				requiredFormat = PF_BYTE_BGR;
@@ -249,6 +270,44 @@ namespace Ogre {
 			case PF_BYTE_BGRA:
 				requiredFormat = PF_BYTE_BGR;
 				break;
+            case PF_L8:
+            case PF_L16:
+            case PF_UNKNOWN:
+            case PF_BYTE_A:
+            case PF_A4L4:
+            case PF_BYTE_LA:
+            case PF_R5G6B5:
+            case PF_B5G6R5:
+            case PF_R3G3B2:
+            case PF_A4R4G4B4:
+            case PF_A1R5G5B5:
+            case PF_B8G8R8A8:
+            case PF_R8G8B8A8:
+            case PF_X8B8G8R8:
+            case PF_X8R8G8B8:
+            case PF_BYTE_BGR:
+            case PF_BYTE_RGB:
+            case PF_A2B10G10R10:
+            case PF_A2R10G10B10:
+            case PF_DXT1:
+            case PF_DXT2:
+            case PF_DXT3:
+            case PF_DXT4:
+            case PF_DXT5:
+            case PF_FLOAT16_R:
+            case PF_FLOAT16_RGB:
+            case PF_FLOAT16_RGBA:
+            case PF_FLOAT32_R:
+            case PF_FLOAT32_RGB:
+            case PF_FLOAT32_RGBA:
+            case PF_FLOAT16_GR:
+            case PF_FLOAT32_GR:
+            case PF_DEPTH:
+            case PF_SHORT_RGBA:
+            case PF_SHORT_GR:
+            case PF_SHORT_RGB:
+            case PF_COUNT:
+                break;
 			};
 
 		}
@@ -264,7 +323,7 @@ namespace Ogre {
 			if (bpp == 32 && PixelUtil::hasAlpha(pImgData->format) && FreeImage_FIFSupportsExportBPP((FREE_IMAGE_FORMAT)mFreeImageType, 24))
 			{
 				// drop to 24 bit (lose alpha)
-#if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 				requiredFormat = PF_BYTE_RGB;
 #else
 				requiredFormat = PF_BYTE_BGR;
@@ -297,6 +356,16 @@ namespace Ogre {
 			static_cast<int>(pImgData->width), 
 			static_cast<int>(pImgData->height), 
 			bpp);
+
+		if (!ret)
+		{
+			if (conversionRequired)
+				OGRE_FREE(convBox.data, MEMCATEGORY_GENERAL);
+
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"FreeImage_AllocateT failed - possibly out of memory. ", 
+				__FUNCTION__);
+		}
 
 		if (requiredFormat == PF_L8 || requiredFormat == PF_A8)
 		{
@@ -333,6 +402,9 @@ namespace Ogre {
     //---------------------------------------------------------------------
     DataStreamPtr FreeImageCodec::code(MemoryDataStreamPtr& input, Codec::CodecDataPtr& pData) const
     {        
+		// Set error handler
+		FreeImage_SetOutputMessage(FreeImageSaveErrorHandler);
+
 		FIBITMAP* fiBitmap = encode(input, pData);
 
 		// open memory chunk allocated by FreeImage
@@ -362,6 +434,9 @@ namespace Ogre {
     void FreeImageCodec::codeToFile(MemoryDataStreamPtr& input, 
         const String& outFileName, Codec::CodecDataPtr& pData) const
     {
+		// Set error handler
+		FreeImage_SetOutputMessage(FreeImageSaveErrorHandler);
+
 		FIBITMAP* fiBitmap = encode(input, pData);
 
 		FreeImage_Save((FREE_IMAGE_FORMAT)mFreeImageType, fiBitmap, outFileName.c_str());
@@ -372,6 +447,9 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Codec::DecodeResult FreeImageCodec::decode(DataStreamPtr& input) const
     {
+		// Set error handler
+		FreeImage_SetOutputMessage(FreeImageLoadErrorHandler);
+
 		// Buffer stream into memory (TODO: override IO functions instead?)
 		MemoryDataStream memStream(input, true);
 
@@ -464,14 +542,14 @@ namespace Ogre {
 				// FreeImage differs per platform
 				//     PF_BYTE_BGR[A] for little endian (== PF_ARGB native)
 				//     PF_BYTE_RGB[A] for big endian (== PF_RGBA native)
-#if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 				imgData->format = PF_BYTE_RGB;
 #else
 				imgData->format = PF_BYTE_BGR;
 #endif
 				break;
 			case 32:
-#if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 				imgData->format = PF_BYTE_RGBA;
 #else
 				imgData->format = PF_BYTE_BGRA;
@@ -543,6 +621,9 @@ namespace Ogre {
 	//---------------------------------------------------------------------
 	String FreeImageCodec::magicNumberToFileExt(const char *magicNumberPtr, size_t maxbytes) const
 	{
+		// Set error handler
+		FreeImage_SetOutputMessage(FreeImageLoadErrorHandler);
+
 		FIMEMORY* fiMem = 
 			FreeImage_OpenMemory((BYTE*)magicNumberPtr, static_cast<DWORD>(maxbytes));
 

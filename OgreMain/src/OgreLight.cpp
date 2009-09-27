@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -454,9 +453,20 @@ namespace Ogre {
 
         // Get worldspace frustum corners
         const Vector3* corners = cam->getWorldSpaceCorners();
-        int winding = cam->isReflected() ? +1 : -1;
+        int windingPt0 = cam->isReflected() ? 1 : 0;
+        int windingPt1 = cam->isReflected() ? 0 : 1;
 
         bool infiniteViewDistance = (cam->getFarClipDistance() == 0);
+
+		Vector3 notSoFarCorners[4];
+		if(infiniteViewDistance)
+		{
+			Vector3 camPosition = cam->getRealPosition();
+			notSoFarCorners[0] = corners[0] + corners[0] - camPosition;
+			notSoFarCorners[1] = corners[1] + corners[1] - camPosition;
+			notSoFarCorners[2] = corners[2] + corners[2] - camPosition;
+			notSoFarCorners[3] = corners[3] + corners[3] - camPosition;
+		}
 
         mFrustumClipVolumes.clear();
         for (unsigned short n = 0; n < 6; ++n)
@@ -492,28 +502,28 @@ namespace Ogre {
                     clockwiseVerts[3] = corners + 4;
                     break;
                 case(FRUSTUM_PLANE_LEFT):
-                    clockwiseVerts[0] = corners + 2;
-                    clockwiseVerts[1] = corners + 6;
-                    clockwiseVerts[2] = corners + 5;
-                    clockwiseVerts[3] = corners + 1;
+                    clockwiseVerts[0] = infiniteViewDistance ? notSoFarCorners + 1 : corners + 5;
+                    clockwiseVerts[1] = corners + 1;
+                    clockwiseVerts[2] = corners + 2;
+                    clockwiseVerts[3] = infiniteViewDistance ? notSoFarCorners + 2 : corners + 6;
                     break;
                 case(FRUSTUM_PLANE_RIGHT):
-                    clockwiseVerts[0] = corners + 7;
+                    clockwiseVerts[0] = infiniteViewDistance ? notSoFarCorners + 3 : corners + 7;
                     clockwiseVerts[1] = corners + 3;
                     clockwiseVerts[2] = corners + 0;
-                    clockwiseVerts[3] = corners + 4;
+                    clockwiseVerts[3] = infiniteViewDistance ? notSoFarCorners + 0 : corners + 4;
                     break;
                 case(FRUSTUM_PLANE_TOP):
-                    clockwiseVerts[0] = corners + 0;
-                    clockwiseVerts[1] = corners + 1;
-                    clockwiseVerts[2] = corners + 5;
-                    clockwiseVerts[3] = corners + 4;
+                    clockwiseVerts[0] = infiniteViewDistance ? notSoFarCorners + 0 : corners + 4;
+                    clockwiseVerts[1] = corners + 0;
+                    clockwiseVerts[2] = corners + 1;
+                    clockwiseVerts[3] = infiniteViewDistance ? notSoFarCorners + 1 : corners + 5;
                     break;
                 case(FRUSTUM_PLANE_BOTTOM):
-                    clockwiseVerts[0] = corners + 7;
-                    clockwiseVerts[1] = corners + 6;
-                    clockwiseVerts[2] = corners + 2;
-                    clockwiseVerts[3] = corners + 3;
+                    clockwiseVerts[0] = infiniteViewDistance ? notSoFarCorners + 2 : corners + 6;
+                    clockwiseVerts[1] = corners + 2;
+                    clockwiseVerts[2] = corners + 3;
+                    clockwiseVerts[3] = infiniteViewDistance ? notSoFarCorners + 3 : corners + 7;
                     break;
                 };
 
@@ -521,11 +531,12 @@ namespace Ogre {
                 // Iterate over world points and form side planes
                 Vector3 normal;
                 Vector3 lightDir;
-                for (unsigned int i = 0; i < 4; ++i)
+				unsigned int infiniteViewDistanceInt = infiniteViewDistance ? 1 : 0;
+                for (unsigned int i = 0; i < 4 - infiniteViewDistanceInt; ++i)
                 {
                     // Figure out light dir
                     lightDir = lightPos3 - (*(clockwiseVerts[i]) * lightPos.w);
-                    Vector3 edgeDir = *(clockwiseVerts[i]) - *(clockwiseVerts[(i+winding)%4]);
+                    Vector3 edgeDir = *(clockwiseVerts[(i+windingPt1)%4]) - *(clockwiseVerts[(i+windingPt0)%4]);
                     // Cross with anticlockwise corner, therefore normal points in
                     normal = edgeDir.crossProduct(lightDir);
                     normal.normalise();

@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -112,6 +112,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     BillboardParticleRenderer::~BillboardParticleRenderer()
     {
+		// mBillboardSet is never actually attached to a node, we just passthrough
+		// based on the particle system's attachment. So manually notify that it's
+		// no longer attached.
+		mBillboardSet->_notifyAttached(0);
         OGRE_DELETE  mBillboardSet;
     }
     //-----------------------------------------------------------------------
