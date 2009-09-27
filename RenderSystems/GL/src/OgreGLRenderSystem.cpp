@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.s
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.s
 -----------------------------------------------------------------------------
 */
 
@@ -127,10 +126,6 @@ namespace Ogre {
 		{
 			// Dummy value
 			mTextureCoordIndex[i] = 99;
-		}
-
-		for (i = 0; i < OGRE_MAX_TEXTURE_LAYERS; i++)
-		{
 			mTextureTypes[i] = 0;
 		}
 
@@ -138,7 +133,7 @@ namespace Ogre {
 		mCurrentContext = 0;
 		mMainContext = 0;
 
-		mGLInitialized = false;
+		mGLInitialised = false;
 
 		mCurrentLights = 0;
 		mMinFilter = FO_LINEAR;
@@ -226,6 +221,8 @@ namespace Ogre {
 			rsc->setVendor(GPU_MATROX);
 		else if (strstr(vendorName, "3DLabs"))
 			rsc->setVendor(GPU_3DLABS);
+		else if (strstr(vendorName, "SiS"))
+			rsc->setVendor(GPU_SIS);
 		else
 			rsc->setVendor(GPU_UNKNOWN);
 
@@ -236,11 +233,21 @@ namespace Ogre {
         if(GLEW_VERSION_1_4 || GLEW_SGIS_generate_mipmap)
         {
 			bool disableAutoMip = false;
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-			// Apple ATI drivers have faults in hardware mipmap generation
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_LINUX
+			// Apple & Linux ATI drivers have faults in hardware mipmap generation
 			if (rsc->getVendor() == GPU_ATI)
 				disableAutoMip = true;
 #endif
+			// The Intel 915G frequently corrupts textures when using hardware mip generation
+			// I'm not currently sure how many generations of hardware this affects, 
+			// so for now, be safe.
+			if (rsc->getVendor() == GPU_INTEL)
+				disableAutoMip = true;
+
+			// SiS chipsets also seem to have problems with this
+			if (rsc->getVendor() == GPU_SIS)
+				disableAutoMip = true;
+
 			if (!disableAutoMip)
 				rsc->setCapability(RSC_AUTOMIPMAP);
         }
@@ -516,7 +523,7 @@ namespace Ogre {
 		// UBYTE4 always supported
 		rsc->setCapability(RSC_VERTEX_FORMAT_UBYTE4);
 
-		// Inifinite far plane always supported
+		// Infinite far plane always supported
 		rsc->setCapability(RSC_INFINITE_FAR_PLANE);
 
 		// Check for non-power-of-2 texture support
@@ -866,7 +873,7 @@ namespace Ogre {
 		/// Create the texture manager        
 		mTextureManager = new GLTextureManager(*mGLSupport); 
 
-		mGLInitialized = true;
+		mGLInitialised = true;
 	}
 
 	void GLRenderSystem::reinitialise(void)
@@ -920,7 +927,7 @@ namespace Ogre {
 		// There will be a new initial window and so forth, thus any call to test
 		//  some params will access an invalid pointer, so it is best to reset
 		//  the whole state.
-		mGLInitialized = 0;
+		mGLInitialised = 0;
 	}
 
 	void GLRenderSystem::setAmbientLight(float r, float g, float b)
@@ -1004,7 +1011,7 @@ namespace Ogre {
 
 		attachRenderTarget( *win );
 
-		if (!mGLInitialized) 
+		if (!mGLInitialised) 
 		{                
 
 			// set up glew and GLSupport
@@ -1341,11 +1348,18 @@ namespace Ogre {
 			val[1] = linear * correction;
 			val[2] = quadratic * correction;
 			val[3] = 1;
+			
+			if (mCurrentCapabilities->hasCapability(RSC_VERTEX_PROGRAM))
+				glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+			
+			
 		} 
 		else 
 		{
 			if (maxSize == 0.0f)
 				maxSize = mCurrentCapabilities->getMaxPointSize();
+			if (mCurrentCapabilities->hasCapability(RSC_VERTEX_PROGRAM))
+				glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 		}
 		
 		// no scaling required
@@ -1756,7 +1770,14 @@ namespace Ogre {
 			break;
 		}
 
-		glBlendEquation(func);
+		if(GLEW_VERSION_1_4 || GLEW_ARB_imaging)
+        {
+			glBlendEquation(func);
+		}
+		else if(GLEW_EXT_blend_minmax && (func == GL_MIN || func == GL_MAX))
+        {
+			glBlendEquationEXT(func);
+		}
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setSeparateSceneBlending(
@@ -1820,7 +1841,12 @@ namespace Ogre {
 			break;
 		}
 
-		glBlendEquationSeparate(func, alphaFunc);
+		if(GLEW_VERSION_2_0) {
+			glBlendEquationSeparate(func, alphaFunc);
+		}
+		else if(GLEW_EXT_blend_equation_separate) {
+			glBlendEquationSeparateEXT(func, alphaFunc);
+		}
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setAlphaRejectSettings(CompareFunction func, unsigned char value, bool alphaToCoverage)
@@ -2083,7 +2109,7 @@ namespace Ogre {
 	void GLRenderSystem::_convertProjectionMatrix(const Matrix4& matrix,
 		Matrix4& dest, bool forGpuProgram)
 	{
-		// no any convertion request for OpenGL
+		// no any conversion request for OpenGL
 		dest = matrix;
 	}
 
@@ -2895,12 +2921,13 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 		}
 
         glDisableClientState( GL_VERTEX_ARRAY );
-		// only valid up to GL_MAX_TEXTURE_COORDS, which is recorded in mFixedFunctionTextureUnits
+		// only valid up to GL_MAX_TEXTURE_UNITS, which is recorded in mFixedFunctionTextureUnits
 		if (multitexturing)
         {
 			for (int i = 0; i < mFixedFunctionTextureUnits; i++)
 			{
             glClientActiveTextureARB(GL_TEXTURE0 + i);
+				glDisableClientState( GL_TEXTURE_COORD_ARRAY );
 			}
 			glClientActiveTextureARB(GL_TEXTURE0);
 		}
@@ -3354,7 +3381,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 		if (mCurrentFragmentProgram)
 			mCurrentFragmentProgram->unbindProgram();
 
-		// It's ready to switching
+		// It's ready for switching
 		if (mCurrentContext)
 			mCurrentContext->endCurrent();
 		mCurrentContext = context;
@@ -3403,7 +3430,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 		// Bind frame buffer object
 		mRTTManager->bind(target);
 
-		if (GLEW_VERSION_1_2)
+		if (GLEW_EXT_framebuffer_sRGB)
 		{
 		// Enable / disable sRGB states
 		if (target->isHardwareGammaEnabled())
@@ -3452,6 +3479,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	//---------------------------------------------------------------------
 	void GLRenderSystem::registerThread()
 	{
+		OGRE_LOCK_MUTEX(mThreadInitMutex)
 		// This is only valid once we've created the main context
 		if (!mMainContext)
 		{
@@ -3487,12 +3515,14 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	//---------------------------------------------------------------------
 	void GLRenderSystem::preExtraThreadsStarted()
 	{
+		OGRE_LOCK_MUTEX(mThreadInitMutex)
 		// free context, we'll need this to share lists
 		mCurrentContext->endCurrent();
 	}
 	//---------------------------------------------------------------------
 	void GLRenderSystem::postExtraThreadsStarted()
 	{
+		OGRE_LOCK_MUTEX(mThreadInitMutex)
 		// reacquire context
 		mCurrentContext->setCurrent();
 	}

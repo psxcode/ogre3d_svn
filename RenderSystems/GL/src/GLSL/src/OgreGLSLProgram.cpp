@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -74,7 +74,7 @@ namespace Ogre {
 			checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
 			// create shader object
 
-			GLenum shaderType;
+			GLenum shaderType = 0x0000;
 			switch (mType)
 			{
 			case GPT_VERTEX_PROGRAM:
@@ -199,7 +199,7 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void GLSLProgram::createLowLevelImpl(void)
 	{
-		mAssemblerProgram = GpuProgramPtr(new GLSLGpuProgram( this ));
+		mAssemblerProgram = GpuProgramPtr(OGRE_NEW GLSLGpuProgram( this ));
 	}
 	//---------------------------------------------------------------------------
 	void GLSLProgram::unloadImpl()
@@ -223,7 +223,8 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void GLSLProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
 	{
-		params->_setNamedConstants(&getConstantDefinitions());
+		getConstantDefinitions();
+		params->_setNamedConstants(mConstantDefs);
 		// Don't set logical / physical maps here, as we can't access parameters by logical index in GLHL.
 	}
 	//-----------------------------------------------------------------------
@@ -234,10 +235,9 @@ namespace Ogre {
 
 
 		// Therefore instead, parse the source code manually and extract the uniforms
-		mConstantDefs.floatBufferSize = 0;
-		mConstantDefs.intBufferSize = 0;
+		createParameterMappingStructures(true);
 		GLSLLinkProgramManager::getSingleton().extractConstantDefs(
-			mSource, mConstantDefs, mName);
+			mSource, *mConstantDefs.get(), mName);
 
 		// Also parse any attached sources
 		for (GLSLProgramContainer::const_iterator i = mAttachedGLSLPrograms.begin();
@@ -246,7 +246,7 @@ namespace Ogre {
 			GLSLProgram* childShader = *i;
 
 			GLSLLinkProgramManager::getSingleton().extractConstantDefs(
-				childShader->getSource(), mConstantDefs, childShader->getName());
+				childShader->getSource(), *mConstantDefs.get(), childShader->getName());
 
 		}
 	}

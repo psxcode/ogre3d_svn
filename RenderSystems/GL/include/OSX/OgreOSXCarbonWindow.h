@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
  
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
  
 This program is free software; you can redistribute it and/or modify it under
@@ -57,8 +57,14 @@ namespace Ogre
         /** Overridden - see RenderWindow */
 		virtual void resize( unsigned int width, unsigned int height );
         /** Overridden - see RenderWindow */
+    	virtual void setVisible( bool visible );
+        /** Overridden - see RenderWindow */
+    	virtual bool isVisible(void) const;
+        /** Overridden - see RenderWindow */
 		virtual void swapBuffers( bool waitForVSync );
-		/** Overridden - see RenderTarget */
+        /** Overridden - see RenderWindow */
+        virtual void setFullscreen(bool fullScreen, unsigned int width, unsigned int height);
+   	    /** Overridden - see RenderTarget */
 		virtual void windowMovedOrResized();
 
 		bool requiresTextureFlipping() const { return false; }
@@ -77,11 +83,12 @@ namespace Ogre
 		HIViewRef mView;
 		AGLContext mAGLContext;
 		
-		bool mActive;
-		bool mClosed;
-        bool mCreated;
-		bool mHasResized;
-        bool mIsExternal;
+    bool mActive;
+    bool mClosed;
+    bool mCreated;
+    bool mHasResized;
+    bool mIsExternal;
+    bool mVisible;
 	};
 }
 

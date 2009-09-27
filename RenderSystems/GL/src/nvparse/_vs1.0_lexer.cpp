@@ -51,6 +51,9 @@
 /* The "const" storage-class-modifier is valid. */
 #define YY_USE_CONST
 
+/* yyunput is never used */
+#define YY_NO_UNPUT
+
 #else	/* ! __cplusplus */
 
 #if __STDC__
@@ -261,7 +264,9 @@ YY_BUFFER_STATE yy_scan_string YY_PROTO(( yyconst char *yy_str ));
 YY_BUFFER_STATE yy_scan_bytes YY_PROTO(( yyconst char *bytes, int len ));
 
 static void *yy_flex_alloc YY_PROTO(( yy_size_t ));
+#if !defined(YY_USES_REJECT) && defined(YY_NO_PUSH_STATE)
 static void *yy_flex_realloc YY_PROTO(( void *, yy_size_t ));
+#endif
 static void yy_flex_free YY_PROTO(( void * ));
 
 #define yy_new_buffer yy_create_buffer
@@ -781,8 +786,8 @@ char *yytext;
 
 #define yylineno line_number
 int line_incr;
-void LexError(char *format, ...);
-void LexWarning(char *format, ...);
+void LexError(const char *format, ...);
+void LexWarning(const char *format, ...);
 char *ReadTextFile(const char * filename);
 
 unsigned int MakeRegisterMask(char *findName);
@@ -885,7 +890,7 @@ MACROENTRY *FindNMacro(char *macroName, unsigned int sLen);
 
 MACROFUNCTIONPTR gMacroCallFunction;
 
-char *builtInMacros =	"macro m3x2 reg1, reg2, reg3\n"
+const char *builtInMacros =	"macro m3x2 reg1, reg2, reg3\n"
 						"	dp3	%reg1.x, %reg2, %reg3\n"
 						"	dp3 %reg1.y, %reg2, %inc(%reg3)\n"
 						"endm";
@@ -931,7 +936,7 @@ MACROENTRY *gParseMacro;		// which source macro entry we are using
 MACROENTRY *gTempParseMacro;	// temporary holder until parameters are received.
 MACROTEXT *gMacroLineParse;		// which line we are currently parsing inside the macro invocation
 
-typedef enum OPCODETYPE
+enum OPCODETYPE
 {
 	TYPE_NONE = 0,
 	TYPE_VERTEX_SHADER = 1,
@@ -939,7 +944,7 @@ typedef enum OPCODETYPE
 };
 typedef struct OPCODEMAP
 {
-	char *string;				// string for opcode
+	const char *string;				// string for opcode
 	int tokenName;              // name of the corresponding token
 	int numArguments;			// number of arguments for opcode
 	float version;				// minimum version supported in.
@@ -3746,6 +3751,9 @@ yy_size_t size;
 	return (void *) malloc( size );
 	}
 
+// This function is never referenced under these specific conditions
+// Removes a warning
+#if !defined(YY_USES_REJECT) && defined(YY_NO_PUSH_STATE)
 #ifdef YY_USE_PROTOS
 static void *yy_flex_realloc( void *ptr, yy_size_t size )
 #else
@@ -3763,6 +3771,7 @@ yy_size_t size;
 	 */
 	return (void *) realloc( (char *) ptr, size );
 	}
+#endif
 
 #ifdef YY_USE_PROTOS
 static void yy_flex_free( void *ptr )
@@ -3997,7 +4006,7 @@ char *FindDefineParm(MACROENTRY *srcParms, MACROENTRY *invParms,
 	MACROTEXT *srcText;
 	MACROTEXT *invText;
 	char *checkStr;
-	unsigned int checkLen;
+	unsigned int checkLen = 0;
 	unsigned int sLen;
 
 	checkStr = lookString;
@@ -4335,12 +4344,12 @@ bool ParseBuiltInMacroParms(MACROENTRY *parsedMacro, char *parmStr)
 // Returns:		new recognizedLen, invStr, with incremented #
 //=====================================================================
 void MacroMathFunction(MACROENTRY *invMacro, unsigned int *recognizedLen, char **invStr,
-						char *mathStr)
+						const char *mathStr)
 {
 	char *numStartStr;
 	unsigned int sLen;
 	char numberStr[256];
-	unsigned int number;
+	unsigned int number = 0;
 	char *operand;
 
 
@@ -4458,7 +4467,7 @@ void MacroIncFunction(char *lookStr, unsigned int *recognizedLen, char **invStr)
 	MACROTEXT parm1;
 	MACROTEXT parm2;
 
-	tMEntry.macroName = "%inc()";
+	tMEntry.macroName = (char *)"%inc()";
 	tMEntry.numParms = 2;
 	tMEntry.firstMacroParms = &parm1;
 	parm1.prev = NULL;
@@ -4466,7 +4475,7 @@ void MacroIncFunction(char *lookStr, unsigned int *recognizedLen, char **invStr)
 	parm1.macroText = *invStr;
 	parm2.prev = &parm1;
 	parm2.next = NULL;
-	parm2.macroText = "1";
+	parm2.macroText = (char *)"1";
 
 	MacroMathFunction(&tMEntry, recognizedLen, invStr, "+");
 	// skip ')'
@@ -4488,7 +4497,7 @@ void MacroDecFunction(char *lookStr, unsigned int *recognizedLen, char **invStr)
 	MACROTEXT parm1;
 	MACROTEXT parm2;
 
-	tMEntry.macroName = "%dec()";
+	tMEntry.macroName = (char *)"%dec()";
 	tMEntry.numParms = 2;
 	tMEntry.firstMacroParms = &parm1;
 	parm1.prev = NULL;
@@ -4496,7 +4505,7 @@ void MacroDecFunction(char *lookStr, unsigned int *recognizedLen, char **invStr)
 	parm1.macroText = *invStr;
 	parm2.prev = &parm1;
 	parm2.next = NULL;
-	parm2.macroText = "1";
+	parm2.macroText = (char *)"1";
 
 	MacroMathFunction(&tMEntry, recognizedLen, invStr, "-");
 	// skip ')'
@@ -4519,7 +4528,7 @@ void MacroAddFunction(char *lookStr, unsigned int *recognizedLen, char **invStr)
 	MACROTEXT *nextMT;
 	unsigned int i;
 
-	tMEntry.macroName = "%add()";
+	tMEntry.macroName = (char *)"%add()";
 	if (strlen(lookStr) > MAXREPLACESTRING)
 	{
 		LexError("Out of Temporary string replacement memory inside builtin macro %add()\n");
@@ -4559,7 +4568,7 @@ void MacroSubFunction(char *lookStr, unsigned int *recognizedLen, char **invStr)
 	MACROTEXT *nextMT;
 	unsigned int i;
 
-	tMEntry.macroName = "%sub()";
+	tMEntry.macroName = (char *)"%sub()";
 	if (ParseBuiltInMacroParms(&tMEntry, lookStr))
 	{
 		MacroMathFunction(&tMEntry, recognizedLen, invStr, "-");
@@ -4628,11 +4637,11 @@ void EndMacroParms()
 			myin = NULL;
 			curFileName = gCurFileName;
 			if (curFileName == NULL)
-				curFileName = "";
+				curFileName = (char *)"";
 
 			macroFileName = gParseMacro->fileName;
 			if (macroFileName == NULL)
-				macroFileName = "";
+				macroFileName = (char *)"";
 
 			sprintf(tempStr, "%s(%d) : References ->\n%s", curFileName, yylineno, macroFileName); 
 			gCurFileName = strdup(tempStr);
@@ -4874,7 +4883,7 @@ unsigned int MakeRegisterMask(char *findName)
 // Parameters:	typical printf like format
 // Returns:		.
 //=====================================================================
-void LexError(char *format, ...)
+void LexError(const char *format, ...)
 {
 	char errstring[4096];
 	va_list marker;
@@ -4903,7 +4912,7 @@ void LexError(char *format, ...)
 // Parameters:	typical printf like format
 // Returns:		.
 //=====================================================================
-void LexWarning(char *format, ...)
+void LexWarning(const char *format, ...)
 {
 	char errstring[4096];
 	va_list marker;
