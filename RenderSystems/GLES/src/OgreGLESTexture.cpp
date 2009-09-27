@@ -5,26 +5,25 @@ This source file is part of OGRE
 For the latest info, see http://www.ogre3d.org
 
 Copyright (c) 2008 Renato Araujo Oliveira Filho <renatox@gmail.com>
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -71,7 +70,7 @@ namespace Ogre {
 
     GLESTexture::~GLESTexture()
     {
-        // have to call this here reather than in Resource destructor
+        // have to call this here rather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
         if (isLoaded())
         {
@@ -109,7 +108,7 @@ namespace Ogre {
         glBindTexture(GL_TEXTURE_2D, mTextureID);
         GL_CHECK_ERROR;
         glTexParameteri(GL_TEXTURE_2D,
-                        GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                        GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         GL_CHECK_ERROR;
         glTexParameteri(GL_TEXTURE_2D,
                         GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -155,6 +154,7 @@ namespace Ogre {
             {
                 size = PixelUtil::getMemorySize(width, height, depth, mFormat);
 
+                // TODO: DJR - Add support for PVRTC here
                 glCompressedTexImage2D(GL_TEXTURE_2D,
                                        mip,
                                        format,
@@ -181,7 +181,7 @@ namespace Ogre {
         }
         else
         {
-            // Run through this process to pregenerate mipmap piramid
+            // Run through this process to pregenerate mipmap pyramid
             for(size_t mip=0; mip<=mNumMipmaps; mip++)
             {
                 glTexImage2D(GL_TEXTURE_2D,
@@ -191,7 +191,11 @@ namespace Ogre {
                              0,
                              format,
                              GL_UNSIGNED_BYTE, 0);
-
+//                LogManager::getSingleton().logMessage("GLESTexture::create - Mip: " + StringConverter::toString(mip) +
+//                                                      " Width: " + StringConverter::toString(width) +
+//                                                      " Height: " + StringConverter::toString(height) +
+//                                                      " Internal Format: " + StringConverter::toString(format)
+//                                                      );
                 GL_CHECK_ERROR;
 
                 if (width > 1)
@@ -220,10 +224,7 @@ namespace Ogre {
 
     void GLESTexture::prepareImpl()
     {
-        if (mUsage & TU_RENDERTARGET)
-        {
-            return;
-        }
+        if (mUsage & TU_RENDERTARGET) return;
 
         String baseName, ext;
         size_t pos = mName.find_last_of(".");
@@ -241,17 +242,37 @@ namespace Ogre {
             doImageIO(mName, mGroup, ext, *loadedImages, this);
 
             // If this is a cube map, set the texture type flag accordingly.
-            if ((*loadedImages)[0].hasFlag(IF_CUBEMAP))
-            {
-                OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
-                            "**** Unsuported CUBMAP texture type ****",
-                            "GLESTexture::prepare");
-            }
+//            if ((*loadedImages)[0].hasFlag(IF_CUBEMAP) &&
+//                Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_CUBEMAPPING))
+//            {
+//                if(getSourceFileType() == "dds")
+//                {
+//                    // XX HACK there should be a better way to specify whether 
+//                    // all faces are in the same file or not
+//                    doImageIO(mName, mGroup, ext, *loadedImages, this);
+//                }
+//                else
+//                {
+//                    vector<Image>::type images(6);
+//                    ConstImagePtrList imagePtrs;
+//                    static const String suffixes[6] = {"_rt", "_lf", "_up", "_dn", "_fr", "_bk"};
+//                    
+//                    for(size_t i = 0; i < 6; i++)
+//                    {
+//                        String fullName = baseName + suffixes[i];
+//                        if (!ext.empty())
+//                            fullName = fullName + "." + ext;
+//                        // find & load resource data intro stream to allow resource
+//                        // group changes if required
+//                        doImageIO(fullName,mGroup,ext,*loadedImages,this);
+//                    }
+//                }
+//            }
             // If this is a volumetric texture set the texture type flag accordingly.
             if ((*loadedImages)[0].getDepth() > 1)
             {
                 OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
-                            "**** Unsuported 3D texture type ****",
+                            "**** Unsupported 3D texture type ****",
                             "GLESTexture::prepare" );
             }
         }
@@ -311,13 +332,14 @@ namespace Ogre {
 
         // Do mipmapping in software? (uses GLU) For some cards, this is still needed. Of course,
         // only when mipmap generation is desired.
-        bool doSoftware = true; // seems that hardware doesn't work for OpenGL ES...// wantGeneratedMips && !mMipmapsHardwareGenerated && getNumMipmaps();
+        bool doSoftware = wantGeneratedMips && !mMipmapsHardwareGenerated && getNumMipmaps();
 
         for (size_t face = 0; face < getNumFaces(); face++)
         {
             for (size_t mip = 0; mip <= getNumMipmaps(); mip++)
             {
                 GLESHardwarePixelBuffer *buf = new GLESTextureBuffer(mName,
+                                                                     getGLESTextureTarget(),
                                                                      mTextureID,
                                                                      mWidth, mHeight,
                                                                      GLESPixelUtil::getClosestGLInternalFormat(mFormat, mHwGamma),
@@ -338,7 +360,7 @@ namespace Ogre {
                         "Zero sized texture surface on texture "+getName()+
                             " face "+StringConverter::toString(face)+
                             " mipmap "+StringConverter::toString(mip)+
-                            ". Probably, the GL driver refused to create the texture.",
+                            ". The GL probably driver refused to create the texture.",
                             "GLESTexture::_createSurfaceList");
                 }
             }

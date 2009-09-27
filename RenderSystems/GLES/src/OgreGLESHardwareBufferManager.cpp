@@ -5,26 +5,25 @@ This source file is part of OGRE
 For the latest info, see http://www.ogre3d.org/
 
 Copyright (c) 2008 Renato Araujo Oliveira Filho <renatox@gmail.com>
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -46,7 +45,7 @@ namespace Ogre {
         uint32 free: 1;
     };
 
-    GLESHardwareBufferManager::GLESHardwareBufferManager()
+    GLESHardwareBufferManagerBase::GLESHardwareBufferManagerBase()
     {
         // Init scratch pool
         // TODO make it a configurable size?
@@ -59,7 +58,7 @@ namespace Ogre {
         ptrAlloc->free = 1;
     }
 
-    GLESHardwareBufferManager::~GLESHardwareBufferManager()
+    GLESHardwareBufferManagerBase::~GLESHardwareBufferManagerBase()
     {
         destroyAllDeclarations();
         destroyAllBindings();
@@ -68,14 +67,14 @@ namespace Ogre {
     }
 
     HardwareVertexBufferSharedPtr
-        GLESHardwareBufferManager::createVertexBuffer(size_t vertexSize,
+        GLESHardwareBufferManagerBase::createVertexBuffer(size_t vertexSize,
                                                       size_t numVerts,
                                                       HardwareBuffer::Usage usage,
                                                       bool useShadowBuffer)
     {
         // always use shadowBuffer
         GLESHardwareVertexBuffer* buf =
-            new GLESHardwareVertexBuffer(vertexSize, numVerts, usage, true);
+            new GLESHardwareVertexBuffer(this, vertexSize, numVerts, usage, true);
         {
             OGRE_LOCK_MUTEX(mVertexBuffersMutex)
             mVertexBuffers.insert(buf);
@@ -83,14 +82,14 @@ namespace Ogre {
         return HardwareVertexBufferSharedPtr(buf);
     }
 
-    HardwareIndexBufferSharedPtr GLESHardwareBufferManager::createIndexBuffer(HardwareIndexBuffer::IndexType itype,
+    HardwareIndexBufferSharedPtr GLESHardwareBufferManagerBase::createIndexBuffer(HardwareIndexBuffer::IndexType itype,
                                                                               size_t numIndexes,
                                                                               HardwareBuffer::Usage usage,
                                                                               bool useShadowBuffer)
     {
         // always use shadowBuffer
         GLESHardwareIndexBuffer* buf =
-            new GLESHardwareIndexBuffer(itype, numIndexes, usage, true);
+            new GLESHardwareIndexBuffer(this, itype, numIndexes, usage, true);
         {
             OGRE_LOCK_MUTEX(mIndexBuffersMutex)
             mIndexBuffers.insert(buf);
@@ -98,14 +97,14 @@ namespace Ogre {
         return HardwareIndexBufferSharedPtr(buf);
     }
 
-	RenderToVertexBufferSharedPtr GLESHardwareBufferManager::createRenderToVertexBuffer()
+	RenderToVertexBufferSharedPtr GLESHardwareBufferManagerBase::createRenderToVertexBuffer()
 	{
 		// not supported
 		return RenderToVertexBufferSharedPtr();
 	}
 
 
-    GLenum GLESHardwareBufferManager::getGLUsage(unsigned int usage)
+    GLenum GLESHardwareBufferManagerBase::getGLUsage(unsigned int usage)
     {
         switch(usage)
         {
@@ -114,14 +113,13 @@ namespace Ogre {
                 return GL_STATIC_DRAW;
             case HardwareBuffer::HBU_DYNAMIC:
             case HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY:
-                return GL_DYNAMIC_DRAW;
             case HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE:
             default:
                 return GL_DYNAMIC_DRAW;
         };
     }
 
-    GLenum GLESHardwareBufferManager::getGLType(unsigned int type)
+    GLenum GLESHardwareBufferManagerBase::getGLType(unsigned int type)
     {
         switch(type)
         {
@@ -145,7 +143,7 @@ namespace Ogre {
         };
     }
 
-    void* GLESHardwareBufferManager::allocateScratch(uint32 size)
+    void* GLESHardwareBufferManagerBase::allocateScratch(uint32 size)
     {
         // simple forward link search based on alloc sizes
         // not that fast but the list should never get that long since not many
@@ -194,7 +192,7 @@ namespace Ogre {
         return 0;
     }
 
-    void GLESHardwareBufferManager::deallocateScratch(void* ptr)
+    void GLESHardwareBufferManagerBase::deallocateScratch(void* ptr)
     {
         OGRE_LOCK_MUTEX(mScratchMutex)
 
