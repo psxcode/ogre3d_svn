@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __OGRE_PROPERTY_H__
@@ -159,9 +158,22 @@ namespace Ogre
 		/// Get a string name of a property type
 		static const String& getTypeName(PropertyType theType);
 
-		/// Get the expected type code for a given value
-		template<typename T>
-		static PropertyType getTypeForValue(const T& val) { return PROP_UNKNOWN; }
+		static PropertyType getTypeForValue(const short& val) { return PROP_SHORT; }
+		static PropertyType getTypeForValue(const unsigned short& val) { return PROP_UNSIGNED_SHORT; }
+		static PropertyType getTypeForValue(const int& val) { return PROP_INT; }
+		static PropertyType getTypeForValue(const unsigned int& val) { return PROP_UNSIGNED_INT; }
+		static PropertyType getTypeForValue(const long& val) { return PROP_LONG; }
+		static PropertyType getTypeForValue(const unsigned long& val) { return PROP_UNSIGNED_LONG; }
+		static PropertyType getTypeForValue(const Real& val) { return PROP_REAL; }
+		static PropertyType getTypeForValue(const String& val) { return PROP_STRING; }
+		static PropertyType getTypeForValue(const Vector2& val) { return PROP_VECTOR2; }
+		static PropertyType getTypeForValue(const Vector3& val) { return PROP_VECTOR3; }
+		static PropertyType getTypeForValue(const Vector4& val) { return PROP_VECTOR4; }
+		static PropertyType getTypeForValue(const ColourValue& val) { return PROP_COLOUR; }
+		static PropertyType getTypeForValue(const bool& val) { return PROP_BOOL; }
+		static PropertyType getTypeForValue(const Quaternion& val) { return PROP_QUATERNION; }
+		static PropertyType getTypeForValue(const Matrix3& val) { return PROP_MATRIX3; }
+		static PropertyType getTypeForValue(const Matrix4& val) { return PROP_MATRIX4; }
 
 	protected:
 		// no default construction
@@ -172,23 +184,6 @@ namespace Ogre
 		PropertyType mType;
 
 	};
-
-  template<> PropertyType PropertyDef::getTypeForValue(const short& val) { return PROP_SHORT; }
-  template<> PropertyType PropertyDef::getTypeForValue(const unsigned short& val) { return PROP_UNSIGNED_SHORT; }
-  template<> PropertyType PropertyDef::getTypeForValue(const int& val) { return PROP_INT; }
-  template<> PropertyType PropertyDef::getTypeForValue(const unsigned int& val) { return PROP_UNSIGNED_INT; }
-  template<> PropertyType PropertyDef::getTypeForValue(const long& val) { return PROP_LONG; }
-  template<> PropertyType PropertyDef::getTypeForValue(const unsigned long& val) { return PROP_UNSIGNED_LONG; }
-  template<> PropertyType PropertyDef::getTypeForValue(const Real& val) { return PROP_REAL; }
-  template<> PropertyType PropertyDef::getTypeForValue(const String& val) { return PROP_STRING; }
-  template<> PropertyType PropertyDef::getTypeForValue(const Vector2& val) { return PROP_VECTOR2; }
-  template<> PropertyType PropertyDef::getTypeForValue(const Vector3& val) { return PROP_VECTOR3; }
-  template<> PropertyType PropertyDef::getTypeForValue(const Vector4& val) { return PROP_VECTOR4; }
-  template<> PropertyType PropertyDef::getTypeForValue(const ColourValue& val) { return PROP_COLOUR; }
-  template<> PropertyType PropertyDef::getTypeForValue(const bool& val) { return PROP_BOOL; }
-  template<> PropertyType PropertyDef::getTypeForValue(const Quaternion& val) { return PROP_QUATERNION; }
-  template<> PropertyType PropertyDef::getTypeForValue(const Matrix3& val) { return PROP_MATRIX3; }
-  template<> PropertyType PropertyDef::getTypeForValue(const Matrix4& val) { return PROP_MATRIX4; }
 
 	/// Map from property name to shared definition
 	typedef map<String, PropertyDef>::type PropertyDefMap;
@@ -332,7 +327,7 @@ namespace Ogre
 		template<typename T>
 		void setValue(const String& name, const T* value)
 		{
-			setPropertyImpl(name, *value, PropertyDef::getTypeForValue(value));
+			setPropertyImpl(name, *value, PropertyDef::getTypeForValue(*value));
 		}
 		/** Set a named property value. 
 		*/

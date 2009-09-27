@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 ############################################################
 # Paging optional component
 ############################################################
@@ -21,7 +30,7 @@ add_definitions(-DOGRE_PROPERTY_EXPORTS -D_MT -D_USRDLL)
 # include headers
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/OgreMain/include)
-
+include_directories(${Boost_INCLUDE_DIRS})
 
 # setup target
 add_library(OgreProperty ${OGRE_LIB_TYPE} ${HEADER_FILES} ${SOURCE_FILES} ${PLATFORM_HEADER_FILES} ${PLATFORM_SOURCE_FILES})
@@ -30,6 +39,14 @@ target_link_libraries(OgreProperty OgreMain)
 if (OGRE_CONFIG_THREADS)
   target_link_libraries(OgreProperty ${Boost_LIBRARIES})
 endif ()
+
+if (APPLE AND NOT OGRE_BUILD_PLATFORM_IPHONE)
+    # Set the INSTALL_PATH so that Plugins can be installed in the application package
+    set_target_properties(OgreProperty
+       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+       INSTALL_NAME_DIR "@executable_path/../Plugins"
+    )
+endif()
 
 # install 
 ogre_config_lib(OgreProperty)
