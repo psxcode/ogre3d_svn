@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __RenderSystem_H_
@@ -363,6 +362,27 @@ namespace Ogre
 			<td>Parent window handle, for embedding the OGRE in a child of an external window</td>
 			<td>&nbsp;</td>
 		</tr>
+		<tr>
+			<td>macAPI</td>
+			<td>String: "cocoa" or "carbon"</td>
+			<td>"carbon"</td>
+			<td>Specifies the type of rendering window on the Mac Platform.</td>
+			<td>&nbsp;</td>
+		 </tr>
+		 <tr>
+			<td>macAPICocoaUseNSView</td>
+			<td>bool "true" or "false"</td>
+			<td>"false"</td>
+			<td>On the Mac platform the most diffused method to embed ogre in a custom application is to use the IntefaceBuilder
+				and add to the interface an instance of OgreView.
+				The pointer to this instance is then used as "externalWindowHandle".
+				However, there are cases where you are NOT using the Interface Builder and you get the Cocoa NSView* of an existing interface.
+				For example, this is happens when you want to render into a Java/AWT interface.
+				In short, by setting this flag to "true" the Ogre::Root::createRenderWindow interprets the "externalWindowHandle" as a NSView*
+				instead of an OgreView*. See OgreOSXCocoaView.h/mm.
+			</td>
+			<td>&nbsp;</td>
+		 </tr>
 		<tr>
 			<td>FSAA</td>
 			<td>Positive integer (usually 0, 2, 4, 8, 16)</td>
@@ -1105,6 +1125,10 @@ namespace Ogre
 		/** Internal method for swapping all the buffers on all render targets,
 		if _updateAllRenderTargets was called with a 'false' parameter. */
 		virtual void _swapAllRenderTargetBuffers(bool waitForVsync = true);
+
+		/** Gets whether or not vertex windings set should be inverted; this can be important
+		for rendering reflections. */
+		virtual bool getInvertVertexWinding(void);
 
 		/** Sets whether or not vertex windings set should be inverted; this can be important
 		for rendering reflections. */

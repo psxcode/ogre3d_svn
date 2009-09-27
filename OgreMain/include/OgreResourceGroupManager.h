@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef _ResourceGroupManager_H__
@@ -269,6 +268,17 @@ namespace Ogre {
         typedef list<ResourceDeclaration>::type ResourceDeclarationList;
 		typedef map<String, ResourceManager*>::type ResourceManagerMap;
 		typedef MapIterator<ResourceManagerMap> ResourceManagerIterator;
+		/// Resource location entry
+		struct ResourceLocation
+		{
+			/// Pointer to the archive which is the destination
+			Archive* archive;
+			/// Whether this location was added recursively
+			bool recursive;
+		};
+		/// List of possible file locations
+		typedef list<ResourceLocation*>::type LocationList;
+
     protected:
 		/// Map of resource types (strings) to ResourceManagers, used to notify them to load / unload group contents
         ResourceManagerMap mResourceManagerMap;
@@ -285,16 +295,6 @@ namespace Ogre {
         /// Resource index entry, resourcename->location 
         typedef map<String, Archive*>::type ResourceLocationIndex;
 
-		/// Resource location entry
-		struct ResourceLocation
-		{
-			/// Pointer to the archive which is the destination
-			Archive* archive;
-			/// Whether this location was added recursively
-			bool recursive;
-		};
-		/// List of possible file locations
-		typedef list<ResourceLocation*>::type LocationList;
 		/// List of resources which can be loaded / unloaded
 		typedef list<ResourcePtr>::type LoadUnloadResourceList;
 		/// Resource group entry
@@ -618,6 +618,9 @@ namespace Ogre {
             const String& resGroup = DEFAULT_RESOURCE_GROUP_NAME, bool recursive = false);
         /** Removes a resource location from the search path. */ 
         void removeResourceLocation(const String& name, 
+			const String& resGroup = DEFAULT_RESOURCE_GROUP_NAME);
+        /** Verify if a resource location exists for the given group. */ 
+		bool resourceLocationExists(const String& name, 
 			const String& resGroup = DEFAULT_RESOURCE_GROUP_NAME);
 
         /** Declares a resource to be a part of a resource group, allowing you 
@@ -997,23 +1000,6 @@ namespace Ogre {
             method the number of times equal to the value they return from 
             SceneManager::estimateWorldGeometry while loading their geometry.
         */
-        void _notifyWorldGeometryPrepareStageStarted(const String& description);
-        /** Notify this manager that one stage of world geometry loading has been 
-            completed.
-        @remarks
-            Custom SceneManagers which load custom world geometry should call this 
-            method the number of times equal to the value they return from 
-            SceneManager::estimateWorldGeometry while loading their geometry.
-        */
-        void _notifyWorldGeometryPrepareStageEnded(void);
-
-        /** Notify this manager that one stage of world geometry loading has been 
-            started.
-        @remarks
-            Custom SceneManagers which load custom world geometry should call this 
-            method the number of times equal to the value they return from 
-            SceneManager::estimateWorldGeometry while loading their geometry.
-        */
         void _notifyWorldGeometryStageStarted(const String& description);
         /** Notify this manager that one stage of world geometry loading has been 
             completed.
@@ -1037,6 +1023,12 @@ namespace Ogre {
 		@returns A copy of list of currently defined resources.
 		*/
 		ResourceDeclarationList getResourceDeclarationList(const String& groupName);
+
+		/** Get the list of resource locations for the specified group name.
+		@param groupName The name of the group
+		@returns The list of resource locations associated with the given group.
+		*/		
+		const LocationList& getResourceLocationList(const String& groupName);
 
 		/// Sets a new loading listener
 		void setLoadingListener(ResourceLoadingListener *listener);

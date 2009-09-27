@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2008 Torus Knot Software Ltd
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -232,14 +232,14 @@ namespace Ogre
 namespace Ogre
 {
 	// Useful shortcuts
-	typedef CategorisedAllocPolicy<MEMCATEGORY_GENERAL> GeneralAllocPolicy;
-	typedef CategorisedAllocPolicy<MEMCATEGORY_GEOMETRY> GeometryAllocPolicy;
-	typedef CategorisedAllocPolicy<MEMCATEGORY_ANIMATION> AnimationAllocPolicy;
-	typedef CategorisedAllocPolicy<MEMCATEGORY_SCENE_CONTROL> SceneCtlAllocPolicy;
-	typedef CategorisedAllocPolicy<MEMCATEGORY_SCENE_OBJECTS> SceneObjAllocPolicy;
-	typedef CategorisedAllocPolicy<MEMCATEGORY_RESOURCE> ResourceAllocPolicy;
-	typedef CategorisedAllocPolicy<MEMCATEGORY_SCRIPTING> ScriptingAllocPolicy;
-	typedef CategorisedAllocPolicy<MEMCATEGORY_RENDERSYS> RenderSysAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_GENERAL> GeneralAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_GEOMETRY> GeometryAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_ANIMATION> AnimationAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_SCENE_CONTROL> SceneCtlAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_SCENE_OBJECTS> SceneObjAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_RESOURCE> ResourceAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_SCRIPTING> ScriptingAllocPolicy;
+	typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_RENDERSYS> RenderSysAllocPolicy;
 
 	// Now define all the base classes for each allocation
 	typedef AllocatedObject<GeneralAllocPolicy> GeneralAllocatedObject;
@@ -458,6 +458,20 @@ namespace Ogre
 #	define OGRE_DELETE delete
 
 #endif // OGRE_DEBUG_MODE
+
+
+namespace Ogre
+{
+	/** Function which invokes OGRE_DELETE on a given pointer. 
+	@remarks
+		Useful to pass custom deletion policies to external libraries (e. g. boost).
+	*/
+	template<typename T>
+	void deletePtr(T* ptr)
+	{
+		OGRE_DELETE ptr;
+	}
+}
 
 /** @} */
 /** @} */

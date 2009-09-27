@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __Common_H__
@@ -53,6 +52,13 @@ namespace Ogre {
 
 	/// Fast general hashing algorithm
 	uint32 _OgreExport FastHash (const char * data, int len, uint32 hashSoFar = 0);
+	/// Combine hashes with same style as boost::hash_combine
+	template <typename T>
+	uint32 HashCombine (uint32 hashSoFar, const T& data)
+	{
+		return FastHash(&data, sizeof(T), hashSoFar);
+	}
+
 
     /** Comparison functions used for the depth/stencil buffer operations and 
 		others. */
@@ -376,15 +382,15 @@ namespace Ogre {
 			return mList.const_iterator(n); 
 		}
 		const_reference at(size_type n) const { return mList.at(n); }
-		HashedVector() : mListHash(0) {}
-		HashedVector(size_type n) : mList(n), mListHash(0) {}
-		HashedVector(size_type n, const T& t) : mList(n, t), mListHash(0) {}
+		HashedVector() : mListHash(0), mListHashDirty(false) {}
+		HashedVector(size_type n) : mList(n), mListHash(0), mListHashDirty(false) {}
+		HashedVector(size_type n, const T& t) : mList(n, t), mListHash(0), mListHashDirty(false) {}
 		HashedVector(const HashedVector<T>& rhs) 
-			: mList(rhs.mList), mListHash(rhs.mListHash) {}
+			: mList(rhs.mList), mListHash(rhs.mListHash), mListHashDirty(false) {}
 
 		template <class InputIterator>
 		HashedVector(InputIterator a, InputIterator b)
-			: mList(a, b)
+			: mList(a, b), mListHashDirty(false)
 		{
 			dirtyHash();
 		}
@@ -433,11 +439,12 @@ namespace Ogre {
 		iterator insert(iterator pos, const T& t)
 		{
 			bool recalc = (pos != end());
-			mList.insert(pos, t);
+			iterator ret = mList.insert(pos, t);
 			if (recalc)
 				dirtyHash();
 			else
 				addToHash(t);
+			return ret;
 		}
 
 		template <class InputIterator>
@@ -470,6 +477,7 @@ namespace Ogre {
 		{
 			mList.clear();
 			mListHash = 0;
+			mListHashDirty = false;
 		}
 
 		void resize(size_type n, const T& t = T())
@@ -546,6 +554,24 @@ namespace Ogre {
           {
             return bottom - top;
           }
+		  TRect & merge(const TRect& rhs)
+		  {
+			  if (width() == 0)
+			  {
+				  *this = rhs;
+			  }
+			  else
+			  {
+				  left = std::min(left, rhs.left);
+				  right = std::max(right, rhs.right);
+				  top = std::min(top, rhs.top);
+				  bottom = std::max(bottom, rhs.bottom);
+			  }
+
+			  return *this;
+
+		  }
+
         };
 
         /** Structure used to define a rectangle in a 2-D floating point space.
@@ -673,13 +699,16 @@ namespace Ogre {
 	typedef vector<RenderWindow*>::type RenderWindowList;
 
 	/// Utility class to generate a sequentially numbered series of names
-	class NameGenerator
+	class _OgreExport NameGenerator
 	{
 	protected:
 		String mPrefix;
 		unsigned long long int mNext;
 		OGRE_AUTO_MUTEX
 	public:
+		NameGenerator(const NameGenerator& rhs)
+			: mPrefix(rhs.mPrefix), mNext(rhs.mNext) {}
+		
 		NameGenerator(const String& prefix) : mPrefix(prefix), mNext(1) {}
 
 		/// Generate a new name
@@ -713,6 +742,57 @@ namespace Ogre {
 			return mNext;
 		}
 
+
+
+
+	};
+
+	/** Template class describing a simple pool of items.
+	*/
+	template <typename T>
+	class Pool
+	{
+	protected:
+		typedef typename list<T>::type ItemList;
+		ItemList mItems;
+		OGRE_AUTO_MUTEX
+	public:
+		Pool() {} 
+		virtual ~Pool() {}
+
+		/** Get the next item from the pool.
+		@returns pair indicating whether there was a free item, and the item if so
+		*/
+		virtual std::pair<bool, T> removeItem()
+		{
+			OGRE_LOCK_AUTO_MUTEX
+			std::pair<bool, T> ret;
+			if (mItems.empty())
+			{
+				ret.first = false;
+			}
+			else
+			{
+				ret.first = true;
+				ret.second = mItems.front();
+				mItems.pop_front();
+			}
+			return ret;
+		}
+
+		/** Add a new item to the pool. 
+		*/
+		virtual void addItem(const T& i)
+		{
+			OGRE_LOCK_AUTO_MUTEX
+			mItems.push_front(i);
+		}
+		/// Clear the pool
+		virtual void clear()
+		{
+			OGRE_LOCK_AUTO_MUTEX
+			mItems.clear();
+		}
 
 
 

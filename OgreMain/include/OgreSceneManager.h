@@ -4,23 +4,24 @@ This source file is a part of OGRE
 
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This library is free software; you can redistribute it and/or modify it
-under the terms of the GNU Lesser General Public License (LGPL) as 
-published by the Free Software Foundation; either version 2.1 of the 
-License, or (at your option) any later version.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-This library is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public 
-License for more details.
-
-You should have received a copy of the GNU Lesser General Public License 
-along with this library; if not, write to the Free Software Foundation, 
-Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA or go to
-http://www.gnu.org/copyleft/lesser.txt
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE
 
 You may alternatively use this source under the terms of a specific version of
 the OGRE Unrestricted License provided you have obtained such a license from
@@ -87,6 +88,10 @@ namespace Ogre {
 		Real minDistance;
 		/// The farthest a visible objects is from the camera
 		Real maxDistance;
+		/// The closest a object in the frustum regardless of visibility / shadow caster flags
+		Real minDistanceInFrustum;
+		/// The farthest object in the frustum regardless of visibility / shadow caster flags
+		Real maxDistanceInFrustum;
 
 		VisibleObjectsBoundsInfo()
 		{
@@ -97,8 +102,8 @@ namespace Ogre {
 		{
 			aabb.setNull();
 			receiverAabb.setNull();
-			minDistance = std::numeric_limits<Real>::infinity();
-			maxDistance = 0;
+			minDistance = minDistanceInFrustum = std::numeric_limits<Real>::infinity();
+			maxDistance = maxDistanceInFrustum = 0;
 		}
 
 		void merge(const AxisAlignedBox& boxBounds, const Sphere& sphereBounds, 
@@ -107,10 +112,27 @@ namespace Ogre {
 			aabb.merge(boxBounds);
 			if (receiver)
 				receiverAabb.merge(boxBounds);
-			Real camDistToCenter = 
-				(cam->getDerivedPosition() - sphereBounds.getCenter()).length();
+			// use view matrix to determine distance, works with custom view matrices
+			Vector3 vsSpherePos = cam->getViewMatrix(true) * sphereBounds.getCenter();
+			Real camDistToCenter = vsSpherePos.length();
 			minDistance = (std::min)(minDistance, (std::max)((Real)0, camDistToCenter - sphereBounds.getRadius()));
 			maxDistance = (std::max)(maxDistance, camDistToCenter + sphereBounds.getRadius());
+			minDistanceInFrustum = (std::min)(minDistanceInFrustum, (std::max)((Real)0, camDistToCenter - sphereBounds.getRadius()));
+			maxDistanceInFrustum = (std::max)(maxDistanceInFrustum, camDistToCenter + sphereBounds.getRadius());
+		}
+
+		/** Merge an object that is not being rendered because it's not a shadow caster, 
+			but is a shadow receiver so should be included in the range.
+		*/
+		void mergeNonRenderedButInFrustum(const AxisAlignedBox& boxBounds, 
+			const Sphere& sphereBounds, const Camera* cam)
+		{
+			// use view matrix to determine distance, works with custom view matrices
+			Vector3 vsSpherePos = cam->getViewMatrix(true) * sphereBounds.getCenter();
+			Real camDistToCenter = vsSpherePos.length();
+			minDistanceInFrustum = (std::min)(minDistanceInFrustum, (std::max)((Real)0, camDistToCenter - sphereBounds.getRadius()));
+			maxDistanceInFrustum = (std::max)(maxDistanceInFrustum, camDistToCenter + sphereBounds.getRadius());
+
 		}
 
 
@@ -240,7 +262,7 @@ namespace Ogre {
 			@param v The viewport being updated. You can get the camera from here.
 			*/
 			virtual void preFindVisibleObjects(SceneManager* source, 
-				IlluminationRenderStage irs, Viewport* v) = 0;
+				IlluminationRenderStage irs, Viewport* v) {}
 			/** Called after searching for visible objects in this SceneManager.
 			@remarks
 				Note that the render queue at this stage will be full of the current
@@ -252,7 +274,7 @@ namespace Ogre {
 			@param v The viewport being updated. You can get the camera from here.
 			*/
 			virtual void postFindVisibleObjects(SceneManager* source, 
-				IlluminationRenderStage irs, Viewport* v) = 0;
+				IlluminationRenderStage irs, Viewport* v) {}
 
 			/** Event raised after all shadow textures have been rendered into for 
 				all queues / targets but before any other geometry has been rendered
@@ -268,7 +290,7 @@ namespace Ogre {
 				This event will only be fired when texture shadows are in use.
 			@param numberOfShadowTextures The number of shadow textures in use
 			*/
-			virtual void shadowTexturesUpdated(size_t numberOfShadowTextures) = 0;
+			virtual void shadowTexturesUpdated(size_t numberOfShadowTextures) {}
 
 			/** This event occurs just before the view & projection matrices are
 		 		set for rendering into a shadow texture.
@@ -284,7 +306,7 @@ namespace Ogre {
 			@param iteration For lights that use multiple shadow textures, the iteration number
 			*/
 			virtual void shadowTextureCasterPreViewProj(Light* light, 
-				Camera* camera, size_t iteration) = 0;
+				Camera* camera, size_t iteration) {}
 			/** This event occurs just before the view & projection matrices are
 		 		set for re-rendering a shadow receiver.
 			@remarks
@@ -299,7 +321,7 @@ namespace Ogre {
 				the shadow texture
 			*/
 			virtual void shadowTextureReceiverPreViewProj(Light* light, 
-				Frustum* frustum) = 0;
+				Frustum* frustum) {}
 
 			/** Hook to allow the listener to override the ordering of lights for
 				the entire frustum.
@@ -324,6 +346,9 @@ namespace Ogre {
 			@returns true if you sorted the list, false otherwise.
 			*/
 			virtual bool sortLightsAffectingFrustum(LightList& lightList) { return false; }
+
+			/** Event notifying the listener of the SceneManager's destruction. */
+			virtual void sceneManagerDestroyed(SceneManager* source) {}
 
 
 
@@ -489,11 +514,12 @@ namespace Ogre {
             int type;           // Use int instead of Light::LightTypes to avoid header file dependence
             Real range;         // Sets to zero if directional light
             Vector3 position;   // Sets to zero if directional light
+			uint32 lightMask;   // Light mask
 
             bool operator== (const LightInfo& rhs) const
             {
                 return light == rhs.light && type == rhs.type &&
-                    range == rhs.range && position == rhs.position;
+                    range == rhs.range && position == rhs.position && lightMask == rhs.lightMask;
             }
 
             bool operator!= (const LightInfo& rhs) const
@@ -626,6 +652,8 @@ namespace Ogre {
         typedef vector<RenderQueueListener*>::type RenderQueueListenerList;
         RenderQueueListenerList mRenderQueueListeners;
 
+		typedef vector<RenderObjectListener*>::type RenderObjectListenerList;
+		RenderObjectListenerList mRenderObjectListeners;
         typedef vector<Listener*>::type ListenerList;
         ListenerList mListeners;
 		/// Internal method for firing the queue start event
@@ -636,6 +664,9 @@ namespace Ogre {
         virtual bool fireRenderQueueStarted(uint8 id, const String& invocation);
         /// Internal method for firing the queue end event, returns true if queue is to be repeated
         virtual bool fireRenderQueueEnded(uint8 id, const String& invocation);
+		/// Internal method for firing when rendering a single object.
+		virtual void fireRenderSingleObject(Renderable* rend, const Pass* pass, const AutoParamDataSource* source, 
+			const LightList* pLightList, bool suppressRenderStateChanges);
 
 		/// Internal method for firing the texture shadows updated event
         virtual void fireShadowTexturesUpdated(size_t numberOfShadowTextures);
@@ -647,6 +678,8 @@ namespace Ogre {
 		virtual void firePreFindVisibleObjects(Viewport* v);
 		/// Internal method for firing find visible objects event
 		virtual void firePostFindVisibleObjects(Viewport* v);
+		/// Internal method for firing destruction event
+		virtual void fireSceneManagerDestroyed();
         /** Internal method for setting the destination viewport for the next render. */
         virtual void setViewport(Viewport *vp);
 
@@ -2355,6 +2388,12 @@ namespace Ogre {
 
         /** Removes a listener previously added with addRenderQueueListener. */
         virtual void removeRenderQueueListener(RenderQueueListener* delListener);
+		
+		/** Registers a new Render Object Listener which will be notified when rendering an object.		
+		*/
+		virtual void addRenderObjectListener(RenderObjectListener* newListener);
+		/** Removes a listener previously added with addRenderObjectListener. */
+		virtual void removeRenderObjectListener(RenderObjectListener* delListener);
 
 		/** Adds an item to the 'special case' render queue list.
 		@remarks
@@ -2517,10 +2556,16 @@ namespace Ogre {
         CameraIterator getCameraIterator(void) {
             return CameraIterator(mCameras.begin(), mCameras.end());
         }
+		/** Returns a const version of the camera list. 
+		*/
+		const CameraList& getCameras() const { return mCameras; }
         /** Returns a specialised MapIterator over all animations in the scene. */
         AnimationIterator getAnimationIterator(void) {
             return AnimationIterator(mAnimationsList.begin(), mAnimationsList.end());
         }
+		/** Returns a const version of the animation list. 
+		*/
+		const AnimationList& getAnimations() const { return mAnimationsList; }
         /** Returns a specialised MapIterator over all animation states in the scene. */
         AnimationStateIterator getAnimationStateIterator(void) {
             return mAnimationStates.getAnimationStateIterator();

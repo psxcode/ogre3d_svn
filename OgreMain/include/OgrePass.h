@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __Pass_H__
@@ -36,6 +35,7 @@ Torus Knot Software Ltd.
 #include "OgreCommon.h"
 #include "OgreLight.h"
 #include "OgreTextureUnitState.h"
+#include "OgreAny.h"
 
 namespace Ogre {
 
@@ -151,6 +151,8 @@ namespace Ogre {
 
 		// Transparent depth sorting
 		bool mTransparentSorting;
+		// Transparent depth sorting forced
+		bool mTransparentSortingForced;
         //-------------------------------------------------------------------------
 
         //-------------------------------------------------------------------------
@@ -228,6 +230,7 @@ namespace Ogre {
 		bool mLightClipPlanes;
 		/// Illumination stage?
 		IlluminationStage mIlluminationStage;
+		Any mUserAny;
 
 		// Used to get scene blending flags from a blending type
 		void _getBlendFlags(SceneBlendType type, SceneBlendFactor& source, SceneBlendFactor& dest);
@@ -1057,6 +1060,21 @@ namespace Ogre {
         */
 		bool getTransparentSortingEnabled(void) const;
 
+        /** Sets whether or not transparent sorting is forced.
+        @param enabled
+			If true depth sorting of this material will be depend only on the value of
+            getTransparentSortingEnabled().
+        @remarks
+			By default even if transparent sorting is enabled, depth sorting will only be
+            performed when the material is transparent and depth write/check are disabled.
+            This function disables these extra conditions.
+        */
+        void setTransparentSortingForced(bool enabled);
+
+        /** Returns whether or not transparent sorting is forced.
+        */
+		bool getTransparentSortingForced(void) const;
+
 		/** Sets whether or not this pass should iterate per light or number of
 			lights which can affect the object being rendered.
 		@remarks
@@ -1622,7 +1640,22 @@ namespace Ogre {
 		/** Get the hash function used for all passes.
 		*/
 		static HashFunc* getHashFunction(void) { return msHashFunc; }
-        
+
+		/** Get the builtin hash function.
+		*/
+		static HashFunc* getBuiltinHashFunction(BuiltinHashFunction builtin);
+
+		/** Sets any kind of user value on this object.
+		@remarks
+		This method allows you to associate any user value you like with 
+		this Pass. This can be a pointer back to one of your own
+		classes for instance.		
+		*/
+		virtual void setUserAny(const Any& anything) { mUserAny = anything; }
+
+		/** Retrieves the custom user value associated with this pass.
+		*/
+		virtual const Any& getUserAny(void) const { return mUserAny; }
     };
 
     /** Struct recording a pass which can be used for a specific illumination stage.

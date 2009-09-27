@@ -5,25 +5,24 @@ This source file is part of OGRE
 For the latest info, see http://www.ogre3d.org
 
 Copyright (c) 2000-2009 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __GpuProgramParams_H_
@@ -262,7 +261,7 @@ namespace Ogre {
 	typedef ConstMapIterator<GpuConstantDefinitionMap> GpuConstantDefinitionIterator;
 
 	/// Struct collecting together the information for named constants.
-	struct _OgreExport GpuNamedConstants
+	struct _OgreExport GpuNamedConstants : public GpuParamsAlloc
 	{
 		/// Total size of the float buffer required
 		size_t floatBufferSize;
@@ -270,6 +269,8 @@ namespace Ogre {
 		size_t intBufferSize;
 		/// Map of parameter names to GpuConstantDefinition
 		GpuConstantDefinitionMap map;
+
+		GpuNamedConstants() : floatBufferSize(0), intBufferSize(0) {}
 
 		/** Generate additional constant entries for arrays based on a base definition.
 		@remarks
@@ -314,6 +315,7 @@ namespace Ogre {
 		*/
 		static bool msGenerateAllConstantDefinitionArrayEntries;
 	};
+	typedef SharedPtr<GpuNamedConstants> GpuNamedConstantsPtr;
 
 	/// Simple class for loading / saving GpuNamedConstants
 	class _OgreExport GpuNamedConstantsSerializer : public Serializer
@@ -345,7 +347,7 @@ namespace Ogre {
 	};
 	typedef map<size_t, GpuLogicalIndexUse>::type GpuLogicalIndexUseMap;
 	/// Container struct to allow params to safely & update shared list of logical buffer assignments
-	struct _OgreExport GpuLogicalBufferStruct
+	struct _OgreExport GpuLogicalBufferStruct : public GpuParamsAlloc
 	{
 		OGRE_MUTEX(mutex)
 			/// Map from logical index to physical buffer location
@@ -354,6 +356,7 @@ namespace Ogre {
 		size_t bufferSize;
 		GpuLogicalBufferStruct() : bufferSize(0) {}
 	};
+	typedef SharedPtr<GpuLogicalBufferStruct> GpuLogicalBufferStructPtr;
 
 	/** Definition of container that holds the current float constants.
 	@note Not necessarily in direct index order to constant indexes, logical
@@ -1109,12 +1112,12 @@ namespace Ogre {
 		IntConstantList mIntConstants;
 		/** Logical index to physical index map - for low-level programs
 		or high-level programs which pass params this way. */
-		GpuLogicalBufferStruct* mFloatLogicalToPhysical;
+		GpuLogicalBufferStructPtr mFloatLogicalToPhysical;
 		/** Logical index to physical index map - for low-level programs
 		or high-level programs which pass params this way. */
-		GpuLogicalBufferStruct* mIntLogicalToPhysical;
+		GpuLogicalBufferStructPtr mIntLogicalToPhysical;
 		/// Mapping from parameter names to def - high-level programs are expected to populate this
-		const GpuNamedConstants* mNamedConstants;
+		GpuNamedConstantsPtr mNamedConstants;
 		/// List of automatically updated parameters
 		AutoConstantList mAutoConstants;
 		/// The combined variability masks of all parameters
@@ -1155,21 +1158,21 @@ namespace Ogre {
 		GpuProgramParameters& operator=(const GpuProgramParameters& oth);
 
 		/** Internal method for providing a link to a name->definition map for parameters. */
-		void _setNamedConstants(const GpuNamedConstants* constantmap);
+		void _setNamedConstants(const GpuNamedConstantsPtr& constantmap);
 
 		/** Internal method for providing a link to a logical index->physical index map for parameters. */
-		void _setLogicalIndexes(GpuLogicalBufferStruct* floatIndexMap, 
-			GpuLogicalBufferStruct* intIndexMap);
+		void _setLogicalIndexes(const GpuLogicalBufferStructPtr& floatIndexMap, 
+			const GpuLogicalBufferStructPtr&  intIndexMap);
 
 
 		/// Does this parameter set include named parameters?
-		bool hasNamedParameters() const { return mNamedConstants != 0;}
+		bool hasNamedParameters() const { return !mNamedConstants.isNull(); }
 		/** Does this parameter set include logically indexed parameters?
 		@note Not mutually exclusive with hasNamedParameters since some high-level
 		programs still use logical indexes to set the parameters on the 
 		rendersystem.
 		*/
-		bool hasLogicalIndexedParameters() const { return mFloatLogicalToPhysical != 0;}
+		bool hasLogicalIndexedParameters() const { return !mFloatLogicalToPhysical.isNull(); }
 
 		/** Sets a 4-element floating-point parameter to the program.
 		@param index The logical constant index at which to place the parameter 
@@ -1323,8 +1326,9 @@ namespace Ogre {
 		the named / logical index versions.
 		@param physicalIndex The physical buffer index at which to place the parameter 
 		@param m The value to set
+		@param elementCount actual element count used with shader
 		*/
-		void _writeRawConstant(size_t physicalIndex, const Matrix4& m);
+		void _writeRawConstant(size_t physicalIndex, const Matrix4& m, size_t elementCount);
 		/** Write a list of Matrix4 parameters to the program.
 		@note You can use these methods if you have already derived the physical
 		constant buffer location, for a slight speed improvement over using
@@ -1370,7 +1374,7 @@ namespace Ogre {
 		@note
 		Only applicable to low-level programs.
 		*/
-		const GpuLogicalBufferStruct* getFloatLogicalBufferStruct() const { return mFloatLogicalToPhysical; }
+		const GpuLogicalBufferStructPtr& getFloatLogicalBufferStruct() const { return mFloatLogicalToPhysical; }
 
 		/** Retrieves the logical index relating to a physical index in the float
 		buffer, for programs which support that (low-level programs and 
@@ -1390,7 +1394,7 @@ namespace Ogre {
 		@note
 		Only applicable to low-level programs.
 		*/
-		const GpuLogicalBufferStruct* getIntLogicalBufferStruct() const { return mIntLogicalToPhysical; }
+		const GpuLogicalBufferStructPtr& getIntLogicalBufferStruct() const { return mIntLogicalToPhysical; }
 		/// Get a reference to the list of float constants
 		const FloatConstantList& getFloatConstantList() const { return mFloatConstants; }
 		/// Get a pointer to the 'nth' item in the float buffer
