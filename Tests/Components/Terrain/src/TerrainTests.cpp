@@ -25,44 +25,72 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
-#include <cppunit/TestFixture.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include "OgreString.h"
+#include "TerrainTests.h"
+#include "OgreTerrain.h"
+#include "OgreConfigFile.h"
+#include "OgreResourceGroupManager.h"
 
-using namespace Ogre;
 
-class FileSystemArchiveTests : public CppUnit::TestFixture
+CPPUNIT_TEST_SUITE_REGISTRATION( TerrainTests );
+
+void TerrainTests::setUp()
 {
-    // CppUnit macros for setting up the test suite
-    CPPUNIT_TEST_SUITE( FileSystemArchiveTests );
-    CPPUNIT_TEST(testListNonRecursive);
-    CPPUNIT_TEST(testListRecursive);
-    CPPUNIT_TEST(testListFileInfoNonRecursive);
-    CPPUNIT_TEST(testListFileInfoRecursive);
-    CPPUNIT_TEST(testFindNonRecursive);
-    CPPUNIT_TEST(testFindRecursive);
-    CPPUNIT_TEST(testFindFileInfoNonRecursive);
-    CPPUNIT_TEST(testFindFileInfoRecursive);
-    CPPUNIT_TEST(testFileRead);
-    CPPUNIT_TEST(testReadInterleave);
-	CPPUNIT_TEST(testCreateAndRemoveFile);
-    CPPUNIT_TEST_SUITE_END();
-protected:
-    String testPath;
-public:
-    void setUp();
-    void tearDown();
+	mRoot = OGRE_NEW Root();
 
-    void testListNonRecursive();
-    void testListRecursive();
-    void testListFileInfoNonRecursive();
-    void testListFileInfoRecursive();
-    void testFindNonRecursive();
-    void testFindRecursive();
-    void testFindFileInfoNonRecursive();
-    void testFindFileInfoRecursive();
-    void testFileRead();
-    void testReadInterleave();
-	void testCreateAndRemoveFile();
+	// Load resource paths from config file
+	ConfigFile cf;
+	cf.load("resources.cfg");
 
-};
+	// Go through all sections & settings in the file
+	ConfigFile::SectionIterator seci = cf.getSectionIterator();
+
+	String secName, typeName, archName;
+	while (seci.hasMoreElements())
+	{
+		secName = seci.peekNextKey();
+		ConfigFile::SettingsMultiMap *settings = seci.getNext();
+		ConfigFile::SettingsMultiMap::iterator i;
+		for (i = settings->begin(); i != settings->end(); ++i)
+		{
+			typeName = i->first;
+			archName = i->second;
+			ResourceGroupManager::getSingleton().addResourceLocation(
+				archName, typeName, secName);
+
+		}
+	}
+
+	mSceneMgr = mRoot->createSceneManager(ST_GENERIC);
+
+}
+
+void TerrainTests::tearDown()
+{
+	OGRE_DELETE mRoot;
+}
+
+
+void TerrainTests::testCreate()
+{
+	Terrain* t = OGRE_NEW Terrain(mSceneMgr);
+	Image img;
+	img.load("terrain.png", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+	Terrain::ImportData imp;
+	imp.inputImage = &img;
+	imp.terrainSize = 513;
+	imp.worldSize = 1000;
+	imp.minBatchSize = 33;
+	imp.maxBatchSize = 65;
+	t->prepare(imp);
+	// don't load, this requires GPU access
+	//t->load();
+	
+
+	
+
+
+
+	OGRE_DELETE t;
+}
+

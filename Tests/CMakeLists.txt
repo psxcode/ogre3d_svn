@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 # Configure Tests build
 if (OGRE_BUILD_TESTS)
 
@@ -49,9 +58,33 @@ if (OGRE_BUILD_TESTS)
 	    Components/Paging/src/PageCoreTests.cpp
 	  )
 	endif ()
+	if (OGRE_BUILD_COMPONENT_TERRAIN)
+	  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Components/Terrain/include
+	    ${CMAKE_SOURCE_DIR}/Components/Terrain/include)
+	  
+	  set(OGRE_LIBRARIES ${OGRE_LIBRARIES} OgreTerrain)
+	  set(HEADER_FILES ${HEADER_FILES}
+	    Components/Terrain/include/TerrainTests.h
+	  )
+	  set(SOURCE_FILES ${SOURCE_FILES}
+	    Components/Terrain/src/TerrainTests.cpp
+	  )
+	endif ()
+	if (OGRE_BUILD_COMPONENT_PROPERTY)
+	  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Components/Property/include
+	    ${CMAKE_SOURCE_DIR}/Components/Property/include)
+	  
+	  set(OGRE_LIBRARIES ${OGRE_LIBRARIES} OgreProperty)
+	  set(HEADER_FILES ${HEADER_FILES}
+	    Components/Property/include/PropertyTests.h
+	  )
+	  set(SOURCE_FILES ${SOURCE_FILES}
+	    Components/Property/src/PropertyTests.cpp
+	  )
+	endif ()
 
 	add_executable(Test_Ogre WIN32 ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE_FILES} )
-	ogre_config_common(Test_Ogre)
+	ogre_config_sample(Test_Ogre)
 	target_link_libraries(Test_Ogre ${OGRE_LIBRARIES} ${CppUnit_LIBRARIES})
 
   endif ()
@@ -90,6 +123,9 @@ if (OGRE_BUILD_TESTS)
 	  if (OGRE_BUILD_RENDERSYSTEM_GL)
 		set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} RenderSystem_GL)
 	  endif ()
+	  if (OGRE_BUILD_RENDERSYSTEM_GLES)
+		set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} RenderSystem_GLES)
+	  endif ()
 
 	  if (OGRE_STATIC)
 		# Static linking means we need to directly use plugins
@@ -101,6 +137,7 @@ if (OGRE_BUILD_TESTS)
 		include_directories(${CMAKE_SOURCE_DIR}/PlugIns/PCZSceneManager/include)
 		include_directories(${CMAKE_SOURCE_DIR}/RenderSystems/Direct3D9/include)
 		include_directories(${CMAKE_SOURCE_DIR}/RenderSystems/Direct3D10/include)
+		include_directories(${CMAKE_SOURCE_DIR}/RenderSystems/GLES/include)
 		include_directories(
 			${CMAKE_SOURCE_DIR}/RenderSystems/GL/include
 			${CMAKE_SOURCE_DIR}/RenderSystems/GL/src/GLSL/include

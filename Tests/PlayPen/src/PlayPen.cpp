@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 /*
@@ -42,6 +41,9 @@ Description: Somewhere to play in the sand...
 #include "OgreErrorDialog.h"
 #include "OgreFontManager.h"
 #include "OgreDistanceLodStrategy.h"
+#include "OgreTerrain.h"
+#include "OgreTerrainQuadTreeNode.h"
+#include "OgreCommon.h"
 // Static plugins declaration section
 // Note that every entry in here adds an extra header / library dependency
 #ifdef OGRE_STATIC_LIB
@@ -116,6 +118,8 @@ CompositorInstance* compositorToSwitch = 0;
 int compositorSchemeIndex = 0;
 StringVector compositorSchemeList;
 GpuSharedParametersPtr testSharedParams;
+Terrain* mTerrain = 0;
+Quaternion quat1, quat2;
 
 class RefractionTextureListener : public RenderTargetListener
 {
@@ -169,12 +173,6 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-		//mMoveSpeed = 0.2;
-		if (mKeyboard->isKeyDown(OIS::KC_SCROLL))
-		{
-			mWindow->writeContentsToTimestampedFile("test", ".jpg");
-		}
-
         if (!vertParams.isNull())
         {
             Matrix4 scaleMat = Matrix4::IDENTITY;
@@ -265,6 +263,92 @@ public:
 			scissorRect->end();
 
 
+		}
+
+		if (mTerrain)
+		{
+			if (mKeyboard->isKeyDown(OIS::KC_PERIOD))
+			{
+				mTerrain->setLayerWorldSize(0, mTerrain->getLayerWorldSize(0) + 100 * evt.timeSinceLastFrame);
+			}
+			else if (mKeyboard->isKeyDown(OIS::KC_COMMA))
+			{
+				mTerrain->setLayerWorldSize(0, mTerrain->getLayerWorldSize(0) - 100 * evt.timeSinceLastFrame);
+			}
+
+			// fire ray
+			Ray ray; 
+			ray = mCamera->getCameraToViewportRay(0.5, 0.5);
+			//ray.setOrigin(mCamera->getDerivedPosition());
+			//ray.setDirection(Vector3::NEGATIVE_UNIT_Y);
+			std::pair<bool, Vector3> rayResult = mTerrain->rayIntersects(ray);
+
+			static SceneNode* testNode = 0;
+			if (!testNode)
+			{
+				testNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+				testNode->attachObject(mSceneMgr->createEntity("tst", "sphere.mesh"));
+				testNode->setScale(0.05, 0.05, 0.05);
+			}
+			if (rayResult.first)
+			{
+				testNode->setPosition(rayResult.second);
+				StringUtil::StrStreamType str;
+				str << "HIT: " << rayResult.second;
+
+				
+				if (mKeyboard->isKeyDown(OIS::KC_SPACE))
+				{
+					Vector3 tsPos;
+					mTerrain->getTerrainPosition(rayResult.second, &tsPos);
+
+					size_t x = tsPos.x * (mTerrain->getSize()-1);
+					size_t y = tsPos.y * (mTerrain->getSize()-1);
+					float addedHeight = 250.0 * evt.timeSinceLastFrame;
+					float newheight = mTerrain->getHeightAtPoint(x, y) + addedHeight;
+
+					mTerrain->setHeightAtPoint(x, y, newheight);
+					mTerrain->update();
+
+				}
+				if (mKeyboard->isKeyDown(OIS::KC_P))
+				{
+					Vector3 tsPos;
+					mTerrain->getTerrainPosition(rayResult.second, &tsPos);
+					TerrainLayerBlendMap* map = mTerrain->getLayerBlendMap(1);
+					size_t imgx, imgy;
+					map->convertTerrainToImageSpace(tsPos.x, tsPos.y, &imgx, &imgy);
+
+					map->setBlendValue(imgx, imgy, 1);
+					map->update();
+
+				}
+				mDebugText = str.str();
+
+			}
+			else
+			{
+				mDebugText = "MISS";
+			}
+
+			static float updateDelay = 0;
+			if (mKeyboard->isKeyDown(OIS::KC_U) && updateDelay <= 0)
+			{
+				mTerrain->dirty();
+				mTerrain->update();
+				updateDelay = 0.3;
+			}
+			/*
+			if (mKeyboard->isKeyDown(OIS::KC_M) && updateDelay <= 0)
+			{
+				StringVector texNames;
+				texNames.push_back("growth_weirdfungus-03_diffusespecular.dds");
+				texNames.push_back("growth_weirdfungus-03_normalheight.dds");
+				mTerrain->addLayer(500, &texNames);
+				updateDelay = 0.3;
+			}
+			*/
+			updateDelay -= evt.timeSinceLastFrame;
 		}
 
 		return ret;
@@ -482,38 +566,41 @@ public:
 				}
 			}
 		}
-		if (mKeyboard->isKeyDown(OIS::KC_P))
-        {
-            mTestNode[0]->yaw(Degree(-evt.timeSinceLastFrame * 30));
-        }
-		if (mKeyboard->isKeyDown(OIS::KC_O))
-        {
-            mTestNode[0]->yaw(Degree(evt.timeSinceLastFrame * 30));
-        }
-		if (mKeyboard->isKeyDown(OIS::KC_K))
-        {
-            mTestNode[0]->roll(Degree(-evt.timeSinceLastFrame * 30));
-        }
-		if (mKeyboard->isKeyDown(OIS::KC_L))
-        {
-            mTestNode[0]->roll(Degree(evt.timeSinceLastFrame * 30));
-        }
-		if (mKeyboard->isKeyDown(OIS::KC_U))
-        {
-            mTestNode[0]->translate(0,0,-evt.timeSinceLastFrame * 30);
-        }
-		if (mKeyboard->isKeyDown(OIS::KC_J))
-        {
-            mTestNode[0]->translate(0,0,evt.timeSinceLastFrame * 30);
-        }
-		if (mKeyboard->isKeyDown(OIS::KC_M))
-        {
-            mTestNode[0]->translate(0,evt.timeSinceLastFrame * 30, 0);
-        }
-		if (mKeyboard->isKeyDown(OIS::KC_N))
-        {
-            mTestNode[0]->translate(0,-evt.timeSinceLastFrame * 30, 0);
-        }
+		if (mTestNode[0])
+		{
+			if (mKeyboard->isKeyDown(OIS::KC_P))
+			{
+				mTestNode[0]->yaw(Degree(-evt.timeSinceLastFrame * 30));
+			}
+			if (mKeyboard->isKeyDown(OIS::KC_O))
+			{
+				mTestNode[0]->yaw(Degree(evt.timeSinceLastFrame * 30));
+			}
+			if (mKeyboard->isKeyDown(OIS::KC_K))
+			{
+				mTestNode[0]->roll(Degree(-evt.timeSinceLastFrame * 30));
+			}
+			if (mKeyboard->isKeyDown(OIS::KC_L))
+			{
+				mTestNode[0]->roll(Degree(evt.timeSinceLastFrame * 30));
+			}
+			if (mKeyboard->isKeyDown(OIS::KC_U))
+			{
+				mTestNode[0]->translate(0,0,-evt.timeSinceLastFrame * 30);
+			}
+			if (mKeyboard->isKeyDown(OIS::KC_J))
+			{
+				mTestNode[0]->translate(0,0,evt.timeSinceLastFrame * 30);
+			}
+			if (mKeyboard->isKeyDown(OIS::KC_M))
+			{
+				mTestNode[0]->translate(0,evt.timeSinceLastFrame * 30, 0);
+			}
+			if (mKeyboard->isKeyDown(OIS::KC_N))
+			{
+				mTestNode[0]->translate(0,-evt.timeSinceLastFrame * 30, 0);
+			}
+		}
 
         if (mKeyboard->isKeyDown(OIS::KC_0) && timeUntilNextToggle <= 0)
         {
@@ -624,6 +711,9 @@ public:
 			delete mFrameListener;
 			mFrameListener = 0;
 		}
+
+		delete mTerrain;
+
 		if (mRoot)
 		{
 			delete mRoot;
@@ -1834,7 +1924,7 @@ protected:
            multiple index sets (submeshes) using a single vertex buffer.
         */
         VertexData vd;
-        IndexData id[4];
+        IndexData ind[4];
         // Test pyramid
         vd.vertexCount = 4;
         vd.vertexStart = 0;
@@ -1849,44 +1939,44 @@ protected:
         *pFloat++ = 0  ; *pFloat++ = 0  ; *pFloat++ = -50;
         vbuf->unlock();
             
-        id[0].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[0].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[0].indexCount = 3;
-        id[0].indexStart = 0;
-        unsigned short* pIdx = static_cast<unsigned short*>(id[0].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[0].indexCount = 3;
+        ind[0].indexStart = 0;
+        unsigned short* pIdx = static_cast<unsigned short*>(ind[0].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 0; *pIdx++ = 1; *pIdx++ = 2;
-        id[0].indexBuffer->unlock();
+        ind[0].indexBuffer->unlock();
 
-        id[1].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[1].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[1].indexCount = 3;
-        id[1].indexStart = 0;
-        pIdx = static_cast<unsigned short*>(id[1].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[1].indexCount = 3;
+        ind[1].indexStart = 0;
+        pIdx = static_cast<unsigned short*>(ind[1].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 0; *pIdx++ = 2; *pIdx++ = 3;
-        id[1].indexBuffer->unlock();
+        ind[1].indexBuffer->unlock();
 
-        id[2].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[2].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[2].indexCount = 3;
-        id[2].indexStart = 0;
-        pIdx = static_cast<unsigned short*>(id[2].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[2].indexCount = 3;
+        ind[2].indexStart = 0;
+        pIdx = static_cast<unsigned short*>(ind[2].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 1; *pIdx++ = 3; *pIdx++ = 2;
-        id[2].indexBuffer->unlock();
+        ind[2].indexBuffer->unlock();
 
-        id[3].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[3].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[3].indexCount = 3;
-        id[3].indexStart = 0;
-        pIdx = static_cast<unsigned short*>(id[3].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[3].indexCount = 3;
+        ind[3].indexStart = 0;
+        pIdx = static_cast<unsigned short*>(ind[3].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 0; *pIdx++ = 3; *pIdx++ = 1;
-        id[3].indexBuffer->unlock();
+        ind[3].indexBuffer->unlock();
 
         EdgeListBuilder edgeBuilder;
         edgeBuilder.addVertexData(&vd);
-        edgeBuilder.addIndexData(&id[0]);
-        edgeBuilder.addIndexData(&id[1]);
-        edgeBuilder.addIndexData(&id[2]);
-        edgeBuilder.addIndexData(&id[3]);
+        edgeBuilder.addIndexData(&ind[0]);
+        edgeBuilder.addIndexData(&ind[1]);
+        edgeBuilder.addIndexData(&ind[2]);
+        edgeBuilder.addIndexData(&ind[3]);
         EdgeData* edgeData = edgeBuilder.build();
 
         edgeData->log(LogManager::getSingleton().getDefaultLog());
@@ -1905,7 +1995,7 @@ protected:
         */
 
         VertexData vd[4];
-        IndexData id[4];
+        IndexData ind[4];
         // Test pyramid
         vd[0].vertexCount = 3;
         vd[0].vertexStart = 0;
@@ -1955,47 +2045,47 @@ protected:
         *pFloat++ = 0  ; *pFloat++ = 0  ; *pFloat++ = -50;
         vbuf->unlock();
 
-        id[0].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[0].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[0].indexCount = 3;
-        id[0].indexStart = 0;
-        unsigned short* pIdx = static_cast<unsigned short*>(id[0].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[0].indexCount = 3;
+        ind[0].indexStart = 0;
+        unsigned short* pIdx = static_cast<unsigned short*>(ind[0].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 0; *pIdx++ = 1; *pIdx++ = 2;
-        id[0].indexBuffer->unlock();
+        ind[0].indexBuffer->unlock();
 
-        id[1].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[1].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[1].indexCount = 3;
-        id[1].indexStart = 0;
-        pIdx = static_cast<unsigned short*>(id[1].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[1].indexCount = 3;
+        ind[1].indexStart = 0;
+        pIdx = static_cast<unsigned short*>(ind[1].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 0; *pIdx++ = 1; *pIdx++ = 2;
-        id[1].indexBuffer->unlock();
+        ind[1].indexBuffer->unlock();
 
-        id[2].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[2].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[2].indexCount = 3;
-        id[2].indexStart = 0;
-        pIdx = static_cast<unsigned short*>(id[2].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[2].indexCount = 3;
+        ind[2].indexStart = 0;
+        pIdx = static_cast<unsigned short*>(ind[2].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 0; *pIdx++ = 2; *pIdx++ = 1;
-        id[2].indexBuffer->unlock();
+        ind[2].indexBuffer->unlock();
 
-        id[3].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
+        ind[3].indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
             HardwareIndexBuffer::IT_16BIT, 3, HardwareBuffer::HBU_STATIC, true);
-        id[3].indexCount = 3;
-        id[3].indexStart = 0;
-        pIdx = static_cast<unsigned short*>(id[3].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+        ind[3].indexCount = 3;
+        ind[3].indexStart = 0;
+        pIdx = static_cast<unsigned short*>(ind[3].indexBuffer->lock(HardwareBuffer::HBL_DISCARD));
         *pIdx++ = 0; *pIdx++ = 2; *pIdx++ = 1;
-        id[3].indexBuffer->unlock();
+        ind[3].indexBuffer->unlock();
 
         EdgeListBuilder edgeBuilder;
         edgeBuilder.addVertexData(&vd[0]);
         edgeBuilder.addVertexData(&vd[1]);
         edgeBuilder.addVertexData(&vd[2]);
         edgeBuilder.addVertexData(&vd[3]);
-        edgeBuilder.addIndexData(&id[0], 0);
-        edgeBuilder.addIndexData(&id[1], 1);
-        edgeBuilder.addIndexData(&id[2], 2);
-        edgeBuilder.addIndexData(&id[3], 3);
+        edgeBuilder.addIndexData(&ind[0], 0);
+        edgeBuilder.addIndexData(&ind[1], 1);
+        edgeBuilder.addIndexData(&ind[2], 2);
+        edgeBuilder.addIndexData(&ind[3], 3);
         EdgeData* edgeData = edgeBuilder.build();
 
         edgeData->log(LogManager::getSingleton().getDefaultLog());
@@ -2708,6 +2798,10 @@ protected:
 	}
 	void addTextureDebugOverlay(TexturePtr tex, size_t i)
 	{
+		addTextureDebugOverlay(tex->getName(), i);
+	}
+	void addTextureDebugOverlay(const String& texname, size_t i)
+	{
 		Overlay* debugOverlay = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
 
 		// Set up a debug panel to display the shadow
@@ -2715,11 +2809,12 @@ protected:
 			"Ogre/DebugTexture" + StringConverter::toString(i), 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 		debugMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-		TextureUnitState *t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState(tex->getName());
+		TextureUnitState *t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState(texname);
 		t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
 		//t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState("spot_shadow_fade.png");
 		//t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
 		//t->setColourOperation(LBO_ADD);
+		
 
 		OverlayContainer* debugPanel = (OverlayContainer*)
 			(OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugTexPanel" + StringConverter::toString(i)));
@@ -2781,6 +2876,9 @@ protected:
         //pEnt->setMaterialName("2 - Default");
         mTestNode[1]->attachObject( pEnt );
         mTestNode[1]->translate(0,-100,0);
+
+		quat1 = Quaternion::IDENTITY;
+		quat2.FromAngleAxis(Degree(360), Vector3::UNIT_Y);
 
         pEnt = mSceneMgr->createEntity( "3", "knot.mesh" );
         mTestNode[2] = mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(-200, 0, -200));
@@ -4243,7 +4341,7 @@ protected:
 		man->normal(0, 0, 1);
 		man->textureCoord(0, 1);
 
-		man->position(30, 30, 30);
+		man->position(90, 30, 30);
 		man->normal(0, 0, 1);
 		man->textureCoord(1, 0);
 
@@ -7851,6 +7949,249 @@ protected:
 
 	}
 
+	void testImageCombine()
+	{
+		Image combined;
+		
+		// pick 2 files that are the same size, alpha texture will be made greyscale
+		combined.loadTwoImagesAsRGBA("rockwall.tga", "flare.png", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, PF_BYTE_RGBA);
+
+		TexturePtr tex = TextureManager::getSingleton().createManual("1", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 256, 256, 1, 0, PF_BYTE_RGBA);
+		tex->loadImage(combined);
+
+		MaterialManager& mmgr = MaterialManager::getSingleton();
+		MaterialPtr mat = mmgr.create("m1", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		Pass* pass = mat->getTechnique(0)->getPass(0);
+		pass->setLightingEnabled(false);
+		pass->setCullingMode(CULL_NONE);
+		pass->setSceneBlending(SBT_TRANSPARENT_ALPHA);
+		pass->setDepthWriteEnabled(false);
+		pass->createTextureUnitState(tex->getName());
+
+		Entity *e = mSceneMgr->createEntity("test", SceneManager::PT_PLANE);
+		e->setMaterialName(mat->getName());
+		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
+
+		mCamera->setPosition(0, 0, 200);
+		mCamera->lookAt(Vector3::ZERO);
+
+		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Blue);
+
+	}
+
+	Terrain* createTerrain()
+	{
+		Terrain* terrain = OGRE_NEW Terrain(mSceneMgr);
+		Image img;
+		img.load("terrain.png", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		//img.load("terrain_flattened.png", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		//img.load("terrain_onehill.png", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+		Terrain::ImportData imp;
+		imp.inputImage = &img;
+		imp.terrainSize = 513;
+		imp.worldSize = 8000;
+		imp.inputScale = 600;
+		imp.minBatchSize = 33;
+		imp.maxBatchSize = 65;
+		// textures
+		imp.layerList.resize(3);
+		imp.layerList[0].worldSize = 100;
+		imp.layerList[0].textureNames.push_back("dirt_grayrocky_diffusespecular.dds");
+		imp.layerList[0].textureNames.push_back("dirt_grayrocky_normalheight.dds");
+		imp.layerList[1].worldSize = 30;
+		imp.layerList[1].textureNames.push_back("grass_green-01_diffusespecular.dds");
+		imp.layerList[1].textureNames.push_back("grass_green-01_normalheight.dds");
+		imp.layerList[2].worldSize = 200;
+		imp.layerList[2].textureNames.push_back("growth_weirdfungus-03_diffusespecular.dds");
+		imp.layerList[2].textureNames.push_back("growth_weirdfungus-03_normalheight.dds");
+		terrain->prepare(imp);
+		terrain->load();
+
+		TerrainLayerBlendMap* blendMap0 = terrain->getLayerBlendMap(1);
+		TerrainLayerBlendMap* blendMap1 = terrain->getLayerBlendMap(2);
+		Real minHeight0 = 70;
+		Real fadeDist0 = 40;
+		Real minHeight1 = 70;
+		Real fadeDist1 = 15;
+		float* pBlend0 = blendMap0->getBlendPointer();
+		float* pBlend1 = blendMap1->getBlendPointer();
+		for (Ogre::uint16 y = 0; y < terrain->getLayerBlendMapSize(); ++y)
+		{
+			for (Ogre::uint16 x = 0; x < terrain->getLayerBlendMapSize(); ++x)
+			{
+				Real tx, ty;
+
+				blendMap0->convertImageToTerrainSpace(x, y, &tx, &ty);
+				Real height = terrain->getHeightAtTerrainPosition(tx, ty);
+				Real val = (height - minHeight0) / fadeDist0;
+				val = Math::Clamp(val, (Real)0, (Real)1);
+				//*pBlend0++ = val;
+
+				val = (height - minHeight1) / fadeDist1;
+				val = Math::Clamp(val, (Real)0, (Real)1);
+				*pBlend1++ = val;
+
+
+			}
+		}
+		blendMap0->dirty();
+		blendMap1->dirty();
+		//blendMap0->loadImage("blendmap1.png", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		blendMap0->update();
+		blendMap1->update();
+
+		/*
+		// set up a colour map
+		terrain->setGlobalColourMapEnabled(true);
+		Image colourMap;
+		colourMap.load("testcolourmap.jpg", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		terrain->getGlobalColourMap()->loadImage(colourMap);
+		*/
+
+		terrain->freeTemporaryResources();
+
+		return terrain;
+
+	}
+
+	void testNewTerrain(bool loadTerrain = false, bool saveTerrain = false, const String& filename = "testTerrain.dat")
+	{
+		MaterialManager::getSingleton().setDefaultTextureFiltering(TFO_ANISOTROPIC);
+		MaterialManager::getSingleton().setDefaultAnisotropy(7);
+
+		LogManager::getSingleton().setLogDetail(LL_BOREME);
+
+		Vector3 lightdir(0, -0.3, 0.75);
+		lightdir.normalise();
+
+
+		TerrainGlobalOptions::setMaxPixelError(8);
+		// testing composite map
+		TerrainGlobalOptions::setCompositeMapDistance(2000);
+		//TerrainGlobalOptions::setUseRayBoxDistanceCalculation(true);
+		//TerrainGlobalOptions::getDefaultMaterialGenerator()->setDebugLevel(1);
+		//TerrainGlobalOptions::setLightMapSize(256);
+
+
+
+		Light* l = mSceneMgr->createLight("tstLight");
+		l->setType(Light::LT_DIRECTIONAL);
+		l->setDirection(lightdir);
+		l->setDiffuseColour(ColourValue::White);
+		l->setSpecularColour(ColourValue(0.4, 0.4, 0.4));
+
+		mSceneMgr->setAmbientLight(ColourValue(0.2, 0.2, 0.2));
+
+		
+		// Important to set these so that the terrain knows what to use for derived (non-realtime) data
+		TerrainGlobalOptions::setLightMapDirection(lightdir);
+		TerrainGlobalOptions::setCompositeMapAmbient(mSceneMgr->getAmbientLight());
+		//TerrainGlobalOptions::setCompositeMapAmbient(ColourValue::Red);
+		TerrainGlobalOptions::setCompositeMapDiffuse(l->getDiffuseColour());
+
+		//mSceneMgr->showBoundingBoxes(true);
+		if (loadTerrain)
+		{
+			mTerrain = OGRE_NEW Terrain(mSceneMgr);
+			mTerrain->load(filename);
+		}
+		else
+		{
+			mTerrain = createTerrain();
+
+		}
+
+		//addTextureDebugOverlay(TextureManager::getSingleton().getByName(mTerrain->getTerrainNormalMap()->getName()), 0);
+
+		//mWindow->getViewport(0)->setBackgroundColour(ColourValue::Blue);
+
+		Vector3 terrainPos(10000,0,5000);
+		mTerrain->setPosition(terrainPos);
+
+		/*
+		// create a few entities on the terrain
+		for (int i = 0; i < 20; ++i)
+		{
+			Entity* e = mSceneMgr->createEntity("ninja.mesh");
+			Real x = terrainPos.x + Math::RangeRandom(-2500, 2500);
+			Real z = terrainPos.z + Math::RangeRandom(-2500, 2500);
+			Real y = mTerrain->getHeightAtWorldPosition(Vector3(x, 0, z));
+			mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(x, y, z))->attachObject(e);
+		}
+		*/
+	
+
+
+		mCamera->setPosition(terrainPos + Vector3(-4000,300,4000));
+		mCamera->lookAt(terrainPos);
+		mCamera->setNearClipDistance(5);
+		mCamera->setFarClipDistance(50000);
+
+		mSceneMgr->setSkyBox(true, "Examples/CloudyNoonSkyBox");
+
+		if (saveTerrain)
+		{
+			mTerrain->save(filename);
+		}
+
+		//addTextureDebugOverlay(mTerrain->getCompositeMap()->getName(), 0);
+
+	}
+
+	void testTwoNewTerrains()
+	{
+		MaterialManager::getSingleton().setDefaultTextureFiltering(TFO_ANISOTROPIC);
+		MaterialManager::getSingleton().setDefaultAnisotropy(7);
+
+		LogManager::getSingleton().setLogDetail(LL_BOREME);
+
+		Vector3 lightdir(0.55, -0.3, 0.75);
+		lightdir.normalise();
+
+
+		// Until material implemented
+		TerrainGlobalOptions::setMaxPixelError(8);
+		//TerrainGlobalOptions::setUseRayBoxDistanceCalculation(true);
+		//TerrainGlobalOptions::getDefaultMaterialGenerator()->setDebugLevel(1);
+		//TerrainGlobalOptions::setLightMapSize(256);
+		TerrainGlobalOptions::setLightMapDirection(lightdir);
+
+		Light* l = mSceneMgr->createLight("tstLight");
+		l->setType(Light::LT_DIRECTIONAL);
+		l->setDirection(lightdir);
+		l->setDiffuseColour(ColourValue::White);
+		l->setSpecularColour(ColourValue(0.4, 0.4, 0.4));
+
+		mSceneMgr->setAmbientLight(ColourValue(0.2, 0.2, 0.2));
+
+
+
+		//mSceneMgr->showBoundingBoxes(true);
+		Terrain* terrain1 = createTerrain();
+		Terrain* terrain2 = createTerrain();
+
+		for (int i = 0; i < terrain2->getSize()-1; i++)
+			terrain2->setHeightAtPoint(0, i, terrain1->getHeightAtPoint(terrain1->getSize()-1, i));
+		terrain2->update();
+
+		//addTextureDebugOverlay(TextureManager::getSingleton().getByName(mTerrain->getTerrainNormalMap()->getName()), 0);
+
+		//mWindow->getViewport(0)->setBackgroundColour(ColourValue::Blue);
+
+		terrain2->setPosition(Vector3(8000,0,0));
+
+		mCamera->setPosition(Vector3(-4000,300,4000));
+		mCamera->lookAt(Vector3::ZERO);
+		mCamera->setNearClipDistance(5);
+		mCamera->setFarClipDistance(15000);
+
+		mSceneMgr->setSkyBox(true, "Examples/CloudyNoonSkyBox");
+
+
+	}
+
 	void createScene(void)
     {
 
@@ -7890,62 +8231,65 @@ protected:
 
 		Any anyString(String("test"));
 
+		LogManager::getSingleton().setLogDetail(LL_BOREME);
+
 		//testLiSPSM();
 		//testBug();
 		//testSharedPtrBug();
-        //testMatrices();
-        //testBsp();
-        //testAlpha();
-        //testAnimation();
+  //      testMatrices();
+  //      //testBsp();
+  //      testAlpha();
+  //      testAnimation();
 		//testAnimationBlend();
 
-        //testGpuPrograms();
-        //testMultiViewports();
-        //testDistortion();
-        //testEdgeBuilderSingleIndexBufSingleVertexBuf();
-        //testEdgeBuilderMultiIndexBufSingleVertexBuf();
-        //testEdgeBuilderMultiIndexBufMultiVertexBuf();
-        //testPrepareShadowVolume();
-        //testWindowedViewportMode();
-        //testSubEntityVisibility();
-        //testAttachObjectsToBones();
-        //testSkeletalAnimation();
-        //testOrtho();
-        //testClearScene();
+  //      testGpuPrograms();
+  //      testMultiViewports();
+  //      testDistortion();
+  //      testEdgeBuilderSingleIndexBufSingleVertexBuf();
+  //      testEdgeBuilderMultiIndexBufSingleVertexBuf();
+  //      testEdgeBuilderMultiIndexBufMultiVertexBuf();
+  //      testPrepareShadowVolume();
+  //      testWindowedViewportMode();
+  //      testSubEntityVisibility();
+  //      testAttachObjectsToBones();
+  //      testSkeletalAnimation();
+  //      testOrtho();
+  //      testClearScene();
 		//testInfiniteAAB();
 
-        //testProjection();
-        testStencilShadows(SHADOWTYPE_STENCIL_ADDITIVE, true, true);
-        //testStencilShadows(SHADOWTYPE_STENCIL_MODULATIVE, false, true);
-        //testTextureShadows(SHADOWTYPE_TEXTURE_ADDITIVE, true);
+  //      testProjection();
+  //      testStencilShadows(SHADOWTYPE_STENCIL_ADDITIVE, true, true);
+  //      testStencilShadows(SHADOWTYPE_STENCIL_MODULATIVE, false, true);
+  //      testTextureShadows(SHADOWTYPE_TEXTURE_ADDITIVE, true);
 		//testTextureShadows(SHADOWTYPE_TEXTURE_MODULATIVE, true);
 		//testTextureShadowsIntegrated();
 		//testTextureShadowsIntegratedPSSM();
 		//testStencilShadowsMixedOpSubMeshes(false, true);
 		//testTextureShadowsTransparentCaster();
-		//testTextureShadowsCustomCasterMat(SHADOWTYPE_TEXTURE_ADDITIVE);
-		//testTextureShadowsCustomReceiverMat(SHADOWTYPE_TEXTURE_MODULATIVE);
+		//testTextureShadowsCustomCasterMat(SHADOWTYPE_TEXTURE_ADDITIVE, true);
+		//testTextureShadowsCustomReceiverMat(SHADOWTYPE_TEXTURE_MODULATIVE, true);
 		//testCompositorTextureShadows(SHADOWTYPE_TEXTURE_MODULATIVE);
 		//testSplitPassesTooManyTexUnits();
-        //testOverlayZOrder();
+  //      testOverlayZOrder();
 		//testReflectedBillboards();
 		//testBlendDiffuseColour();
 
-        //testRaySceneQuery();
+  //      testRaySceneQuery();
 		//testNegativeScale();
 		//testMaterialSerializer();
-        //testIntersectionSceneQuery();
+  //      testIntersectionSceneQuery();
 
-        //test2Spotlights();
+  //      test2Spotlights();
 		//testDepthBias();
 
+		////testMaterialSchemesListener();
 		//testManualLOD();
 		//testGeneratedLOD();
 		//testLotsAndLotsOfEntities();
 		//testSimpleMesh();
 		//test2Windows();
 		//testStaticGeometry();
-		testStaticGeometryWithLOD(true);
+		//testStaticGeometryWithLOD(true);
 		//testBillboardTextureCoords();
 		//testBillboardOrigins();
 		//testReloadResources();
@@ -7987,8 +8331,8 @@ protected:
 		//testMaterialSchemesListener();
 		//testMaterialSchemesWithLOD();
 		//testMaterialSchemesWithMismatchedLOD();
-        //testSkeletonAnimationOptimise();
-        //testBuildTangentOnAnimatedMesh();
+  //      testSkeletonAnimationOptimise();
+  //      testBuildTangentOnAnimatedMesh();
 		//testOverlayRelativeMode();
 		//testShadowLod(false, SHADOWTYPE_TEXTURE_MODULATIVE);
 
@@ -8024,11 +8368,45 @@ protected:
 
         //testLod();
 		//testSharedGpuParameters();
+		//testNewTerrain(false);
+		testNewTerrain(true);
+		//testTwoNewTerrains();
+		//testImageCombine();
+		//testNewTerrain(true, false, "flatterrain.dat");
+		//testImageCombine();
 
+		Image combined;
+		/*
+		combined.loadTwoImagesAsRGBA("dirt_grayrocky_DIFFUSE.png", "dirt_grayrocky_SPECULAR.png", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, PF_BYTE_RGBA);
 
+		combined.save("dirt_grayrocky_diffusespecular.png");
 
+		combined.loadTwoImagesAsRGBA("dirt_grayrocky_NORMAL.png", "dirt_grayrocky_DISP.png", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, PF_BYTE_RGBA);
 
+		combined.save("dirt_grayrocky_normalheight.png");
+
+		combined.loadTwoImagesAsRGBA("grass_green-01_DIFFUSE.png", "grass_green-01_SPECULAR.png", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, PF_BYTE_RGBA);
+
+		combined.save("grass_green-01_diffusespecular.png");
+
+		combined.loadTwoImagesAsRGBA("grass_green-01_NORMAL.png", "grass_green-01_DISP.png", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, PF_BYTE_RGBA);
+
+		combined.save("grass_green-01_normalheight.png");
 		
+		combined.loadTwoImagesAsRGBA("growth_weirdfungus-03_DIFFUSE.png", "growth_weirdfungus-03_SPECULAR.png", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, PF_BYTE_RGBA);
+
+		combined.save("growth_weirdfungus-03_diffusespecular.png");
+
+		combined.loadTwoImagesAsRGBA("growth_weirdfungus-03_NORMAL.png", "growth_weirdfungus-03_DISP.png", 
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, PF_BYTE_RGBA);
+
+		combined.save("growth_weirdfungus-03_normalheight.png");
+		*/
     }
     // Create new frame listener
     void createFrameListener(void)
@@ -8057,7 +8435,7 @@ public:
 #ifdef OGRE_STATIC_LIB
 		mRoot = new Root(StringUtil::BLANK, 
 			mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
-		mStaticPluginLoader.load(*mRoot);
+		mStaticPluginLoader.load();
 #else
 		mRoot = new Root(pluginsPath, 
 			mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
@@ -8291,6 +8669,12 @@ INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
 int main(int argc, char **argv)
 #endif
 {
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+    int retVal = UIApplicationMain(argc, argv, @"UIApplication", @"AppDelegate");
+    [pool release];
+    return retVal;
+#else
 	//EmbeddedMain(hInst, 0, strCmdLine, 0);
 
 	// Create application object
@@ -8307,13 +8691,79 @@ int main(int argc, char **argv)
 #endif
     }
 
-
     return 0;
+#endif
 }
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+#   ifdef __OBJC__
+@interface AppDelegate : NSObject <UIApplicationDelegate>
+{
+}
 
+- (void)go;
 
+@end
 
+@implementation AppDelegate
 
+- (void)go {
+    // Create application object
+    PlayPenApplication app;
+    try {
+        app.go();
+    } catch( Ogre::Exception& e ) {
+        std::cerr << "An exception has occured: " <<
+        e.getFullDescription().c_str() << std::endl;
+    }
+}
+        
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
+    // Hide the status bar
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    
+    // Create a window
+    UIWindow *window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    
+    // Create an image view
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Default.png"]];
+    [window addSubview:imageView];
+    
+    // Create an indeterminate status indicator
+    UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+    [indicator setFrame:CGRectMake(150, 280, 20, 20)];
+    [indicator startAnimating];
+    [window addSubview:indicator];
+    
+    // Display our window
+    [window makeKeyAndVisible];
+    
+    // Clean up
+    [imageView release];
+    [indicator release];
+    
+    [NSThread detachNewThreadSelector:@selector(go) toTarget:self withObject:nil];
+}
 
+- (void)applicationWillTerminate:(UIApplication *)application {
+    Root::getSingleton().queueEndRendering();
+}
 
+//- (void)applicationWillResignActive:(UIApplication *)application
+//{
+//    // Pause FrameListeners and rendering
+//}
+//
+//- (void)applicationDidBecomeActive:(UIApplication *)application
+//{
+//    // Resume FrameListeners and rendering
+//}
+
+- (void)dealloc {
+    [super dealloc];
+}
+
+@end
+#   endif
+        
+#endif

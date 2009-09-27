@@ -27,38 +27,23 @@ THE SOFTWARE.
 */
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "OgreString.h"
 
-class ZipArchiveTests : public CppUnit::TestFixture
+#include "OgreRoot.h"
+
+using namespace Ogre; 
+
+class TerrainTests : public CppUnit::TestFixture
 {
-    // CppUnit macros for setting up the test suite
-    CPPUNIT_TEST_SUITE( ZipArchiveTests );
-    CPPUNIT_TEST(testListNonRecursive);
-    CPPUNIT_TEST(testListRecursive);
-    CPPUNIT_TEST(testListFileInfoNonRecursive);
-    CPPUNIT_TEST(testListFileInfoRecursive);
-    CPPUNIT_TEST(testFindNonRecursive);
-    CPPUNIT_TEST(testFindRecursive);
-    CPPUNIT_TEST(testFindFileInfoNonRecursive);
-    CPPUNIT_TEST(testFindFileInfoRecursive);
-    CPPUNIT_TEST(testFileRead);
-    CPPUNIT_TEST(testReadInterleave);
-    CPPUNIT_TEST_SUITE_END();
-protected:
-    Ogre::String testPath;
+	// CppUnit macros for setting up the test suite
+	CPPUNIT_TEST_SUITE( TerrainTests );
+	CPPUNIT_TEST(testCreate);
+	CPPUNIT_TEST_SUITE_END();
+
+	Root* mRoot;
+	SceneManager* mSceneMgr;
+
 public:
-    void setUp();
-    void tearDown();
-
-    void testListNonRecursive();
-    void testListRecursive();
-    void testListFileInfoNonRecursive();
-    void testListFileInfoRecursive();
-    void testFindNonRecursive();
-    void testFindRecursive();
-    void testFindFileInfoNonRecursive();
-    void testFindFileInfoRecursive();
-    void testFileRead();
-    void testReadInterleave();
-
+	void setUp();
+	void tearDown();
+	void testCreate();
 };
