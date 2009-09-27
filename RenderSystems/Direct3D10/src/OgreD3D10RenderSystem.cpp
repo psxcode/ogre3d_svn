@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D10RenderSystem.h"
@@ -116,7 +115,7 @@ namespace Ogre
 		}
 
 		ID3D10Device * device;
-		if(FAILED(D3D10CreateDevice(NULL,D3D10_DRIVER_TYPE_HARDWARE ,0,deviceFlags,D3D10_SDK_VERSION, &device)))
+		if(FAILED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE ,0,deviceFlags, D3D10_SDK_VERSION, &device)))
 		{
 			OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, 
 				"Failed to create Direct3D10 object", 
@@ -211,6 +210,7 @@ namespace Ogre
 		ConfigOption optNVPerfHUD;
 		ConfigOption optSRGB;
 		ConfigOption optExceptionsErrorLevel;
+		ConfigOption optDriverType;
 
 		driverList = this->getDirect3DDrivers();
 
@@ -279,7 +279,7 @@ namespace Ogre
  		optSRGB.possibleValues.push_back("Yes");
  		optSRGB.possibleValues.push_back("No");
  		optSRGB.currentValue = "No";
- 		optSRGB.immutable = false;
+ 		optSRGB.immutable = false;		
 
 
 		// Exceptions Error Level
@@ -297,6 +297,14 @@ namespace Ogre
 		optExceptionsErrorLevel.immutable = false;
 		
 
+		// Driver type
+		optDriverType.name = "Driver type";
+		optDriverType.possibleValues.push_back("Hardware");
+		optDriverType.possibleValues.push_back("Software");
+		optDriverType.possibleValues.push_back("Warp");
+		optDriverType.currentValue = "Hardware";
+		optDriverType.immutable = false;
+
 
 		mOptions[optDevice.name] = optDevice;
 		mOptions[optVideoMode.name] = optVideoMode;
@@ -308,7 +316,8 @@ namespace Ogre
 		mOptions[optNVPerfHUD.name] = optNVPerfHUD;
 		mOptions[optSRGB.name] = optSRGB;
 		mOptions[optExceptionsErrorLevel.name] = optExceptionsErrorLevel;
-
+		mOptions[optDriverType.name] = optDriverType;
+		
 		refreshD3DSettings();
 
 	}
@@ -573,6 +582,28 @@ namespace Ogre
 
 
 
+			// Driver type
+			opt = mOptions.find( "Driver type" );
+			if( opt == mOptions.end() )
+				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, "Can't find driver type!", "D3D10RenderSystem::initialise" );
+			String driverTypeName = opt->second.currentValue;
+
+			mDriverType = DT_HARDWARE;
+			if ("Hardware" == driverTypeName)
+			{
+				 mDriverType = DT_HARDWARE;
+			}
+			if ("Software" == driverTypeName)
+			{
+				mDriverType = DT_SOFTWARE;
+			}
+			if ("Warp" == driverTypeName)
+			{
+				mDriverType = DT_WARP;
+			}
+
+
+
 			UINT deviceFlags = 0;
 			if (D3D10Device::D3D_NO_EXCEPTION != D3D10Device::getExceptionsErrorLevel())
 			{
@@ -624,7 +655,42 @@ namespace Ogre
 			}
 
 			ID3D10Device * device;
-			if(FAILED(D3D10CreateDevice(pSelectedAdapter,driverType ,0,deviceFlags,D3D10_SDK_VERSION, &device)))         
+
+			HMODULE Software3d310Dll = NULL;
+			if (mDriverType == DT_SOFTWARE)
+			{
+				driverType = D3D10_DRIVER_TYPE_SOFTWARE; 
+				pSelectedAdapter = NULL;
+				Software3d310Dll = LoadLibrary(TEXT("D3D10Ref.dll"));
+				if (Software3d310Dll == NULL) 
+				{
+					OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, 
+						"Failed to load Direct3D10 software DLL (D3D10Ref.dll)", 
+						"D3D10RenderSystem::D3D10RenderSystem" );
+
+				}
+			}
+			else if (mDriverType == DT_WARP)
+			{
+				// you have to use D3D10_DRIVER_TYPE_SOFTWARE (D3D10_DRIVER_TYPE_WARP doesn't work)
+				driverType = D3D10_DRIVER_TYPE_SOFTWARE; 
+				pSelectedAdapter = NULL;
+				Software3d310Dll = LoadLibrary(TEXT("D3D10WARP.dll"));
+				if (Software3d310Dll == NULL) 
+				{
+					// try to load the beta that was released
+					Software3d310Dll = LoadLibrary(TEXT("D3D10WARP_beta.dll"));
+					if (Software3d310Dll == NULL) 
+					{
+						OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, 
+							"Failed to load Direct3D10 Wrap DLL (D3D10WARP.dll or D3D10WARP_beta.dll)", 
+							"D3D10RenderSystem::D3D10RenderSystem" );
+
+					}
+				}
+			}
+
+			if(FAILED(D3D10CreateDevice(pSelectedAdapter,driverType , Software3d310Dll, deviceFlags,D3D10_SDK_VERSION, &device)))         
 			{
 				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, 
 					"Failed to create Direct3D10 object", 
@@ -2044,7 +2110,7 @@ namespace Ogre
 		hr = mDevice->SetRenderTarget(x, pBack[x]);
 		if (FAILED(hr))
 		{
-		String msg ;//= DXGetErrorDescription9(hr);
+		String msg ;//= DXGetErrorDescription(hr);
 		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to setRenderTarget : " + msg, "D3D10RenderSystem::_setViewport" );
 		}
 		}
@@ -2087,7 +2153,7 @@ namespace Ogre
 		/*	hr = mDevice->SetDepthStencilSurface(pDepth);
 		if (FAILED(hr))
 		{
-		String msg ;//= DXGetErrorDescription9(hr);
+		String msg ;//= DXGetErrorDescription(hr);
 		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to setDepthStencil : " + msg, "D3D10RenderSystem::_setViewport" );
 		}
 		*/
@@ -2153,7 +2219,7 @@ namespace Ogre
 /*
 		if( FAILED( hr = mDevice->BeginScene() ) )
 		{
-			String msg = DXGetErrorDescription9(hr);
+			String msg = DXGetErrorDescription(hr);
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error beginning frame :" + msg, "D3D10RenderSystem::_beginFrame" );
 		}
 
@@ -2165,7 +2231,7 @@ namespace Ogre
 			hr = __SetRenderState(D3DRS_SPECULARENABLE, TRUE);
 			if (FAILED(hr))
 			{
-				String msg = DXGetErrorDescription9(hr);
+				String msg = DXGetErrorDescription(hr);
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error enabling alpha blending option : " + msg, "D3D10RenderSystem::_beginFrame");
 			}
 			mBasicStatesInitialised = true;
@@ -3355,7 +3421,7 @@ namespace Ogre
 				NULL);
 			if(FAILED(hr))
 			{
-				String msg = DXGetErrorDescription9(hr);
+				String msg = DXGetErrorDescription(hr);
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error CreateDepthStencilSurface : " + msg, "D3D10RenderSystem::_getDepthStencilFor" );
 			}
 			/// And cache it

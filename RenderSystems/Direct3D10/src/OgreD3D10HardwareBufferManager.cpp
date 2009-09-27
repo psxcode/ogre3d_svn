@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D10HardwareBufferManager.h"
@@ -37,25 +36,25 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 	//-----------------------------------------------------------------------
-	D3D10HardwareBufferManager::D3D10HardwareBufferManager(D3D10Device & device)
+	D3D10HardwareBufferManagerBase::D3D10HardwareBufferManagerBase(D3D10Device & device)
 		: mlpD3DDevice(device)
 	{
 	}
 	//-----------------------------------------------------------------------
-	D3D10HardwareBufferManager::~D3D10HardwareBufferManager()
+	D3D10HardwareBufferManagerBase::~D3D10HardwareBufferManagerBase()
 	{
 		destroyAllDeclarations();
 		destroyAllBindings();
 	}
 	//-----------------------------------------------------------------------
 	HardwareVertexBufferSharedPtr 
-		D3D10HardwareBufferManager::
+		D3D10HardwareBufferManagerBase::
 		createVertexBuffer(size_t vertexSize, size_t numVerts, HardwareBuffer::Usage usage,
 		bool useShadowBuffer)
 	{
 		assert (numVerts > 0);
 		D3D10HardwareVertexBuffer* vbuf = new D3D10HardwareVertexBuffer(
-			vertexSize, numVerts, usage, mlpD3DDevice, false, useShadowBuffer);
+			this, vertexSize, numVerts, usage, mlpD3DDevice, false, useShadowBuffer);
 		{
 			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
 				mVertexBuffers.insert(vbuf);
@@ -64,7 +63,7 @@ namespace Ogre {
 	}
 	//-----------------------------------------------------------------------
 	HardwareIndexBufferSharedPtr 
-		D3D10HardwareBufferManager::
+		D3D10HardwareBufferManagerBase::
 		createIndexBuffer(HardwareIndexBuffer::IndexType itype, size_t numIndexes, 
 		HardwareBuffer::Usage usage, bool useShadowBuffer)
 	{
@@ -87,7 +86,7 @@ namespace Ogre {
 		}
 #endif
 		D3D10HardwareIndexBuffer* idx = new D3D10HardwareIndexBuffer(
-			itype, numIndexes, usage, mlpD3DDevice, false, useShadowBuffer);
+			this, itype, numIndexes, usage, mlpD3DDevice, false, useShadowBuffer);
 		{
 			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
 				mIndexBuffers.insert(idx);
@@ -97,22 +96,22 @@ namespace Ogre {
 	}
 	//-----------------------------------------------------------------------
 	RenderToVertexBufferSharedPtr 
-		D3D10HardwareBufferManager::createRenderToVertexBuffer()
+		D3D10HardwareBufferManagerBase::createRenderToVertexBuffer()
 	{
 		return RenderToVertexBufferSharedPtr(new D3D10RenderToVertexBuffer());
 	}
 	//-----------------------------------------------------------------------
-	VertexDeclaration* D3D10HardwareBufferManager::createVertexDeclarationImpl(void)
+	VertexDeclaration* D3D10HardwareBufferManagerBase::createVertexDeclarationImpl(void)
 	{
 		return new D3D10VertexDeclaration(mlpD3DDevice);
 	}
 	//-----------------------------------------------------------------------
-	void D3D10HardwareBufferManager::destroyVertexDeclarationImpl(VertexDeclaration* decl)
+	void D3D10HardwareBufferManagerBase::destroyVertexDeclarationImpl(VertexDeclaration* decl)
 	{
 		delete decl;
 	}
 	//-----------------------------------------------------------------------
-	void D3D10HardwareBufferManager::releaseDefaultPoolResources(void)
+	void D3D10HardwareBufferManagerBase::releaseDefaultPoolResources(void)
 	{
 		size_t iCount = 0;
 		size_t vCount = 0;
@@ -145,14 +144,14 @@ namespace Ogre {
 			}
 		}
 
-		LogManager::getSingleton().logMessage("D3D10HardwareBufferManager released:");
+		LogManager::getSingleton().logMessage("D3D10HardwareBufferManagerBase released:");
 		LogManager::getSingleton().logMessage(
 			StringConverter::toString(vCount) + " unmanaged vertex buffers");
 		LogManager::getSingleton().logMessage(
 			StringConverter::toString(iCount) + " unmanaged index buffers");
 	}
 	//-----------------------------------------------------------------------
-	void D3D10HardwareBufferManager::recreateDefaultPoolResources(void)
+	void D3D10HardwareBufferManagerBase::recreateDefaultPoolResources(void)
 	{
 		size_t iCount = 0;
 		size_t vCount = 0;
@@ -184,7 +183,7 @@ namespace Ogre {
 			}
 		}
 
-		LogManager::getSingleton().logMessage("D3D10HardwareBufferManager recreated:");
+		LogManager::getSingleton().logMessage("D3D10HardwareBufferManagerBase recreated:");
 		LogManager::getSingleton().logMessage(
 			StringConverter::toString(vCount) + " unmanaged vertex buffers");
 		LogManager::getSingleton().logMessage(

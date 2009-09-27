@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 # Configure Direct3D10 RenderSystem build
 
 set (HEADER_FILES
@@ -89,3 +98,6 @@ if (OGRE_CONFIG_THREADS)
 endif ()
 
 ogre_config_plugin(RenderSystem_Direct3D10)
+if (OGRE_INSTALL_PLUGINS_HEADERS)
+  install(FILES ${HEADER_FILES} DESTINATION include/OGRE/RenderSystems/Direct3D10)
+endif ()
