@@ -1,3 +1,12 @@
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
+#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
+
 # Configure Octree SceneManager build
 
 set (HEADER_FILES
@@ -42,6 +51,14 @@ if (NOT OGRE_STATIC)
     COMPILE_DEFINITIONS OGRE_TERRAINPLUGIN_EXPORTS
   ) 
 endif ()
+
+if (APPLE AND NOT OGRE_BUILD_PLATFORM_IPHONE)
+    # Set the INSTALL_PATH so that Plugins can be installed in the application package
+    set_target_properties(Plugin_OctreeSceneManager
+       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+       INSTALL_NAME_DIR "@executable_path/../Plugins"
+    )
+endif()
 
 ogre_config_plugin(Plugin_OctreeSceneManager)
 if (OGRE_INSTALL_PLUGINS_HEADERS)
