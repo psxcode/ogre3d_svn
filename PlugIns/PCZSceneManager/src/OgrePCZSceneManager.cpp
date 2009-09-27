@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 PCZSceneManager.cpp  -  description
 -----------------------------------------------------------------------------
@@ -49,15 +48,17 @@ email                : ericc@xenopi.com
 
 namespace Ogre
 {
-    PCZSceneManager::PCZSceneManager(const String& name) : SceneManager(name)
-    {
-        mDefaultZone = 0;
-		mActiveCameraZone = 0;
-		mZoneFactoryManager = 0;
-        mShowPortals = false;
-		mDefaultZoneTypeName = "ZoneType_Default";
-		mDefaultZoneFileName = "none";
-    }
+	PCZSceneManager::PCZSceneManager(const String& name) :
+	SceneManager(name),
+	mDefaultZoneTypeName("ZoneType_Default"),
+	mDefaultZoneFileName("none"),
+	mLastActiveCamera(0),
+	mDefaultZone(0),
+	mShowPortals(false),
+	mZoneFactoryManager(0),
+	mActiveCameraZone(0)
+	{ }
+
     PCZSceneManager::~PCZSceneManager()
     {
         // we don't delete the root scene node here because the
@@ -920,15 +921,15 @@ namespace Ogre
             "Function doesn't do as advertised",
             "PCZSceneManager::_alertVisibleObjects" );
 
-        NodeList::iterator it = mVisible.begin();
-
-        while ( it != mVisible.end() )
-        {
-            SceneNode * node = *it;
-            // this is where you would do whatever you wanted to the visible node
-            // but right now, it does nothing.
-            ++it;
-        }
+//        NodeList::iterator it = mVisible.begin();
+//
+//        while ( it != mVisible.end() )
+//        {
+//            SceneNode * node = *it;
+//            // this is where you would do whatever you wanted to the visible node
+//            // but right now, it does nothing.
+//            ++it;
+//        }
     }
 
     //-----------------------------------------------------------------------
@@ -1027,8 +1028,7 @@ namespace Ogre
 				// add cam distance for sorting if texture shadows
 				if (isShadowTechniqueTextureBased())
 				{
-					(*j)->tempSquareDist = 
-						(camera->getDerivedPosition() - (*j)->getDerivedPosition()).squaredLength();
+					(*j)->_calcTempSquareDist(camera->getDerivedPosition());
 				}
 			}
 
@@ -1180,18 +1180,37 @@ namespace Ogre
 		}
 	}
 
-    // main visibility determination & render queue filling routine
-    // over-ridden from base/default scene manager.  This is *the*
-    // main call.
-    void PCZSceneManager::_findVisibleObjects(Camera * cam, 
-											  VisibleObjectsBoundsInfo* visibleBounds, 
-											  bool onlyShadowCasters )
-    {
-	
+	// main visibility determination & render queue filling routine
+	// over-ridden from base/default scene manager.  This is *the*
+	// main call.
+	void PCZSceneManager::_findVisibleObjects(Camera* cam,
+											  VisibleObjectsBoundsInfo* visibleBounds,
+											  bool onlyShadowCasters)
+	{
 		// clear the render queue
-        getRenderQueue()->clear();
+		getRenderQueue()->clear();
+
+		// if we are re-rendering the scene again with the same camera, we can just use the cache.
+		// this helps post processing compositors.
+		unsigned long frameCount = Root::getSingleton().getNextFrameNumber();
+		if (mLastActiveCamera == cam && mFrameCount == frameCount)
+		{
+			RenderQueue* queue = getRenderQueue();
+			size_t count = mVisible.size();
+			for (size_t i = 0; i < count; ++i)
+			{
+				((PCZSceneNode*)mVisible[i])->_addToRenderQueue(
+					cam, queue, onlyShadowCasters, visibleBounds);
+			}
+			return;
+		}
+
+		// increment the visibility frame counter
+		mFrameCount = frameCount;
+		mLastActiveCamera = cam;
+
 		// clear the list of visible nodes
-        mVisible.clear();
+		mVisible.clear();
 
 		// turn off sky 
 		enableSky(false);
@@ -1199,17 +1218,13 @@ namespace Ogre
 		// remove all extra culling planes
 		((PCZCamera*)cam)->removeAllExtraCullingPlanes();
 
-        // increment the visibility frame counter
-        //mFrameCount++;
-		mFrameCount = Root::getSingleton().getNextFrameNumber();
-
-        // update the camera
-        ((PCZCamera*)cam)->update();
+		// update the camera
+		((PCZCamera*)cam)->update();
 
 		// get the home zone of the camera
-		PCZone * cameraHomeZone = ((PCZSceneNode*)(cam->getParentSceneNode()))->getHomeZone();
+		PCZone* cameraHomeZone = ((PCZSceneNode*)(cam->getParentSceneNode()))->getHomeZone();
 
-        // walk the zones, starting from the camera home zone,
+		// walk the zones, starting from the camera home zone,
 		// adding all visible scene nodes to the mVisibles list
 		cameraHomeZone->setLastVisibleFrame(mFrameCount);
 		cameraHomeZone->findVisibleNodes((PCZCamera*)cam, 
@@ -1219,8 +1234,7 @@ namespace Ogre
 										  onlyShadowCasters,
 										  mDisplayNodes,
 										  mShowBoundingBoxes);
-
-    }
+	}
 
     void PCZSceneManager::findNodesIn( const AxisAlignedBox &box, 
                                        PCZSceneNodeList &list, 
