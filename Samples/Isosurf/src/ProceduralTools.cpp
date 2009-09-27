@@ -96,8 +96,6 @@ MeshPtr ProceduralTools::generateTetrahedra()
 		*positions++ = (float(pos[1]) / float(1<<Y_SIZE_LOG2))*2.0-1.0;
 		*positions++ = (float(pos[2]) / float(1<<Z_SIZE_LOG2))*2.0-1.0;
 		*positions++ = 1.0f;
-
-		float* logPositions = positions - 4;
 	}
 	vertexBuffer->unlock();
 	
@@ -116,7 +114,7 @@ MeshPtr ProceduralTools::generateTetrahedra()
 		pos[1] = (i >> X_SIZE_LOG2) & ((1<<Y_SIZE_LOG2)-1);
 		pos[2] = (i >> (X_SIZE_LOG2+Y_SIZE_LOG2)) & ((1<<Z_SIZE_LOG2)-1);
 #endif
-		if (pos[0] == (1 << sizeLog2[0]) - 1 || pos[1] == (1 << sizeLog2[1]) - 1 || pos[2] == (1 << sizeLog2[2]) - 1)
+		if ((int)pos[0] == (1 << sizeLog2[0]) - 1 || (int)pos[1] == (1 << sizeLog2[1]) - 1 || (int)pos[2] == (1 << sizeLog2[2]) - 1)
 			continue;	// skip extra cells
 
 		numIndices += 24; //Got to this point, adding 24 indices
