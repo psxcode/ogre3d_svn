@@ -38,6 +38,14 @@ add_executable(Demo_DeferredShading ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE_F
 target_link_libraries(Demo_DeferredShading ${OGRE_LIBRARIES} ${OGRE_PLUGIN_LIBRARIES} ${OIS_LIBRARIES})
 ogre_config_sample(Demo_DeferredShading)
 
+if (APPLE AND NOT OGRE_BUILD_PLATFORM_IPHONE)
+    # Set the INSTALL_PATH so that Samples can be installed in the application package
+    set_target_properties(Sample_DeferredShading
+       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+       INSTALL_NAME_DIR "@executable_path/../Plugins"
+    )
+endif()
+
 if (SAMPLE_DEPENDENCIES)
   add_dependencies(Demo_DeferredShading ${SAMPLE_DEPENDENCIES})
 endif ()

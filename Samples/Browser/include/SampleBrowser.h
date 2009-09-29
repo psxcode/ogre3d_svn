@@ -1,9 +1,41 @@
+/*
+ -----------------------------------------------------------------------------
+ This source file is part of OGRE
+ (Object-oriented Graphics Rendering Engine)
+ For the latest info, see http://www.ogre3d.org/
+ 
+ Copyright (c) 2000-2009 Torus Knot Software Ltd
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ -----------------------------------------------------------------------------
+ */
+
 #ifndef __SampleBrowser_H__
 #define __SampleBrowser_H__
 
 #include "SampleContext.h"
 #include "SamplePlugin.h"
 #include "SdkTrays.h"
+
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+#include "macUtils.h"
+#endif
 
 namespace OgreBites
 {
@@ -81,7 +113,7 @@ namespace OgreBites
 				else mCarouselPlace += carouselOffset * Ogre::Math::Clamp<Ogre::Real>(evt.timeSinceLastFrame * 15, -1, 1);
 
 				// update the thumbnail positions based on carousel state
-				for (unsigned int i = 0; i < mThumbs.size(); i++)
+				for (int i = 0; i < (int)mThumbs.size(); i++)
 				{
 					Ogre::Real thumbOffset = mCarouselPlace - i;
 					Ogre::Real phase = thumbOffset / 2 - 2.8;
@@ -621,7 +653,7 @@ namespace OgreBites
 			mWindow->removeAllViewports();
 			Ogre::SceneManager* sm = mRoot->createSceneManager(Ogre::ST_GENERIC, "DummyScene");
 			Ogre::Camera* cam = sm->createCamera("DummyCamera");
-			Ogre::Viewport* vp = mWindow->addViewport(cam);
+			mWindow->addViewport(cam);
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -632,7 +664,13 @@ namespace OgreBites
 			Ogre::StringVector unloadedSamplePlugins;
 
 			Ogre::ConfigFile cfg;
-			cfg.load("samples.cfg");
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+			cfg.load(Ogre::macBundlePath() + "/Contents/Resources/samples.cfg");
+#elif OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+			cfg.load(Ogre::macBundlePath() + "/samples.cfg");
+#else
+			cfg.load(mConfigPath + "samples.cfg");
+#endif
 
 			Ogre::String sampleDir = cfg.getSetting("SampleFolder");        // Mac OS X just uses Resources/ directory
 			Ogre::StringVector sampleList = cfg.getMultiSetting("Sample");
@@ -799,7 +837,7 @@ namespace OgreBites
 
 			if (mLastSampleIndex != -1)
 			{
-				unsigned int index = -1;
+				int index = -1;
 				for (SampleSet::iterator i = mLoadedSamples.begin(); i != mLoadedSamples.end(); i++)
 				{
 					index++;

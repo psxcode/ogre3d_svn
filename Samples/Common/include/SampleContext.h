@@ -1,3 +1,30 @@
+/*
+ -----------------------------------------------------------------------------
+ This source file is part of OGRE
+ (Object-oriented Graphics Rendering Engine)
+ For the latest info, see http://www.ogre3d.org/
+ 
+ Copyright (c) 2000-2009 Torus Knot Software Ltd
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ -----------------------------------------------------------------------------
+ */
 #ifndef __SampleContext_H__
 #define __SampleContext_H__
 
@@ -5,32 +32,12 @@
 #include "OgrePlugin.h"
 #include "Sample.h"
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+#include "macUtils.h"
+#endif
+
 #define OIS_DYNAMIC_LIB
 #include "OIS/OIS.h"
-
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-#include <CoreFoundation/CoreFoundation.h>
-
-/*-----------------------------------------------------------------------------
-| This function will return the appropriate working directory depending
-| on the platform. For Windows, a blank string will suffice. For OS X,
-| however, we need to do a little extra work.
------------------------------------------------------------------------------*/
-std::string macBundlePath()
-{
-	char path[1024];
-	CFBundleRef mainBundle = CFBundleGetMainBundle();
-	assert(mainBundle);
-	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-	assert(mainBundleURL);
-	CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
-	assert(cfStringRef);
-	CFStringGetCString(cfStringRef, path, 1024, kCFStringEncodingASCII);
-	CFRelease(mainBundleURL);
-	CFRelease(cfStringRef);
-	return std::string(path);
-}
-#endif
 
 namespace OgreBites
 {
@@ -226,9 +233,11 @@ namespace OgreBites
 			// manually call sample callback to ensure correct order
 			if (mCurrentSample && !mSamplePaused) mCurrentSample->windowResized(rw);
 
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 			const OIS::MouseState& ms = mMouse->getMouseState();
 			ms.width = rw->getWidth();
 			ms.height = rw->getHeight();
+#endif
 		}
 
 		// window event callbacks which manually call their respective sample callbacks to ensure correct order
@@ -296,7 +305,7 @@ namespace OgreBites
 			// get platform-specific working directory
 			Ogre::String workDir = Ogre::StringUtil::BLANK;
 			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-			workDir = macBundlePath() + "/Contents/Resources/";
+			workDir = Ogre::macBundlePath() + "/Contents/Resources/";
 			#endif
 
 			mRoot = OGRE_NEW Ogre::Root(workDir + "plugins.cfg", workDir + "Ogre.cfg", workDir + "Ogre.log");
@@ -368,10 +377,15 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void createInputDevices()
 		{
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+			mMouse = static_cast<OIS::MultiTouch*>(mInputMgr->createInputObject(OIS::OISMultiTouch, true));
+			mAccelerometer = static_cast<OIS::JoyStick*>(mInputMgr->createInputObject(OIS::OISJoyStick, true));
+#else
 			mKeyboard = static_cast<OIS::Keyboard*>(mInputMgr->createInputObject(OIS::OISKeyboard, true));
 			mMouse = static_cast<OIS::Mouse*>(mInputMgr->createInputObject(OIS::OISMouse, true));
 
 			mKeyboard->setEventCallback(this);
+#endif
 			mMouse->setEventCallback(this);
 		}
 
@@ -384,7 +398,7 @@ namespace OgreBites
 			// load resource paths from config file
 			Ogre::ConfigFile cf;
 			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-			cf.load(macBundlePath() + "/Contents/Resources/Resources.cfg");
+			cf.load(Ogre::macBundlePath() + "/Contents/Resources/Resources.cfg");
 			#else
 			cf.load("resources.cfg");
 			#endif
@@ -406,8 +420,8 @@ namespace OgreBites
 					arch = i->second;
 
 					#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-					if (!Ogre::StringUtil::startsWith(archName, "/", false)) // only adjust relative dirs
-						archName = String(macBundlePath() + "/" + archName);
+					if (!Ogre::StringUtil::startsWith(arch, "/", false)) // only adjust relative dirs
+						arch = Ogre::String(Ogre::macBundlePath() + "/" + arch);
 					#endif
 					Ogre::ResourceGroupManager::getSingleton().addResourceLocation(arch, type, sec);
 				}
@@ -482,7 +496,11 @@ namespace OgreBites
 		{
 			if (mInputMgr)
 			{
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 				mInputMgr->destroyInputObject(mKeyboard);
+#else
+                mInputMgr->destroyInputObject(mAccelerometer);
+#endif
 				mInputMgr->destroyInputObject(mMouse);
 
 				OIS::InputManager::destroyInputSystem(mInputMgr);
@@ -495,15 +513,24 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		virtual void captureInputDevices()
 		{
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 			mKeyboard->capture();
+#else
+            mAccelerometer->capture();
+#endif
 			mMouse->capture();
 		}
 
 		Ogre::Root* mRoot;              // OGRE root
 		Ogre::RenderWindow* mWindow;    // render window
 		OIS::InputManager* mInputMgr;   // OIS input manager
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		OIS::MultiTouch* mMouse;        // multitouch device
+		OIS::JoyStick* mAccelerometer;  // accelerometer device
+#else
 		OIS::Keyboard* mKeyboard;       // keyboard device
 		OIS::Mouse* mMouse;             // mouse device
+#endif
 		Sample* mCurrentSample;         // currently running sample
 		bool mSamplePaused;             // whether current sample is paused
 		bool mLastRun;                  // whether or not this is the final run

@@ -1,3 +1,30 @@
+/*
+ -----------------------------------------------------------------------------
+ This source file is part of OGRE
+ (Object-oriented Graphics Rendering Engine)
+ For the latest info, see http://www.ogre3d.org/
+ 
+ Copyright (c) 2000-2009 Torus Knot Software Ltd
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ -----------------------------------------------------------------------------
+ */
 #ifndef __SdkTrays_H__
 #define __SdkTrays_H__
 
@@ -166,7 +193,7 @@ namespace OgreBites
 			Ogre::Font* f = (Ogre::Font*)Ogre::FontManager::getSingleton().getByName(area->getFontName()).getPointer();
 			Ogre::String s = caption.asUTF8();
 
-			unsigned int nl = s.find('\n');
+			int nl = s.find('\n');
 			if (nl != -1) s = s.substr(0, nl);
 
 			Ogre::Real width = 0;
@@ -986,14 +1013,14 @@ namespace OgreBites
 			Ogre::BorderPanelOverlayElement* ie;
 			Ogre::TextAreaOverlayElement* ta;
 
-			for (unsigned int i = 0; i < mItemElements.size(); i++)
+			for (int i = 0; i < (int)mItemElements.size(); i++)
 			{
 				ie = mItemElements[i];
 				ta = (Ogre::TextAreaOverlayElement*)ie->getChild(ie->getName() + "/MenuItemText");
 
 				fitCaptionToArea(mItems[mDisplayIndex + i], ta, ie->getWidth() - 2 * ta->getLeft());
 
-				if (mDisplayIndex + i == mHighlightIndex)
+				if ((mDisplayIndex + i) == mHighlightIndex)
 				{
 					ie->setMaterialName("SdkTrays/MiniTextBox/Over");
 					ie->setBorderMaterialName("SdkTrays/MiniTextBox/Over");
@@ -1475,16 +1502,6 @@ namespace OgreBites
 			if (mListener && notifyListener) mListener->checkBoxToggled(this);
 		}
 
-		void check(bool notifyListener = true)
-		{
-			setChecked(true, notifyListener);
-		}
-
-		void uncheck(bool notifyListener = true)
-		{
-			setChecked(false, notifyListener);
-		}
-
 		void toggle(bool notifyListener = true)
 		{
 			setChecked(!isChecked(), notifyListener);
@@ -1630,9 +1647,9 @@ namespace OgreBites
 		| Creates backdrop, cursor, and trays.
 		-----------------------------------------------------------------------------*/
 		SdkTrayManager(const Ogre::String& name, Ogre::RenderWindow* window, OIS::Mouse* mouse, SdkTrayListener* listener = 0) :
-		  mName(name), mWindow(window), mMouse(mouse), mListener(listener), mTrayPadding(0), mWidgetPadding(8),
-			  mWidgetSpacing(2), mTrayDrag(false), mExpandedMenu(0), mDialog(0), mOk(0), mYes(0), mNo(0),
-			  mFpsLabel(0), mStatsPanel(0), mLogo(0), mLoadBar(0)
+		  mName(name), mWindow(window), mMouse(mouse), mListener(listener), mWidgetPadding(8), mWidgetSpacing(2),
+                mTrayPadding(0), mTrayDrag(false), mExpandedMenu(0), mDialog(0), mOk(0), mYes(0), mNo(0),
+                mFpsLabel(0), mStatsPanel(0), mLogo(0), mLoadBar(0)
 		{
 			Ogre::OverlayManager& om = Ogre::OverlayManager::getSingleton();
 
@@ -2563,9 +2580,9 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Adds a widget to a specified tray.
 		-----------------------------------------------------------------------------*/
-		void moveWidgetToTray(Widget* widget, TrayLocation trayLoc, unsigned int place = -1)
+		void moveWidgetToTray(Widget* widget, TrayLocation trayLoc, int place = -1)
 		{
-			if (!widget) OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Widget deos not exist.", "TrayManager::moveWidgetToTray");
+			if (!widget) OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Widget does not exist.", "TrayManager::moveWidgetToTray");
 
 			// remove widget from old tray
 			WidgetList& wList = mWidgets[widget->getTrayLocation()];
@@ -2577,7 +2594,7 @@ namespace OgreBites
 			}
 
 			// insert widget into new tray at given position, or at the end if unspecified or invalid
-			if (place == -1 || place > mWidgets[trayLoc].size()) place = mWidgets[trayLoc].size();
+			if (place == -1 || place > (int)mWidgets[trayLoc].size()) place = mWidgets[trayLoc].size();
 			mWidgets[trayLoc].insert(mWidgets[trayLoc].begin() + place, widget);
 			mTrays[trayLoc]->addChild(widget->getOverlayElement());
 
@@ -2595,13 +2612,13 @@ namespace OgreBites
 		}
 
 		void moveWidgetToTray(TrayLocation currentTrayLoc, const Ogre::String& name, TrayLocation targetTrayLoc,
-			unsigned int place = -1)
+			int place = -1)
 		{
 			moveWidgetToTray(getWidget(currentTrayLoc, name), targetTrayLoc, place);
 		}
 
 		void moveWidgetToTray(TrayLocation currentTrayLoc, unsigned int currentPlace, TrayLocation targetTrayLoc,
-			unsigned int targetPlace = -1)
+			int targetPlace = -1)
 		{
 			moveWidgetToTray(getWidget(currentTrayLoc, currentPlace), targetTrayLoc, targetPlace);
 		}
@@ -2624,7 +2641,7 @@ namespace OgreBites
 			removeWidgetFromTray(getWidget(trayLoc, name));
 		}
 
-		void removeWidgetFromTray(TrayLocation trayLoc, unsigned int place)
+		void removeWidgetFromTray(TrayLocation trayLoc, int place)
 		{
 			removeWidgetFromTray(getWidget(trayLoc, place));
 		}

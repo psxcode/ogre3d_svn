@@ -9,11 +9,10 @@
 
 # Configure Browser demo build
 
+set(SOURCE_FILES src/SampleBrowser.cpp)
+
 if (OGRE_BUILD_PLATFORM_IPHONE)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/SampleBrowser.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/SampleBrowser.mm COPYONLY)
-  set(SOURCE_FILES src/SampleBrowser.mm)
-else ()
-  set(SOURCE_FILES src/SampleBrowser.cpp)
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/SampleBrowser.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
 endif ()
 
 set (HEADER_FILES
@@ -60,8 +59,6 @@ if (APPLE)
 		${OGRE_SAMPLE_CONTENTS_PATH}/Frameworks/
 		COMMAND ln ARGS -s -f ${CMAKE_SOURCE_DIR}/Dependencies/Cg.framework 
 		${OGRE_SAMPLE_CONTENTS_PATH}/Frameworks/
-		COMMAND ln ARGS -s -f ${CMAKE_SOURCE_DIR}/Dependencies/CEGUI.framework 
-		${OGRE_SAMPLE_CONTENTS_PATH}/Frameworks/
 		)
 	# now cfg files
 	add_custom_command(TARGET SampleBrowser POST_BUILD
@@ -72,9 +69,10 @@ if (APPLE)
 		${OGRE_SAMPLE_CONTENTS_PATH}/Resources/
 		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/bin/media.cfg 
 		${OGRE_SAMPLE_CONTENTS_PATH}/Resources/
-		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/bin/quake3settings.cfg 
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/bin/samples.cfg 
 		${OGRE_SAMPLE_CONTENTS_PATH}/Resources/
 		)
+
 	# now plugins
 	add_custom_command(TARGET SampleBrowser POST_BUILD
 		COMMAND mkdir ARGS -p ${OGRE_SAMPLE_CONTENTS_PATH}/Plugins)
@@ -84,25 +82,25 @@ if (APPLE)
 			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
 			)
 	endif ()
-	if (OGRE_BUILD_PLUGIN_BSP)    
+	if (OGRE_BUILD_PLUGIN_BSP)
 		add_custom_command(TARGET SampleBrowser POST_BUILD
 			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Plugin_BSPSceneManager.dylib 
 			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
 			)
 	endif()
-	if (OGRE_BUILD_PLUGIN_CG)    
+	if (OGRE_BUILD_PLUGIN_CG)
 		add_custom_command(TARGET SampleBrowser POST_BUILD
 			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Plugin_CgProgramManager.dylib 
 			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
 			)
 	endif()
-	if (OGRE_BUILD_PLUGIN_OCTREE)    
+	if (OGRE_BUILD_PLUGIN_OCTREE)
 		add_custom_command(TARGET SampleBrowser POST_BUILD
 			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Plugin_OctreeSceneManager.dylib 
 			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
 			)
 	endif()
-	if (OGRE_BUILD_PLUGIN_PCZ)    
+	if (OGRE_BUILD_PLUGIN_PCZ)
 		add_custom_command(TARGET SampleBrowser POST_BUILD
 			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Plugin_PCZSceneManager.dylib 
 			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/    
@@ -112,12 +110,124 @@ if (APPLE)
 			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
 			)
 	endif()
-	if (OGRE_BUILD_PLUGIN_PFX)    
+	if (OGRE_BUILD_PLUGIN_PFX)
 		add_custom_command(TARGET SampleBrowser POST_BUILD
 			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Plugin_ParticleFX.dylib 
 			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
 			)
 	endif()
+
+	# Components
+	if (OGRE_BUILD_COMPONENT_PAGING)
+		add_custom_command(TARGET SampleBrowser POST_BUILD
+			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/libOgrePaging.dylib 
+			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+			)
+	endif()
+	if (OGRE_BUILD_COMPONENT_PROPERTY)
+		add_custom_command(TARGET SampleBrowser POST_BUILD
+			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/libOgreProperty.dylib 
+			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+			)
+	endif()
+	if (OGRE_BUILD_COMPONENT_RTSHADERSYSTEM)
+		add_custom_command(TARGET SampleBrowser POST_BUILD
+			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/libOgreRTShaderSystem.dylib 
+			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+			)
+	endif()
+	if (OGRE_BUILD_COMPONENT_TERRAIN)
+		add_custom_command(TARGET SampleBrowser POST_BUILD
+			COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/libOgreTerrain.dylib 
+			${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+			)
+	endif()
+
+	# Add links for the sample plugins
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_BezierPatch.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_BSP.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_CameraTrack.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_CelShading.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_CubeMapping.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Dot3Bump.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_DynTex.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_FacialAnimation.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Fresnel.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Grass.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Lighting.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_ParticleFX.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_SkeletalAnimation.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_SkyBox.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_SkyDome.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_SkyPlane.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Smoke.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_SphereMapping.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Terrain.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_TextureFX.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
+	add_custom_command(TARGET SampleBrowser POST_BUILD
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Transparency.dylib 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
+		)
 endif (APPLE)
 
 if (OGRE_INSTALL_SAMPLES)

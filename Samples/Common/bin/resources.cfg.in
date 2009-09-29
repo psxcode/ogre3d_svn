@@ -10,6 +10,7 @@ FileSystem=@OGRE_MEDIADIR@/fonts
 FileSystem=@OGRE_MEDIADIR@/materials/programs
 FileSystem=@OGRE_MEDIADIR@/materials/scripts
 FileSystem=@OGRE_MEDIADIR@/materials/textures
+FileSystem=@OGRE_MEDIADIR@/materials/textures/nvidia
 FileSystem=@OGRE_MEDIADIR@/models
 FileSystem=@OGRE_MEDIADIR@/overlays
 FileSystem=@OGRE_MEDIADIR@/particle

@@ -91,12 +91,12 @@ protected:
 	{
 		// create check boxes to toggle the visibility of our particle systems
 		mTrayMgr->createLabel(TL_TOPLEFT, "VisLabel", "Particles");
-		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fireworks", "Fireworks", 130)->check();
-		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fountain1", "Fountain A", 130)->check();
-		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fountain2", "Fountain B", 130)->check();
-		mTrayMgr->createCheckBox(TL_TOPLEFT, "Aureola", "Aureola", 130)->uncheck();
-		mTrayMgr->createCheckBox(TL_TOPLEFT, "Nimbus", "Nimbus", 130)->uncheck();
-		mTrayMgr->createCheckBox(TL_TOPLEFT, "Rain", "Rain", 130)->uncheck();
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fireworks", "Fireworks", 130)->setChecked(true);
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fountain1", "Fountain A", 130)->setChecked(true);
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Fountain2", "Fountain B", 130)->setChecked(true);
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Aureola", "Aureola", 130)->setChecked(false);
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Nimbus", "Nimbus", 130)->setChecked(false);
+		mTrayMgr->createCheckBox(TL_TOPLEFT, "Rain", "Rain", 130)->setChecked(false);
 	}
 
 	SceneNode* mFountainPivot;
