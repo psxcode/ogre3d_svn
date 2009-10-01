@@ -2219,11 +2219,8 @@ namespace OgreBites
 		void showLoadingBar(unsigned int numGroupsInit = 1, unsigned int numGroupsLoad = 1,
 			Ogre::Real initProportion = 0.7)
 		{
-			if (mLoadBar)
-			{
-				hideLoadingBar();
-				return;
-			}
+			if (mDialog) closeDialog();
+			if (mLoadBar) hideLoadingBar();
 
 			mLoadBar = new ProgressBar(mName + "/LoadingBar", "Loading...", 400, 308);
 			Ogre::OverlayElement* e = mLoadBar->getOverlayElement();
@@ -2285,6 +2282,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void showOkDialog(const Ogre::DisplayString& caption, const Ogre::DisplayString& message)
 		{
+			if (mLoadBar) hideLoadingBar();
+
 			Ogre::OverlayElement* e;
 
 			if (mDialog)
@@ -2342,6 +2341,8 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void showYesNoDialog(const Ogre::DisplayString& caption, const Ogre::DisplayString& question)
 		{
+			if (mLoadBar) hideLoadingBar();
+
 			Ogre::OverlayElement* e;
 
 			if (mDialog)

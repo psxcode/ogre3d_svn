@@ -608,8 +608,8 @@ namespace OgreBites
 			mTrayMgr->getTrayContainer(TL_NONE)->hide();
 
 			createDummyScene();
-			loadSamples();
 			loadResources();
+			loadSamples();
 
 			Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
