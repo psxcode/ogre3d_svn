@@ -669,7 +669,7 @@ namespace OgreBites
 #elif OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
 			cfg.load(Ogre::macBundlePath() + "/samples.cfg");
 #else
-			cfg.load(mConfigPath + "samples.cfg");
+			cfg.load("samples.cfg");
 #endif
 
 			Ogre::String sampleDir = cfg.getSetting("SampleFolder");        // Mac OS X just uses Resources/ directory
