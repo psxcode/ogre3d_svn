@@ -53,41 +53,6 @@ fragment_program DeferredShading/post/ShowColour_ps cg
 }
 
 // Auxilary lights
-vertex_program DeferredShading/post/LightMaterial_vs cg
-{
-	source DeferredShading/post/LightMaterial_vs.cg
-	profiles vs_1_1 arbvp1
-	entry_point main
-	default_params
-	{
-		param_named_auto worldViewProj worldviewproj_matrix
-		param_named_auto flip render_target_flipping
-		param_named_auto vpWidth viewport_width
-		param_named_auto vpHeight viewport_height
-		//farCorner needs to be filled by shaders
-		param_named farCorner float3 1 1 1
-	}
-}
-fragment_program DeferredShading/post/LightMaterial_ps cg
-{
-	source DeferredShading/post/LightMaterial_ps.cg
-	profiles ps_2_0 arbfp1
-	entry_point main
-
-	default_params
-	{
-		param_named_auto worldView worldview_matrix
-		
-		param_named_auto lightDiffuseColor custom 1
-		//param_named_auto lightSpecularColor custom 2
-		param_named_auto lightFalloff custom 3
-	}
-}
-
-// Auxilary lights
-
-// N.B This is not used directly, since the mini light programs are set up in code.
-
 // cg
 vertex_program DeferredShading/post/LightMaterial_vs cg
 {
@@ -97,31 +62,9 @@ vertex_program DeferredShading/post/LightMaterial_vs cg
 	default_params
 	{
 		param_named_auto worldViewProj worldviewproj_matrix
-		param_named_auto invProj inverse_projection_matrix
-		param_named_auto vpWidth viewport_width
-		param_named_auto vpHeight viewport_height
-	}
-}
-
-fragment_program DeferredShading/post/LightMaterial_ps cg
-{
-	source DeferredShading/post/LightMaterial_ps.cg
-	profiles ps_2_0 arbfp1
-	entry_point main
-	compiler_options -DIS_ATTENUATED=1 -DIS_SPECULAR=1
-
-	default_params
-	{
-		param_named_auto worldView worldview_matrix
-		
-		param_named lightDiffuseColor float4 0.0 0.0 0.0 0.0
-		param_named lightSpecularColor float4 0.0 0.0 0.0 0.0
-		param_named lightFalloff float4 0.0 0.0 0.0 0.0
-
-		
-		//param_named_auto lightDiffuseColor custom 1
-		//param_named_auto lightSpecularColor custom 2
-		//param_named_auto lightFalloff custom 3
+		//param_named_auto invProj inverse_projection_matrix
+		//param_named_auto vpWidth viewport_width
+		//param_named_auto vpHeight viewport_height
 	}
 }
 
@@ -149,7 +92,6 @@ vertex_program DeferredShading/post/vs cg
 	{
 		//param_named_auto invProj inverse_projection_matrix
 		param_named_auto flip render_target_flipping
-		param_named_auto worldViewProj worldviewproj_matrix
 		param_named farCorner float3 1 1 1
 	}
 }

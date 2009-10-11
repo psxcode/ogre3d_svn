@@ -24,7 +24,7 @@ material sibenik/poplocenje
 
 			texture_unit
 			{
-				texture KAMEN320x240.JPG
+				texture KAMEN320x240.jpg
 			}
 		}
 
@@ -43,7 +43,7 @@ material sibenik/kuce
 
 			texture_unit
 			{
-				texture KAMEN320x240.JPG
+				texture KAMEN320x240.jpg
 			}
 		}
 
@@ -76,7 +76,7 @@ material sibenik/kamen_zid_prozor
 
 			texture_unit
 			{
-				texture KAMEN320x240.JPG
+				texture KAMEN320x240.jpg
 			}
 		}
 
@@ -95,7 +95,7 @@ material sibenik/pod-rub
 
 			texture_unit
 			{
-				texture KAMEN320x240.JPG
+				texture KAMEN320x240.jpg
 			}
 		}
 
@@ -170,7 +170,7 @@ material sibenik/rozeta
 
 			texture_unit
 			{
-				texture KAMEN-stup.JPG
+				texture KAMEN-stup.jpg
 			}
 		}
 
@@ -189,7 +189,7 @@ material sibenik/kamen_zid_parape
 
 			texture_unit
 			{
-				texture KAMEN-stup.JPG
+				texture KAMEN-stup.jpg
 			}
 		}
 
@@ -208,7 +208,7 @@ material sibenik/zid_vani
 
 			texture_unit
 			{
-				texture KAMEN320x240.JPG
+				texture KAMEN320x240.jpg
 			}
 		}
 
@@ -243,7 +243,7 @@ material sibenik/pod
 
 			texture_unit
 			{
-				texture MRAMOR6X6.JPG
+				texture MRAMOR6X6.jpg
 			}
 		}
 
@@ -276,7 +276,7 @@ material sibenik/stupovi
 
 			texture_unit
 			{
-				texture KAMEN-stup.JPG
+				texture KAMEN-stup.jpg
 			}
 		}
 
@@ -296,7 +296,7 @@ material sibenik/kamen_zid
 
 			texture_unit
 			{
-				texture KAMEN320x240.JPG
+				texture KAMEN320x240.jpg
 			}
 		}
 
