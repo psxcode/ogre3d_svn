@@ -116,10 +116,16 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Sets up a sample. Used by the SampleContext class. Do not call directly.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual void _setup(Ogre::RenderWindow* window, OIS::MultiTouch* mouse)
+#else
 		virtual void _setup(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
+#endif
 		{
 			mWindow = window;
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 			mKeyboard = keyboard;
+#endif
 			mMouse = mouse;
 
 			locateResources();
@@ -183,9 +189,15 @@ namespace OgreBites
 		virtual void windowFocusChange(Ogre::RenderWindow* rw) {}
 		virtual bool keyPressed(const OIS::KeyEvent& evt) { return true; }
 		virtual bool keyReleased(const OIS::KeyEvent& evt) { return true; }
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual bool touchMoved(const OIS::MultiTouchEvent& evt) { return true; }
+		virtual bool touchPressed(const OIS::MultiTouchEvent& evt) { return true; }
+		virtual bool touchReleased(const OIS::MultiTouchEvent& evt) { return true; }
+#else
 		virtual bool mouseMoved(const OIS::MouseEvent& evt) { return true; }
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return true; }
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id) { return true; }
+#endif
 
     protected:
 
@@ -242,8 +254,13 @@ namespace OgreBites
 
 		Ogre::Root* mRoot;                // OGRE root object
 		Ogre::RenderWindow* mWindow;      // context render window
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		OIS::MultiTouch* mMouse;          // context multitouch device
+		OIS::JoyStick* mAccelerometer;    // context accelerometer device
+#else
 		OIS::Keyboard* mKeyboard;         // context keyboard device
 		OIS::Mouse* mMouse;               // context mouse device
+#endif
 		Ogre::SceneManager* mSceneMgr;    // scene manager for this sample
 		Ogre::NameValuePairList mInfo;    // custom sample info
 		bool mDone;                       // flag to mark the end of the sample

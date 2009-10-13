@@ -67,53 +67,60 @@ int main(int argc, char *argv[])
 #   ifdef __OBJC__
 @interface AppDelegate : NSObject <UIApplicationDelegate>
 {
+    NSTimer *mTimer;
+    OgreBites::SampleBrowser sb;
 }
 
 - (void)go;
+- (void)renderOneFrame:(id)sender;
+
+@property (retain) NSTimer *mTimer;
 
 @end
 
 @implementation AppDelegate
 
+@synthesize mTimer;
+
 - (void)go {
-	try
-	{
-		OgreBites::SampleBrowser sb;
-		sb.go();
-	}
-	catch (Ogre::Exception& e)
-	{
-		std::cerr << "An exception has occurred: " << e.getFullDescription().c_str() << std::endl;
+
+    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+
+    try {
+        sb.go();
+
+        Ogre::Root::getSingleton().getRenderSystem()->_initRenderTargets();
+        
+        // Clear event times
+		Ogre::Root::getSingleton().clearEventTimes();
+    } catch( Ogre::Exception& e ) {
+        std::cerr << "An exception has occurred: " <<
+        e.getFullDescription().c_str() << std::endl;
     }
+        
+    mTimer = [NSTimer scheduledTimerWithTimeInterval:(NSTimeInterval)(1.0f / 60.0f)
+                                              target:self
+                                            selector:@selector(renderOneFrame:)
+                                            userInfo:nil
+                                             repeats:YES];
+    
+    [pool release];
 }
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
     // Hide the status bar
     [[UIApplication sharedApplication] setStatusBarHidden:YES];
-    
-    // Create a window
-    UIWindow *window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    
-    // Create an image view
-    UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Default.png"]];
-    [window addSubview:imageView];
-    
-    // Create an indeterminate status indicator
-    UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
-    [indicator setFrame:CGRectMake(150, 280, 20, 20)];
-    [indicator startAnimating];
-    [window addSubview:indicator];
-    
-    // Display our window
-    [window makeKeyAndVisible];
-    
-    // Clean up
-    [imageView release];
-    [indicator release];
-    
-    [NSThread detachNewThreadSelector:@selector(go) toTarget:self withObject:nil];
+
+    [self go];
 }
 
+- (void)renderOneFrame:(id)sender
+{
+    [sb.mGestureView becomeFirstResponder];
+
+    Root::getSingleton().renderOneFrame((Real)[mTimer timeInterval]);
+}
+        
 - (void)applicationWillTerminate:(UIApplication *)application {
     Ogre::Root::getSingleton().queueEndRendering();
 }
@@ -129,6 +136,8 @@ int main(int argc, char *argv[])
 //}
 
 - (void)dealloc {
+    [mTimer release];
+    
     [super dealloc];
 }
 

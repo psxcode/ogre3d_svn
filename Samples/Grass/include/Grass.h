@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class GrassSample : public SdkSample
+class _OgreSampleClassExport Sample_Grass : public SdkSample
 {
 public:
 
-	GrassSample() : GRASS_WIDTH(40), GRASS_HEIGHT(40)
+	Sample_Grass() : GRASS_WIDTH(40), GRASS_HEIGHT(40)
 	{
 		mInfo["Title"] = "Grass";
 		mInfo["Description"] = "Demonstrates how to use the StaticGeometry class to create 'baked' "
@@ -18,22 +18,6 @@ public:
 		mInfo["Thumbnail"] = "thumb_grass.png";
 		mInfo["Category"] = "Unsorted";
 		mInfo["Help"] = "Press B to toggle bounding boxes.";
-	}
-
-	StringVector getRequiredPlugins()
-	{
-		StringVector names;
-		names.push_back("Cg Program Manager");
-		return names;
-	}
-
-	void testCapabilities(const RenderSystemCapabilities* caps)
-	{
-		if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !caps->hasCapability(RSC_FRAGMENT_PROGRAM))
-        {
-			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your graphics card does not support vertex and fragment"
-				" programs, so you cannot run this sample. Sorry!", "GrassSample::testCapabilities");
-        }
 	}
 
     bool frameRenderingQueued(const FrameEvent& evt)

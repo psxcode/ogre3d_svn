@@ -9,7 +9,7 @@ Sample* s;
 
 extern "C" _OgreSampleExport void dllStartPlugin()
 {
-	s = new TransparencySample;
+	s = new Sample_Transparency;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
 	sp->addSample(s);
 	Root::getSingleton().installPlugin(sp);

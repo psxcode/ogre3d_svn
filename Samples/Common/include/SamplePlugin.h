@@ -62,7 +62,7 @@ namespace OgreBites
 		{
 			return mName;
 		}
-		
+        
 		void install() {}
 		void uninstall() {}
 		void initialise() {}

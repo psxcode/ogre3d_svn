@@ -229,6 +229,16 @@ namespace OgreBites
 		to filter out any interface-related mouse events before processing them in your scene.
 		If the tray manager handler returns true, the event was meant for the trays, not you. */
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual bool touchMoved(const OIS::MultiTouchEvent& evt)
+		{
+			if (mTrayMgr->injectMouseMove(evt)) return true;
+            
+			mCameraMan->injectMouseMove(evt);
+            
+			return true;
+		}
+#else
 		virtual bool mouseMoved(const OIS::MouseEvent& evt)
 		{
 			if (mTrayMgr->injectMouseMove(evt)) return true;
@@ -237,7 +247,18 @@ namespace OgreBites
 
 			return true;
 		}
+#endif
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual bool touchPressed(const OIS::MultiTouchEvent& evt)
+		{
+			if (mTrayMgr->injectMouseDown(evt)) return true;
+            
+			mCameraMan->injectMouseDown(evt);
+            
+			return true;
+		}
+#else
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (mTrayMgr->injectMouseDown(evt, id)) return true;
@@ -246,7 +267,18 @@ namespace OgreBites
 
 			return true;
 		}
+#endif
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual bool touchReleased(const OIS::MultiTouchEvent& evt)
+		{
+			if (mTrayMgr->injectMouseUp(evt)) return true;
+            
+			mCameraMan->injectMouseUp(evt);
+            
+			return true;
+		}
+#else
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (mTrayMgr->injectMouseUp(evt, id)) return true;
@@ -255,14 +287,21 @@ namespace OgreBites
 
 			return true;
 		}
+#endif
 
 		/*-----------------------------------------------------------------------------
-		| Extendeded to setup a default tray interface and camera controller.
+		| Extended to setup a default tray interface and camera controller.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual void _setup(Ogre::RenderWindow* window, OIS::MultiTouch* mouse)
+#else
 		virtual void _setup(Ogre::RenderWindow* window, OIS::Keyboard* keyboard, OIS::Mouse* mouse)
+#endif
 		{
 			mWindow = window;
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 			mKeyboard = keyboard;
+#endif
 			mMouse = mouse;
 
 			locateResources();

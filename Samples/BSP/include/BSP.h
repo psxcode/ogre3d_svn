@@ -3,14 +3,18 @@
 
 #include "SdkSample.h"
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+#include "macUtils.h"
+#endif
+
 using namespace Ogre;
 using namespace OgreBites;
 
-class BspSample : public SdkSample
+class _OgreSampleClassExport Sample_BSP : public SdkSample
 {
 public:
 
-	BspSample()
+	Sample_BSP()
 	{
 		mInfo["Title"] = "BSP";
 		mInfo["Description"] = "A demo of the indoor, or BSP (Binary Space Partition) scene manager. "
@@ -32,10 +36,24 @@ protected:
 	{
 		// load the Quake archive location and map name from a config file
 		ConfigFile cf;
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+        cf.load(Ogre::macBundlePath() + "/Contents/Resources/quakemap.cfg");
+#elif OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+        cf.load(Ogre::macBundlePath() + "/quakemap.cfg");
+#else
 		cf.load("quakemap.cfg");
+#endif
 		mArchive = cf.getSetting("Archive");
 		mMap = cf.getSetting("Map");
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+        // OS X does not set the working directory relative to the app,
+        // In order to make things portable on OS X we need to provide
+        // the loading with it's own bundle path location
+        if (!Ogre::StringUtil::startsWith(mArchive, "/", false)) // only adjust relative dirs
+            mArchive = Ogre::String(Ogre::macBundlePath() + "/" + mArchive);
+#endif
+        
 		// add the Quake archive to the world resource group
 		ResourceGroupManager::getSingleton().addResourceLocation(mArchive, "Zip",
 			ResourceGroupManager::getSingleton().getWorldResourceGroupName(), true);

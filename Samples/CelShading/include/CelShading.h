@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class CelShadingSample : public SdkSample
+class _OgreSampleClassExport Sample_CelShading : public SdkSample
 {
 public:
 
-	CelShadingSample()
+	Sample_CelShading()
 	{
 		mInfo["Title"] = "Cel-shading";
 		mInfo["Description"] = "A demo of cel-shaded graphics using vertex & fragment programs.";

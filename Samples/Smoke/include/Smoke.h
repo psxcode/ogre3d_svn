@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class SmokeSample : public SdkSample
+class _OgreSampleClassExport Sample_Smoke : public SdkSample
 {
 public:
 
-	SmokeSample()
+	Sample_Smoke()
 	{
 		mInfo["Title"] = "Smoke";
 		mInfo["Description"] = "Demonstrates depth-sorting of particles in particle systems.";

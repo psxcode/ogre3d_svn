@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class FresnelSample : public SdkSample, public RenderTargetListener
+class _OgreSampleClassExport Sample_Fresnel : public SdkSample, public RenderTargetListener
 {
 public:
 
-	FresnelSample() : NUM_FISH(30), NUM_FISH_WAYPOINTS(10), FISH_PATH_LENGTH(200), FISH_SCALE(2)
+	Sample_Fresnel() : NUM_FISH(30), NUM_FISH_WAYPOINTS(10), FISH_PATH_LENGTH(200), FISH_SCALE(2)
 	{
 		mInfo["Title"] = "Fresnel";
 		mInfo["Description"] = "Shows how to create reflections and refractions using render-to-texture and shaders.";

@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class CameraTrackSample : public SdkSample
+class _OgreSampleClassExport Sample_CameraTrack : public SdkSample
 {
 public:
 
-	CameraTrackSample()
+	Sample_CameraTrack()
 	{
 		mInfo["Title"] = "Camera Tracking";
 		mInfo["Description"] = "An example of using AnimationTracks to make a node smoothly follow "

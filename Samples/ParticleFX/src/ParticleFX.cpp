@@ -9,7 +9,7 @@ Sample* s;
 
 extern "C" _OgreSampleExport void dllStartPlugin()
 {
-	s = new ParticleFxSample;
+	s = new Sample_ParticleFX;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
 	sp->addSample(s);
 	Root::getSingleton().installPlugin(sp);

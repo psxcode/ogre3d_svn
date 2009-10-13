@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class DynTexSample : public SdkSample
+class _OgreSampleClassExport Sample_DynTex : public SdkSample
 {
 public:
 
-	DynTexSample() : TEXTURE_SIZE(128), SQR_BRUSH_RADIUS(Math::Sqr(12))
+	Sample_DynTex() : TEXTURE_SIZE(128), SQR_BRUSH_RADIUS(Math::Sqr(12))
 	{
 		mInfo["Title"] = "Dynamic Texturing";
 		mInfo["Description"] = "Demonstrates how to create and use dynamically changing textures.";
@@ -51,21 +51,35 @@ public:
 
 		return SdkSample::frameRenderingQueued(evt);  // don't forget the parent class updates!
 	}
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+	bool touchPressed(const OIS::MultiTouchEvent& evt)
+	{
+		if (mTrayMgr->injectMouseDown(evt)) return true;
+		mWiping = true;  // wipe frost if user left clicks in the scene
+		return true;
+	}
 
+	bool touchReleased(const OIS::MultiTouchEvent& evt)
+	{
+		if (mTrayMgr->injectMouseUp(evt)) return true;
+		mWiping = false;  // stop wiping frost if user releases LMB
+		return true;
+	}
+#else
 	bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 	{
 		if (mTrayMgr->injectMouseDown(evt, id)) return true;
 		mWiping = true;  // wipe frost if user left clicks in the scene
 		return true;
 	}
-
+    
 	bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 	{
 		if (mTrayMgr->injectMouseUp(evt, id)) return true;
 		mWiping = false;  // stop wiping frost if user releases LMB
 		return true;
 	}
-
+#endif
 protected:
 
 	void setupContent()

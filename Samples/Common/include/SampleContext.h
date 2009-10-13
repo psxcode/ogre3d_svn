@@ -32,6 +32,37 @@
 #include "OgrePlugin.h"
 #include "Sample.h"
 
+// Static plugins declaration section
+// Note that every entry in here adds an extra header / library dependency
+#ifdef OGRE_STATIC_LIB
+#  define OGRE_STATIC_GL
+#  if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+#    define OGRE_STATIC_Direct3D9
+// dx10 will only work on vista, so be careful about statically linking
+#    if OGRE_USE_D3D10
+#      define OGRE_STATIC_Direct3D10
+#    endif
+#  endif
+#  define OGRE_STATIC_BSPSceneManager
+#  define OGRE_STATIC_ParticleFX
+#  define OGRE_STATIC_CgProgramManager
+#  ifdef OGRE_USE_PCZ
+#    define OGRE_STATIC_PCZSceneManager
+#    define OGRE_STATIC_OctreeZone
+#  else
+#    define OGRE_STATIC_OctreeSceneManager
+#  endif
+#  if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+#     undef OGRE_STATIC_CgProgramManager
+#     undef OGRE_STATIC_GL
+#     define OGRE_STATIC_GLES 1
+#     ifdef __OBJC__
+#       import <UIKit/UIKit.h>
+#     endif
+#  endif
+#  include "OgreStaticPluginLoader.h"
+#endif
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
 #include "macUtils.h"
 #endif
@@ -49,8 +80,12 @@ namespace OgreBites
 	class SampleContext :
 		public Ogre::FrameListener,
 		public Ogre::WindowEventListener,
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 		public OIS::KeyListener,
 		public OIS::MouseListener
+#else
+        public OIS::MultiTouchListener
+#endif
 	{
 	public:
 
@@ -127,7 +162,11 @@ namespace OgreBites
 				// test system capabilities against sample requirements
 				s->testCapabilities(mRoot->getRenderSystem()->getCapabilities());
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+				s->_setup(mWindow, mMouse);   // start new sample
+#else
 				s->_setup(mWindow, mKeyboard, mMouse);   // start new sample
+#endif
 			}
 
 			mCurrentSample = s;
@@ -139,7 +178,16 @@ namespace OgreBites
 		virtual void go(Sample* initialSample = 0)
 		{
 			bool firstRun = true;
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            createRoot();
 
+            if (!firstRun) mRoot->setRenderSystem(mRoot->getRenderSystemByName(mNextRenderer));
+
+            setup();
+
+            if (!firstRun) recoverLastSample();
+            else if (initialSample) runSample(initialSample);
+#else
 			while (!mLastRun)
 			{
 				mLastRun = true;  // assume this is our last run
@@ -161,10 +209,14 @@ namespace OgreBites
 				mRoot->saveConfig();
 				shutdown();
 				if (mRoot) OGRE_DELETE mRoot;
+#ifdef OGRE_STATIC_LIB
+                mStaticPluginLoader.unload();
+#endif
 				firstRun = false;
 			}
+#endif
 		}
-
+        
 		virtual bool isCurrentSamplePaused()
 		{
 			if (mCurrentSample) return mSamplePaused;
@@ -277,26 +329,67 @@ namespace OgreBites
 			return true;
 		}
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual bool touchMoved(const OIS::MultiTouchEvent& evt)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->touchMoved(evt);
+			return true;
+		}
+#else
 		virtual bool mouseMoved(const OIS::MouseEvent& evt)
 		{
 			if (mCurrentSample && !mSamplePaused) return mCurrentSample->mouseMoved(evt);
 			return true;
 		}
+#endif
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual bool touchPressed(const OIS::MultiTouchEvent& evt)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->touchPressed(evt);
+			return true;
+		}
+#else
 		virtual bool mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (mCurrentSample && !mSamplePaused) return mCurrentSample->mousePressed(evt, id);
 			return true;
 		}
+#endif
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual bool touchReleased(const OIS::MultiTouchEvent& evt)
+		{
+			if (mCurrentSample && !mSamplePaused) return mCurrentSample->touchReleased(evt);
+			return true;
+		}
+#else
 		virtual bool mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (mCurrentSample && !mSamplePaused) return mCurrentSample->mouseReleased(evt, id);
 			return true;
 		}
+#endif
 
 	protected:
 
+        /*-----------------------------------------------------------------------------
+         | Sets up the context after configuration.
+         -----------------------------------------------------------------------------*/
+		virtual void setup()
+		{
+			createWindow();
+			setupInput();
+			locateResources();
+			loadResources();
+            
+			Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
+            
+			// adds context as listener to process context-level (above the sample level) events
+			mRoot->addFrameListener(this);
+			Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
+		}
+        
 		/*-----------------------------------------------------------------------------
 		| Creates the OGRE root.
 		-----------------------------------------------------------------------------*/
@@ -304,11 +397,22 @@ namespace OgreBites
 		{
 			// get platform-specific working directory
 			Ogre::String workDir = Ogre::StringUtil::BLANK;
-			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-			workDir = Ogre::macBundlePath() + "/Contents/Resources/";
-			#endif
+            Ogre::String pluginsPath = Ogre::StringUtil::BLANK;
+            #ifndef OGRE_STATIC_LIB
+                #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+                workDir = Ogre::macBundlePath() + "/Contents/Resources/";
+                pluginsPath = workDir;
+                #endif
+            #else
+                #if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+                workDir = Ogre::macBundlePath() + "/";
+                #endif
+            #endif
+			mRoot = OGRE_NEW Ogre::Root(pluginsPath + "plugins.cfg", workDir + "ogre.cfg", workDir + "ogre.log");
 
-			mRoot = OGRE_NEW Ogre::Root(workDir + "plugins.cfg", workDir + "Ogre.cfg", workDir + "Ogre.log");
+#ifdef OGRE_STATIC_LIB
+            mStaticPluginLoader.load();
+#endif
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -320,23 +424,6 @@ namespace OgreBites
 		{
 			return mRoot->showConfigDialog();
 			// return mRoot->restoreConfig();
-		}
-
-		/*-----------------------------------------------------------------------------
-		| Sets up the context after configuration.
-		-----------------------------------------------------------------------------*/
-		virtual void setup()
-		{
-			createWindow();
-			setupInput();
-			locateResources();
-			loadResources();
-
-			Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
-
-			// adds context as listener to process context-level (above the sample level) events
-			mRoot->addFrameListener(this);
-			Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
 		}
 
 		/*-----------------------------------------------------------------------------
@@ -398,7 +485,9 @@ namespace OgreBites
 			// load resource paths from config file
 			Ogre::ConfigFile cf;
 			#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-			cf.load(Ogre::macBundlePath() + "/Contents/Resources/Resources.cfg");
+			cf.load(Ogre::macBundlePath() + "/Contents/Resources/resources.cfg");
+            #elif OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+			cf.load(Ogre::macBundlePath() + "/resources.cfg");
 			#else
 			cf.load("resources.cfg");
 			#endif
@@ -419,7 +508,10 @@ namespace OgreBites
 					type = i->first;
 					arch = i->second;
 
-					#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+					#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+                    // OS X does not set the working directory relative to the app,
+                    // In order to make things portable on OS X we need to provide
+                    // the loading with it's own bundle path location
 					if (!Ogre::StringUtil::startsWith(arch, "/", false)) // only adjust relative dirs
 						arch = Ogre::String(Ogre::macBundlePath() + "/" + arch);
 					#endif
@@ -524,6 +616,9 @@ namespace OgreBites
 		Ogre::Root* mRoot;              // OGRE root
 		Ogre::RenderWindow* mWindow;    // render window
 		OIS::InputManager* mInputMgr;   // OIS input manager
+#ifdef OGRE_STATIC_LIB
+        Ogre::StaticPluginLoader mStaticPluginLoader;
+#endif
 #if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
 		OIS::MultiTouch* mMouse;        // multitouch device
 		OIS::JoyStick* mAccelerometer;  // accelerometer device

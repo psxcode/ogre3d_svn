@@ -9,7 +9,7 @@ Sample* s;
 
 extern "C" _OgreSampleExport void dllStartPlugin()
 {
-	s = new TerrainSample;
+	s = new Sample_Terrain;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
 	sp->addSample(s);
 	Root::getSingleton().installPlugin(sp);

@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class FacialAnimationSample : public SdkSample
+class _OgreSampleClassExport Sample_FacialAnimation : public SdkSample
 {
 public:
 
-	FacialAnimationSample(): mPlayAnimation(false)
+	Sample_FacialAnimation(): mPlayAnimation(false)
 	{
 		mInfo["Title"] = "Facial Animation";
 		mInfo["Description"] = "A demonstration of the facial animation feature, using pose animation.";
@@ -78,7 +78,7 @@ protected:
 			String sliderName = "Pose" + StringConverter::toString(i);
 			String poseName = mHeadMesh->getPose(i)->getName();
 
-			if (poseName.find("Expression") != -1)
+			if (poseName.find("Expression") != std::string::npos)
 				mExpressions.push_back(mTrayMgr->createLongSlider(TL_NONE, sliderName, poseName.substr(11), 200, 80, 44, 0, 1, 11));
 			else mMouthShapes.push_back(mTrayMgr->createLongSlider(TL_NONE, sliderName, poseName.substr(0, 1), 160, 80, 44, 0, 1, 11));
 		}

@@ -9,7 +9,7 @@ Sample* s;
 
 extern "C" _OgreSampleExport void dllStartPlugin()
 {
-	s = new FacialAnimationSample;
+	s = new Sample_FacialAnimation;
 	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
 	sp->addSample(s);
 	Root::getSingleton().installPlugin(sp);

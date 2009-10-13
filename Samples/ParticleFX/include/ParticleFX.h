@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class ParticleFxSample : public SdkSample
+class _OgreSampleClassExport Sample_ParticleFX : public SdkSample
 {
 public:
 
-	ParticleFxSample()
+	Sample_ParticleFX()
 	{
 		mInfo["Title"] = "Particle Effects";
 		mInfo["Description"] = "Demonstrates the creation and usage of particle effects.";

@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class TextureFxSample : public SdkSample
+class _OgreSampleClassExport Sample_TextureFX : public SdkSample
 {
 public:
 
-	TextureFxSample()
+	Sample_TextureFX()
 	{
 		mInfo["Title"] = "Texture Effects";
 		mInfo["Description"] = "Demonstrates OGRE's many different animated texture effects.";

@@ -277,6 +277,9 @@ namespace OgreBites
 			mElement = Ogre::OverlayManager::getSingleton().createOverlayElementFromTemplate("SdkTrays/Button", "BorderPanel", name);
 			mBP = (Ogre::BorderPanelOverlayElement*)mElement;
 			mTextArea = (Ogre::TextAreaOverlayElement*)mBP->getChild(mBP->getName() + "/ButtonCaption");
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            mTextArea->setCharHeight(mTextArea->getCharHeight() - 3);
+#endif
 			mTextArea->setTop(-(mTextArea->getCharHeight() / 2));
 
 			if (width > 0)
@@ -392,6 +395,10 @@ namespace OgreBites
 			mStartingLine = 0;
 			mPadding = 15;
 			mText = "";
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            mTextArea->setCharHeight(mTextArea->getCharHeight() - 3);
+            mCaptionTextArea->setCharHeight(mCaptionTextArea->getCharHeight() - 3);
+#endif
 			refitContents();
 		}
 
@@ -430,7 +437,7 @@ namespace OgreBites
 			mLines.clear();
 
 			Ogre::Font* font = (Ogre::Font*)Ogre::FontManager::getSingleton().getByName(mTextArea->getFontName()).getPointer();
-
+            
 			Ogre::String current = text.asUTF8();
 			bool firstWord = true;
 			unsigned int lastSpace = 0;
@@ -663,7 +670,11 @@ namespace OgreBites
 			mSmallBox->setWidth(width - 10);
 			mSmallTextArea = (Ogre::TextAreaOverlayElement*)mSmallBox->getChild(name + "/MenuSmallBox/MenuSmallText");
 			mElement->setWidth(width);
-
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            mTextArea->setCharHeight(mTextArea->getCharHeight() - 3);
+            mSmallTextArea->setCharHeight(mSmallTextArea->getCharHeight() - 3);
+#endif
+            
 			if (boxWidth > 0)  // long style
 			{
 				if (width <= 0) mFitToContents = true;
@@ -1079,6 +1090,9 @@ namespace OgreBites
 		{
 			mElement = Ogre::OverlayManager::getSingleton().createOverlayElementFromTemplate("SdkTrays/Label", "BorderPanel", name);
 			mTextArea = (Ogre::TextAreaOverlayElement*)((Ogre::OverlayContainer*)mElement)->getChild(getName() + "/LabelCaption");
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            mTextArea->setCharHeight(mTextArea->getCharHeight() - 3);
+#endif
 			setCaption(caption);
 			if (width <= 0) mFitToTray = true;
 			else
@@ -1167,7 +1181,11 @@ namespace OgreBites
 			mValueTextArea = (Ogre::TextAreaOverlayElement*)valueBox->getChild(valueBox->getName() + "/SliderValueText");
 			mTrack = (Ogre::BorderPanelOverlayElement*)c->getChild(getName() + "/SliderTrack");
 			mHandle = (Ogre::PanelOverlayElement*)mTrack->getChild(mTrack->getName() + "/SliderHandle");
-
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            mTextArea->setCharHeight(mTextArea->getCharHeight() - 3);
+            mValueTextArea->setCharHeight(mValueTextArea->getCharHeight() - 3);
+#endif
+            
 			if (trackWidth <= 0)  // tall style
 			{
 				mTrack->setWidth(width - 16);
@@ -1347,6 +1365,10 @@ namespace OgreBites
 			Ogre::OverlayContainer* c = (Ogre::OverlayContainer*)mElement;
 			mNamesArea = (Ogre::TextAreaOverlayElement*)c->getChild(getName() + "/ParamsPanelNames");
 			mValuesArea = (Ogre::TextAreaOverlayElement*)c->getChild(getName() + "/ParamsPanelValues");
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            mNamesArea->setCharHeight(mNamesArea->getCharHeight() - 3);
+            mValuesArea->setCharHeight(mValuesArea->getCharHeight() - 3);
+#endif
 			mElement->setWidth(width);
 			mElement->setHeight(mNamesArea->getTop() * 2 + lines * mNamesArea->getCharHeight());
 		}
@@ -1476,6 +1498,9 @@ namespace OgreBites
 			mX = mSquare->getChild(mSquare->getName() + "/CheckBoxX");
 			mX->hide();
 			mElement->setWidth(width);
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            mTextArea->setCharHeight(mTextArea->getCharHeight() - 3);
+#endif
 			setCaption(caption);
 		}
 
@@ -1646,7 +1671,11 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Creates backdrop, cursor, and trays.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		SdkTrayManager(const Ogre::String& name, Ogre::RenderWindow* window, OIS::MultiTouch* mouse, SdkTrayListener* listener = 0) :
+#else
 		SdkTrayManager(const Ogre::String& name, Ogre::RenderWindow* window, OIS::Mouse* mouse, SdkTrayListener* listener = 0) :
+#endif
 		  mName(name), mWindow(window), mMouse(mouse), mListener(listener), mWidgetPadding(8), mWidgetSpacing(2),
                 mTrayPadding(0), mTrayDrag(false), mExpandedMenu(0), mDialog(0), mOk(0), mYes(0), mNo(0),
                 mFpsLabel(0), mStatsPanel(0), mLogo(0), mLoadBar(0)
@@ -1844,7 +1873,13 @@ namespace OgreBites
 		-----------------------------------------------------------------------------*/
 		void refreshCursor()
 		{
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            std::vector<OIS::MultiTouchState> states = mMouse->getMultiTouchStates();
+            if(states.size() > 0)
+                mCursor->setPosition(states[0].X.abs, states[0].Y.abs);
+#else
 			mCursor->setPosition(mMouse->getMouseState().X.abs, mMouse->getMouseState().Y.abs);
+#endif
 		}
 
 		void showTrays()
@@ -2822,11 +2857,19 @@ namespace OgreBites
 		| Processes mouse button down events. Returns true if the event was
 		| consumed and should not be passed on to other handlers.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		bool injectMouseDown(const OIS::MultiTouchEvent& evt)
+#else
 		bool injectMouseDown(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+#endif
 		{
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 			// only process left button when stuff is visible
 			if (!mCursorLayer->isVisible() || id != OIS::MB_Left) return false;
-
+#else
+            // only process touches when stuff is visible
+			if (!mCursorLayer->isVisible()) return false;
+#endif
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
 
 			mTrayDrag = false;
@@ -2871,15 +2914,13 @@ namespace OgreBites
 
 			if (!mTrayDrag) return false;   // don't process if mouse press is not in tray
 
-			Widget* w;
-
 			for (unsigned int i = 0; i < 10; i++)
 			{
 				if (!mTrays[i]->isVisible()) continue;
 
 				for (unsigned int j = 0; j < mWidgets[i].size(); j++)
 				{
-					w = mWidgets[i][j];
+					Widget* w = mWidgets[i][j];
 					if (!w->getOverlayElement()->isVisible()) continue;
 					w->_cursorPressed(cursorPos);    // send event to widget
 
@@ -2899,11 +2940,19 @@ namespace OgreBites
 		| Processes mouse button up events. Returns true if the event was
 		| consumed and should not be passed on to other handlers.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		bool injectMouseUp(const OIS::MultiTouchEvent& evt)
+#else
 		bool injectMouseUp(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
+#endif
 		{
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 			// only process left button when stuff is visible
 			if (!mCursorLayer->isVisible() || id != OIS::MB_Left) return false;
-
+#else
+            // only process touches when stuff is visible
+			if (!mCursorLayer->isVisible()) return false;
+#endif
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
 
 			if (mExpandedMenu)   // only check top priority widget until it passes on
@@ -2949,14 +2998,46 @@ namespace OgreBites
 		| Updates cursor position. Returns true if the event was
 		| consumed and should not be passed on to other handlers.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		bool injectMouseMove(const OIS::MultiTouchEvent& evt)
+#else
 		bool injectMouseMove(const OIS::MouseEvent& evt)
+#endif
 		{
 			if (!mCursorLayer->isVisible()) return false;   // don't process if cursor layer is invisible
 
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 			mCursor->setPosition(evt.state.X.abs, evt.state.Y.abs);
 
 			Ogre::Vector2 cursorPos(mCursor->getLeft(), mCursor->getTop());
+#else
+            // Adjust the input depending upon viewport orientation
+            float origTransX = 0, origTransY = 0;
+            Ogre::Vector2 cursorPos(evt.state.X.abs, evt.state.Y.abs);
 
+            switch(mWindow->getViewport(0)->getOrientation())
+            {
+                case Ogre::Viewport::OR_LANDSCAPELEFT:
+                    origTransX = cursorPos.x;
+                    origTransY = cursorPos.y;
+                    cursorPos.x = origTransY;
+                    cursorPos.y = mWindow->getViewport(0)->getActualWidth() - origTransX;
+                    break;
+
+                case Ogre::Viewport::OR_LANDSCAPERIGHT:
+                    origTransX = cursorPos.x;
+                    origTransY = cursorPos.y;
+                    cursorPos.x = mWindow->getViewport(0)->getActualHeight() - origTransY;
+                    cursorPos.y = origTransX;
+                    break;
+                    
+                // Portrait doesn't need any change
+                case Ogre::Viewport::OR_PORTRAIT:
+                default:
+                    break;
+            }
+			mCursor->setPosition(cursorPos.x, cursorPos.y);
+#endif
 			if (mExpandedMenu)   // only check top priority widget until it passes on
 			{
 				mExpandedMenu->_cursorMoved(cursorPos);
@@ -3023,7 +3104,11 @@ namespace OgreBites
 
 		Ogre::String mName;                   // name of this tray system
 		Ogre::RenderWindow* mWindow;          // render window
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		OIS::MultiTouch* mMouse;              // multitouch device
+#else
 		OIS::Mouse* mMouse;                   // mouse device
+#endif
 		Ogre::Overlay* mBackdropLayer;        // backdrop layer
 		Ogre::Overlay* mTraysLayer;           // widget layer
 		Ogre::Overlay* mPriorityLayer;        // top priority layer

@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class SkyPlaneSample : public SdkSample
+class _OgreSampleClassExport Sample_SkyPlane : public SdkSample
 {
 public:
 
-	SkyPlaneSample()
+	Sample_SkyPlane()
 	{
 		mInfo["Title"] = "Sky Plane";
 		mInfo["Description"] = "Shows how to use skyplanes (fixed-distance planes used for backgrounds).";

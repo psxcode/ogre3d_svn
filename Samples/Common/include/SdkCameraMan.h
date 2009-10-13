@@ -244,8 +244,39 @@ namespace OgreBites
 		/*-----------------------------------------------------------------------------
 		| Processes mouse movement differently for each style.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual void injectMouseMove(const OIS::MultiTouchEvent& evt)
+#else
 		virtual void injectMouseMove(const OIS::MouseEvent& evt)
+#endif
 		{
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+            OIS::MultiTouchState state = evt.state;
+            float origTransX = 0, origTransY = 0;
+            switch(mCamera->getViewport()->getOrientation())
+            {
+                case Ogre::Viewport::OR_LANDSCAPELEFT:
+                    origTransX = state.X.rel;
+                    origTransY = state.Y.rel;
+                    state.X.rel = -origTransY;
+                    state.Y.rel = origTransX;
+                    break;
+                    
+                case Ogre::Viewport::OR_LANDSCAPERIGHT:
+                    origTransX = state.X.rel;
+                    origTransY = state.Y.rel;
+                    state.X.rel = origTransY;
+                    state.Y.rel = origTransX;
+                    break;
+                    
+                    // Portrait doesn't need any change
+                case Ogre::Viewport::OR_PORTRAIT:
+                default:
+                    break;
+            }
+#else
+            OIS::MouseEvent state = evt.state;
+#endif
 			if (mStyle == CS_ORBIT)
 			{
 				Ogre::Real dist = (mCamera->getPosition() - mTarget->_getDerivedPosition()).length();
@@ -254,8 +285,8 @@ namespace OgreBites
 				{
 					mCamera->setPosition(mTarget->_getDerivedPosition());
 
-					mCamera->yaw(Ogre::Degree(-evt.state.X.rel * 0.25f));
-					mCamera->pitch(Ogre::Degree(-evt.state.Y.rel * 0.25f));
+					mCamera->yaw(Ogre::Degree(-state.X.rel * 0.25f));
+					mCamera->pitch(Ogre::Degree(-state.Y.rel * 0.25f));
 
 					mCamera->moveRelative(Ogre::Vector3(0, 0, dist));
 
@@ -264,18 +295,18 @@ namespace OgreBites
 				else if (mZooming)  // move the camera toward or away from the target
 				{
 					// the further the camera is, the faster it moves
-					mCamera->moveRelative(Ogre::Vector3(0, 0, evt.state.Y.rel * 0.004f * dist));
+					mCamera->moveRelative(Ogre::Vector3(0, 0, state.Y.rel * 0.004f * dist));
 				}
-				else if (evt.state.Z.rel != 0)  // move the camera toward or away from the target
+				else if (state.Z.rel != 0)  // move the camera toward or away from the target
 				{
 					// the further the camera is, the faster it moves
-					mCamera->moveRelative(Ogre::Vector3(0, 0, -evt.state.Z.rel * 0.0008f * dist));
+					mCamera->moveRelative(Ogre::Vector3(0, 0, -state.Z.rel * 0.0008f * dist));
 				}
 			}
 			else if (mStyle == CS_FREELOOK)
 			{
-				mCamera->yaw(Ogre::Degree(-evt.state.X.rel * 0.15f));
-				mCamera->pitch(Ogre::Degree(-evt.state.Y.rel * 0.15f));
+				mCamera->yaw(Ogre::Degree(-state.X.rel * 0.15f));
+				mCamera->pitch(Ogre::Degree(-state.Y.rel * 0.15f));
 			}
 		}
 
@@ -283,6 +314,15 @@ namespace OgreBites
 		| Processes mouse presses. Only applies for orbit style.
 		| Left button is for orbiting, and right button is for zooming.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual void injectMouseDown(const OIS::MultiTouchEvent& evt)
+		{
+			if (mStyle == CS_ORBIT)
+			{
+                mOrbiting = true;
+			}
+		}
+#else
 		virtual void injectMouseDown(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (mStyle == CS_ORBIT)
@@ -291,11 +331,21 @@ namespace OgreBites
 				else if (id == OIS::MB_Right) mZooming = true;
 			}
 		}
+#endif
 
 		/*-----------------------------------------------------------------------------
 		| Processes mouse releases. Only applies for orbit style.
 		| Left button is for orbiting, and right button is for zooming.
 		-----------------------------------------------------------------------------*/
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+		virtual void injectMouseUp(const OIS::MultiTouchEvent& evt)
+		{
+			if (mStyle == CS_ORBIT)
+			{
+                mOrbiting = false;
+			}
+		}
+#else
 		virtual void injectMouseUp(const OIS::MouseEvent& evt, OIS::MouseButtonID id)
 		{
 			if (mStyle == CS_ORBIT)
@@ -304,6 +354,7 @@ namespace OgreBites
 				else if (id == OIS::MB_Right) mZooming = false;
 			}
 		}
+#endif
 
     protected:
 

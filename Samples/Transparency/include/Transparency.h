@@ -10,11 +10,11 @@ using namespace OgreBites;
 is all in the material script itself. You won't find anything even vaguely related to transparency in
 this source code. Check out the Examples/WaterStream material in Examples.material. */
 
-class TransparencySample : public SdkSample
+class _OgreSampleClassExport Sample_Transparency : public SdkSample
 {
 public:
 
-	TransparencySample()
+	Sample_Transparency()
 	{
 		mInfo["Title"] = "Transparency";
 		mInfo["Description"] = "Demonstrates the use of transparent materials (or scene blending).";

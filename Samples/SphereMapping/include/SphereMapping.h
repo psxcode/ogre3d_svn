@@ -10,11 +10,11 @@ using namespace OgreBites;
 is all in the material script itself. You won't find anything even vaguely related to sphere mapping in
 this source code. Check out the Examples/SphereMappedRustySteel material in Examples.material. */
 
-class SphereMappingSample : public SdkSample
+class _OgreSampleClassExport Sample_SphereMapping : public SdkSample
 {
 public:
 
-	SphereMappingSample()
+	Sample_SphereMapping()
 	{
 		mInfo["Title"] = "Sphere Mapping";
 		mInfo["Description"] = "Shows the sphere mapping feature of materials. "

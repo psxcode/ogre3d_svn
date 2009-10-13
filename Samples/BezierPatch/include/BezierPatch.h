@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class BezierPatchSample : public SdkSample
+class _OgreSampleClassExport Sample_BezierPatch : public SdkSample
 {
 public:
 
-	BezierPatchSample()
+	Sample_BezierPatch()
 	{
 		mInfo["Title"] = "Bezier Patch";
 		mInfo["Description"] = "A demonstration of the Bezier patch support.";

@@ -23,11 +23,11 @@ same license as the rest of the engine.
 using namespace Ogre;
 using namespace OgreBites;
 
-class TerrainSample : public SdkSample
+class _OgreSampleClassExport Sample_Terrain : public SdkSample
 {
 public:
 
-	TerrainSample()
+	Sample_Terrain()
 		: mTerrain(0)
 		, mFly(false)
 		, mMode(MODE_NORMAL)
@@ -47,6 +47,15 @@ public:
 
 	}
 
+    void testCapabilities(const RenderSystemCapabilities* caps)
+	{
+        if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !caps->hasCapability(RSC_FRAGMENT_PROGRAM))
+        {
+			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your graphics card does not support vertext or fragment shaders, "
+                        "so you cannot run this sample. Sorry!", "TerrainSample::testCapabilities");
+        }
+	}
+    
 	StringVector getRequiredPlugins()
 	{
 		StringVector names;
@@ -68,7 +77,7 @@ public:
 
 				Vector3 tsPos;
 				mTerrain->getTerrainPosition(rayResult.second, &tsPos);
-
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 				if (mKeyboard->isKeyDown(OIS::KC_EQUALS) || mKeyboard->isKeyDown(OIS::KC_MINUS))
 				{
 					switch(mMode)
@@ -155,6 +164,7 @@ public:
 					};
 
 				}
+#endif
 
 			}
 			else
@@ -177,7 +187,12 @@ public:
 			// TODO - new tray
 			//mDebugText = "Blend Edit Mode";
 			break;
-
+        case MODE_COUNT:
+            // TODO - new tray
+            //mDebugText = "";
+            break;
+        default:
+            break;
 		}
 
 		if (!mFly)
@@ -212,6 +227,7 @@ public:
 
 	bool keyPressed (const OIS::KeyEvent &e)
 	{
+#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 		switch (e.key)
 		{
 		case OIS::KC_RETURN:
@@ -227,6 +243,7 @@ public:
 		default:
 			return SdkSample::keyPressed(e);
 		}
+#endif
 
 		return true;
 	}
@@ -396,7 +413,6 @@ protected:
 		//TerrainGlobalOptions::setCompositeMapAmbient(ColourValue::Red);
 		TerrainGlobalOptions::setCompositeMapDiffuse(l->getDiffuseColour());
 
-		bool saveTerrain = false;
 		try
 		{
 			mTerrain = OGRE_NEW Terrain(mSceneMgr);

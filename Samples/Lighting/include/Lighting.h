@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class LightingSample : public SdkSample
+class _OgreSampleClassExport Sample_Lighting : public SdkSample
 {
 public:
 
-	LightingSample()
+	Sample_Lighting()
 	{
 		mInfo["Title"] = "Lighting";
 		mInfo["Description"] = "Shows OGRE's lighting support. Also demonstrates automatic "

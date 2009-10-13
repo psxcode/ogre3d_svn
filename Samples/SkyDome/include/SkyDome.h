@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class SkyDomeSample : public SdkSample
+class _OgreSampleClassExport Sample_SkyDome : public SdkSample
 {
 public:
 
-	SkyDomeSample()
+	Sample_SkyDome()
 	{
 		mInfo["Title"] = "Sky Dome";
 		mInfo["Description"] = "Shows how to use skydomes (fixed-distance domes used for backgrounds).";

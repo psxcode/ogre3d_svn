@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class SkeletalAnimationSample : public SdkSample
+class _OgreSampleClassExport Sample_SkeletalAnimation : public SdkSample
 {
 public:
 
-	SkeletalAnimationSample() : NUM_MODELS(6), ANIM_CHOP(8)
+	Sample_SkeletalAnimation() : NUM_MODELS(6), ANIM_CHOP(8)
 	{
 		mInfo["Title"] = "Skeletal Animation";
 		mInfo["Description"] = "A demo of the skeletal animation feature, including spline animation.";
@@ -95,9 +95,9 @@ protected:
 	{
 		tweakSneakAnim();
 
-		SceneNode* sn;
-		Entity* ent;
-		AnimationState* as;
+		SceneNode* sn = NULL;
+		Entity* ent = NULL;
+		AnimationState* as = NULL;
 
         for (unsigned int i = 0; i < NUM_MODELS; i++)
         {

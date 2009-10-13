@@ -17,5 +17,8 @@ if (APPLE AND NOT OGRE_BUILD_PLATFORM_IPHONE)
     )
 endif()
 
-add_dependencies(Sample_CelShading SampleBrowser)
-
+if (OGRE_STATIC)
+  add_dependencies(SampleBrowser Sample_CelShading)
+else ()
+  add_dependencies(Sample_CelShading SampleBrowser)
+endif (OGRE_STATIC)

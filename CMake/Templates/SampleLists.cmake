@@ -77,7 +77,7 @@ include_directories(
 )
 
 if (OGRE_STATIC)
-  # need to link against all plugins
+  # need to link against all plugins and components
   if (OGRE_Plugin_BSPSceneManager_FOUND)
     include_directories(${OGRE_Plugin_BSPSceneManager_INCLUDE_DIRS})
     set(OGRE_PLUGIN_LIBRARIES ${OGRE_PLUGIN_LIBRARIES} ${OGRE_Plugin_BSPSceneManager_LIBRARIES})
@@ -93,6 +93,14 @@ if (OGRE_STATIC)
   if (OGRE_Plugin_ParticleFX_FOUND)
     include_directories(${OGRE_Plugin_ParticleFX_INCLUDE_DIRS})
     set(OGRE_PLUGIN_LIBRARIES ${OGRE_PLUGIN_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES})
+  endif ()
+  if (OGRE_Paging_FOUND)
+    include_directories(${OGRE_Paging_INCLUDE_DIRS})
+    set(OGRE_PLUGIN_LIBRARIES ${OGRE_PLUGIN_LIBRARIES} ${OGRE_Paging_LIBRARIES})
+  endif ()
+  if (OGRE_Terrain_FOUND)
+    include_directories(${OGRE_Terrain_INCLUDE_DIRS})
+    set(OGRE_PLUGIN_LIBRARIES ${OGRE_PLUGIN_LIBRARIES} ${OGRE_Terrain_LIBRARIES})
   endif ()
   if (OGRE_RenderSystem_Direct3D9_FOUND)
     include_directories(${OGRE_RenderSystem_Direct3D9_INCLUDE_DIRS})

@@ -215,17 +215,6 @@ function(ogre_config_sample SAMPLENAME)
   if (APPLE)
     # On OS X, create .app bundle
     set_property(TARGET ${SAMPLENAME} PROPERTY MACOSX_BUNDLE TRUE)
-
-	if (OGRE_BUILD_PLATFORM_IPHONE)
-      set (OGRE_SAMPLE_CONTENTS_PATH 
-        ${CMAKE_BINARY_DIR}/bin/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/$(PRODUCT_NAME).app)
-      add_custom_command(TARGET ${SAMPLENAME} POST_BUILD
-        COMMAND cp ARGS ${CMAKE_BINARY_DIR}/bin/*.cfg ${OGRE_SAMPLE_CONTENTS_PATH}/
-	    COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${OGRE_SOURCE_DIR}/Samples/Media ${OGRE_SAMPLE_CONTENTS_PATH}/
-	    COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${OGRE_SOURCE_DIR}/Samples/Common/misc/Icon.png ${OGRE_SAMPLE_CONTENTS_PATH}/
-	    COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${OGRE_SOURCE_DIR}/Samples/Common/misc/Default.png ${OGRE_SAMPLE_CONTENTS_PATH}/
-      )
-    endif()
   endif (APPLE)
   if (CMAKE_COMPILER_IS_GNUCXX)
     # add GCC visibility flags to shared library build

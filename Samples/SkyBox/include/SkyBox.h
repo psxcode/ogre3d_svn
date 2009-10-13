@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class SkyBoxSample : public SdkSample
+class _OgreSampleClassExport Sample_SkyBox : public SdkSample
 {
 public:
 
-	SkyBoxSample()
+	Sample_SkyBox()
 	{
 		mInfo["Title"] = "Sky Box";
 		mInfo["Description"] = "Shows how to use skyboxes (fixed-distance cubes used for backgrounds).";

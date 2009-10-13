@@ -13,6 +13,31 @@ set(SOURCE_FILES src/SampleBrowser.cpp)
 
 if (OGRE_BUILD_PLATFORM_IPHONE)
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/SampleBrowser.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+
+  set (SAMPLE_LIBRARIES
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_BezierPatch.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_BSP.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_CameraTrack.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_CelShading.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_CubeMapping.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_Dot3Bump.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_DynTex.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_FacialAnimation.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_Fresnel.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_Grass.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_Lighting.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_ParticleFX.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_SkeletalAnimation.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_SkyBox.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_SkyDome.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_SkyPlane.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_Smoke.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_SphereMapping.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_Terrain.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_TextureFX.a
+       ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Sample_Transparency.a
+  )
+
 endif ()
 
 set (HEADER_FILES
@@ -23,11 +48,29 @@ set (HEADER_FILES
 	${CMAKE_SOURCE_DIR}/Samples/Common/include/SdkCameraMan.h
 	${CMAKE_SOURCE_DIR}/Samples/Common/include/SdkSample.h
 	${CMAKE_SOURCE_DIR}/Samples/Common/include/SdkTrays.h
+	${CMAKE_SOURCE_DIR}/Samples/Common/include/OgreStaticPluginLoader.h
 )
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+if (OGRE_STATIC)
+  if (OGRE_BUILD_PLATFORM_IPHONE)
+	include_directories(
+      ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${CMAKE_SOURCE_DIR}/Components/Paging/include
+      ${CMAKE_SOURCE_DIR}/Components/Terrain/include
+      ${CMAKE_SOURCE_DIR}/Samples/**)
+  else()
+    include_directories(
+      ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${CMAKE_SOURCE_DIR}/Components/Paging/include
+      ${CMAKE_SOURCE_DIR}/Components/Terrain/include)
+  endif()
+else()
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+endif()
+
 add_executable(SampleBrowser WIN32 ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE_FILES})
 
-target_link_libraries(SampleBrowser ${OGRE_LIBRARIES} ${OGRE_PLUGIN_LIBRARIES} ${OIS_LIBRARIES})
+target_link_libraries(SampleBrowser ${OGRE_LIBRARIES} ${OGRE_PLUGIN_LIBRARIES} ${OIS_LIBRARIES} ${SAMPLE_LIBRARIES})
 
 if (SAMPLE_DEPENDENCIES)
   add_dependencies(SampleBrowser ${SAMPLE_DEPENDENCIES})
@@ -48,6 +91,22 @@ endif ()
 if (APPLE)
 	# On OS X, create .app bundle
 	set_property(TARGET SampleBrowser PROPERTY MACOSX_BUNDLE TRUE)
+
+  if (OGRE_BUILD_PLATFORM_IPHONE)
+    set (OGRE_SAMPLE_CONTENTS_PATH ${CMAKE_BINARY_DIR}/bin/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/SampleBrowser.app)
+    add_custom_command(TARGET SampleBrowser POST_BUILD
+      COMMAND cp ARGS ${CMAKE_BINARY_DIR}/bin/*.cfg ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${OGRE_SOURCE_DIR}/Samples/Media ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${OGRE_SOURCE_DIR}/Samples/Common/misc/Icon.png ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${OGRE_SOURCE_DIR}/Samples/Common/misc/Default.png ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${CMAKE_BINARY_DIR}/bin/plugins.cfg ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${CMAKE_BINARY_DIR}/bin/resources.cfg ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${CMAKE_BINARY_DIR}/bin/media.cfg ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${CMAKE_BINARY_DIR}/bin/samples.cfg ${OGRE_SAMPLE_CONTENTS_PATH}/
+      COMMAND /Developer/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp -exclude .DS_Store -exclude CVS -exclude .svn -exclude 'CMakeLists.txt' -resolve-src-symlinks ${CMAKE_BINARY_DIR}/bin/quakemap.cfg ${OGRE_SAMPLE_CONTENTS_PATH}/
+    )
+  else()
+
 	# also, symlink frameworks so .app is standalone
 	# NOTE: $(CONFIGURATION) is not resolvable at CMake run time, it's only 
 	# valid at build time (hence parenthesis rather than braces)
@@ -70,6 +129,8 @@ if (APPLE)
 		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/bin/media.cfg 
 		${OGRE_SAMPLE_CONTENTS_PATH}/Resources/
 		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/bin/samples.cfg 
+		${OGRE_SAMPLE_CONTENTS_PATH}/Resources/
+		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/bin/quakemap.cfg 
 		${OGRE_SAMPLE_CONTENTS_PATH}/Resources/
 		)
 
@@ -228,6 +289,7 @@ if (APPLE)
 		COMMAND ln ARGS -s -f ${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)/Sample_Transparency.dylib 
 		${OGRE_SAMPLE_CONTENTS_PATH}/Plugins/
 		)
+  endif()
 endif (APPLE)
 
 if (OGRE_INSTALL_SAMPLES)

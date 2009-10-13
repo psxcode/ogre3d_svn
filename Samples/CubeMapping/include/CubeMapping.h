@@ -6,11 +6,11 @@
 using namespace Ogre;
 using namespace OgreBites;
 
-class CubeMappingSample : public SdkSample, public RenderTargetListener
+class _OgreSampleClassExport Sample_CubeMapping : public SdkSample, public RenderTargetListener
 {
 public:
 
-	CubeMappingSample()
+	Sample_CubeMapping()
 	{
 		mInfo["Title"] = "Cube Mapping";
 		mInfo["Description"] = "Demonstrates the cube mapping feature where a wrap-around environment is reflected "
