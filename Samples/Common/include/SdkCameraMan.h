@@ -275,7 +275,7 @@ namespace OgreBites
                     break;
             }
 #else
-            OIS::MouseEvent state = evt.state;
+            OIS::MouseState state = evt.state;
 #endif
 			if (mStyle == CS_ORBIT)
 			{
