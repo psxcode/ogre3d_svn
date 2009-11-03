@@ -496,6 +496,20 @@ namespace OgreBites
 				}
 				else buttonHit((Button*)mTrayMgr->getWidget("Back"));  // if we're in config, just go back
 			}
+			else if (evt.key == OIS::KC_UP || evt.key == OIS::KC_DOWN && mTitleLabel->getTrayLocation() != TL_NONE)
+			{
+				// if we're in the main screen, use the up and down arrow keys to cycle through samples
+				int newIndex = mSampleMenu->getSelectionIndex() + (evt.key == OIS::KC_UP ? -1 : 1);
+				mSampleMenu->selectItem(Ogre::Math::Clamp<int>(newIndex, 0, mSampleMenu->getNumItems() - 1));
+			}
+			else if (evt.key == OIS::KC_RETURN)   // start or stop sample
+			{
+				if (!mLoadedSamples.empty())
+				{
+					Sample* newSample = Ogre::any_cast<Sample*>(mThumbs[mSampleMenu->getSelectionIndex()]->getUserAny());
+					runSample(newSample == mCurrentSample ? 0 : newSample);
+				}
+			}
 
 			try
 			{
